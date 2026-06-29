@@ -11,10 +11,12 @@
 ## Global Constraints
 
 - PEP-8; docstrings nas funções públicas; comentários só quando agregam.
+- **Código em inglês:** identificadores, docstrings e mensagens de erro de runtime em inglês.
+  Apenas dados de domínio (conteúdo, perguntas) ficam em PT-BR. Onde os exemplos de código
+  deste plano trouxerem docstrings/strings em português, traduza para inglês mantendo a lógica idêntica.
 - Sem duplicação: todo acesso a LLM/embedding/vetor passa pelo `core/` (entra nos planos 2+).
 - Toda técnica plugável vive atrás de interface + registry.
 - Python 3.11; FastAPI; SQLAlchemy 2.x (estilo declarativo novo).
-- Idioma de domínio: PT-BR (dados); código e identificadores em inglês.
 - Configuração sensível via variáveis de ambiente / `.env` (nunca commitar segredos).
 - Commits frequentes, um por task.
 

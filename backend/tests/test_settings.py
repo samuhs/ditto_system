@@ -1,5 +1,3 @@
-import importlib
-
 from app.core.config import settings as settings_module
 
 
