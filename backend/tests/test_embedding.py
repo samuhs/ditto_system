@@ -1,6 +1,7 @@
 """Tests for the embedding provider interface and implementations."""
 from app.core.embedding.base import Embedder, build_embedder, embedding_registry
 from app.core.embedding.gemini import GeminiEmbedder
+from app.core.embedding.huggingface import E5Embedder, ParaphraseEmbedder
 
 
 class _FakeEmbeddings:
@@ -45,9 +46,6 @@ def test_gemini_registered_and_built():
     assert "gemini" in embedding_registry.names()
     emb = build_embedder("gemini", client=_FakeEmbeddings())
     assert isinstance(emb, Embedder)
-
-
-from app.core.embedding.huggingface import E5Embedder, ParaphraseEmbedder
 
 
 class _FakeSentenceTransformer:

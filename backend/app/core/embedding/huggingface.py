@@ -27,14 +27,14 @@ class HuggingFaceEmbedder(Embedder):
 
 
 class E5Embedder(HuggingFaceEmbedder):
-    """multilingual-e5-small local embedder."""
+    """Local embedder using multilingual-e5-small."""
 
     def __init__(self, model=None) -> None:
         super().__init__("intfloat/multilingual-e5-small", model=model)
 
 
 class ParaphraseEmbedder(HuggingFaceEmbedder):
-    """paraphrase-multilingual-MiniLM local embedder."""
+    """Local embedder using paraphrase-multilingual-MiniLM."""
 
     def __init__(self, model=None) -> None:
         super().__init__("paraphrase-multilingual-MiniLM-L12-v2", model=model)
