@@ -1,6 +1,4 @@
 """Tests for the LLM provider interface and implementations."""
-import pytest
-
 from app.core.llm.base import LLM, build_llm, llm_registry
 from app.core.llm.custom import CustomLLM
 from app.core.llm.gemini import GeminiLLM
@@ -46,3 +44,9 @@ def test_build_llm_constructs_provider():
     assert isinstance(llm, GeminiLLM)
     assert isinstance(llm, LLM)
     assert llm.generate("x") == "generated answer"
+
+    custom = build_llm(
+        "custom", model="qwen2", base_url="http://localhost:11434/v1", client=_FakeClient()
+    )
+    assert isinstance(custom, CustomLLM)
+    assert custom.generate("y") == "generated answer"
