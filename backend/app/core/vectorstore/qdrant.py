@@ -39,6 +39,8 @@ class QdrantStore:
         payloads: list[dict],
     ) -> None:
         """Insert vectors with their metadata payloads under sequential ids."""
+        if len(vectors) != len(payloads):
+            raise ValueError("vectors and payloads must have the same length")
         count = self._client.count(name).count
         points = [
             PointStruct(id=count + i, vector=vector, payload=payload)

@@ -47,3 +47,18 @@ def test_ensure_collection_is_idempotent(store):
     store.ensure_collection("c", dimension=3)
     hits = store.search("c", query_vector=[1.0, 0.0, 0.0], top_k=1)
     assert hits == []
+
+
+def test_add_appends_without_id_collision(store):
+    name = "viagem__recursive__gemini"
+    store.ensure_collection(name, dimension=3)
+    store.add(name, vectors=[[1.0, 0.0, 0.0]], payloads=[{"text": "first"}])
+    store.add(name, vectors=[[0.0, 1.0, 0.0]], payloads=[{"text": "second"}])
+    hits = store.search(name, query_vector=[1.0, 0.0, 0.0], top_k=5)
+    assert {h["payload"]["text"] for h in hits} == {"first", "second"}
+
+
+def test_add_rejects_mismatched_lengths(store):
+    store.ensure_collection("c", dimension=3)
+    with pytest.raises(ValueError):
+        store.add("c", vectors=[[1.0, 0.0, 0.0]], payloads=[])
