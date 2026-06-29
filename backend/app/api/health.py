@@ -1,4 +1,4 @@
-"""Endpoint de verificacao de saude."""
+"""Health check endpoint."""
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -6,5 +6,5 @@ router = APIRouter()
 
 @router.get("/health")
 def health() -> dict[str, str]:
-    """Retorna o estado da aplicacao."""
+    """Return the application status."""
     return {"status": "ok"}
