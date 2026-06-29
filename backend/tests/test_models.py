@@ -1,5 +1,4 @@
 """Tests for SQLAlchemy models and relationships."""
-from app.core.db.base import Base
 from app.core.db.models import Experiment, ExperimentRun, RunResult
 
 

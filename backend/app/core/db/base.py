@@ -11,8 +11,8 @@ class Base(DeclarativeBase):
     """Declarative base for all models."""
 
 
-engine = create_engine(get_settings().database_url, future=True)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, future=True)
+engine = create_engine(get_settings().database_url)
+SessionLocal = sessionmaker(bind=engine, autoflush=False)
 
 
 def get_session() -> Iterator[Session]:

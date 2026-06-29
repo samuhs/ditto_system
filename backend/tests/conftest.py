@@ -19,8 +19,8 @@ def db_session():
     """Isolated SQLAlchemy session backed by an in-memory SQLite database."""
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
-    TestingSession = sessionmaker(bind=engine)
-    session = TestingSession()
+    session_factory = sessionmaker(bind=engine)
+    session = session_factory()
     try:
         yield session
     finally:
