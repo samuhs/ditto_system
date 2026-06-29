@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api import health
+from app.core.db import models  # noqa: F401 — registers models on Base.metadata
 from app.core.db.base import create_all
 
 
