@@ -1,7 +1,8 @@
 from app.core.config import settings as settings_module
 
 
-def test_settings_read_from_env(monkeypatch):
+def test_settings_read_from_env(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@db:5432/ditto")
     monkeypatch.setenv("QDRANT_URL", "http://qdrant:6333")
     monkeypatch.setenv("GEMINI_API_KEY", "secret")
@@ -12,7 +13,8 @@ def test_settings_read_from_env(monkeypatch):
     assert cfg.gemini_api_key == "secret"
 
 
-def test_gemini_key_optional(monkeypatch):
+def test_gemini_key_optional(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     settings_module.get_settings.cache_clear()
     cfg = settings_module.get_settings()
