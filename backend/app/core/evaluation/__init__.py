@@ -13,6 +13,7 @@ from app.core.evaluation.embedding_metrics import (
     Faithfulness,
 )
 from app.core.evaluation.overlap_metrics import RougeL
+from app.core.evaluation.runner import evaluate_sample
 
 __all__ = [
     "EvalSample",
@@ -25,4 +26,5 @@ __all__ = [
     "ContextRecall",
     "AnswerCorrectness",
     "RougeL",
+    "evaluate_sample",
 ]
