@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createExperiment, getExperiment, getOptions, ingest } from "./client";
+import {
+  createExperiment,
+  getExperiment,
+  getOptions,
+  ingest,
+  listExperiments,
+} from "./client";
 
 function mockFetchOnce(body: unknown, ok = true, status = 200) {
   return vi.fn().mockResolvedValue({
@@ -31,11 +37,20 @@ describe("api client", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/ingest", { method: "POST", body: form });
   });
 
-  it("createExperiment returns the experiment ref", async () => {
+  it("createExperiment posts to the experiments endpoint and returns the ref", async () => {
     const ref = { id: 1, name: "kind-ember-89", status: "pending" };
-    vi.stubGlobal("fetch", mockFetchOnce(ref));
+    const fetchMock = mockFetchOnce(ref);
+    vi.stubGlobal("fetch", fetchMock);
     const form = new FormData();
     await expect(createExperiment(form)).resolves.toEqual(ref);
+    expect(fetchMock).toHaveBeenCalledWith("/api/experiments", { method: "POST", body: form });
+  });
+
+  it("listExperiments returns the summary list", async () => {
+    const summaries = [{ id: 1, name: "kind-ember-89", status: "done" }];
+    vi.stubGlobal("fetch", mockFetchOnce(summaries));
+    await expect(listExperiments()).resolves.toEqual(summaries);
+    expect(fetch).toHaveBeenCalledWith("/api/experiments");
   });
 
   it("getExperiment returns the detail", async () => {
