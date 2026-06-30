@@ -1,7 +1,7 @@
 """Endpoint to ingest uploaded documents."""
 from collections.abc import Callable
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from app.core.embedding.base import Embedder, build_embedder
 from app.core.vectorstore.qdrant import QdrantStore
@@ -36,10 +36,17 @@ async def ingest(
     embedder_factory: Callable[..., Embedder] = Depends(get_embedder_factory),
 ) -> IngestResult:
     """Ingest uploaded documents under the given configuration."""
-    documents = [
-        Document(name=file.filename, text=(await file.read()).decode("utf-8"))
-        for file in files
-    ]
+    documents = []
+    for file in files:
+        raw = await file.read()
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=f"{file.filename or 'file'}: not valid UTF-8",
+            ) from exc
+        documents.append(Document(name=file.filename or "document", text=text))
     config = IngestConfig(
         base=base, chunkings=_csv(chunkings), embeddings=_csv(embeddings)
     )

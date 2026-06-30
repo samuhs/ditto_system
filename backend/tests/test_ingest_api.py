@@ -48,3 +48,11 @@ def test_ingest_uploads_and_stores(client):
     body = response.json()
     assert body["collections"] == ["viagem__recursive__gemini"]
     assert body["total_chunks"] > 0
+
+
+def test_ingest_rejects_non_utf8_file(client):
+    files = [("files", ("bad.txt", io.BytesIO(b"\xff\xfe\x00invalid"), "text/plain"))]
+    data = {"base": "viagem", "chunkings": "recursive", "embeddings": "gemini"}
+    response = client.post("/ingest", data=data, files=files)
+    assert response.status_code == 422
+    assert "UTF-8" in response.json()["detail"]
