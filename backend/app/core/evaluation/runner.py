@@ -17,6 +17,8 @@ def evaluate_sample(
         if metric_class.requires_reference and sample.reference_answer is None:
             continue
         if "embedder" in inspect.signature(metric_class.__init__).parameters:
+            if embedder is None:
+                raise ValueError(f"metric '{name}' requires an embedder")
             metric = metric_class(embedder=embedder)
         else:
             metric = metric_class()
