@@ -35,7 +35,9 @@ describe("ExperimentPage", () => {
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText(/base/i), "viagem");
     await user.click(screen.getByRole("button", { name: /gerar/i }));
-    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(client.createExperiment).toHaveBeenCalledWith(expect.any(FormData)),
+    );
     expect(await screen.findByText(/done/i)).toBeInTheDocument();
     expect(await screen.findByText(/kind-ember-89/)).toBeInTheDocument();
   });

@@ -28,11 +28,15 @@ export function ExperimentPage() {
   const [csv, setCsv] = useState<File | null>(null);
   const [experiment, setExperiment] = useState<ExperimentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const timer = useRef<number | null>(null);
+  const mounted = useRef(true);
 
   useEffect(() => {
+    mounted.current = true;
     getOptions().then(setOptions).catch((e) => setError(String(e)));
     return () => {
+      mounted.current = false;
       if (timer.current) window.clearTimeout(timer.current);
     };
   }, []);
@@ -40,16 +44,25 @@ export function ExperimentPage() {
   function poll(id: number) {
     getExperiment(id)
       .then((detail) => {
+        if (!mounted.current) return;
         setExperiment(detail);
-        if (detail.status !== "done" && detail.status !== "failed") {
+        if (detail.status === "done" || detail.status === "failed") {
+          setLoading(false);
+        } else {
           timer.current = window.setTimeout(() => poll(id), POLL_INTERVAL_MS);
         }
       })
-      .catch((e) => setError(String(e)));
+      .catch((e) => {
+        if (!mounted.current) return;
+        setError(String(e));
+        setLoading(false);
+      });
   }
 
   async function submit() {
+    if (loading) return;
     setError(null);
+    setLoading(true);
     try {
       const config = {
         name: name || undefined,
@@ -68,6 +81,7 @@ export function ExperimentPage() {
       poll(ref.id);
     } catch (e) {
       setError(String(e));
+      setLoading(false);
     }
   }
 
@@ -86,9 +100,20 @@ export function ExperimentPage() {
       </Group>
       <MultiSelect label="Métricas" data={options?.metrics ?? []} value={metrics} onChange={setMetrics} />
       <FileInput label="Perguntas (CSV)" value={csv} onChange={setCsv} />
-      <Button onClick={submit}>Gerar</Button>
+      <Button onClick={submit} loading={loading}>
+        Gerar
+      </Button>
       {experiment && (
-        <Alert color={experiment.status === "done" ? "green" : "blue"} title={experiment.name}>
+        <Alert
+          color={
+            experiment.status === "done"
+              ? "green"
+              : experiment.status === "failed"
+                ? "red"
+                : "blue"
+          }
+          title={experiment.name}
+        >
           <Text>Status: {experiment.status}</Text>
         </Alert>
       )}
