@@ -6,6 +6,8 @@ from app.core.retrieval.base import (
     retrieval_registry,
 )
 from app.core.retrieval.mmr import MMRRetriever
+from app.core.retrieval.multi_query import MultiQueryRetriever
+from app.core.retrieval.parent_document import ParentDocumentRetriever
 from app.core.retrieval.similarity import SimilarityRetriever
 
 __all__ = [
@@ -15,4 +17,6 @@ __all__ = [
     "retrieval_registry",
     "SimilarityRetriever",
     "MMRRetriever",
+    "MultiQueryRetriever",
+    "ParentDocumentRetriever",
 ]
