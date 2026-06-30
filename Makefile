@@ -17,3 +17,12 @@ install:
 
 test:
 	cd backend && python -m pytest -v
+
+front-install:
+	cd frontend && npm install
+
+front-test:
+	cd frontend && npm run test -- --run
+
+front-build:
+	cd frontend && npm run build

@@ -36,6 +36,13 @@ services:
     volumes:
       - qdrantdata:/qdrant/storage
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
 volumes:
   pgdata:
   qdrantdata:
