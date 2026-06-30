@@ -21,7 +21,7 @@ class NaiveRAG(RAG):
         contexts = self._retriever.retrieve(query)
         prompt = _PROMPT.format(context=format_context(contexts), question=query)
         generated = self._llm.generate(prompt)
-        return RAGResult(answer=generated, contexts=contexts)
+        return RAGResult(answer=generated.strip(), contexts=contexts)
 
 
 rag_registry.register("naive", NaiveRAG)

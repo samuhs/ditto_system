@@ -22,7 +22,12 @@ class ParentDocumentRetriever(Retriever):
         self._window = window
 
     def retrieve(self, query: str) -> list[dict]:
-        """Return top chunks expanded with same-document neighbors."""
+        """Return top chunks expanded with same-document neighbors.
+
+        "Parent" here means a +/-window span of neighboring chunks from the same
+        source document (not the whole document); the hit's text is replaced by
+        the joined span while the rest of its payload metadata is preserved.
+        """
         query_vector = self._embedder.embed_query(query)
         hits = self._store.search(self._collection, query_vector, top_k=self._top_k)
         results = []
@@ -40,14 +45,7 @@ class ParentDocumentRetriever(Retriever):
                 key=lambda p: p["chunk_index"],
             )
             text = " ".join(chunk["text"] for chunk in window_chunks)
-            results.append(
-                {
-                    "text": text,
-                    "score": hit["score"],
-                    "source_doc": source,
-                    "chunk_index": index,
-                }
-            )
+            results.append({**payload, "text": text, "score": hit["score"]})
         return results
 
 
