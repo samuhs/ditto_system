@@ -1,13 +1,13 @@
 """Ingestion pipeline: chunk, embed, and store documents per combination."""
 from collections.abc import Callable
 
-from app.core.chunking.base import build_chunker
+from app.core.chunking.base import Chunker, build_chunker
 from app.core.embedding.base import Embedder, build_embedder
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.ingestion.schemas import Document, IngestConfig, IngestResult
 
 
-def _build_chunker_for(chunking: str, embedder: Embedder):
+def _build_chunker_for(chunking: str, embedder: Embedder) -> Chunker:
     """Build a chunker, injecting the embedder only for the semantic strategy."""
     if chunking == "semantic":
         return build_chunker(chunking, embedder=embedder)

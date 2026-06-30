@@ -26,7 +26,7 @@ def _factory(name: str, **kwargs) -> _FakeEmbedder:
     return _FakeEmbedder()
 
 
-def test_ingest_creates_collections_and_inserts(tmp_store_factory=None):
+def test_ingest_creates_collections_and_inserts():
     store = QdrantStore(client=QdrantClient(":memory:"))
     docs = [Document(name="a.txt", text="Para 1.\n\nPara 2 is here.\n\nPara 3 ok.")]
     config = IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"])
