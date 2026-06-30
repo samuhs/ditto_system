@@ -3,18 +3,9 @@ import re
 
 from app.core.chunking.base import Chunker, chunking_registry
 from app.core.embedding.base import Embedder
+from app.core.vector_math import cosine_distance
 
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
-
-
-def _cosine_distance(a: list[float], b: list[float]) -> float:
-    """Return 1 - cosine similarity between two vectors."""
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = sum(x * x for x in a) ** 0.5
-    norm_b = sum(y * y for y in b) ** 0.5
-    if norm_a == 0 or norm_b == 0:
-        return 1.0
-    return 1.0 - dot / (norm_a * norm_b)
 
 
 class SemanticChunker(Chunker):
@@ -36,7 +27,7 @@ class SemanticChunker(Chunker):
         chunks: list[str] = []
         current = [sentences[0]]
         for i in range(1, len(sentences)):
-            if _cosine_distance(vectors[i - 1], vectors[i]) > self._threshold:
+            if cosine_distance(vectors[i - 1], vectors[i]) > self._threshold:
                 chunks.append(" ".join(current))
                 current = [sentences[i]]
             else:

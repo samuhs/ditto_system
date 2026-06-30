@@ -2,16 +2,7 @@
 from abc import ABC, abstractmethod
 
 from app.core.registry import Registry
-
-
-def cosine_similarity(a: list[float], b: list[float]) -> float:
-    """Return the cosine similarity between two vectors (0 if either is zero)."""
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = sum(x * x for x in a) ** 0.5
-    norm_b = sum(y * y for y in b) ** 0.5
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-    return dot / (norm_a * norm_b)
+from app.core.vector_math import cosine_similarity  # re-exported for retrievers
 
 
 class Retriever(ABC):
