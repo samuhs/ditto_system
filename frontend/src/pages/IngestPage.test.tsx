@@ -42,7 +42,9 @@ describe("IngestPage", () => {
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText(/nome da base/i), "viagem");
     await user.click(screen.getByRole("button", { name: /inserir/i }));
-    await waitFor(() => expect(client.ingest).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(client.ingest).toHaveBeenCalledWith(expect.any(FormData)),
+    );
     expect(await screen.findByText(/12/)).toBeInTheDocument();
   });
 });

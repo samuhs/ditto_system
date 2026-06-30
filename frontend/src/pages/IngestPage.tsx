@@ -28,6 +28,7 @@ export function IngestPage() {
 
   async function submit() {
     setError(null);
+    setResult(null);
     setLoading(true);
     try {
       const form = new FormData();
