@@ -5,7 +5,7 @@ from app.core.vector_math import cosine_similarity
 
 
 def _clamp(value: float) -> float:
-    """Clamp a similarity to the non-negative [0, 1] range used for scores."""
+    """Lower-bound a cosine similarity at 0 (its upper bound is already 1)."""
     return max(0.0, value)
 
 
