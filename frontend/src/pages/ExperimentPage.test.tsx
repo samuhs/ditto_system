@@ -41,4 +41,15 @@ describe("ExperimentPage", () => {
     expect(await screen.findByText(/done/i)).toBeInTheDocument();
     expect(await screen.findByText(/kind-ember-89/)).toBeInTheDocument();
   });
+
+  it("fills all 5 fields when 'Preencher tudo' is clicked and clears on 'Limpar tudo'", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    const fillBtn = await screen.findByRole("button", { name: /preencher tudo/i });
+    expect(fillBtn).toBeEnabled();
+    await user.click(fillBtn);
+    expect(screen.getByRole("button", { name: /limpar tudo/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /limpar tudo/i }));
+    expect(screen.getByRole("button", { name: /preencher tudo/i })).toBeInTheDocument();
+  });
 });

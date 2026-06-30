@@ -40,6 +40,31 @@ export function ExperimentPage() {
   const timer = useRef<number | null>(null);
   const mounted = useRef(true);
 
+  const allFilled =
+    options !== null &&
+    options.chunkings.length > 0 &&
+    chunkings.length === options.chunkings.length &&
+    embeddings.length === options.embeddings.length &&
+    rags.length === options.rags.length &&
+    retrievers.length === options.retrievers.length &&
+    metrics.length === options.metrics.length;
+
+  function toggleAll() {
+    if (allFilled) {
+      setChunkings([]);
+      setEmbeddings([]);
+      setRags([]);
+      setRetrievers([]);
+      setMetrics([]);
+    } else {
+      setChunkings(options?.chunkings ?? []);
+      setEmbeddings(options?.embeddings ?? []);
+      setRags(options?.rags ?? []);
+      setRetrievers(options?.retrievers ?? []);
+      setMetrics(options?.metrics ?? []);
+    }
+  }
+
   useEffect(() => {
     mounted.current = true;
     getOptions().then(setOptions).catch((e) => setError(String(e)));
@@ -108,6 +133,17 @@ export function ExperimentPage() {
 
       <div className="ditto-glass" style={{ padding: "30px", maxWidth: 760 }}>
         <Stack gap="lg">
+          <Group justify="flex-end">
+            <Button
+              variant="subtle"
+              size="xs"
+              disabled={options === null}
+              color={allFilled ? "gray" : "violet"}
+              onClick={toggleAll}
+            >
+              {allFilled ? "Limpar tudo" : "Preencher tudo"}
+            </Button>
+          </Group>
           <Group grow align="flex-start">
             <TextInput
               label="Nome do experimento (opcional)"
