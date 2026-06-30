@@ -1,8 +1,10 @@
 """Tests for embedding-based evaluation metrics (no reference needed)."""
 from app.core.evaluation.base import EvalSample, build_evaluator, evaluation_registry
 from app.core.evaluation.embedding_metrics import (
+    AnswerCorrectness,
     AnswerRelevancy,
     ContextPrecision,
+    ContextRecall,
     Faithfulness,
 )
 
@@ -61,6 +63,34 @@ def test_context_precision_averages_relevance():
         )
     )
     assert score > 0.9
+
+
+def test_answer_correctness_higher_when_matching_reference():
+    embedder = _FakeEmbedder()
+    metric = AnswerCorrectness(embedder)
+    assert metric.requires_reference is True
+    close = metric.score(
+        EvalSample(question="q", answer="the square", contexts=[], reference_answer="the square plaza")
+    )
+    far = metric.score(
+        EvalSample(question="q", answer="the square", contexts=[], reference_answer="the cheese shop")
+    )
+    assert close > far
+
+
+def test_context_recall_uses_reference_and_context():
+    embedder = _FakeEmbedder()
+    metric = ContextRecall(embedder)
+    assert metric.requires_reference is True
+    covered = metric.score(
+        EvalSample(
+            question="q",
+            answer="a",
+            contexts=["the square map"],
+            reference_answer="the square plaza",
+        )
+    )
+    assert covered > 0.9
 
 
 def test_embedding_metrics_registered_and_no_reference():

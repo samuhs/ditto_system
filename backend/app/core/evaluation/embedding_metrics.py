@@ -53,6 +53,36 @@ class ContextPrecision(_EmbeddingMetric):
         return sum(scores) / len(scores)
 
 
+class ContextRecall(_EmbeddingMetric):
+    """Whether the retrieved context covers the reference answer."""
+
+    requires_reference = True
+
+    def score(self, sample: EvalSample) -> float:
+        """Cosine similarity between the reference answer and the joined contexts."""
+        if not sample.contexts or sample.reference_answer is None:
+            return 0.0
+        reference_vec = self._embedder.embed_query(sample.reference_answer)
+        context_vec = self._embedder.embed_query(" ".join(sample.contexts))
+        return _clamp(cosine_similarity(reference_vec, context_vec))
+
+
+class AnswerCorrectness(_EmbeddingMetric):
+    """How close the generated answer is to the reference answer."""
+
+    requires_reference = True
+
+    def score(self, sample: EvalSample) -> float:
+        """Cosine similarity between the answer and the reference answer."""
+        if sample.reference_answer is None:
+            return 0.0
+        answer_vec = self._embedder.embed_query(sample.answer)
+        reference_vec = self._embedder.embed_query(sample.reference_answer)
+        return _clamp(cosine_similarity(answer_vec, reference_vec))
+
+
 evaluation_registry.register("answer_relevancy", AnswerRelevancy)
 evaluation_registry.register("faithfulness", Faithfulness)
 evaluation_registry.register("context_precision", ContextPrecision)
+evaluation_registry.register("context_recall", ContextRecall)
+evaluation_registry.register("answer_correctness", AnswerCorrectness)

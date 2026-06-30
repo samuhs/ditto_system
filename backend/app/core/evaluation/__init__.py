@@ -6,10 +6,13 @@ from app.core.evaluation.base import (
     evaluation_registry,
 )
 from app.core.evaluation.embedding_metrics import (
+    AnswerCorrectness,
     AnswerRelevancy,
     ContextPrecision,
+    ContextRecall,
     Faithfulness,
 )
+from app.core.evaluation.overlap_metrics import RougeL
 
 __all__ = [
     "EvalSample",
@@ -19,4 +22,7 @@ __all__ = [
     "AnswerRelevancy",
     "ContextPrecision",
     "Faithfulness",
+    "ContextRecall",
+    "AnswerCorrectness",
+    "RougeL",
 ]
