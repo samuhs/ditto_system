@@ -20,8 +20,8 @@ class NaiveRAG(RAG):
         """Retrieve context and generate a grounded answer."""
         contexts = self._retriever.retrieve(query)
         prompt = _PROMPT.format(context=format_context(contexts), question=query)
-        answer = self._llm.generate(prompt)
-        return RAGResult(answer=answer, contexts=contexts)
+        generated = self._llm.generate(prompt)
+        return RAGResult(answer=generated, contexts=contexts)
 
 
 rag_registry.register("naive", NaiveRAG)

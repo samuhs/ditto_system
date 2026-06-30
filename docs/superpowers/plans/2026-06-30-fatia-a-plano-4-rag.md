@@ -742,7 +742,7 @@ git commit -m "feat: multi-query and parent-document retrievers"
   - `RAG` (ABC) com `answer(self, query: str) -> RAGResult`.
   - Helper `format_context(contexts) -> str` em `base.py`.
   - `rag_registry: Registry[type[RAG]]`; `build_rag(name: str, **kwargs) -> RAG`.
-  - `NaiveRAG(retriever, llm, top_context: int | None = None)` registrado `"naive"`.
+  - `NaiveRAG(retriever, llm)` registrado `"naive"`. (Nota: não há `top_context` — a quantidade de contexto já é controlada pelo `top_k` do retriever; adicionar outro limite aqui seria redundante.)
 
 - [ ] **Step 1: Escrever o teste que falha**
 

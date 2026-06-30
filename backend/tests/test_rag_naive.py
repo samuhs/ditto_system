@@ -4,6 +4,8 @@ from app.core.rag.naive import NaiveRAG
 
 
 class _StubRetriever:
+    """Returns two fixed documents regardless of query."""
+
     def retrieve(self, query: str) -> list[dict]:
         return [
             {"text": "The center is around the main square.", "source_doc": "a.txt", "score": 0.9},
