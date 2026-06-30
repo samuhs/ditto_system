@@ -6,7 +6,7 @@ from fastapi import FastAPI
 import app.core.chunking  # noqa: F401  registers chunking strategies
 import app.core.embedding  # noqa: F401  registers embedding providers
 import app.core.llm  # noqa: F401  registers LLM providers
-from app.api import health, ingest, options
+from app.api import experiments, health, ingest, options
 from app.core.db import models  # noqa: F401  registers models on Base.metadata
 from app.core.db.base import create_all
 
@@ -24,6 +24,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(options.router)
     app.include_router(ingest.router)
+    app.include_router(experiments.router)
     return app
 
 
