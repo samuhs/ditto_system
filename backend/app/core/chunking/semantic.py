@@ -26,9 +26,12 @@ class SemanticChunker(Chunker):
 
     def split(self, text: str) -> list[str]:
         """Split text at sentence boundaries where topic shifts."""
-        sentences = [s for s in _SENTENCE_RE.split(text.strip()) if s]
+        stripped = text.strip()
+        if not stripped:
+            return []
+        sentences = [s for s in _SENTENCE_RE.split(stripped) if s]
         if len(sentences) <= 1:
-            return sentences or [text]
+            return sentences or [stripped]
         vectors = self._embedder.embed_documents(sentences)
         chunks: list[str] = []
         current = [sentences[0]]

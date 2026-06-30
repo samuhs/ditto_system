@@ -32,13 +32,18 @@ def test_semantic_chunker_splits_on_topic_change():
     chunker = SemanticChunker(embedder=_FakeEmbedder(), threshold=0.5)
     chunks = chunker.split(text)
     assert len(chunks) == 2
-    assert "Apples" in chunks[0] and "Apples" in chunks[0]
-    assert "Cars" in chunks[1]
+    assert chunks[0] == "Apples are red. Apples are sweet."
+    assert "Cars" in chunks[1] and "fast" in chunks[1] and "loud" in chunks[1]
 
 
 def test_semantic_single_sentence_returns_one_chunk():
     chunker = SemanticChunker(embedder=_FakeEmbedder())
     assert chunker.split("Apples are red.") == ["Apples are red."]
+
+
+def test_semantic_empty_text_returns_no_chunks():
+    chunker = SemanticChunker(embedder=_FakeEmbedder())
+    assert chunker.split("   ") == []
 
 
 def test_semantic_registered_and_built():
