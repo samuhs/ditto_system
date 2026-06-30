@@ -1,4 +1,4 @@
-import { Collapse, Select, Stack, Table, Text, Title } from "@mantine/core";
+import { Alert, Collapse, Select, Stack, Table, Text, Title } from "@mantine/core";
 import { Fragment, useEffect, useState } from "react";
 
 import { getExperiment, listExperiments } from "../api/client";
@@ -19,21 +19,29 @@ export function ResultsPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<ExperimentDetail | null>(null);
   const [openRow, setOpenRow] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listExperiments().then((rows) => {
-      setExperiments(rows);
-      if (rows.length > 0) setSelected(String(rows[0].id));
-    });
+    listExperiments()
+      .then((rows) => {
+        setExperiments(rows);
+        if (rows.length > 0) setSelected(String(rows[0].id));
+      })
+      .catch((e) => setError(String(e)));
   }, []);
 
   useEffect(() => {
-    if (selected) getExperiment(Number(selected)).then(setDetail);
+    if (selected) getExperiment(Number(selected)).then(setDetail).catch((e) => setError(String(e)));
   }, [selected]);
 
   return (
     <Stack>
       <Title order={2}>Resultados</Title>
+      {error && (
+        <Alert color="red" title="Erro">
+          {error}
+        </Alert>
+      )}
       <Select
         label="Experimento"
         data={experiments.map((e) => ({ value: String(e.id), label: `${e.name} (${e.status})` }))}
