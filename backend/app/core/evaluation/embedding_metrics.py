@@ -47,10 +47,10 @@ class ContextPrecision(_EmbeddingMetric):
             return 0.0
         question_vec = self._embedder.embed_query(sample.question)
         scores = [
-            cosine_similarity(question_vec, self._embedder.embed_query(context))
+            _clamp(cosine_similarity(question_vec, self._embedder.embed_query(context)))
             for context in sample.contexts
         ]
-        return _clamp(sum(scores) / len(scores))
+        return sum(scores) / len(scores)
 
 
 evaluation_registry.register("answer_relevancy", AnswerRelevancy)
