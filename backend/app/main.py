@@ -5,7 +5,10 @@ from fastapi import FastAPI
 
 import app.core.chunking  # noqa: F401  registers chunking strategies
 import app.core.embedding  # noqa: F401  registers embedding providers
+import app.core.evaluation  # noqa: F401  registers evaluation metrics
 import app.core.llm  # noqa: F401  registers LLM providers
+import app.core.rag  # noqa: F401  registers RAG techniques
+import app.core.retrieval  # noqa: F401  registers retrievers
 from app.api import experiments, health, ingest, options
 from app.core.db import models  # noqa: F401  registers models on Base.metadata
 from app.core.db.base import create_all

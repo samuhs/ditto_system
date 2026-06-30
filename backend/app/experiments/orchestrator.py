@@ -109,6 +109,7 @@ def run_experiment(
         if experiment is not None:
             experiment.status = "failed"
             experiment.config = {**experiment.config, "error": str(exc)}
+            experiment.finished_at = datetime.now(UTC)
             session.commit()
     finally:
         session.close()

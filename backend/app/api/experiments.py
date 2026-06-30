@@ -1,6 +1,7 @@
 """Endpoints to create and inspect experiments."""
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
 
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
@@ -32,7 +33,11 @@ async def create_experiment(
         raise HTTPException(status_code=422, detail=exc.errors()) from exc
     if not parsed.name:
         parsed.name = generate_experiment_name()
-    csv_text = (await questions.read()).decode("utf-8")
+    raw = await questions.read()
+    try:
+        csv_text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(status_code=422, detail="questions file is not valid UTF-8") from exc
     try:
         items = parse_questions_csv(csv_text)
     except ValueError as exc:
@@ -42,7 +47,13 @@ async def create_experiment(
     try:
         experiment = Experiment(name=parsed.name, status="pending", config=parsed.model_dump())
         session.add(experiment)
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError as exc:
+            session.rollback()
+            raise HTTPException(
+                status_code=409, detail=f"experiment name already exists: {parsed.name}"
+            ) from exc
         session.refresh(experiment)
         experiment_id = experiment.id
         name = experiment.name
