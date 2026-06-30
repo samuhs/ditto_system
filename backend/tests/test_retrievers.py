@@ -48,11 +48,12 @@ def test_similarity_returns_nearest_first(store):
 
 
 def test_mmr_diversifies_results(store):
-    retriever = MMRRetriever(store, "col", _FakeEmbedder(), top_k=2, fetch_k=3, lambda_mult=0.5)
+    retriever = MMRRetriever(store, "col", _FakeEmbedder(), top_k=2, fetch_k=3, lambda_mult=0.4)
     results = retriever.retrieve("alpha question")
     texts = [r["text"] for r in results]
     assert len(results) == 2
-    assert "alpha one" in texts
+    assert texts[0] == "alpha one"  # highest relevance first
+    assert texts[1] == "beta"  # diversity: picks the orthogonal doc, not the near-duplicate
 
 
 def test_retrievers_registered_and_built(store):
