@@ -1,4 +1,6 @@
 """Tests for experiment schemas, naming, and CSV parsing."""
+import pytest
+
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.naming import generate_experiment_name
 from app.experiments.schemas import ExperimentConfig, QuestionItem
@@ -9,6 +11,12 @@ def test_generate_experiment_name_format():
     parts = name.split("-")
     assert len(parts) == 3
     assert parts[2].isdigit()
+    assert len(parts[2]) == 2
+
+
+def test_parse_questions_csv_missing_column_raises():
+    with pytest.raises(ValueError):
+        parse_questions_csv("wrong_header\nsome value\n")
 
 
 def test_generate_experiment_name_varies():

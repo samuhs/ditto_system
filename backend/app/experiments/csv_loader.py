@@ -8,6 +8,8 @@ from app.experiments.schemas import QuestionItem
 def parse_questions_csv(content: str) -> list[QuestionItem]:
     """Parse a CSV with 'pergunta' and optional 'resposta_referencia' columns."""
     reader = csv.DictReader(io.StringIO(content))
+    if "pergunta" not in (reader.fieldnames or []):
+        raise ValueError("CSV missing required column: pergunta")
     items = []
     for row in reader:
         text = (row.get("pergunta") or "").strip()
