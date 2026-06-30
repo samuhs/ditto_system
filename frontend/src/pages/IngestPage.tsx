@@ -2,15 +2,18 @@ import {
   Alert,
   Button,
   FileInput,
+  Group,
   MultiSelect,
   Stack,
+  Text,
   TextInput,
-  Title,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 
 import { getOptions, ingest } from "../api/client";
 import type { IngestResult, Options } from "../api/types";
+import { PageHeader } from "../components/PageHeader";
+import { ArrowIcon, UploadIcon } from "../components/icons";
 
 export function IngestPage() {
   const [options, setOptions] = useState<Options | null>(null);
@@ -45,44 +48,85 @@ export function IngestPage() {
   }
 
   return (
-    <Stack maw={640}>
-      <Title order={2}>Inserir documentos</Title>
-      <TextInput
-        label="Nome da base"
-        value={base}
-        onChange={(e) => setBase(e.currentTarget.value)}
+    <div>
+      <PageHeader
+        eyebrow="Passo 01 · Absorver"
+        title="Inserir documentos"
+        subtitle="Envie seus textos e escolha como o Ditto vai cortá-los e representá-los. Cada combinação de corte e embedding vira uma coleção pronta para os experimentos."
       />
-      <MultiSelect
-        label="Técnicas de corte"
-        data={options?.chunkings ?? []}
-        value={chunkings}
-        onChange={setChunkings}
-      />
-      <MultiSelect
-        label="Modelos de embedding"
-        data={options?.embeddings ?? []}
-        value={embeddings}
-        onChange={setEmbeddings}
-      />
-      <FileInput
-        label="Documentos (.txt / .md)"
-        multiple
-        value={files}
-        onChange={setFiles}
-      />
-      <Button onClick={submit} loading={loading}>
-        Inserir
-      </Button>
+
+      <div className="ditto-glass" style={{ padding: "30px", maxWidth: 680 }}>
+        <Stack gap="lg">
+          <TextInput
+            label="Nome da base"
+            placeholder="ex.: manuais-de-viagem"
+            value={base}
+            onChange={(e) => setBase(e.currentTarget.value)}
+          />
+          <Group grow align="flex-start">
+            <MultiSelect
+              label="Técnicas de corte"
+              placeholder="Selecione"
+              data={options?.chunkings ?? []}
+              value={chunkings}
+              onChange={setChunkings}
+              searchable
+            />
+            <MultiSelect
+              label="Modelos de embedding"
+              placeholder="Selecione"
+              data={options?.embeddings ?? []}
+              value={embeddings}
+              onChange={setEmbeddings}
+              searchable
+            />
+          </Group>
+          <FileInput
+            label="Documentos (.txt / .md)"
+            placeholder="Escolher arquivos"
+            multiple
+            value={files}
+            onChange={setFiles}
+            leftSection={<UploadIcon />}
+          />
+          <Button
+            onClick={submit}
+            loading={loading}
+            size="md"
+            variant="gradient"
+            gradient={{ from: "#ab63f2", to: "#f26dcf", deg: 115 }}
+            rightSection={<ArrowIcon />}
+            style={{ alignSelf: "flex-start" }}
+          >
+            Inserir
+          </Button>
+        </Stack>
+      </div>
+
       {result && (
-        <Alert color="green" title="Inserção concluída">
-          {result.total_chunks} trechos em {result.collections.length} coleção(ões).
+        <Alert
+          color="teal"
+          variant="light"
+          title="Inserção concluída"
+          mt="xl"
+          radius="lg"
+          maw={680}
+        >
+          <Group gap="xs" align="baseline">
+            <Text className="ditto-mono" fz={28} fw={700} c="#07f285">
+              {result.total_chunks}
+            </Text>
+            <Text c="dimmed">
+              trechos absorvidos em {result.collections.length} coleção(ões).
+            </Text>
+          </Group>
         </Alert>
       )}
       {error && (
-        <Alert color="red" title="Erro">
+        <Alert color="red" variant="light" title="Erro" mt="xl" radius="lg" maw={680}>
           {error}
         </Alert>
       )}
-    </Stack>
+    </div>
   );
 }

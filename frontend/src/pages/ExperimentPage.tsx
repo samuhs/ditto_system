@@ -3,18 +3,26 @@ import {
   Button,
   FileInput,
   Group,
+  Loader,
   MultiSelect,
   Stack,
   Text,
   TextInput,
-  Title,
 } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 
 import { createExperiment, getExperiment, getOptions } from "../api/client";
 import type { ExperimentDetail, Options } from "../api/types";
+import { PageHeader } from "../components/PageHeader";
+import { ArrowIcon } from "../components/icons";
 
 const POLL_INTERVAL_MS = 2000;
+
+function statusColor(status: string): string {
+  if (status === "done") return "#07f285";
+  if (status === "failed") return "#f26d6d";
+  return "#05dbf2";
+}
 
 export function ExperimentPage() {
   const [options, setOptions] = useState<Options | null>(null);
@@ -85,43 +93,135 @@ export function ExperimentPage() {
     }
   }
 
+  const running =
+    experiment != null &&
+    experiment.status !== "done" &&
+    experiment.status !== "failed";
+
   return (
-    <Stack maw={720}>
-      <Title order={2}>Gerar teste de qualidade</Title>
-      <TextInput label="Nome do experimento (opcional)" value={name} onChange={(e) => setName(e.currentTarget.value)} />
-      <TextInput label="Base" value={base} onChange={(e) => setBase(e.currentTarget.value)} />
-      <Group grow>
-        <MultiSelect label="Cortes" data={options?.chunkings ?? []} value={chunkings} onChange={setChunkings} />
-        <MultiSelect label="Embeddings" data={options?.embeddings ?? []} value={embeddings} onChange={setEmbeddings} />
-      </Group>
-      <Group grow>
-        <MultiSelect label="RAGs" data={options?.rags ?? []} value={rags} onChange={setRags} />
-        <MultiSelect label="Retrievers" data={options?.retrievers ?? []} value={retrievers} onChange={setRetrievers} />
-      </Group>
-      <MultiSelect label="Métricas" data={options?.metrics ?? []} value={metrics} onChange={setMetrics} />
-      <FileInput label="Perguntas (CSV)" value={csv} onChange={setCsv} />
-      <Button onClick={submit} loading={loading}>
-        Gerar
-      </Button>
+    <div>
+      <PageHeader
+        eyebrow="Passo 02 · Experimentar"
+        title="Gerar teste de qualidade"
+        subtitle="Escolha as estratégias a combinar e o conjunto de perguntas. O Ditto executa cada forma possível e mede a qualidade das respostas — você acompanha em tempo real."
+      />
+
+      <div className="ditto-glass" style={{ padding: "30px", maxWidth: 760 }}>
+        <Stack gap="lg">
+          <Group grow align="flex-start">
+            <TextInput
+              label="Nome do experimento (opcional)"
+              placeholder="gerado automaticamente"
+              value={name}
+              onChange={(e) => setName(e.currentTarget.value)}
+            />
+            <TextInput
+              label="Base"
+              placeholder="nome da base ingerida"
+              value={base}
+              onChange={(e) => setBase(e.currentTarget.value)}
+            />
+          </Group>
+          <Group grow align="flex-start">
+            <MultiSelect
+              label="Cortes"
+              placeholder="Selecione"
+              data={options?.chunkings ?? []}
+              value={chunkings}
+              onChange={setChunkings}
+              searchable
+            />
+            <MultiSelect
+              label="Embeddings"
+              placeholder="Selecione"
+              data={options?.embeddings ?? []}
+              value={embeddings}
+              onChange={setEmbeddings}
+              searchable
+            />
+          </Group>
+          <Group grow align="flex-start">
+            <MultiSelect
+              label="RAGs"
+              placeholder="Selecione"
+              data={options?.rags ?? []}
+              value={rags}
+              onChange={setRags}
+              searchable
+            />
+            <MultiSelect
+              label="Retrievers"
+              placeholder="Selecione"
+              data={options?.retrievers ?? []}
+              value={retrievers}
+              onChange={setRetrievers}
+              searchable
+            />
+          </Group>
+          <MultiSelect
+            label="Métricas"
+            placeholder="Selecione"
+            data={options?.metrics ?? []}
+            value={metrics}
+            onChange={setMetrics}
+            searchable
+          />
+          <FileInput
+            label="Perguntas (CSV)"
+            placeholder="Escolher arquivo .csv"
+            value={csv}
+            onChange={setCsv}
+          />
+          <Button
+            onClick={submit}
+            loading={loading}
+            size="md"
+            variant="gradient"
+            gradient={{ from: "#ab63f2", to: "#f26dcf", deg: 115 }}
+            rightSection={<ArrowIcon />}
+            style={{ alignSelf: "flex-start" }}
+          >
+            Gerar
+          </Button>
+        </Stack>
+      </div>
+
       {experiment && (
-        <Alert
-          color={
-            experiment.status === "done"
-              ? "green"
-              : experiment.status === "failed"
-                ? "red"
-                : "blue"
-          }
-          title={experiment.name}
+        <div
+          className="ditto-glass"
+          style={{
+            padding: "22px 26px",
+            maxWidth: 760,
+            marginTop: 28,
+            borderColor: statusColor(experiment.status),
+          }}
         >
-          <Text>Status: {experiment.status}</Text>
-        </Alert>
+          <Group justify="space-between" align="center">
+            <div>
+              <Text className="ditto-mono" size="xs" c="dimmed">
+                EXPERIMENTO
+              </Text>
+              <Text fw={700} fz="lg" mt={4}>
+                {experiment.name}
+              </Text>
+            </div>
+            <Group gap="xs" align="center">
+              {running && <Loader size="xs" color="#05dbf2" />}
+              <span
+                className="ditto-chip"
+                style={{ color: statusColor(experiment.status) }}
+              >
+                {experiment.status}
+              </span>
+            </Group>
+          </Group>
+        </div>
       )}
       {error && (
-        <Alert color="red" title="Erro">
+        <Alert color="red" variant="light" title="Erro" mt="xl" radius="lg" maw={760}>
           {error}
         </Alert>
       )}
-    </Stack>
+    </div>
   );
 }

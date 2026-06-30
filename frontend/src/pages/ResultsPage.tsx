@@ -1,13 +1,16 @@
-import { Alert, Collapse, Select, Stack, Table, Text, Title } from "@mantine/core";
+import { Alert, Collapse, Select, Text } from "@mantine/core";
 import { Fragment, useEffect, useState } from "react";
 
 import { getExperiment, listExperiments } from "../api/client";
 import type { ExperimentDetail, ExperimentSummary } from "../api/types";
+import { PageHeader } from "../components/PageHeader";
 
-function summarizeScores(scores: Record<string, number>): string {
-  return Object.entries(scores)
-    .map(([key, value]) => `${key}: ${value.toFixed(2)}`)
-    .join(" · ");
+/** Map a 0–1 score to an accent color: high = green, low = pink. */
+function scoreColor(value: number): string {
+  if (value >= 0.7) return "#07f285";
+  if (value >= 0.45) return "#05dbf2";
+  if (value >= 0.25) return "#f2ec91";
+  return "#f26dcf";
 }
 
 function truncateAnswer(answer: string, max = 60): string {
@@ -31,69 +34,150 @@ export function ResultsPage() {
   }, []);
 
   useEffect(() => {
-    if (selected) getExperiment(Number(selected)).then(setDetail).catch((e) => setError(String(e)));
+    if (selected)
+      getExperiment(Number(selected))
+        .then(setDetail)
+        .catch((e) => setError(String(e)));
   }, [selected]);
 
   return (
-    <Stack>
-      <Title order={2}>Resultados</Title>
+    <div>
+      <PageHeader
+        eyebrow="Passo 03 · Ranquear"
+        title="Resultados"
+        subtitle="Cada linha é uma forma que o Ditto assumiu. As barras coloridas mostram a qualidade de cada métrica — verde é bom, rosa pede atenção. Clique para abrir a resposta completa."
+      />
+
       {error && (
-        <Alert color="red" title="Erro">
+        <Alert color="red" variant="light" title="Erro" mb="lg" radius="lg" maw={520}>
           {error}
         </Alert>
       )}
+
       <Select
         label="Experimento"
-        data={experiments.map((e) => ({ value: String(e.id), label: `${e.name} (${e.status})` }))}
+        placeholder="Selecione um experimento"
+        data={experiments.map((e) => ({
+          value: String(e.id),
+          label: `${e.name} (${e.status})`,
+        }))}
         value={selected}
         onChange={setSelected}
-        maw={360}
+        maw={380}
+        mb="xl"
+        searchable
       />
+
       {detail && (
-        <Table highlightOnHover withTableBorder>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Combinação</Table.Th>
-              <Table.Th>Pergunta</Table.Th>
-              <Table.Th>Resposta</Table.Th>
-              <Table.Th>Scores</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {detail.results.map((row, index) => (
-              <Fragment key={index}>
-                <Table.Tr
-                  onClick={() => setOpenRow(openRow === index ? null : index)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <Table.Td>{`${row.chunking}/${row.embedding}/${row.rag}/${row.retriever}`}</Table.Td>
-                  <Table.Td>{row.question}</Table.Td>
-                  {/* Hide answer preview when row is expanded to avoid duplicate matches */}
-                  <Table.Td>{openRow === index ? null : truncateAnswer(row.answer)}</Table.Td>
-                  <Table.Td>{summarizeScores(row.scores)}</Table.Td>
-                </Table.Tr>
-                <Table.Tr>
-                  <Table.Td colSpan={4} p={0} style={{ border: 0 }}>
-                    <Collapse in={openRow === index}>
-                      {/* Conditionally render so content is not in DOM when collapsed */}
-                      {openRow === index && (
-                        <Stack p="md" gap="xs">
-                          <Text fw={600}>Resposta completa</Text>
-                          <Text>{row.answer}</Text>
-                          <Text size="sm" c="dimmed">
-                            {summarizeScores(row.scores)} · latência: {row.latency_ms} ms · tokens:{" "}
-                            {row.tokens}
-                          </Text>
-                        </Stack>
-                      )}
-                    </Collapse>
-                  </Table.Td>
-                </Table.Tr>
-              </Fragment>
-            ))}
-          </Table.Tbody>
-        </Table>
+        <div className="ditto-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: "26%" }}>Combinação</th>
+                <th style={{ width: "26%" }}>Pergunta</th>
+                <th style={{ width: "26%" }}>Resposta</th>
+                <th style={{ width: "22%" }}>Scores</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detail.results.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="ditto-empty">
+                    Nenhum resultado para este experimento ainda.
+                  </td>
+                </tr>
+              )}
+              {detail.results.map((row, index) => {
+                const open = openRow === index;
+                return (
+                  <Fragment key={index}>
+                    <tr
+                      className="ditto-row"
+                      data-open={open}
+                      onClick={() => setOpenRow(open ? null : index)}
+                    >
+                      <td>
+                        <div className="ditto-combo">
+                          <span>{row.chunking}</span>
+                          <span>{row.embedding}</span>
+                          <span>{row.rag}</span>
+                          <span>{row.retriever}</span>
+                        </div>
+                      </td>
+                      <td>{row.question}</td>
+                      {/* Hide answer preview when expanded to avoid duplicate matches */}
+                      <td>{open ? null : truncateAnswer(row.answer)}</td>
+                      <td>
+                        <div className="ditto-scores-mini">
+                          {Object.entries(row.scores).map(([key, value]) => (
+                            <span key={key} className="ditto-score-pill">
+                              <span
+                                className="ditto-score-dot"
+                                style={{ background: scoreColor(value) }}
+                              />
+                              {value.toFixed(2)}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={4} style={{ padding: 0, borderBottom: 0 }}>
+                        <Collapse in={open}>
+                          {open && (
+                            <div className="ditto-expand">
+                              <Text className="ditto-eyebrow" mb={6}>
+                                Resposta completa
+                              </Text>
+                              <Text mb="md" style={{ lineHeight: 1.6 }}>
+                                {row.answer}
+                              </Text>
+
+                              {Object.entries(row.scores).map(([key, value]) => (
+                                <div key={key} className="ditto-score-bar-row">
+                                  <span className="ditto-score-bar-label">{key}</span>
+                                  <span className="ditto-score-bar-track">
+                                    <span
+                                      className="ditto-score-bar-fill"
+                                      style={{
+                                        width: `${Math.max(0, Math.min(1, value)) * 100}%`,
+                                        background: scoreColor(value),
+                                        boxShadow: `0 0 12px ${scoreColor(value)}`,
+                                      }}
+                                    />
+                                  </span>
+                                  <span className="ditto-score-bar-val">
+                                    {value.toFixed(2)}
+                                  </span>
+                                </div>
+                              ))}
+
+                              <div className="ditto-meta-chips">
+                                <span
+                                  className="ditto-chip"
+                                  style={{ color: "#05dbf2" }}
+                                >
+                                  {row.latency_ms} ms
+                                </span>
+                                <span
+                                  className="ditto-chip"
+                                  style={{ color: "#f2ec91" }}
+                                >
+                                  {row.tokens} tokens
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </Collapse>
+                      </td>
+                    </tr>
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
-    </Stack>
+    </div>
   );
 }
