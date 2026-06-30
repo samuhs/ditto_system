@@ -12,6 +12,18 @@ from qdrant_client.models import (
 from app.core.config.settings import get_settings
 
 
+def _payload_filter(where: dict | None) -> Filter | None:
+    """Build a Qdrant equality filter from a payload dict, or None."""
+    if not where:
+        return None
+    return Filter(
+        must=[
+            FieldCondition(key=key, match=MatchValue(value=value))
+            for key, value in where.items()
+        ]
+    )
+
+
 def collection_name(base: str, chunking: str, embedding: str) -> str:
     """Build the Qdrant collection name for a chunking x embedding combination."""
     return f"{base}__{chunking}__{embedding}"
@@ -54,20 +66,36 @@ class QdrantStore:
         query_vector: list[float],
         top_k: int = 5,
         where: dict | None = None,
+        with_vectors: bool = False,
     ) -> list[dict]:
-        """Return the nearest points as {"score", "payload"}, optionally filtered."""
-        query_filter = None
-        if where:
-            query_filter = Filter(
-                must=[
-                    FieldCondition(key=key, match=MatchValue(value=value))
-                    for key, value in where.items()
-                ]
-            )
+        """Return the nearest points as {"id", "score", "payload"[, "vector"]}."""
         response = self._client.query_points(
             collection_name=name,
             query=query_vector,
             limit=top_k,
-            query_filter=query_filter,
+            query_filter=_payload_filter(where),
+            with_vectors=with_vectors,
         )
-        return [{"score": point.score, "payload": point.payload} for point in response.points]
+        results = []
+        for point in response.points:
+            item = {"id": point.id, "score": point.score, "payload": point.payload}
+            if with_vectors:
+                item["vector"] = list(point.vector)
+            results.append(item)
+        return results
+
+    def scroll(
+        self,
+        name: str,
+        where: dict | None = None,
+        limit: int = 1000,
+    ) -> list[dict]:
+        """Return points matching a payload filter (no similarity ranking)."""
+        points, _ = self._client.scroll(
+            collection_name=name,
+            scroll_filter=_payload_filter(where),
+            limit=limit,
+            with_payload=True,
+            with_vectors=False,
+        )
+        return [{"id": point.id, "payload": point.payload} for point in points]
