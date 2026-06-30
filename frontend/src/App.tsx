@@ -1,41 +1,59 @@
-import { AppShell, NavLink, Title } from "@mantine/core";
-import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { Route, Routes, useLocation } from "react-router-dom";
 
+import { PageTransition } from "./components/PageTransition";
+import { Sidebar } from "./components/Sidebar";
 import { ExperimentPage } from "./pages/ExperimentPage";
+import { HomePage } from "./pages/HomePage";
 import { IngestPage } from "./pages/IngestPage";
 import { ResultsPage } from "./pages/ResultsPage";
 
-const NAV = [
-  { to: "/", label: "Inserir documentos" },
-  { to: "/experiment", label: "Gerar teste" },
-  { to: "/results", label: "Resultados" },
-];
-
 export function App() {
   const location = useLocation();
+
   return (
-    <AppShell navbar={{ width: 220, breakpoint: "sm" }} padding="md">
-      <AppShell.Navbar p="md">
-        <Title order={4} mb="md">
-          Ditto
-        </Title>
-        {NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            component={Link}
-            to={item.to}
-            label={item.label}
-            active={location.pathname === item.to}
-          />
-        ))}
-      </AppShell.Navbar>
-      <AppShell.Main>
-        <Routes>
-          <Route path="/" element={<IngestPage />} />
-          <Route path="/experiment" element={<ExperimentPage />} />
-          <Route path="/results" element={<ResultsPage />} />
-        </Routes>
-      </AppShell.Main>
-    </AppShell>
+    <div className="ditto-shell">
+      <Sidebar />
+      <main className="ditto-main">
+        <div className="ditto-main-inner">
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route
+                path="/"
+                element={
+                  <PageTransition>
+                    <HomePage />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/ingest"
+                element={
+                  <PageTransition>
+                    <IngestPage />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/experiment"
+                element={
+                  <PageTransition>
+                    <ExperimentPage />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/results"
+                element={
+                  <PageTransition>
+                    <ResultsPage />
+                  </PageTransition>
+                }
+              />
+            </Routes>
+          </AnimatePresence>
+        </div>
+      </main>
+    </div>
   );
 }

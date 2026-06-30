@@ -1,0 +1,697 @@
+/* ============================================================
+   Ditto — design tokens & atmosphere
+   "Bioluminescent research lab": a living blob in a purple void.
+   ============================================================ */
+
+:root {
+  /* Brand palette */
+  --ditto-purple: #ab63f2;
+  --ditto-purple-bright: #c089ff;
+  --ditto-pink: #f26dcf;
+  --ditto-cyan: #05dbf2;
+  --ditto-green: #07f285;
+  --ditto-yellow: #f2ec91;
+
+  /* Deep purple-black backgrounds */
+  --bg-0: #08040f;
+  --bg-1: #0e0719;
+  --bg-2: #160c28;
+  --bg-elev: #1b1030;
+
+  /* Surfaces & strokes */
+  --surface: rgba(33, 18, 56, 0.55);
+  --surface-strong: rgba(40, 22, 68, 0.75);
+  --stroke: rgba(171, 99, 242, 0.18);
+  --stroke-strong: rgba(171, 99, 242, 0.4);
+
+  /* Text */
+  --text-hi: #f4eeff;
+  --text-mid: #c5b6e0;
+  --text-lo: #8a7aa8;
+
+  /* Signature gradient */
+  --grad-brand: linear-gradient(115deg, #ab63f2 0%, #f26dcf 100%);
+  --grad-brand-soft: linear-gradient(
+    115deg,
+    rgba(171, 99, 242, 0.22) 0%,
+    rgba(242, 109, 207, 0.22) 100%
+  );
+
+  /* Type */
+  --font-display: "Syne", "Hanken Grotesk", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+
+  --radius-lg: 24px;
+  --radius-md: 16px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-0);
+  color: var(--text-hi);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* layered radial glows for atmosphere */
+  background-image:
+    radial-gradient(60% 50% at 12% 0%, rgba(171, 99, 242, 0.22) 0%, transparent 60%),
+    radial-gradient(50% 45% at 100% 12%, rgba(242, 109, 207, 0.16) 0%, transparent 55%),
+    radial-gradient(45% 55% at 88% 100%, rgba(5, 219, 242, 0.1) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
+/* faint grain overlay for texture */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Typography helpers ---------- */
+.ditto-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.ditto-gradient-text {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ditto-mono {
+  font-family: var(--font-mono);
+}
+
+.ditto-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ditto-cyan);
+}
+
+/* ---------- Glass surface ---------- */
+.ditto-glass {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 24px 60px -28px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.ditto-glass-hover {
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.32s ease,
+    box-shadow 0.32s ease;
+}
+.ditto-glass-hover:hover {
+  transform: translateY(-6px);
+  border-color: var(--stroke-strong);
+  box-shadow:
+    0 36px 80px -30px rgba(171, 99, 242, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- The Blob ---------- */
+.ditto-blob {
+  position: relative;
+  border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+  background:
+    radial-gradient(120% 120% at 30% 25%, var(--ditto-pink) 0%, transparent 55%),
+    radial-gradient(120% 120% at 75% 80%, var(--ditto-cyan) 0%, transparent 50%),
+    var(--ditto-purple);
+  filter: saturate(1.15);
+  box-shadow:
+    inset 0 0 60px rgba(255, 255, 255, 0.25),
+    inset -18px -22px 60px rgba(91, 18, 130, 0.6),
+    0 0 90px rgba(171, 99, 242, 0.55);
+  animation: blob-morph 12s ease-in-out infinite,
+    blob-float 9s ease-in-out infinite;
+}
+
+/* glossy highlight */
+.ditto-blob::after {
+  content: "";
+  position: absolute;
+  top: 14%;
+  left: 20%;
+  width: 34%;
+  height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.85), transparent);
+  filter: blur(4px);
+  opacity: 0.7;
+}
+
+@keyframes blob-morph {
+  0%,
+  100% {
+    border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+  }
+  33% {
+    border-radius: 64% 36% 39% 61% / 57% 62% 38% 43%;
+  }
+  66% {
+    border-radius: 38% 62% 54% 46% / 63% 38% 62% 37%;
+  }
+}
+
+@keyframes blob-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(6deg);
+  }
+}
+
+/* halo behind blob */
+.ditto-blob-halo {
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(171, 99, 242, 0.35), transparent 70%);
+  filter: blur(28px);
+  z-index: -1;
+  animation: blob-float 9s ease-in-out infinite reverse;
+}
+
+/* ---------- Glowing chips for data ---------- */
+.ditto-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-1);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--ditto-purple), var(--ditto-pink));
+  border-radius: 999px;
+  border: 3px solid var(--bg-1);
+}
+
+/* selection */
+::selection {
+  background: rgba(242, 109, 207, 0.35);
+  color: #fff;
+}
+
+/* keep app above grain overlay */
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- App shell & navigation ---------- */
+.ditto-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.ditto-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  width: 264px;
+  flex: 0 0 264px;
+  padding: 26px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(
+    180deg,
+    rgba(22, 12, 40, 0.92) 0%,
+    rgba(10, 5, 20, 0.92) 100%
+  );
+  border-right: 1px solid var(--stroke);
+  backdrop-filter: blur(12px);
+  z-index: 20;
+}
+
+.ditto-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  text-decoration: none;
+}
+.ditto-brand-mark {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 46% 54% 60% 40% / 50% 44% 56% 50%;
+  background: var(--grad-brand);
+  box-shadow: 0 0 22px rgba(171, 99, 242, 0.6),
+    inset -4px -6px 14px rgba(88, 18, 128, 0.7),
+    inset 0 0 12px rgba(255, 255, 255, 0.3);
+  animation: blob-morph 10s ease-in-out infinite;
+}
+.ditto-brand-word {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+  color: var(--text-hi);
+}
+
+.ditto-navlink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  color: var(--text-mid);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.ditto-navlink:hover {
+  color: var(--text-hi);
+  background: rgba(171, 99, 242, 0.1);
+}
+.ditto-navlink[data-active="true"] {
+  color: var(--text-hi);
+}
+.ditto-navlink svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+}
+.ditto-nav-active {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: var(--grad-brand-soft);
+  border: 1px solid var(--stroke-strong);
+  box-shadow: 0 0 24px -6px rgba(171, 99, 242, 0.6);
+  z-index: -1;
+}
+
+.ditto-sidebar-foot {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--text-lo);
+  line-height: 1.6;
+}
+
+.ditto-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 40px clamp(20px, 5vw, 64px) 80px;
+  display: flex;
+  justify-content: center;
+}
+.ditto-main-inner {
+  width: 100%;
+  max-width: 1080px;
+}
+
+/* Page heading block */
+.ditto-page-head {
+  margin-bottom: 30px;
+}
+.ditto-page-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  letter-spacing: -0.02em;
+  margin: 6px 0 8px;
+}
+.ditto-page-sub {
+  color: var(--text-mid);
+  max-width: 60ch;
+}
+
+/* Mobile: sidebar becomes a top bar */
+@media (max-width: 820px) {
+  .ditto-shell {
+    flex-direction: column;
+  }
+  .ditto-sidebar {
+    position: sticky;
+    top: 0;
+    height: auto;
+    width: 100%;
+    flex-basis: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--stroke);
+  }
+  .ditto-brand {
+    margin: 0 10px 0 0;
+  }
+  .ditto-brand-word {
+    display: none;
+  }
+  .ditto-navlink {
+    padding: 9px 13px;
+    white-space: nowrap;
+  }
+  .ditto-navlink span {
+    display: none;
+  }
+  .ditto-sidebar-foot {
+    display: none;
+  }
+  .ditto-main {
+    padding: 26px 18px 60px;
+  }
+}
+
+/* ---------- Home ---------- */
+.ditto-hero {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 40px;
+  align-items: center;
+  padding: 28px 0 18px;
+}
+.ditto-hero-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin: 16px 0 18px;
+}
+.ditto-hero-sub {
+  color: var(--text-mid);
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
+  line-height: 1.6;
+  max-width: 52ch;
+}
+.ditto-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 30px;
+}
+.ditto-blob-stage {
+  display: grid;
+  place-items: center;
+  min-height: 340px;
+}
+
+/* absorbed-file chips orbiting the blob */
+.ditto-orbit-chip {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 6px 11px;
+  border-radius: 12px;
+  background: var(--surface-strong);
+  border: 1px solid var(--stroke-strong);
+  color: var(--text-hi);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+
+/* combinatorial concept strip */
+.ditto-formula {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+  font-family: var(--font-mono);
+}
+.ditto-formula-chip {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke-strong);
+  background: var(--grad-brand-soft);
+  color: var(--text-hi);
+  font-size: 0.8rem;
+}
+.ditto-formula-x {
+  color: var(--ditto-cyan);
+  font-weight: 700;
+}
+
+/* flow cards */
+.ditto-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 14px;
+}
+.ditto-flow-card {
+  position: relative;
+  display: block;
+  padding: 26px 24px 22px;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+}
+.ditto-flow-card .ditto-flow-step {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: var(--ditto-cyan);
+}
+.ditto-flow-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  margin: 14px 0 16px;
+  background: var(--grad-brand-soft);
+  border: 1px solid var(--stroke-strong);
+  color: var(--ditto-purple-bright);
+}
+.ditto-flow-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.ditto-flow-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.18rem;
+  margin: 0 0 8px;
+}
+.ditto-flow-desc {
+  color: var(--text-mid);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0;
+}
+.ditto-flow-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ditto-pink);
+}
+.ditto-flow-go svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.25s ease;
+}
+.ditto-flow-card:hover .ditto-flow-go svg {
+  transform: translateX(5px);
+}
+
+.ditto-section-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-lo);
+  margin: 56px 0 18px;
+}
+
+@media (max-width: 900px) {
+  .ditto-hero {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+  .ditto-blob-stage {
+    order: -1;
+    min-height: 280px;
+  }
+  .ditto-flow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Results table ---------- */
+.ditto-table-wrap {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--stroke);
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+}
+.ditto-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ditto-table-wrap thead th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-lo);
+  padding: 14px 18px;
+  background: rgba(171, 99, 242, 0.07);
+  border-bottom: 1px solid var(--stroke);
+}
+.ditto-row {
+  cursor: pointer;
+  transition: background 0.18s ease;
+  border-bottom: 1px solid rgba(171, 99, 242, 0.08);
+}
+.ditto-row:hover {
+  background: rgba(171, 99, 242, 0.08);
+}
+.ditto-row[data-open="true"] {
+  background: rgba(171, 99, 242, 0.12);
+}
+.ditto-row td {
+  padding: 14px 18px;
+  vertical-align: top;
+  color: var(--text-hi);
+  font-size: 0.92rem;
+}
+
+.ditto-combo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ditto-combo span {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 7px;
+  background: rgba(171, 99, 242, 0.14);
+  border: 1px solid var(--stroke);
+  color: var(--ditto-purple-bright);
+}
+
+.ditto-scores-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ditto-score-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--stroke);
+}
+.ditto-score-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.ditto-expand {
+  padding: 6px 18px 22px;
+  background: rgba(8, 4, 15, 0.5);
+}
+.ditto-score-bar-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 52px;
+  align-items: center;
+  gap: 12px;
+  margin: 7px 0;
+}
+.ditto-score-bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-mid);
+}
+.ditto-score-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.ditto-score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ditto-score-bar-val {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-align: right;
+  color: var(--text-hi);
+}
+.ditto-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ditto-empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-lo);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ditto-blob,
+  .ditto-blob-halo,
+  .ditto-brand-mark {
+    animation: none;
+  }
+}
