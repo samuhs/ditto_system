@@ -8,7 +8,7 @@ class GeminiEmbedder(Embedder):
 
     def __init__(
         self,
-        model: str = "text-embedding-004",
+        model: str = "gemini-embedding-001",
         api_key: str | None = None,
         client=None,
     ) -> None:
