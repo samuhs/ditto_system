@@ -37,7 +37,7 @@ class MultiQueryRetriever(Retriever):
         merged: dict[tuple, dict] = {}
         for candidate in [query, *self._variations(query)]:
             for context in self._base.retrieve(candidate):
-                key = (context.get("source_doc"), context.get("chunk_index"))
+                key = (context["source_doc"], context["chunk_index"])
                 merged.setdefault(key, context)
         return list(merged.values())
 

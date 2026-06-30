@@ -69,3 +69,11 @@ def test_advanced_retrievers_registered(store):
         "parent_document", store=store, collection="col", embedder=_FakeEmbedder()
     )
     assert isinstance(retriever, ParentDocumentRetriever)
+    multi = build_retriever(
+        "multi_query",
+        store=store,
+        collection="col",
+        embedder=_FakeEmbedder(),
+        llm=_ScriptedLLM(),
+    )
+    assert isinstance(multi, MultiQueryRetriever)
