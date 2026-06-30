@@ -687,6 +687,40 @@ body::before {
   color: var(--text-lo);
 }
 
+/* Experiment list */
+.ditto-exp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ditto-exp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  color: var(--text-hi);
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ditto-exp-row:hover {
+  background: var(--surface-strong);
+  border-color: var(--stroke-strong);
+}
+
+.ditto-exp-row[data-selected="true"] {
+  border-left-color: var(--ditto-purple);
+  background: var(--surface-strong);
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .ditto-blob,
