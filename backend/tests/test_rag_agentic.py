@@ -4,6 +4,8 @@ from app.core.rag.base import RAGResult, rag_registry
 
 
 class _StubRetriever:
+    """Stub retriever that records queried strings."""
+
     def __init__(self) -> None:
         self.queries = []
 
@@ -51,6 +53,15 @@ def test_agentic_stops_at_max_steps():
     result = rag.answer("question")
     assert result.answer == "final fallback answer"
     assert len(retriever.queries) == 2
+
+
+def test_agentic_unrecognized_response_becomes_answer():
+    retriever = _StubRetriever()
+    llm = _ScriptedLLM(["just a plain answer with no tag"])
+    rag = AgenticRAG(retriever, llm, max_steps=3)
+    result = rag.answer("question")
+    assert result.answer == "just a plain answer with no tag"
+    assert len(retriever.queries) == 1
 
 
 def test_agentic_registered():

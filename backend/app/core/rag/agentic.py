@@ -46,7 +46,7 @@ class AgenticRAG(RAG):
         final = self._llm.generate(
             _ANSWER_PROMPT.format(question=query, context=format_context(contexts))
         )
-        return RAGResult(answer=final, contexts=contexts)
+        return RAGResult(answer=final.strip(), contexts=contexts)
 
 
 rag_registry.register("agentic", AgenticRAG)
