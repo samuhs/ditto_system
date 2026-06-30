@@ -38,6 +38,9 @@ def test_options_lists_registered_techniques(client):
     assert {"fixed", "recursive", "token", "semantic"} <= set(body["chunkings"])
     assert {"gemini", "e5", "paraphrase"} <= set(body["embeddings"])
     assert {"gemini", "custom"} <= set(body["llms"])
+    assert {"naive", "agentic"} <= set(body["rags"])
+    assert {"similarity", "mmr", "multi_query", "parent_document"} <= set(body["retrievers"])
+    assert {"answer_relevancy", "faithfulness", "rouge_l"} <= set(body["metrics"])
 
 
 def test_ingest_uploads_and_stores(client):
