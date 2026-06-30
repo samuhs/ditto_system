@@ -1,5 +1,6 @@
 """Endpoints to create and inspect experiments."""
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from pydantic import ValidationError
 
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
@@ -25,11 +26,17 @@ async def create_experiment(
     deps: ExperimentDeps = Depends(get_experiment_deps),
 ) -> dict:
     """Create an experiment and run it in the background."""
-    parsed = ExperimentConfig.model_validate_json(config)
+    try:
+        parsed = ExperimentConfig.model_validate_json(config)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
     if not parsed.name:
         parsed.name = generate_experiment_name()
     csv_text = (await questions.read()).decode("utf-8")
-    items = parse_questions_csv(csv_text)
+    try:
+        items = parse_questions_csv(csv_text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     session = deps.session_factory()
     try:

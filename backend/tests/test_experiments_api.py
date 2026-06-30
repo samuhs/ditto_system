@@ -106,3 +106,15 @@ def test_list_experiments(client):
 
 def test_get_missing_experiment_404(client):
     assert client.get("/experiments/99999").status_code == 404
+
+
+def test_create_experiment_invalid_config_422(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta\nWhere?\n"), "text/csv")}
+    response = client.post("/experiments", data={"config": "{not valid json"}, files=files)
+    assert response.status_code == 422
+
+
+def test_create_experiment_csv_missing_column_422(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"wrong_header\nvalue\n"), "text/csv")}
+    response = client.post("/experiments", data={"config": _config_payload()}, files=files)
+    assert response.status_code == 422
