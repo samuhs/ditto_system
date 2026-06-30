@@ -1,4 +1,4 @@
-"""Tests for embedding-based evaluation metrics (no reference needed)."""
+"""Tests for embedding-based evaluation metrics."""
 from app.core.evaluation.base import EvalSample, build_evaluator, evaluation_registry
 from app.core.evaluation.embedding_metrics import (
     AnswerCorrectness,
@@ -99,3 +99,7 @@ def test_embedding_metrics_registered_and_no_reference():
     )
     metric = build_evaluator("faithfulness", embedder=_FakeEmbedder())
     assert metric.requires_reference is False
+
+
+def test_reference_embedding_metrics_registered():
+    assert {"context_recall", "answer_correctness"} <= set(evaluation_registry.names())
