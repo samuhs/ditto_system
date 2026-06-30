@@ -56,3 +56,11 @@ def test_ingest_rejects_non_utf8_file(client):
     response = client.post("/ingest", data=data, files=files)
     assert response.status_code == 422
     assert "UTF-8" in response.json()["detail"]
+
+
+def test_ingest_rejects_unknown_technique(client):
+    files = [("files", ("a.txt", io.BytesIO(b"Some text here."), "text/plain"))]
+    data = {"base": "viagem", "chunkings": "nope", "embeddings": "gemini"}
+    response = client.post("/ingest", data=data, files=files)
+    assert response.status_code == 422
+    assert "chunking" in response.json()["detail"]

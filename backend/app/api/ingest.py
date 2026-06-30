@@ -3,7 +3,8 @@ from collections.abc import Callable
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from app.core.embedding.base import Embedder, build_embedder
+from app.core.chunking.base import chunking_registry
+from app.core.embedding.base import Embedder, build_embedder, embedding_registry
 from app.core.vectorstore.qdrant import QdrantStore
 from app.ingestion.pipeline import ingest_documents
 from app.ingestion.schemas import Document, IngestConfig, IngestResult
@@ -22,8 +23,19 @@ def get_embedder_factory() -> Callable[..., Embedder]:
 
 
 def _csv(value: str) -> list[str]:
-    """Split a comma-separated form field into a clean list."""
-    return [item.strip() for item in value.split(",") if item.strip()]
+    """Split a comma-separated form field into a clean, de-duplicated list."""
+    items = [item.strip() for item in value.split(",") if item.strip()]
+    return list(dict.fromkeys(items))
+
+
+def _validate(names: list[str], available: list[str], kind: str) -> None:
+    """Raise 422 if any requested technique name is not registered."""
+    unknown = [name for name in names if name not in available]
+    if unknown:
+        raise HTTPException(
+            status_code=422,
+            detail=f"unknown {kind}: {unknown}. Available: {available}",
+        )
 
 
 @router.post("/ingest", response_model=IngestResult)
@@ -50,4 +62,6 @@ async def ingest(
     config = IngestConfig(
         base=base, chunkings=_csv(chunkings), embeddings=_csv(embeddings)
     )
+    _validate(config.chunkings, chunking_registry.names(), "chunking")
+    _validate(config.embeddings, embedding_registry.names(), "embedding")
     return ingest_documents(documents, config, store, embedder_factory=embedder_factory)
