@@ -38,8 +38,8 @@
   );
 
   /* Type */
-  --font-display: "Syne", "Hanken Grotesk", system-ui, sans-serif;
-  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Montserrat", system-ui, sans-serif;
   --font-mono: "Space Mono", ui-monospace, monospace;
 
   --radius-lg: 24px;

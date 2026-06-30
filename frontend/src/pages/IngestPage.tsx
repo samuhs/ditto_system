@@ -25,6 +25,24 @@ export function IngestPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Derived: true when every available option is selected in both fields
+  const allFilled =
+    options !== null &&
+    options.chunkings.length > 0 &&
+    options.embeddings.length > 0 &&
+    chunkings.length === options.chunkings.length &&
+    embeddings.length === options.embeddings.length;
+
+  function toggleAll() {
+    if (allFilled) {
+      setChunkings([]);
+      setEmbeddings([]);
+    } else {
+      setChunkings(options?.chunkings ?? []);
+      setEmbeddings(options?.embeddings ?? []);
+    }
+  }
+
   useEffect(() => {
     getOptions().then(setOptions).catch((e) => setError(String(e)));
   }, []);
@@ -57,6 +75,17 @@ export function IngestPage() {
 
       <div className="ditto-glass" style={{ padding: "30px", maxWidth: 680 }}>
         <Stack gap="lg">
+          <Group justify="flex-end">
+            <Button
+              variant="subtle"
+              size="xs"
+              disabled={options === null}
+              color={allFilled ? "gray" : "violet"}
+              onClick={toggleAll}
+            >
+              {allFilled ? "Limpar tudo" : "Preencher tudo"}
+            </Button>
+          </Group>
           <TextInput
             label="Nome da base"
             placeholder="ex.: manuais-de-viagem"
