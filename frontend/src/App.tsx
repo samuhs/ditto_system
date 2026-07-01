@@ -9,6 +9,7 @@ import { ExperimentDetailPage } from "./pages/ExperimentDetailPage";
 import { ExperimentPage } from "./pages/ExperimentPage";
 import { HomePage } from "./pages/HomePage";
 import { IngestPage } from "./pages/IngestPage";
+import { PromptsPage } from "./pages/PromptsPage";
 import { ResultsPage } from "./pages/ResultsPage";
 
 export function App() {
@@ -59,6 +60,14 @@ export function App() {
                   element={
                     <PageTransition>
                       <ExperimentDetailPage />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/prompts"
+                  element={
+                    <PageTransition>
+                      <PromptsPage />
                     </PageTransition>
                   }
                 />
