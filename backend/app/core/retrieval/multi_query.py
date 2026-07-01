@@ -1,14 +1,10 @@
 """Multi-query retriever: expands the query with LLM-generated variations."""
 from app.core.embedding.base import Embedder
 from app.core.llm.base import LLM
+from app.core.prompts import load_technique
 from app.core.retrieval.base import Retriever, retrieval_registry
 from app.core.retrieval.similarity import SimilarityRetriever
 from app.core.vectorstore.qdrant import QdrantStore
-
-_PROMPT = (
-    "Generate {n} alternative search queries, one per line, that rephrase the "
-    "following question to improve document retrieval. Question: {question}"
-)
 
 
 class MultiQueryRetriever(Retriever):
@@ -22,14 +18,19 @@ class MultiQueryRetriever(Retriever):
         llm: LLM,
         top_k: int = 5,
         n_queries: int = 3,
+        prompts: dict[str, str] | None = None,
     ) -> None:
         self._base = SimilarityRetriever(store, collection, embedder, top_k=top_k)
         self._llm = llm
         self._n_queries = n_queries
+        resolved = prompts or load_technique("multi_query")
+        self._prompt = resolved["generate"]
 
     def _variations(self, query: str) -> list[str]:
         """Ask the LLM for alternative phrasings of the query."""
-        raw = self._llm.generate(_PROMPT.format(n=self._n_queries, question=query))
+        raw = self._llm.generate(
+            self._prompt.format(n=self._n_queries, question=query)
+        )
         return [line.strip() for line in raw.splitlines() if line.strip()]
 
     def retrieve(self, query: str) -> list[dict]:

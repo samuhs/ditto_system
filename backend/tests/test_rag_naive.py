@@ -39,3 +39,11 @@ def test_naive_rag_registered_and_built():
     assert "naive" in rag_registry.names()
     rag = build_rag("naive", retriever=_StubRetriever(), llm=_EchoLLM())
     assert isinstance(rag, RAG)
+
+
+def test_naive_rag_uses_injected_answer_prompt():
+    llm = _EchoLLM()
+    rag = NaiveRAG(_StubRetriever(), llm, prompts={"answer": "CUSTOM {context} :: {question}"})
+    rag.answer("Where is the center?")
+    assert llm.last_prompt.startswith("CUSTOM ")
+    assert "Where is the center?" in llm.last_prompt
