@@ -1,5 +1,6 @@
 """Experiment orchestrator: run the cartesian product and persist results."""
 import itertools
+import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -17,6 +18,25 @@ from app.core.retrieval.base import build_retriever
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.schemas import ExperimentConfig, QuestionItem
 
+logger = logging.getLogger(__name__)
+
+_MAX_RETRIES = 3
+_RETRY_DELAY_S = 5
+
+# In-memory set of experiment ids for which a pause has been requested.
+# Valid because the API runs as a single uvicorn process: the pause endpoint
+# and the background task share this module-level state.
+_pause_requests: set[int] = set()
+
+
+def request_pause(experiment_id: int) -> None:
+    """Signal a running experiment to stop at its next checkpoint."""
+    _pause_requests.add(experiment_id)
+
+
+def _pause_requested(experiment_id: int) -> bool:
+    return experiment_id in _pause_requests
+
 
 @dataclass
 class ExperimentDeps:
@@ -30,12 +50,64 @@ class ExperimentDeps:
     rag_factory: Callable = build_rag
 
 
-def _build_retriever(deps: ExperimentDeps, name: str, collection: str, embedder, llm):
-    """Build a retriever, injecting the llm only for retrievers that need it."""
+def _build_retriever(deps: ExperimentDeps, name: str, collection: str, embedder, llm, prompts=None):
+    """Build a retriever, injecting the llm/prompts only for retrievers that need it."""
     kwargs = {"store": deps.store, "collection": collection, "embedder": embedder}
     if name == "multi_query":
         kwargs["llm"] = llm
+        kwargs["prompts"] = prompts
     return deps.retriever_factory(name, **kwargs)
+
+
+def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder):
+    """Run rag.answer + evaluate for one question. Returns (answer, scores, latency_ms, tokens)."""
+    start = time.perf_counter()
+    answer = rag.answer(question.text)
+    latency_ms = int((time.perf_counter() - start) * 1000)
+    context_texts = [c.get("text", "") for c in answer.contexts]
+    sample = EvalSample(
+        question=question.text,
+        answer=answer.answer,
+        contexts=context_texts,
+        reference_answer=question.reference,
+    )
+    scores = evaluate_sample(sample, metrics, embedder=eval_embedder)
+    return answer.answer, scores, latency_ms, len(answer.answer.split())
+
+
+def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eval_embedder):
+    """Try _process_question up to _MAX_RETRIES times with _RETRY_DELAY_S between attempts.
+
+    Returns (answer_text, scores, latency_ms, tokens, error_str).
+    On permanent failure error_str is set and the other values are None.
+    """
+    last_exc = None
+    for attempt in range(_MAX_RETRIES):
+        try:
+            answer_text, scores, latency_ms, tokens = _process_question(
+                rag, question, metrics, eval_embedder
+            )
+            return answer_text, scores, latency_ms, tokens, None
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            if attempt < _MAX_RETRIES - 1:
+                logger.warning(
+                    "Question %r failed (attempt %d/%d): %s — retrying in %ds",
+                    question.text[:60],
+                    attempt + 1,
+                    _MAX_RETRIES,
+                    exc,
+                    _RETRY_DELAY_S,
+                )
+                time.sleep(_RETRY_DELAY_S)
+            else:
+                logger.error(
+                    "Question %r failed after %d attempts: %s",
+                    question.text[:60],
+                    _MAX_RETRIES,
+                    exc,
+                )
+    return None, None, None, None, str(last_exc)
 
 
 def run_experiment(
@@ -51,12 +123,19 @@ def run_experiment(
         experiment.status = "running"
         session.commit()
 
+        prompt_snapshot = (experiment.config or {}).get("prompts", {})
         llm = deps.llm_factory(config.llm)
         eval_embedder = deps.embedder_factory(config.eval_embedding)
 
+        paused = False
         for chunking, embedding, rag_name, retriever_name in itertools.product(
             config.chunkings, config.embeddings, config.rags, config.retrievers
         ):
+            # Checkpoint: stop before starting a new combination if paused.
+            if _pause_requested(experiment_id):
+                paused = True
+                break
+
             run = ExperimentRun(
                 experiment_id=experiment_id,
                 chunking=chunking,
@@ -70,37 +149,60 @@ def run_experiment(
 
             embedder = deps.embedder_factory(embedding)
             col = collection_name(config.base, chunking, embedding)
-            retriever = _build_retriever(deps, retriever_name, col, embedder, llm)
-            rag = deps.rag_factory(rag_name, retriever=retriever, llm=llm)
+            retriever = _build_retriever(
+                deps, retriever_name, col, embedder, llm,
+                prompts=prompt_snapshot.get("multi_query"),
+            )
+            rag = deps.rag_factory(
+                rag_name, retriever=retriever, llm=llm,
+                prompts=prompt_snapshot.get(rag_name),
+            )
 
             for question in questions:
-                start = time.perf_counter()
-                answer = rag.answer(question.text)
-                latency_ms = int((time.perf_counter() - start) * 1000)
-                context_texts = [c.get("text", "") for c in answer.contexts]
-                sample = EvalSample(
-                    question=question.text,
-                    answer=answer.answer,
-                    contexts=context_texts,
-                    reference_answer=question.reference,
+                # Checkpoint: stop mid-combination between questions if paused.
+                if _pause_requested(experiment_id):
+                    paused = True
+                    break
+
+                answer_text, scores, latency_ms, tokens, error = _process_question_with_retry(
+                    rag, question, config.metrics, eval_embedder
                 )
-                scores = evaluate_sample(sample, config.metrics, embedder=eval_embedder)
-                session.add(
-                    RunResult(
-                        run_id=run.id,
-                        question=question.text,
-                        reference_answer=question.reference,
-                        generated_answer=answer.answer,
-                        retrieved_context=answer.contexts,
-                        scores=scores,
-                        latency_ms=latency_ms,
-                        tokens=len(answer.answer.split()),
+                if error is not None:
+                    session.add(
+                        RunResult(
+                            run_id=run.id,
+                            question=question.text,
+                            reference_answer=question.reference,
+                            generated_answer=f"[ERRO: {error}]",
+                            retrieved_context=[],
+                            scores={},
+                            latency_ms=0,
+                            tokens=0,
+                        )
                     )
-                )
+                else:
+                    session.add(
+                        RunResult(
+                            run_id=run.id,
+                            question=question.text,
+                            reference_answer=question.reference,
+                            generated_answer=answer_text,
+                            retrieved_context=[],
+                            scores=scores,
+                            latency_ms=latency_ms,
+                            tokens=tokens,
+                        )
+                    )
+
+            if paused:
+                run.status = "paused"
+                session.commit()
+                break
+
             run.status = "done"
             session.commit()
 
-        experiment.status = "done"
+        experiment.status = "paused" if paused else "done"
         experiment.finished_at = datetime.now(UTC)
         session.commit()
     except Exception as exc:  # noqa: BLE001  background task records failure, never raises
@@ -112,4 +214,5 @@ def run_experiment(
             experiment.finished_at = datetime.now(UTC)
             session.commit()
     finally:
+        _pause_requests.discard(experiment_id)
         session.close()

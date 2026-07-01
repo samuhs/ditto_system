@@ -118,3 +118,25 @@ def test_create_experiment_csv_missing_column_422(client):
     files = {"questions": ("q.csv", io.BytesIO(b"wrong_header\nvalue\n"), "text/csv")}
     response = client.post("/experiments", data={"config": _config_payload()}, files=files)
     assert response.status_code == 422
+
+
+def test_experiment_snapshots_prompts(client):
+    config = {
+        "base": "viagem",
+        "chunkings": ["recursive"],
+        "embeddings": ["gemini"],
+        "rags": ["naive"],
+        "retrievers": ["similarity"],
+        "metrics": ["answer_relevancy"],
+    }
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta\nOnde fica o centro?\n"), "text/csv")}
+    data = {"config": json.dumps(config)}
+    resp = client.post("/experiments", data=data, files=files)
+    assert resp.status_code == 200
+    exp_id = resp.json()["id"]
+
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert "prompts" in detail
+    assert "naive" in detail["prompts"]
+    assert "answer" in detail["prompts"]["naive"]
+    assert "{context}" in detail["prompts"]["naive"]["answer"]
