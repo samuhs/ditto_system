@@ -1,0 +1,1 @@
+Generate {n} alternative search queries, one per line, that rephrase the following question to improve document retrieval. Question: {question}
