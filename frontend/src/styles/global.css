@@ -344,7 +344,7 @@ body::before {
 }
 .ditto-main-inner {
   width: 100%;
-  max-width: 1080px;
+  max-width: 1280px;
 }
 
 /* Page heading block */
@@ -566,7 +566,7 @@ body::before {
 /* ---------- Results table ---------- */
 .ditto-table-wrap {
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid var(--stroke);
   background: var(--surface);
   backdrop-filter: blur(12px);
@@ -687,6 +687,93 @@ body::before {
   color: var(--text-lo);
 }
 
+/* Sortable metric headers */
+.ditto-th-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.ditto-th-sortable:hover {
+  color: var(--text-hi);
+  background: rgba(171, 99, 242, 0.14);
+}
+.ditto-th-sortable[data-active="true"] {
+  color: var(--ditto-purple-bright);
+  background: rgba(171, 99, 242, 0.16);
+}
+
+/* Compact metric columns so all metrics fit */
+.ditto-th-metric {
+  width: 90px;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  letter-spacing: 0.05em;
+  padding: 12px 6px;
+  line-height: 1.35;
+}
+.ditto-td-metric {
+  text-align: center;
+}
+.ditto-td-metric .ditto-score-pill {
+  justify-content: center;
+}
+
+/* Text columns: narrow + single-line clipped (full text in modal) */
+.ditto-th-combo {
+  width: 130px;
+}
+.ditto-th-text {
+  width: 150px;
+}
+.ditto-cell-clip {
+  color: var(--text-mid);
+  font-size: 0.86rem;
+}
+.ditto-clip-box {
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ditto-media-cell .ditto-score-pill {
+  font-weight: 700;
+  border-color: var(--stroke-strong);
+}
+.ditto-metric-na {
+  color: var(--text-lo);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+/* Filter bar */
+.ditto-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.ditto-filter-bar > .mantine-MultiSelect-root {
+  flex: 1 1 180px;
+  min-width: 160px;
+}
+.ditto-filter-clear {
+  flex: 0 0 auto;
+  margin-bottom: 2px;
+}
+
+/* Table footer: page size + pagination */
+.ditto-table-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+}
+
 /* Experiment list */
 .ditto-exp-list {
   display: flex;
@@ -728,4 +815,108 @@ body::before {
   .ditto-brand-mark {
     animation: none;
   }
+}
+
+/* ---------- Background Tasks Toast ---------- */
+.ditto-tasks-tray {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 320px;
+}
+
+.ditto-task-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  background: var(--surface-strong);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    0 8px 40px -8px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: border-color 0.3s ease;
+  animation: task-slide-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes task-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ditto-task-card[data-status="running"] { border-color: rgba(5, 219, 242, 0.35); }
+.ditto-task-card[data-status="done"]    { border-color: rgba(7, 242, 133, 0.35); }
+.ditto-task-card[data-status="paused"]  { border-color: rgba(242, 236, 145, 0.4); }
+.ditto-task-card[data-status="failed"]  { border-color: rgba(242, 109, 109, 0.4); }
+
+.ditto-task-icon {
+  flex: 0 0 18px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.ditto-task-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ditto-task-kind {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-lo);
+}
+
+.ditto-task-label {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-hi);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ditto-task-message {
+  font-size: 0.76rem;
+  color: var(--text-mid);
+  line-height: 1.45;
+  word-break: break-word;
+  margin-top: 2px;
+}
+
+.ditto-task-dismiss {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: var(--text-lo);
+  font-size: 0.8rem;
+  line-height: 1;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.ditto-task-dismiss:hover {
+  color: var(--text-hi);
+  background: rgba(255, 255, 255, 0.07);
 }

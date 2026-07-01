@@ -5,27 +5,25 @@ import {
   Group,
   MultiSelect,
   Stack,
-  Text,
   TextInput,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 
 import { getOptions, ingest } from "../api/client";
-import type { IngestResult, Options } from "../api/types";
+import type { Options } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon, UploadIcon } from "../components/icons";
+import { useTasks } from "../context/TasksContext";
 
 export function IngestPage() {
+  const { addIngestTask } = useTasks();
   const [options, setOptions] = useState<Options | null>(null);
   const [base, setBase] = useState("");
   const [chunkings, setChunkings] = useState<string[]>([]);
   const [embeddings, setEmbeddings] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
-  const [result, setResult] = useState<IngestResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
 
-  // Derived: true when every available option is selected in both fields
   const allFilled =
     options !== null &&
     options.chunkings.length > 0 &&
@@ -44,26 +42,20 @@ export function IngestPage() {
   }
 
   useEffect(() => {
-    getOptions().then(setOptions).catch((e) => setError(String(e)));
+    getOptions().then(setOptions).catch((e) => setOptionsError(String(e)));
   }, []);
 
-  async function submit() {
-    setError(null);
-    setResult(null);
-    setLoading(true);
-    try {
-      const form = new FormData();
-      form.append("base", base);
-      form.append("chunkings", chunkings.join(","));
-      form.append("embeddings", embeddings.join(","));
-      files.forEach((file) => form.append("files", file));
-      setResult(await ingest(form));
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setLoading(false);
-    }
+  function submit() {
+    const form = new FormData();
+    form.append("base", base);
+    form.append("chunkings", chunkings.join(","));
+    form.append("embeddings", embeddings.join(","));
+    files.forEach((file) => form.append("files", file));
+    addIngestTask(`Inserção · ${base || "sem nome"}`, ingest(form));
+    setFiles([]);
   }
+
+  const canSubmit = base.trim() !== "" && chunkings.length > 0 && embeddings.length > 0;
 
   return (
     <div>
@@ -120,7 +112,7 @@ export function IngestPage() {
           />
           <Button
             onClick={submit}
-            loading={loading}
+            disabled={!canSubmit}
             size="md"
             variant="gradient"
             gradient={{ from: "#ab63f2", to: "#f26dcf", deg: 115 }}
@@ -132,28 +124,9 @@ export function IngestPage() {
         </Stack>
       </div>
 
-      {result && (
-        <Alert
-          color="teal"
-          variant="light"
-          title="Inserção concluída"
-          mt="xl"
-          radius="lg"
-          maw={680}
-        >
-          <Group gap="xs" align="baseline">
-            <Text className="ditto-mono" fz={28} fw={700} c="#07f285">
-              {result.total_chunks}
-            </Text>
-            <Text c="dimmed">
-              trechos absorvidos em {result.collections.length} coleção(ões).
-            </Text>
-          </Group>
-        </Alert>
-      )}
-      {error && (
-        <Alert color="red" variant="light" title="Erro" mt="xl" radius="lg" maw={680}>
-          {error}
+      {optionsError && (
+        <Alert color="red" variant="light" title="Erro ao carregar opções" mt="xl" radius="lg" maw={680}>
+          {optionsError}
         </Alert>
       )}
     </div>

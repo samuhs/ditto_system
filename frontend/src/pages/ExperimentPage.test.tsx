@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as client from "../api/client";
+import { TasksProvider } from "../context/TasksContext";
 import { ExperimentPage } from "./ExperimentPage";
 
 vi.mock("../api/client");
@@ -11,13 +12,16 @@ vi.mock("../api/client");
 function renderPage() {
   return render(
     <MantineProvider>
-      <ExperimentPage />
+      <TasksProvider>
+        <ExperimentPage />
+      </TasksProvider>
     </MantineProvider>,
   );
 }
 
 beforeEach(() => {
   vi.mocked(client.getOptions).mockResolvedValue({
+    bases: ["teste-1"],
     chunkings: ["recursive"],
     embeddings: ["gemini"],
     llms: ["gemini"],
@@ -30,16 +34,15 @@ beforeEach(() => {
 });
 
 describe("ExperimentPage", () => {
-  it("creates an experiment and polls until done", async () => {
+  it("calls createExperiment when Gerar is clicked", async () => {
     renderPage();
     const user = userEvent.setup();
-    await user.type(await screen.findByLabelText(/base/i), "viagem");
+    // wait for options to load, then submit
+    await screen.findByRole("button", { name: /preencher tudo/i });
     await user.click(screen.getByRole("button", { name: /gerar/i }));
     await waitFor(() =>
       expect(client.createExperiment).toHaveBeenCalledWith(expect.any(FormData)),
     );
-    expect(await screen.findByText(/done/i)).toBeInTheDocument();
-    expect(await screen.findByText(/kind-ember-89/)).toBeInTheDocument();
   });
 
   it("fills all 5 fields when 'Preencher tudo' is clicked and clears on 'Limpar tudo'", async () => {
