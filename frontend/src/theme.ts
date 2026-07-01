@@ -17,12 +17,12 @@ export const theme = createTheme({
   primaryColor: "ditto",
   primaryShade: { light: 5, dark: 5 },
   colors: { ditto },
-  fontFamily: '"Hanken Grotesk", system-ui, sans-serif',
+  fontFamily: '"Montserrat", system-ui, sans-serif',
   fontFamilyMonospace: '"Space Mono", ui-monospace, monospace',
   defaultRadius: "lg",
   headings: {
-    fontFamily: '"Syne", "Hanken Grotesk", sans-serif',
-    fontWeight: "800",
+    fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+    fontWeight: "700",
   },
   components: {
     Button: {
