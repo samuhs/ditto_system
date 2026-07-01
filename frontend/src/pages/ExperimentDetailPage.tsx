@@ -74,6 +74,9 @@ export function ExperimentDetailPage() {
   // modal for full pergunta/resposta
   const [modalRow, setModalRow] = useState<ExperimentResultRow | null>(null);
 
+  // prompt snapshot modal
+  const [promptTech, setPromptTech] = useState<string | null>(null);
+
   useEffect(() => {
     if (!id) return;
     let active = true;
@@ -118,6 +121,8 @@ export function ExperimentDetailPage() {
   }
 
   const results = detail?.results ?? [];
+
+  const promptTechniques = detail?.prompts ? Object.keys(detail.prompts) : [];
 
   const metricKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -260,6 +265,28 @@ export function ExperimentDetailPage() {
 
       {detail && !loading && results.length > 0 && (
         <>
+          {/* Prompt snapshot buttons */}
+          {detail.prompts && promptTechniques.length > 0 ? (
+            <div className="ditto-prompt-bar">
+              <span className="ditto-eyebrow">Prompts</span>
+              {promptTechniques.map((tech) => (
+                <Button
+                  key={tech}
+                  size="xs"
+                  variant="light"
+                  color="violet"
+                  onClick={() => setPromptTech(tech)}
+                >
+                  Prompts: {tech}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <Text size="xs" c="dimmed" mb="sm">
+              Prompts não registrados para este experimento.
+            </Text>
+          )}
+
           {/* Filters */}
           <div className="ditto-filter-bar">
             <MultiSelect
@@ -423,6 +450,31 @@ export function ExperimentDetailPage() {
           </div>
         </>
       )}
+
+      <Modal
+        opened={promptTech !== null}
+        onClose={() => setPromptTech(null)}
+        title="Prompts usados neste experimento"
+        size="lg"
+        centered
+        overlayProps={{ backgroundOpacity: 0.6, blur: 3 }}
+      >
+        {promptTech && detail?.prompts?.[promptTech] && (
+          <div>
+            <Text className="ditto-eyebrow" mb={10}>
+              {promptTech}
+            </Text>
+            {Object.entries(detail.prompts[promptTech]).map(([key, text]) => (
+              <div key={key} style={{ marginBottom: 18 }}>
+                <Text fw={700} size="sm" mb={4}>
+                  {key}
+                </Text>
+                <pre className="ditto-prompt-pre">{text}</pre>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         opened={modalRow !== null}

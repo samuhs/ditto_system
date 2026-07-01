@@ -115,4 +115,37 @@ describe("ExperimentDetailPage", () => {
     await user.click(await screen.findByRole("button", { name: /voltar aos experimentos/i }));
     expect(await screen.findByText("LISTA")).toBeInTheDocument();
   });
+
+  it("shows a prompt button per technique and opens a read-only modal", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "kind-ember-89",
+      status: "done",
+      prompts: {
+        naive: { answer: "Answer using {context} and {question}." },
+      },
+      results: [
+        {
+          chunking: "recursive", embedding: "gemini", rag: "naive", retriever: "similarity",
+          question: "Q", answer: "A", scores: { faithfulness: 0.8 }, latency_ms: 1, tokens: 1,
+        },
+      ],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    const btn = await screen.findByRole("button", { name: /prompts: naive/i });
+    await user.click(btn);
+    expect(await screen.findByText(/Answer using/)).toBeInTheDocument();
+  });
+
+  it("shows a notice when the experiment has no prompt snapshot", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7, name: "old-exp", status: "done", results: [
+        { chunking: "recursive", embedding: "gemini", rag: "naive", retriever: "similarity",
+          question: "Q", answer: "A", scores: { faithfulness: 0.8 }, latency_ms: 1, tokens: 1 },
+      ],
+    });
+    renderPage();
+    expect(await screen.findByText(/Prompts não registrados/i)).toBeInTheDocument();
+  });
 });
