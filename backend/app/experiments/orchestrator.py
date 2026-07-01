@@ -60,7 +60,10 @@ def _build_retriever(deps: ExperimentDeps, name: str, collection: str, embedder,
 
 
 def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder):
-    """Run rag.answer + evaluate for one question. Returns (answer, scores, latency_ms, tokens)."""
+    """Run rag.answer + evaluate for one question.
+
+    Returns (answer, contexts, scores, latency_ms, tokens).
+    """
     start = time.perf_counter()
     answer = rag.answer(question.text)
     latency_ms = int((time.perf_counter() - start) * 1000)
@@ -72,22 +75,22 @@ def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder)
         reference_answer=question.reference,
     )
     scores = evaluate_sample(sample, metrics, embedder=eval_embedder)
-    return answer.answer, scores, latency_ms, len(answer.answer.split())
+    return answer.answer, answer.contexts, scores, latency_ms, len(answer.answer.split())
 
 
 def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eval_embedder):
     """Try _process_question up to _MAX_RETRIES times with _RETRY_DELAY_S between attempts.
 
-    Returns (answer_text, scores, latency_ms, tokens, error_str).
+    Returns (answer_text, contexts, scores, latency_ms, tokens, error_str).
     On permanent failure error_str is set and the other values are None.
     """
     last_exc = None
     for attempt in range(_MAX_RETRIES):
         try:
-            answer_text, scores, latency_ms, tokens = _process_question(
+            answer_text, contexts, scores, latency_ms, tokens = _process_question(
                 rag, question, metrics, eval_embedder
             )
-            return answer_text, scores, latency_ms, tokens, None
+            return answer_text, contexts, scores, latency_ms, tokens, None
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
             if attempt < _MAX_RETRIES - 1:
@@ -107,7 +110,7 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
                     _MAX_RETRIES,
                     exc,
                 )
-    return None, None, None, None, str(last_exc)
+    return None, None, None, None, None, str(last_exc)
 
 
 def run_experiment(
@@ -164,8 +167,10 @@ def run_experiment(
                     paused = True
                     break
 
-                answer_text, scores, latency_ms, tokens, error = _process_question_with_retry(
-                    rag, question, config.metrics, eval_embedder
+                answer_text, contexts, scores, latency_ms, tokens, error = (
+                    _process_question_with_retry(
+                        rag, question, config.metrics, eval_embedder
+                    )
                 )
                 if error is not None:
                     session.add(
@@ -187,7 +192,7 @@ def run_experiment(
                             question=question.text,
                             reference_answer=question.reference,
                             generated_answer=answer_text,
-                            retrieved_context=[],
+                            retrieved_context=contexts,
                             scores=scores,
                             latency_ms=latency_ms,
                             tokens=tokens,
