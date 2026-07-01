@@ -79,7 +79,10 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           }
         })
         .catch((err) => {
-          patch(taskId, { status: "failed", message: String(err) });
+          patch(taskId, {
+            status: "failed",
+            message: err instanceof Error ? err.message : String(err),
+          });
         });
     }, POLL_MS);
     timers.current.set(taskId, timer);
@@ -97,7 +100,10 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         scheduleAutoDismiss(id);
       })
       .catch((err) => {
-        patch(id, { status: "failed", message: String(err) });
+        patch(id, {
+          status: "failed",
+          message: err instanceof Error ? err.message : String(err),
+        });
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

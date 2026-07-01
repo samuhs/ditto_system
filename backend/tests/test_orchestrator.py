@@ -294,3 +294,53 @@ def test_run_experiment_cartesian_product(session_factory):
     stored = check.get(Experiment, experiment_id)
     assert {r.chunking for r in stored.runs} == {"recursive", "token"}
     check.close()
+
+
+def test_rag_not_in_prompt_specs_receives_no_prompts_kwarg(session_factory):
+    """A RAG technique absent from PROMPT_SPECS must not be passed a prompts kwarg."""
+    from app.core.rag.base import RAGResult
+
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="Some text for retrieval.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"]),
+        store,
+        embedder_factory=_embedder_factory,
+    )
+    session = session_factory()
+    experiment = Experiment(name="gate-test", status="pending", config={})
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+
+    received_kwargs: dict = {}
+
+    class _StubRag:
+        def answer(self, query: str) -> RAGResult:
+            return RAGResult(answer="a", contexts=[])
+
+    def _recording_rag_factory(name, **kwargs):
+        received_kwargs.update(kwargs)
+        return _StubRag()
+
+    config = ExperimentConfig(
+        base="viagem",
+        chunkings=["recursive"],
+        embeddings=["gemini"],
+        rags=["custom_promptless"],
+        retrievers=["similarity"],
+        metrics=["answer_relevancy"],
+    )
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=_llm_factory,
+        embedder_factory=_embedder_factory,
+        rag_factory=_recording_rag_factory,
+    )
+
+    run_experiment(experiment_id, config, [QuestionItem(text="q")], deps)
+
+    assert "prompts" not in received_kwargs
+    assert received_kwargs.get("retriever") is not None

@@ -43,6 +43,21 @@ def test_options_lists_registered_techniques(client):
     assert {"answer_relevancy", "faithfulness", "rouge_l"} <= set(body["metrics"])
 
 
+def test_options_bases_empty_when_store_unreachable():
+    """A vector-store outage must not break /options; bases degrade to []."""
+    from app.api.options import get_store as options_get_store
+
+    class _BrokenStore:
+        def list_collections(self):
+            raise RuntimeError("qdrant down")
+
+    app = create_app()
+    app.dependency_overrides[options_get_store] = lambda: _BrokenStore()
+    resp = TestClient(app).get("/options")
+    assert resp.status_code == 200
+    assert resp.json()["bases"] == []
+
+
 def test_ingest_uploads_and_stores(client):
     files = [("files", ("a.txt", io.BytesIO(b"Para one.\n\nPara two here.\n\nPara three."), "text/plain"))]
     data = {"base": "viagem", "chunkings": "recursive", "embeddings": "gemini"}

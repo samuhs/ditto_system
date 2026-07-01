@@ -16,11 +16,19 @@ def get_store() -> QdrantStore:
     return QdrantStore()
 
 
+def _ingested_bases(store: QdrantStore) -> list[str]:
+    """Base names derived from collection names; empty if the store is unreachable."""
+    try:
+        names = store.list_collections()
+    except Exception:  # noqa: BLE001  a vector-store outage must not break the form pages
+        return []
+    return sorted({n.split("__")[0] for n in names if "__" in n})
+
+
 @router.get("/options")
 def options(store: QdrantStore = Depends(get_store)) -> dict[str, list[str]]:
     """List the registered techniques and ingested bases available."""
-    collections = store._client.get_collections().collections
-    bases = sorted({c.name.split("__")[0] for c in collections if "__" in c.name})
+    bases = _ingested_bases(store)
     return {
         "bases": bases,
         "chunkings": chunking_registry.names(),
