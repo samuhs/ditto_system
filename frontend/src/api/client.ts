@@ -4,13 +4,23 @@ import type {
   ExperimentSummary,
   IngestResult,
   Options,
+  PromptsResponse,
 } from "./types";
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api";
 
 async function asJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    throw new Error(`request failed with status ${response.status}`);
+    let message = `HTTP ${response.status}`;
+    try {
+      const body = await response.json() as { detail?: unknown };
+      if (body?.detail) {
+        message = typeof body.detail === "string"
+          ? body.detail
+          : JSON.stringify(body.detail);
+      }
+    } catch { /* ignore parse errors, keep HTTP status message */ }
+    throw new Error(message);
   }
   return (await response.json()) as T;
 }
@@ -33,6 +43,28 @@ export async function getExperiment(id: number): Promise<ExperimentDetail> {
   return asJson<ExperimentDetail>(await fetch(`${BASE}/experiments/${id}`));
 }
 
+export async function pauseExperiment(id: number): Promise<{ id: number; status: string }> {
+  return asJson(await fetch(`${BASE}/experiments/${id}/pause`, { method: "POST" }));
+}
+
 export async function listExperiments(): Promise<ExperimentSummary[]> {
   return asJson<ExperimentSummary[]>(await fetch(`${BASE}/experiments`));
+}
+
+export async function getPrompts(): Promise<PromptsResponse> {
+  return asJson<PromptsResponse>(await fetch(`${BASE}/prompts`));
+}
+
+export async function savePrompt(
+  technique: string,
+  key: string,
+  text: string,
+): Promise<{ technique: string; key: string; text: string }> {
+  return asJson(
+    await fetch(`${BASE}/prompts/${technique}/${key}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    }),
+  );
 }

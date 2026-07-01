@@ -5,13 +5,22 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
+from app.core.prompts import PROMPT_SPECS, load_technique
 from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.naming import generate_experiment_name
-from app.experiments.orchestrator import ExperimentDeps, run_experiment
+from app.experiments.orchestrator import ExperimentDeps, request_pause, run_experiment
 from app.experiments.schemas import ExperimentConfig
 
 router = APIRouter()
+
+
+def _snapshot_prompts(config: ExperimentConfig) -> dict[str, dict[str, str]]:
+    """Capture the current prompts of every technique the experiment uses."""
+    techniques = list(config.rags)
+    if "multi_query" in config.retrievers:
+        techniques.append("multi_query")
+    return {t: load_technique(t) for t in techniques if t in PROMPT_SPECS}
 
 
 def get_experiment_deps() -> ExperimentDeps:
@@ -45,7 +54,9 @@ async def create_experiment(
 
     session = deps.session_factory()
     try:
-        experiment = Experiment(name=parsed.name, status="pending", config=parsed.model_dump())
+        config_dump = parsed.model_dump()
+        config_dump["prompts"] = _snapshot_prompts(parsed)
+        experiment = Experiment(name=parsed.name, status="pending", config=config_dump)
         session.add(experiment)
         try:
             session.commit()
@@ -62,6 +73,28 @@ async def create_experiment(
 
     background_tasks.add_task(run_experiment, experiment_id, parsed, items, deps)
     return {"id": experiment_id, "name": name, "status": "pending"}
+
+
+@router.post("/experiments/{experiment_id}/pause")
+def pause_experiment(
+    experiment_id: int,
+    deps: ExperimentDeps = Depends(get_experiment_deps),
+) -> dict:
+    """Request a running experiment to pause at its next checkpoint."""
+    session = deps.session_factory()
+    try:
+        experiment = session.get(Experiment, experiment_id)
+        if experiment is None:
+            raise HTTPException(status_code=404, detail="experiment not found")
+        if experiment.status not in ("running", "pending"):
+            raise HTTPException(
+                status_code=409,
+                detail=f"experiment is not running (status: {experiment.status})",
+            )
+    finally:
+        session.close()
+    request_pause(experiment_id)
+    return {"id": experiment_id, "status": "pausing"}
 
 
 @router.get("/experiments")
@@ -102,10 +135,21 @@ def get_experiment(
                         "tokens": result.tokens,
                     }
                 )
+        cfg = experiment.config or {}
+        total_combos = (
+            len(cfg.get("chunkings", []))
+            * len(cfg.get("embeddings", []))
+            * len(cfg.get("rags", []))
+            * len(cfg.get("retrievers", []))
+        )
+        completed_combos = sum(1 for run in experiment.runs if run.status == "done")
         return {
             "id": experiment.id,
             "name": experiment.name,
             "status": experiment.status,
+            "error": cfg.get("error") or None,
+            "progress": {"completed": completed_combos, "total": total_combos},
+            "prompts": cfg.get("prompts"),
             "results": results,
         }
     finally:

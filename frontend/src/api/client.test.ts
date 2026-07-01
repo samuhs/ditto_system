@@ -4,8 +4,10 @@ import {
   createExperiment,
   getExperiment,
   getOptions,
+  getPrompts,
   ingest,
   listExperiments,
+  savePrompt,
 } from "./client";
 
 function mockFetchOnce(body: unknown, ok = true, status = 200) {
@@ -63,5 +65,23 @@ describe("api client", () => {
   it("throws on http error", async () => {
     vi.stubGlobal("fetch", mockFetchOnce({}, false, 500));
     await expect(getOptions()).rejects.toThrow();
+  });
+
+  it("getPrompts fetches the prompts endpoint", async () => {
+    const body = { naive: { answer: { text: "{context} {question}", required_placeholders: ["context", "question"] } } };
+    vi.stubGlobal("fetch", mockFetchOnce(body));
+    await expect(getPrompts()).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith("/api/prompts");
+  });
+
+  it("savePrompt PUTs the new text", async () => {
+    const fetchMock = mockFetchOnce({ technique: "naive", key: "answer", text: "t {context} {question}" });
+    vi.stubGlobal("fetch", fetchMock);
+    await savePrompt("naive", "answer", "t {context} {question}");
+    expect(fetchMock).toHaveBeenCalledWith("/api/prompts/naive/answer", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "t {context} {question}" }),
+    });
   });
 });

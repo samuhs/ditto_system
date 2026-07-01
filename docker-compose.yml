@@ -1,6 +1,8 @@
 services:
   api:
     build: ./backend
+    volumes:
+      - ./backend/prompts:/app/prompts
     ports:
       - "8000:8000"
     environment:

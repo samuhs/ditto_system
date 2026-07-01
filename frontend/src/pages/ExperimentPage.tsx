@@ -4,19 +4,20 @@ import {
   FileInput,
   Group,
   MultiSelect,
+  Select,
   Stack,
-  Text,
   TextInput,
-  Title,
 } from "@mantine/core";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { createExperiment, getExperiment, getOptions } from "../api/client";
-import type { ExperimentDetail, Options } from "../api/types";
-
-const POLL_INTERVAL_MS = 2000;
+import { createExperiment, getOptions } from "../api/client";
+import type { Options } from "../api/types";
+import { PageHeader } from "../components/PageHeader";
+import { ArrowIcon } from "../components/icons";
+import { useTasks } from "../context/TasksContext";
 
 export function ExperimentPage() {
+  const { addExperimentTask } = useTasks();
   const [options, setOptions] = useState<Options | null>(null);
   const [name, setName] = useState("");
   const [base, setBase] = useState("");
@@ -26,43 +27,40 @@ export function ExperimentPage() {
   const [retrievers, setRetrievers] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
   const [csv, setCsv] = useState<File | null>(null);
-  const [experiment, setExperiment] = useState<ExperimentDetail | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const timer = useRef<number | null>(null);
-  const mounted = useRef(true);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  useEffect(() => {
-    mounted.current = true;
-    getOptions().then(setOptions).catch((e) => setError(String(e)));
-    return () => {
-      mounted.current = false;
-      if (timer.current) window.clearTimeout(timer.current);
-    };
-  }, []);
+  const allFilled =
+    options !== null &&
+    options.chunkings.length > 0 &&
+    chunkings.length === options.chunkings.length &&
+    embeddings.length === options.embeddings.length &&
+    rags.length === options.rags.length &&
+    retrievers.length === options.retrievers.length &&
+    metrics.length === options.metrics.length;
 
-  function poll(id: number) {
-    getExperiment(id)
-      .then((detail) => {
-        if (!mounted.current) return;
-        setExperiment(detail);
-        if (detail.status === "done" || detail.status === "failed") {
-          setLoading(false);
-        } else {
-          timer.current = window.setTimeout(() => poll(id), POLL_INTERVAL_MS);
-        }
-      })
-      .catch((e) => {
-        if (!mounted.current) return;
-        setError(String(e));
-        setLoading(false);
-      });
+  function toggleAll() {
+    if (allFilled) {
+      setChunkings([]);
+      setEmbeddings([]);
+      setRags([]);
+      setRetrievers([]);
+      setMetrics([]);
+    } else {
+      setChunkings(options?.chunkings ?? []);
+      setEmbeddings(options?.embeddings ?? []);
+      setRags(options?.rags ?? []);
+      setRetrievers(options?.retrievers ?? []);
+      setMetrics(options?.metrics ?? []);
+    }
   }
 
+  useEffect(() => {
+    getOptions().then(setOptions).catch((e) => setOptionsError(String(e)));
+  }, []);
+
   async function submit() {
-    if (loading) return;
-    setError(null);
-    setLoading(true);
+    setSubmitError(null);
     try {
       const config = {
         name: name || undefined,
@@ -77,51 +75,125 @@ export function ExperimentPage() {
       form.append("config", JSON.stringify(config));
       if (csv) form.append("questions", csv);
       const ref = await createExperiment(form);
-      setExperiment({ id: ref.id, name: ref.name, status: ref.status, results: [] });
-      poll(ref.id);
+      addExperimentTask(ref.id, ref.name);
+      setName("");
+      setCsv(null);
     } catch (e) {
-      setError(String(e));
-      setLoading(false);
+      setSubmitError(String(e));
+      setName("");
     }
   }
 
   return (
-    <Stack maw={720}>
-      <Title order={2}>Gerar teste de qualidade</Title>
-      <TextInput label="Nome do experimento (opcional)" value={name} onChange={(e) => setName(e.currentTarget.value)} />
-      <TextInput label="Base" value={base} onChange={(e) => setBase(e.currentTarget.value)} />
-      <Group grow>
-        <MultiSelect label="Cortes" data={options?.chunkings ?? []} value={chunkings} onChange={setChunkings} />
-        <MultiSelect label="Embeddings" data={options?.embeddings ?? []} value={embeddings} onChange={setEmbeddings} />
-      </Group>
-      <Group grow>
-        <MultiSelect label="RAGs" data={options?.rags ?? []} value={rags} onChange={setRags} />
-        <MultiSelect label="Retrievers" data={options?.retrievers ?? []} value={retrievers} onChange={setRetrievers} />
-      </Group>
-      <MultiSelect label="Métricas" data={options?.metrics ?? []} value={metrics} onChange={setMetrics} />
-      <FileInput label="Perguntas (CSV)" value={csv} onChange={setCsv} />
-      <Button onClick={submit} loading={loading}>
-        Gerar
-      </Button>
-      {experiment && (
-        <Alert
-          color={
-            experiment.status === "done"
-              ? "green"
-              : experiment.status === "failed"
-                ? "red"
-                : "blue"
-          }
-          title={experiment.name}
-        >
-          <Text>Status: {experiment.status}</Text>
+    <div>
+      <PageHeader
+        eyebrow="Passo 02 · Experimentar"
+        title="Gerar teste de qualidade"
+        subtitle="Escolha as estratégias a combinar e o conjunto de perguntas. O Ditto executa cada forma possível e mede a qualidade das respostas — acompanhe no canto inferior direito."
+      />
+
+      <div className="ditto-glass" style={{ padding: "30px", maxWidth: 760 }}>
+        <Stack gap="lg">
+          <Group justify="flex-end">
+            <Button
+              variant="subtle"
+              size="xs"
+              disabled={options === null}
+              color={allFilled ? "gray" : "violet"}
+              onClick={toggleAll}
+            >
+              {allFilled ? "Limpar tudo" : "Preencher tudo"}
+            </Button>
+          </Group>
+          <Group grow align="flex-start">
+            <TextInput
+              label="Nome do experimento (opcional)"
+              placeholder="gerado automaticamente"
+              value={name}
+              onChange={(e) => setName(e.currentTarget.value)}
+            />
+            <Select
+              label="Base"
+              placeholder="Selecione a base ingerida"
+              data={options?.bases ?? []}
+              value={base || null}
+              onChange={(v) => setBase(v ?? "")}
+              searchable
+            />
+          </Group>
+          <Group grow align="flex-start">
+            <MultiSelect
+              label="Cortes"
+              placeholder="Selecione"
+              data={options?.chunkings ?? []}
+              value={chunkings}
+              onChange={setChunkings}
+              searchable
+            />
+            <MultiSelect
+              label="Embeddings"
+              placeholder="Selecione"
+              data={options?.embeddings ?? []}
+              value={embeddings}
+              onChange={setEmbeddings}
+              searchable
+            />
+          </Group>
+          <Group grow align="flex-start">
+            <MultiSelect
+              label="RAGs"
+              placeholder="Selecione"
+              data={options?.rags ?? []}
+              value={rags}
+              onChange={setRags}
+              searchable
+            />
+            <MultiSelect
+              label="Retrievers"
+              placeholder="Selecione"
+              data={options?.retrievers ?? []}
+              value={retrievers}
+              onChange={setRetrievers}
+              searchable
+            />
+          </Group>
+          <MultiSelect
+            label="Métricas"
+            placeholder="Selecione"
+            data={options?.metrics ?? []}
+            value={metrics}
+            onChange={setMetrics}
+            searchable
+          />
+          <FileInput
+            label="Perguntas (CSV)"
+            placeholder="Escolher arquivo .csv"
+            value={csv}
+            onChange={setCsv}
+          />
+          <Button
+            onClick={submit}
+            size="md"
+            variant="gradient"
+            gradient={{ from: "#ab63f2", to: "#f26dcf", deg: 115 }}
+            rightSection={<ArrowIcon />}
+            style={{ alignSelf: "flex-start" }}
+          >
+            Gerar
+          </Button>
+        </Stack>
+      </div>
+
+      {optionsError && (
+        <Alert color="red" variant="light" title="Erro ao carregar opções" mt="xl" radius="lg" maw={760}>
+          {optionsError}
         </Alert>
       )}
-      {error && (
-        <Alert color="red" title="Erro">
-          {error}
+      {submitError && (
+        <Alert color="red" variant="light" title="Erro ao criar experimento" mt="xl" radius="lg" maw={760}>
+          {submitError}
         </Alert>
       )}
-    </Stack>
+    </div>
   );
 }
