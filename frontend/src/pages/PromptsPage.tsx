@@ -25,7 +25,7 @@ export function PromptsPage() {
         }
         setDrafts(initial);
       })
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
   async function handleSave(tech: string, key: string) {
@@ -37,7 +37,7 @@ export function PromptsPage() {
       await savePrompt(tech, key, drafts[id]);
       setSavedKey(id);
     } catch (e) {
-      setSaveError((s) => ({ ...s, [id]: String(e) }));
+      setSaveError((s) => ({ ...s, [id]: e instanceof Error ? e.message : String(e) }));
     } finally {
       setSavingKey(null);
     }
@@ -78,6 +78,7 @@ export function PromptsPage() {
                       onChange={(e) => {
                         const value = e.currentTarget.value;
                         setDrafts((d) => ({ ...d, [id]: value }));
+                        if (savedKey === id) setSavedKey(null);
                       }}
                       styles={{ input: { fontFamily: "var(--font-mono)", fontSize: "0.82rem" } }}
                     />

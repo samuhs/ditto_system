@@ -13,6 +13,7 @@ from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
 from app.core.evaluation.runner import evaluate_sample
 from app.core.llm.base import build_llm
+from app.core.prompts import PROMPT_SPECS
 from app.core.rag.base import build_rag
 from app.core.retrieval.base import build_retriever
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
@@ -156,10 +157,10 @@ def run_experiment(
                 deps, retriever_name, col, embedder, llm,
                 prompts=prompt_snapshot.get("multi_query"),
             )
-            rag = deps.rag_factory(
-                rag_name, retriever=retriever, llm=llm,
-                prompts=prompt_snapshot.get(rag_name),
-            )
+            rag_kwargs = {"retriever": retriever, "llm": llm}
+            if rag_name in PROMPT_SPECS:
+                rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
+            rag = deps.rag_factory(rag_name, **rag_kwargs)
 
             for question in questions:
                 # Checkpoint: stop mid-combination between questions if paused.

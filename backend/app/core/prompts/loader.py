@@ -65,7 +65,9 @@ def load_prompt(technique: str, key: str) -> str:
     _check_known(technique, key)
     path = prompts_dir() / technique / f"{key}.md"
     if path.exists():
-        return path.read_text(encoding="utf-8")
+        # rstrip trailing newlines so file-loaded text matches DEFAULT_PROMPTS
+        # and roundtrips (save then load) are deterministic.
+        return path.read_text(encoding="utf-8").rstrip("\n")
     return DEFAULT_PROMPTS[technique][key]
 
 

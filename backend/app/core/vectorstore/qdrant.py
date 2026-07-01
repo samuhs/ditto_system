@@ -35,6 +35,10 @@ class QdrantStore:
     def __init__(self, client: QdrantClient | None = None) -> None:
         self._client = client or QdrantClient(url=get_settings().qdrant_url)
 
+    def list_collections(self) -> list[str]:
+        """Return the names of all collections in the store."""
+        return [c.name for c in self._client.get_collections().collections]
+
     def ensure_collection(self, name: str, dimension: int) -> None:
         """Create the collection (cosine distance) if it does not exist yet."""
         if self._client.collection_exists(name):
