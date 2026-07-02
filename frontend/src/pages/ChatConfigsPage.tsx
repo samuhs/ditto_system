@@ -25,7 +25,7 @@ export function ChatConfigsPage() {
   const [error, setError] = useState<string | null>(null);
 
   function refresh() {
-    listChatConfigs().then(setConfigs).catch((e) => setError(String(e)));
+    listChatConfigs().then(setConfigs).catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }
 
   useEffect(() => {
@@ -36,11 +36,11 @@ export function ChatConfigsPage() {
       if (opts.embeddings.length > 0) setEmbedding(opts.embeddings[0]);
       if (opts.retrievers.length > 0) setRetriever(opts.retrievers[0]);
       if (opts.llms.length > 0) setLlm(opts.llms[0]);
-    }).catch((e) => setError(String(e)));
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
     getPersonas().then((p) => {
       setPersonas(p.personas);
       if (p.personas.length > 0) setPersona(p.personas[0]);
-    }).catch((e) => setError(String(e)));
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
     refresh();
   }, []);
 
@@ -112,7 +112,7 @@ export function ChatConfigsPage() {
               size="xs"
               variant="subtle"
               color="red"
-              onClick={() => deleteChatConfig(c.id).then(refresh)}
+              onClick={() => deleteChatConfig(c.id).then(refresh).catch((e) => setError(e instanceof Error ? e.message : String(e)))}
             >
               Remover
             </Button>
