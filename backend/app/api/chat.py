@@ -195,7 +195,7 @@ def save_dialogue(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -
             raise HTTPException(status_code=404, detail="chat config not found")
         dialogue = Dialogue(config_snapshot={
             "name": cfg.name, "base": cfg.base, "chunking": cfg.chunking,
-            "embedding": cfg.embedding, "retriever": cfg.retriever, "llm": cfg.llm, "persona": cfg.persona,
+            "embedding": cfg.embedding, "retriever": cfg.retriever, "rag": cfg.rag, "llm": cfg.llm, "persona": cfg.persona,
         })
         dialogue.messages = [
             DialogueMessage(role=m.role, content=m.content, position=i)
