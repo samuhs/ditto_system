@@ -33,7 +33,7 @@ def test_save_then_load_roundtrip(prompts_tmp):
 
 
 def test_validate_requires_mandatory_placeholder():
-    validate_flow_placeholders("memory", "Resumo de {history} extra {foo}")
+    validate_flow_placeholders("memory", "Resumo de {history} sem extras")
     with pytest.raises(ValueError, match="history"):
         validate_flow_placeholders("memory", "sem placeholder")
 
@@ -46,3 +46,13 @@ def test_save_rejects_missing_placeholder():
 def test_unknown_node_raises_keyerror():
     with pytest.raises(KeyError):
         load_flow_prompt("nope")
+
+
+def test_save_rejects_literal_brace():
+    with pytest.raises(ValueError):
+        save_flow_prompt("triage", "responda {question} e um smiley :-{")
+
+
+def test_save_rejects_unknown_placeholder_field():
+    with pytest.raises(ValueError):
+        save_flow_prompt("triage", "{question} {foo}")

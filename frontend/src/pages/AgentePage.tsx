@@ -61,12 +61,12 @@ export function AgentePage() {
         setPersonas(p.personas);
         if (p.personas.length > 0) setPersonaName(p.personas[0]);
       })
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
   useEffect(() => {
     if (!personaName) return;
-    getPersona(personaName).then((p) => setPersonaText(p.text)).catch((e) => setError(String(e)));
+    getPersona(personaName).then((p) => setPersonaText(p.text)).catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, [personaName]);
 
   const graph = useMemo(() => (spec ? toReactFlow(spec) : { nodes: [], edges: [] }), [spec]);

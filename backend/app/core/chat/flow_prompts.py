@@ -40,6 +40,8 @@ DEFAULT_FLOW_PROMPTS: dict[str, str] = {
 
 _PLACEHOLDER_RE = re.compile(r"{(\w+)}")
 
+_OPTIONAL_FLOW_PLACEHOLDERS: dict[str, set[str]] = {"persona_compose": {"summary", "context"}}
+
 
 def conversation_dir() -> Path:
     """Directory holding conversation node prompt files."""
@@ -75,6 +77,11 @@ def validate_flow_placeholders(node: str, text: str) -> None:
             f"flow prompt {node} missing required placeholder(s): "
             + ", ".join("{" + m + "}" for m in sorted(missing))
         )
+    allowed = FLOW_PROMPT_SPECS[node] | _OPTIONAL_FLOW_PLACEHOLDERS.get(node, set())
+    try:
+        text.format(**{key: "" for key in allowed})
+    except (ValueError, KeyError, IndexError) as exc:
+        raise ValueError(f"invalid template for {node}: {exc}") from exc
 
 
 def save_flow_prompt(node: str, text: str) -> None:

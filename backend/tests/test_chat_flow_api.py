@@ -49,3 +49,11 @@ def test_get_and_put_persona(client):
 
 def test_get_unknown_persona_404(client):
     assert client.get("/personas/nope").status_code == 404
+
+
+def test_put_flow_prompt_bad_brace_422(client):
+    assert client.put("/chat/flow/triage", json={"text": "{question} :-{"}).status_code == 422
+
+
+def test_put_persona_invalid_name_422(client):
+    assert client.put("/personas/bad name", json={"text": "x"}).status_code == 422
