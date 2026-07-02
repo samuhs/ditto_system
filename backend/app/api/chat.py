@@ -7,10 +7,32 @@ from app.core.chat.deps import ChatDeps
 from app.core.chat.schemas import ChatConfigView, ChatMessage
 from app.core.db.base import SessionLocal
 from app.core.db.models import ChatConfig, Dialogue, DialogueMessage
-from app.core.personas import list_personas
+from app.core.chat.flow_prompts import (
+    FLOW_PROMPT_SPECS,
+    load_flow_prompt,
+    save_flow_prompt,
+)
+from app.core.personas import list_personas, load_persona, save_persona
 from app.core.vectorstore.qdrant import QdrantStore
 
 router = APIRouter()
+
+# Static description of the conversation graph (structure is fixed in code).
+_FLOW_NODES = [
+    ("guardrail", "Guardrail", "prompt", "Verifica se a mensagem é segura e no escopo."),
+    ("triage", "Triagem", "prompt", "Decide se a resposta precisa de busca (RAG) ou é direta."),
+    ("rag", "RAG", "rag", "Executa a técnica de RAG escolhida na config."),
+    ("memory", "Memória", "prompt", "Resume o histórico para manter a memória curta."),
+    ("persona_compose", "Persona", "prompt", "Compõe a resposta final na voz da persona."),
+]
+_FLOW_EDGES = [
+    ("guardrail", "triage", "ok"),
+    ("guardrail", "persona_compose", "bloqueado"),
+    ("triage", "rag", "precisa de conhecimento"),
+    ("triage", "memory", "direto"),
+    ("rag", "memory", ""),
+    ("memory", "persona_compose", ""),
+]
 
 
 def get_chat_deps() -> ChatDeps:
@@ -34,10 +56,60 @@ class ChatTurnBody(BaseModel):
     messages: list[ChatMessage]
 
 
+class PromptBody(BaseModel):
+    text: str
+
+
 @router.get("/personas")
 def personas() -> dict:
     """List available persona names."""
     return {"personas": list_personas()}
+
+
+@router.get("/chat/flow")
+def get_flow() -> dict:
+    """Return the static conversation graph plus each prompt node's current prompt."""
+    nodes = []
+    for node_id, label, ntype, description in _FLOW_NODES:
+        node = {"id": node_id, "label": label, "type": ntype, "description": description}
+        if ntype == "prompt":
+            node["prompt"] = load_flow_prompt(node_id)
+            node["required_placeholders"] = sorted(FLOW_PROMPT_SPECS[node_id])
+        nodes.append(node)
+    edges = [{"source": s, "target": t, "label": lbl} for s, t, lbl in _FLOW_EDGES]
+    return {"nodes": nodes, "edges": edges}
+
+
+@router.put("/chat/flow/{node}")
+def update_flow_prompt(node: str, body: PromptBody) -> dict:
+    """Validate placeholders and persist a node prompt."""
+    if node not in FLOW_PROMPT_SPECS:
+        raise HTTPException(status_code=404, detail=f"unknown flow node: {node}")
+    try:
+        save_flow_prompt(node, body.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"node": node, "text": body.text}
+
+
+@router.get("/personas/{name}")
+def get_persona(name: str) -> dict:
+    """Return a persona's text."""
+    try:
+        text = load_persona(name)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"unknown persona: {name}") from exc
+    return {"name": name, "text": text}
+
+
+@router.put("/personas/{name}")
+def update_persona(name: str, body: PromptBody) -> dict:
+    """Persist a persona's text (creates it if the name is new and valid)."""
+    try:
+        save_persona(name, body.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"name": name, "text": body.text}
 
 
 @router.post("/chat-configs")

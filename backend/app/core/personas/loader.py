@@ -1,7 +1,10 @@
 """File-backed persona system prompts with built-in defaults."""
+import re
 from pathlib import Path
 
 from app.core.prompts import prompts_dir
+
+_VALID_NAME = re.compile(r"^[\w-]+$")
 
 DEFAULT_PERSONAS: dict[str, str] = {
     "travel_guide": (
@@ -41,3 +44,12 @@ def load_persona(name: str) -> str:
     if name in DEFAULT_PERSONAS:
         return DEFAULT_PERSONAS[name]
     raise KeyError(f"unknown persona: {name}")
+
+
+def save_persona(name: str, text: str) -> None:
+    """Write a persona's .md file. Raises ValueError for an invalid name."""
+    if not _VALID_NAME.match(name):
+        raise ValueError(f"invalid persona name: {name}")
+    path = personas_dir() / f"{name}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
