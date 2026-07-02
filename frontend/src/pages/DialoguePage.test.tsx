@@ -26,7 +26,7 @@ beforeEach(() => {
     id: 5,
     created_at: "2026-07-02T10:00:00",
     rating: null,
-    config_snapshot: { name: "c1", persona: "travel_guide", base: "viagem", rag: "naive", llm: "gemini" },
+    config_snapshot: { name: "c1", persona: "travel_guide", base: "viagem", chunking: "recursive", embedding: "gemini", retriever: "similarity", rag: "naive", llm: "gemini" },
     messages: [
       { role: "user", content: "Quais praias?" },
       { role: "assistant", content: "Praia X e Y." },
@@ -40,7 +40,9 @@ describe("DialoguePage", () => {
     renderPage();
     expect(await screen.findByText("Quais praias?")).toBeInTheDocument();
     expect(screen.getByText("Praia X e Y.")).toBeInTheDocument();
-    expect(screen.getByText("travel_guide")).toBeInTheDocument();
+    expect(screen.getByText("c1")).toBeInTheDocument();
+    expect(screen.getByText(/travel_guide/)).toBeInTheDocument();
+    expect(screen.getByText(/retriever: similarity/)).toBeInTheDocument();
   });
 
   it("saves a rating", async () => {

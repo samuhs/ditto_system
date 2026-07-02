@@ -84,20 +84,39 @@ export function DialoguePage() {
 
       {detail && !loading && (
         <>
-          <Group gap="xs" mb="lg">
-            <span className="ditto-chip" style={{ color: "#05dbf2" }}>
-              {snap.persona ?? "—"}
-            </span>
-            <span className="ditto-chip" style={{ color: "#f2ec91" }}>
-              {snap.base ?? "—"}
-            </span>
-            <span className="ditto-chip" style={{ color: "#07f285" }}>
-              {snap.rag ?? "—"} · {snap.llm ?? "—"}
-            </span>
-            <Text size="sm" c="dimmed">
-              {formatDate(detail.created_at)}
-            </Text>
-          </Group>
+          <div style={{ marginBottom: "1.5rem" }}>
+            <Group gap="xs" mb="xs" align="center">
+              <Text fw={600} fz="lg">
+                {snap.name ?? "Configuração sem nome"}
+              </Text>
+              <Text size="sm" c="dimmed">
+                {formatDate(detail.created_at)}
+              </Text>
+            </Group>
+            <Group gap="xs">
+              <span className="ditto-chip" style={{ color: "#05dbf2" }}>
+                persona: {snap.persona ?? "—"}
+              </span>
+              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
+                base: {snap.base ?? "—"}
+              </span>
+              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
+                corte: {snap.chunking ?? "—"}
+              </span>
+              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
+                embedding: {snap.embedding ?? "—"}
+              </span>
+              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
+                retriever: {snap.retriever ?? "—"}
+              </span>
+              <span className="ditto-chip" style={{ color: "#07f285" }}>
+                rag: {snap.rag ?? "—"}
+              </span>
+              <span className="ditto-chip" style={{ color: "#07f285" }}>
+                llm: {snap.llm ?? "—"}
+              </span>
+            </Group>
+          </div>
 
           <div className="ditto-glass ditto-chat-window">
             {detail.messages.map((m, i) => (
