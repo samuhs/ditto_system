@@ -1,5 +1,7 @@
 """Endpoints for chat configs, conversation turns, and saving dialogues."""
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
@@ -203,5 +205,87 @@ def save_dialogue(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -
         session.commit()
         session.refresh(dialogue)
         return {"id": dialogue.id}
+    finally:
+        session.close()
+
+
+_RATED_VALUES = {"all", "rated", "unrated"}
+_SORT_VALUES = {"recent", "oldest", "rating_asc", "rating_desc"}
+
+
+def _dialogue_list_item(d: Dialogue) -> dict:
+    """Build a list-row summary for a dialogue."""
+    snapshot = d.config_snapshot or {}
+    user_msgs = sorted(
+        (m for m in d.messages if m.role == "user"), key=lambda m: m.position
+    )
+    preview = user_msgs[0].content[:80] if user_msgs else None
+    return {
+        "id": d.id,
+        "created_at": d.created_at.isoformat() if d.created_at else None,
+        "rating": d.rating,
+        "name": snapshot.get("name"),
+        "persona": snapshot.get("persona"),
+        "message_count": len(d.messages),
+        "preview": preview,
+    }
+
+
+@router.get("/dialogues")
+def list_dialogues(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    date: str | None = Query(None),
+    rated: str = Query("all"),
+    sort: str = Query("recent"),
+    deps: ChatDeps = Depends(get_chat_deps),
+) -> dict:
+    """List saved dialogues, paginated, with optional date/rated filters and sorting."""
+    if rated not in _RATED_VALUES:
+        raise HTTPException(status_code=422, detail=f"invalid rated filter: {rated}")
+    if sort not in _SORT_VALUES:
+        raise HTTPException(status_code=422, detail=f"invalid sort: {sort}")
+    day_start = None
+    if date is not None:
+        try:
+            day_start = datetime.strptime(date, "%Y-%m-%d")
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=f"invalid date: {date}") from exc
+
+    session = deps.session_factory()
+    try:
+        query = session.query(Dialogue)
+        if day_start is not None:
+            query = query.filter(
+                Dialogue.created_at >= day_start,
+                Dialogue.created_at < day_start + timedelta(days=1),
+            )
+        if rated == "rated":
+            query = query.filter(Dialogue.rating.is_not(None))
+        elif rated == "unrated":
+            query = query.filter(Dialogue.rating.is_(None))
+
+        total = query.count()
+
+        if sort == "recent":
+            query = query.order_by(Dialogue.created_at.desc())
+        elif sort == "oldest":
+            query = query.order_by(Dialogue.created_at.asc())
+        elif sort == "rating_asc":
+            query = query.order_by(
+                Dialogue.rating.is_(None), Dialogue.rating.asc(), Dialogue.created_at.desc()
+            )
+        else:  # rating_desc
+            query = query.order_by(
+                Dialogue.rating.is_(None), Dialogue.rating.desc(), Dialogue.created_at.desc()
+            )
+
+        rows = query.offset((page - 1) * page_size).limit(page_size).all()
+        return {
+            "items": [_dialogue_list_item(d) for d in rows],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
     finally:
         session.close()
