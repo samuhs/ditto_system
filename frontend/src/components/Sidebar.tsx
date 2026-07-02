@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { to: "/prompts", label: "Prompts", icon: <FlaskIcon /> },
   { to: "/chat-configs", label: "Config. de chat", icon: <FlaskIcon /> },
   { to: "/chat", label: "Conversa", icon: <FlaskIcon /> },
+  { to: "/agente", label: "Agente", icon: <FlaskIcon /> },
 ];
 
 export function Sidebar() {

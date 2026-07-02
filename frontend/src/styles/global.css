@@ -975,3 +975,11 @@ body::before {
   background: var(--grad-brand-soft);
   border-color: var(--stroke-strong);
 }
+
+/* ---------- Agent flow (react-flow) ---------- */
+.react-flow__attribution { display: none; }
+.react-flow__controls button {
+  background: var(--surface-strong);
+  border-color: var(--stroke);
+  color: var(--text-hi);
+}
