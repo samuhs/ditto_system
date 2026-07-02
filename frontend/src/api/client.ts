@@ -1,9 +1,15 @@
 import type {
+  ChatConfig,
+  ChatConfigInput,
+  ChatMessage,
+  ChatTurn,
   ExperimentDetail,
   ExperimentRef,
   ExperimentSummary,
+  FlowSpec,
   IngestResult,
   Options,
+  Persona,
   PromptsResponse,
 } from "./types";
 
@@ -67,4 +73,60 @@ export async function savePrompt(
       body: JSON.stringify({ text }),
     }),
   );
+}
+
+export async function getPersonas(): Promise<{ personas: string[] }> {
+  return asJson(await fetch(`${BASE}/personas`));
+}
+
+export async function listChatConfigs(): Promise<ChatConfig[]> {
+  return asJson<ChatConfig[]>(await fetch(`${BASE}/chat-configs`));
+}
+
+export async function createChatConfig(config: ChatConfigInput): Promise<{ id: number; name: string }> {
+  return asJson(await fetch(`${BASE}/chat-configs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  }));
+}
+
+export async function deleteChatConfig(id: number): Promise<{ id: number; deleted: boolean }> {
+  return asJson(await fetch(`${BASE}/chat-configs/${id}`, { method: "DELETE" }));
+}
+
+export async function sendChat(configId: number, messages: ChatMessage[]): Promise<ChatTurn> {
+  return asJson<ChatTurn>(await fetch(`${BASE}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ config_id: configId, messages }),
+  }));
+}
+
+export async function saveDialogue(configId: number, messages: ChatMessage[]): Promise<{ id: number }> {
+  return asJson(await fetch(`${BASE}/dialogues`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ config_id: configId, messages }),
+  }));
+}
+
+export async function getFlow(): Promise<FlowSpec> {
+  return asJson<FlowSpec>(await fetch(`${BASE}/chat/flow`));
+}
+
+export async function saveFlowPrompt(node: string, text: string): Promise<{ node: string; text: string }> {
+  return asJson(await fetch(`${BASE}/chat/flow/${node}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+  }));
+}
+
+export async function getPersona(name: string): Promise<Persona> {
+  return asJson<Persona>(await fetch(`${BASE}/personas/${name}`));
+}
+
+export async function savePersona(name: string, text: string): Promise<Persona> {
+  return asJson<Persona>(await fetch(`${BASE}/personas/${name}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+  }));
 }

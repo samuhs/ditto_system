@@ -1,13 +1,21 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createChatConfig,
   createExperiment,
   getExperiment,
+  getFlow,
   getOptions,
+  getPersona,
+  getPersonas,
   getPrompts,
   ingest,
   listExperiments,
+  saveDialogue,
+  saveFlowPrompt,
+  savePersona,
   savePrompt,
+  sendChat,
 } from "./client";
 
 function mockFetchOnce(body: unknown, ok = true, status = 200) {
@@ -82,6 +90,79 @@ describe("api client", () => {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: "t {context} {question}" }),
+    });
+  });
+
+  it("getPersonas fetches personas", async () => {
+    const body = { personas: ["travel_guide", "assistant"] };
+    vi.stubGlobal("fetch", mockFetchOnce(body));
+    await expect(getPersonas()).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith("/api/personas");
+  });
+
+  it("createChatConfig posts the config", async () => {
+    const cfg = { name: "c1", base: "viagem", chunking: "recursive", embedding: "gemini", retriever: "similarity", rag: "naive", llm: "gemini", persona: "travel_guide" };
+    const fetchMock = mockFetchOnce({ id: 1, name: "c1" });
+    vi.stubGlobal("fetch", fetchMock);
+    await createChatConfig(cfg);
+    expect(fetchMock).toHaveBeenCalledWith("/api/chat-configs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cfg),
+    });
+  });
+
+  it("sendChat posts config_id and messages", async () => {
+    const fetchMock = mockFetchOnce({ reply: "olá", contexts: [] });
+    vi.stubGlobal("fetch", fetchMock);
+    await sendChat(1, [{ role: "user", content: "oi" }]);
+    expect(fetchMock).toHaveBeenCalledWith("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config_id: 1, messages: [{ role: "user", content: "oi" }] }),
+    });
+  });
+
+  it("saveDialogue posts the dialogue", async () => {
+    const fetchMock = mockFetchOnce({ id: 7 });
+    vi.stubGlobal("fetch", fetchMock);
+    await saveDialogue(1, [{ role: "user", content: "oi" }]);
+    expect(fetchMock).toHaveBeenCalledWith("/api/dialogues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config_id: 1, messages: [{ role: "user", content: "oi" }] }),
+    });
+  });
+
+  it("getFlow fetches the flow spec", async () => {
+    const body = { nodes: [{ id: "triage", label: "Triagem", type: "prompt", description: "d", prompt: "{question}", required_placeholders: ["question"] }], edges: [] };
+    vi.stubGlobal("fetch", mockFetchOnce(body));
+    await expect(getFlow()).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith("/api/chat/flow");
+  });
+
+  it("saveFlowPrompt PUTs the node prompt", async () => {
+    const fetchMock = mockFetchOnce({ node: "triage", text: "t {question}" });
+    vi.stubGlobal("fetch", fetchMock);
+    await saveFlowPrompt("triage", "t {question}");
+    expect(fetchMock).toHaveBeenCalledWith("/api/chat/flow/triage", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "t {question}" }),
+    });
+  });
+
+  it("getPersona fetches a persona", async () => {
+    const fetchMock = mockFetchOnce({ name: "travel_guide", text: "guia" });
+    vi.stubGlobal("fetch", fetchMock);
+    await getPersona("travel_guide");
+    expect(fetchMock).toHaveBeenCalledWith("/api/personas/travel_guide");
+  });
+
+  it("savePersona PUTs the persona text", async () => {
+    const fetchMock = mockFetchOnce({ name: "travel_guide", text: "novo" });
+    vi.stubGlobal("fetch", fetchMock);
+    await savePersona("travel_guide", "novo");
+    expect(fetchMock).toHaveBeenCalledWith("/api/personas/travel_guide", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "novo" }),
     });
   });
 });

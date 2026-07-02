@@ -21,6 +21,7 @@ dependencies = [
     "langchain-openai>=0.1",
     "langchain-text-splitters>=0.2",
     "tiktoken>=0.7",
+    "langgraph>=0.2,<2.0",
 ]
 
 [project.optional-dependencies]

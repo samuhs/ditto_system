@@ -58,3 +58,52 @@ export interface PromptInfo {
 }
 
 export type PromptsResponse = Record<string, Record<string, PromptInfo>>;
+
+export interface ChatConfig {
+  id: number;
+  name: string;
+  base: string;
+  chunking: string;
+  embedding: string;
+  retriever: string;
+  rag: string;
+  llm: string;
+  persona: string;
+}
+
+export type ChatConfigInput = Omit<ChatConfig, "id">;
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatTurn {
+  reply: string;
+  contexts: string[];
+}
+
+export interface FlowNode {
+  id: string;
+  label: string;
+  type: "prompt" | "rag";
+  description: string;
+  prompt?: string;
+  required_placeholders?: string[];
+}
+
+export interface FlowEdge {
+  source: string;
+  target: string;
+  label: string;
+}
+
+export interface FlowSpec {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+}
+
+export interface Persona {
+  name: string;
+  text: string;
+}

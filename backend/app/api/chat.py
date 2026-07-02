@@ -1,0 +1,207 @@
+"""Endpoints for chat configs, conversation turns, and saving dialogues."""
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
+
+from app.core.chat.deps import ChatDeps
+from app.core.chat.schemas import ChatConfigView, ChatMessage
+from app.core.db.base import SessionLocal
+from app.core.db.models import ChatConfig, Dialogue, DialogueMessage
+from app.core.chat.flow_prompts import (
+    FLOW_PROMPT_SPECS,
+    load_flow_prompt,
+    save_flow_prompt,
+)
+from app.core.personas import list_personas, load_persona, save_persona
+from app.core.vectorstore.qdrant import QdrantStore
+
+router = APIRouter()
+
+# Static description of the conversation graph (structure is fixed in code).
+_FLOW_NODES = [
+    ("guardrail", "Guardrail", "prompt", "Verifica se a mensagem é segura e no escopo."),
+    ("triage", "Triagem", "prompt", "Decide se a resposta precisa de busca (RAG) ou é direta."),
+    ("rag", "RAG", "rag", "Executa a técnica de RAG escolhida na config."),
+    ("memory", "Memória", "prompt", "Resume o histórico para manter a memória curta."),
+    ("persona_compose", "Persona", "prompt", "Compõe a resposta final na voz da persona."),
+]
+_FLOW_EDGES = [
+    ("guardrail", "triage", "ok"),
+    ("guardrail", "persona_compose", "bloqueado"),
+    ("triage", "rag", "precisa de conhecimento"),
+    ("triage", "memory", "direto"),
+    ("rag", "memory", ""),
+    ("memory", "persona_compose", ""),
+]
+
+
+def get_chat_deps() -> ChatDeps:
+    """Production chat dependencies."""
+    return ChatDeps(store=QdrantStore(), session_factory=SessionLocal)
+
+
+class ChatConfigBody(BaseModel):
+    name: str
+    base: str
+    chunking: str
+    embedding: str
+    retriever: str
+    rag: str = "naive"
+    llm: str = "gemini"
+    persona: str
+
+
+class ChatTurnBody(BaseModel):
+    config_id: int
+    messages: list[ChatMessage]
+
+
+class PromptBody(BaseModel):
+    text: str
+
+
+@router.get("/personas")
+def personas() -> dict:
+    """List available persona names."""
+    return {"personas": list_personas()}
+
+
+@router.get("/chat/flow")
+def get_flow() -> dict:
+    """Return the static conversation graph plus each prompt node's current prompt."""
+    nodes = []
+    for node_id, label, ntype, description in _FLOW_NODES:
+        node = {"id": node_id, "label": label, "type": ntype, "description": description}
+        if ntype == "prompt":
+            node["prompt"] = load_flow_prompt(node_id)
+            node["required_placeholders"] = sorted(FLOW_PROMPT_SPECS[node_id])
+        nodes.append(node)
+    edges = [{"source": s, "target": t, "label": lbl} for s, t, lbl in _FLOW_EDGES]
+    return {"nodes": nodes, "edges": edges}
+
+
+@router.put("/chat/flow/{node}")
+def update_flow_prompt(node: str, body: PromptBody) -> dict:
+    """Validate placeholders and persist a node prompt."""
+    if node not in FLOW_PROMPT_SPECS:
+        raise HTTPException(status_code=404, detail=f"unknown flow node: {node}")
+    try:
+        save_flow_prompt(node, body.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"node": node, "text": body.text}
+
+
+@router.get("/personas/{name}")
+def get_persona(name: str) -> dict:
+    """Return a persona's text."""
+    try:
+        text = load_persona(name)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"unknown persona: {name}") from exc
+    return {"name": name, "text": text}
+
+
+@router.put("/personas/{name}")
+def update_persona(name: str, body: PromptBody) -> dict:
+    """Persist a persona's text (creates it if the name is new and valid)."""
+    try:
+        save_persona(name, body.text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"name": name, "text": body.text}
+
+
+@router.post("/chat-configs")
+def create_chat_config(body: ChatConfigBody, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
+    """Create a saved chat configuration."""
+    session = deps.session_factory()
+    try:
+        cfg = ChatConfig(**body.model_dump())
+        session.add(cfg)
+        try:
+            session.commit()
+        except IntegrityError as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail=f"chat config name already exists: {body.name}") from exc
+        session.refresh(cfg)
+        return {"id": cfg.id, "name": cfg.name}
+    finally:
+        session.close()
+
+
+@router.get("/chat-configs")
+def list_chat_configs(deps: ChatDeps = Depends(get_chat_deps)) -> list[dict]:
+    """List saved chat configurations, most recent first."""
+    session = deps.session_factory()
+    try:
+        rows = session.query(ChatConfig).order_by(ChatConfig.id.desc()).all()
+        return [
+            {
+                "id": c.id, "name": c.name, "base": c.base, "chunking": c.chunking,
+                "embedding": c.embedding, "retriever": c.retriever, "rag": c.rag, "llm": c.llm, "persona": c.persona,
+            }
+            for c in rows
+        ]
+    finally:
+        session.close()
+
+
+@router.delete("/chat-configs/{config_id}")
+def delete_chat_config(config_id: int, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
+    """Delete a chat configuration."""
+    session = deps.session_factory()
+    try:
+        cfg = session.get(ChatConfig, config_id)
+        if cfg is None:
+            raise HTTPException(status_code=404, detail="chat config not found")
+        session.delete(cfg)
+        session.commit()
+        return {"id": config_id, "deleted": True}
+    finally:
+        session.close()
+
+
+@router.post("/chat")
+def chat(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
+    """Run one conversational turn (stateless: history is supplied by the caller)."""
+    session = deps.session_factory()
+    try:
+        cfg = session.get(ChatConfig, body.config_id)
+        if cfg is None:
+            raise HTTPException(status_code=404, detail="chat config not found")
+        view = ChatConfigView(
+            base=cfg.base, chunking=cfg.chunking, embedding=cfg.embedding,
+            retriever=cfg.retriever, rag=cfg.rag, llm=cfg.llm, persona=cfg.persona,
+        )
+    finally:
+        session.close()
+    try:
+        result = deps.agent_runner(view, body.messages, deps)
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"reply": result.answer, "contexts": result.contexts}
+
+
+@router.post("/dialogues")
+def save_dialogue(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
+    """Persist a dialogue and its messages for later evaluation."""
+    session = deps.session_factory()
+    try:
+        cfg = session.get(ChatConfig, body.config_id)
+        if cfg is None:
+            raise HTTPException(status_code=404, detail="chat config not found")
+        dialogue = Dialogue(config_snapshot={
+            "name": cfg.name, "base": cfg.base, "chunking": cfg.chunking,
+            "embedding": cfg.embedding, "retriever": cfg.retriever, "llm": cfg.llm, "persona": cfg.persona,
+        })
+        dialogue.messages = [
+            DialogueMessage(role=m.role, content=m.content, position=i)
+            for i, m in enumerate(body.messages)
+        ]
+        session.add(dialogue)
+        session.commit()
+        session.refresh(dialogue)
+        return {"id": dialogue.id}
+    finally:
+        session.close()
