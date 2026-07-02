@@ -111,3 +111,13 @@ def test_chat_unknown_retriever_returns_400():
     }).json()["id"]
     resp = c.post("/chat", json={"config_id": cid, "messages": [{"role": "user", "content": "Oi"}]})
     assert resp.status_code == 400
+
+
+def test_create_config_persists_rag(client):
+    resp = client.post("/chat-configs", json={
+        "name": "with-rag", "base": "viagem", "chunking": "recursive", "embedding": "gemini",
+        "retriever": "similarity", "rag": "naive", "llm": "gemini", "persona": "travel_guide",
+    })
+    assert resp.status_code == 200
+    listed = client.get("/chat-configs").json()
+    assert any(c["name"] == "with-rag" and c["rag"] == "naive" for c in listed)

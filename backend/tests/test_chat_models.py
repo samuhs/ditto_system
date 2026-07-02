@@ -38,3 +38,15 @@ def test_dialogue_with_messages_cascade():
     s.delete(stored)
     s.commit()
     assert s.query(DialogueMessage).count() == 0
+
+
+def test_chat_config_has_rag_field():
+    from app.core.db.models import ChatConfig
+    s = _session()
+    cfg = ChatConfig(
+        name="c-rag", base="viagem", chunking="recursive", embedding="gemini",
+        retriever="similarity", rag="agentic", llm="gemini", persona="travel_guide",
+    )
+    s.add(cfg)
+    s.commit()
+    assert s.get(ChatConfig, cfg.id).rag == "agentic"

@@ -72,6 +72,7 @@ class ChatConfig(Base):
     chunking: Mapped[str] = mapped_column(String(60))
     embedding: Mapped[str] = mapped_column(String(60))
     retriever: Mapped[str] = mapped_column(String(60))
+    rag: Mapped[str] = mapped_column(String(60), default="naive")
     llm: Mapped[str] = mapped_column(String(60), default="gemini")
     persona: Mapped[str] = mapped_column(String(120))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

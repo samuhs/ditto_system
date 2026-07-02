@@ -25,6 +25,7 @@ class ChatConfigBody(BaseModel):
     chunking: str
     embedding: str
     retriever: str
+    rag: str = "naive"
     llm: str = "gemini"
     persona: str
 
@@ -67,7 +68,7 @@ def list_chat_configs(deps: ChatDeps = Depends(get_chat_deps)) -> list[dict]:
         return [
             {
                 "id": c.id, "name": c.name, "base": c.base, "chunking": c.chunking,
-                "embedding": c.embedding, "retriever": c.retriever, "llm": c.llm, "persona": c.persona,
+                "embedding": c.embedding, "retriever": c.retriever, "rag": c.rag, "llm": c.llm, "persona": c.persona,
             }
             for c in rows
         ]
