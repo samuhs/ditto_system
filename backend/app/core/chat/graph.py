@@ -6,7 +6,6 @@ from langgraph.graph import END, START, StateGraph
 from app.core.chat.flow_prompts import load_flow_prompts
 from app.core.chat.schemas import ChatConfigView, ChatMessage, ChatTurnResult
 from app.core.personas import load_persona
-from app.core.rag.base import format_context
 from app.core.vectorstore.qdrant import collection_name
 
 
