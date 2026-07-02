@@ -38,6 +38,7 @@ export function DialoguesPage() {
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     const params: DialogueListParams = {
       page,
       page_size: PAGE_SIZE,
