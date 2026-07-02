@@ -4,12 +4,11 @@ from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
 from app.core.chat.deps import ChatDeps
-from app.core.chat.schemas import ChatMessage
+from app.core.chat.schemas import ChatConfigView, ChatMessage
 from app.core.db.base import SessionLocal
 from app.core.db.models import ChatConfig, Dialogue, DialogueMessage
-from app.core.llm.base import build_llm
-from app.core.personas import list_personas, load_persona
-from app.core.vectorstore.qdrant import QdrantStore, collection_name
+from app.core.personas import list_personas
+from app.core.vectorstore.qdrant import QdrantStore
 
 router = APIRouter()
 
@@ -91,17 +90,6 @@ def delete_chat_config(config_id: int, deps: ChatDeps = Depends(get_chat_deps)) 
         session.close()
 
 
-def _build_chat_retriever(deps: ChatDeps, cfg: ChatConfig):
-    """Build the retriever tool backend from a chat config."""
-    embedder = deps.embedder_factory(cfg.embedding)
-    col = collection_name(cfg.base, cfg.chunking, cfg.embedding)
-    kwargs = {"store": deps.store, "collection": col, "embedder": embedder}
-    if cfg.retriever == "multi_query":
-        # multi_query uses the Fatia A LLM interface (.generate), not the chat model.
-        kwargs["llm"] = build_llm(cfg.llm)
-    return deps.retriever_factory(cfg.retriever, **kwargs)
-
-
 @router.post("/chat")
 def chat(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
     """Run one conversational turn (stateless: history is supplied by the caller)."""
@@ -110,19 +98,16 @@ def chat(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
         cfg = session.get(ChatConfig, body.config_id)
         if cfg is None:
             raise HTTPException(status_code=404, detail="chat config not found")
-        cfg_persona, cfg_llm = cfg.persona, cfg.llm
-        try:
-            retriever = _build_chat_retriever(deps, cfg)
-        except KeyError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        view = ChatConfigView(
+            base=cfg.base, chunking=cfg.chunking, embedding=cfg.embedding,
+            retriever=cfg.retriever, rag=cfg.rag, llm=cfg.llm, persona=cfg.persona,
+        )
     finally:
         session.close()
     try:
-        persona_text = load_persona(cfg_persona)
-        chat_model = deps.chat_model_factory(cfg_llm)
+        result = deps.agent_runner(view, body.messages, deps)
     except KeyError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    result = deps.agent_runner(persona_text, retriever, chat_model, body.messages)
     return {"reply": result.answer, "contexts": result.contexts}
 
 

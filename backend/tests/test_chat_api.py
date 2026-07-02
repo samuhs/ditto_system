@@ -21,17 +21,14 @@ def client():
     session_factory = sessionmaker(bind=engine)
     captured = {}
 
-    def _fake_runner(persona, retriever, chat_model, messages):
-        captured["persona"] = persona
+    def _fake_runner(cfg, messages, deps):
+        captured["persona"] = cfg.persona
         captured["messages"] = messages
         return ChatTurnResult(answer=f"echo: {messages[-1].content}", contexts=["CTX"])
 
     deps = ChatDeps(
         store=QdrantStore(client=QdrantClient(":memory:")),
         session_factory=session_factory,
-        chat_model_factory=lambda name: object(),
-        embedder_factory=lambda name, **kw: object(),
-        retriever_factory=lambda name, **kw: object(),
         agent_runner=_fake_runner,
     )
     app = create_app()
@@ -44,7 +41,7 @@ def client():
 def _make_config(client, name="c1"):
     return client.post("/chat-configs", json={
         "name": name, "base": "viagem", "chunking": "recursive", "embedding": "gemini",
-        "retriever": "similarity", "llm": "gemini", "persona": "travel_guide",
+        "retriever": "similarity", "rag": "naive", "llm": "gemini", "persona": "travel_guide",
     })
 
 
@@ -68,7 +65,7 @@ def test_chat_returns_reply_and_uses_persona(client):
     resp = client.post("/chat", json={"config_id": cid, "messages": [{"role": "user", "content": "Oi"}]})
     assert resp.status_code == 200
     assert resp.json()["reply"] == "echo: Oi"
-    assert client.captured["persona"].startswith("Você é um guia")
+    assert client.captured["persona"] == "travel_guide"
 
 
 def test_chat_missing_config_404(client):
@@ -86,28 +83,26 @@ def test_save_dialogue_persists_messages(client):
     assert isinstance(did, int)
 
 
-def test_chat_unknown_retriever_returns_400():
-    """A config whose retriever is unknown maps the registry KeyError to 400, not 500."""
+def test_chat_unknown_config_value_returns_400():
+    """A KeyError from run_flow (unknown llm/rag/retriever/persona) maps to 400."""
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine)
 
-    def _raising_retriever_factory(name, **kwargs):
-        raise KeyError(f"retrieval '{name}' not found")
+    def _raising_runner(cfg, messages, deps):
+        raise KeyError("unknown rag 'bogus'")
 
     deps = ChatDeps(
         store=QdrantStore(client=QdrantClient(":memory:")),
         session_factory=session_factory,
-        chat_model_factory=lambda name: object(),
-        embedder_factory=lambda name, **kw: object(),
-        retriever_factory=_raising_retriever_factory,
+        agent_runner=_raising_runner,
     )
     app = create_app()
     app.dependency_overrides[get_chat_deps] = lambda: deps
     c = TestClient(app)
     cid = c.post("/chat-configs", json={
-        "name": "bad", "base": "viagem", "chunking": "recursive", "embedding": "gemini",
-        "retriever": "bogus", "llm": "gemini", "persona": "travel_guide",
+        "name": "x", "base": "viagem", "chunking": "recursive", "embedding": "gemini",
+        "retriever": "similarity", "rag": "naive", "llm": "gemini", "persona": "travel_guide",
     }).json()["id"]
     resp = c.post("/chat", json={"config_id": cid, "messages": [{"role": "user", "content": "Oi"}]})
     assert resp.status_code == 400
