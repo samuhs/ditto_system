@@ -66,6 +66,7 @@ export interface ChatConfig {
   chunking: string;
   embedding: string;
   retriever: string;
+  rag: string;
   llm: string;
   persona: string;
 }
@@ -80,4 +81,29 @@ export interface ChatMessage {
 export interface ChatTurn {
   reply: string;
   contexts: string[];
+}
+
+export interface FlowNode {
+  id: string;
+  label: string;
+  type: "prompt" | "rag";
+  description: string;
+  prompt?: string;
+  required_placeholders?: string[];
+}
+
+export interface FlowEdge {
+  source: string;
+  target: string;
+  label: string;
+}
+
+export interface FlowSpec {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+}
+
+export interface Persona {
+  name: string;
+  text: string;
 }

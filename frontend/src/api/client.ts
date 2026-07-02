@@ -6,8 +6,10 @@ import type {
   ExperimentDetail,
   ExperimentRef,
   ExperimentSummary,
+  FlowSpec,
   IngestResult,
   Options,
+  Persona,
   PromptsResponse,
 } from "./types";
 
@@ -106,5 +108,25 @@ export async function saveDialogue(configId: number, messages: ChatMessage[]): P
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ config_id: configId, messages }),
+  }));
+}
+
+export async function getFlow(): Promise<FlowSpec> {
+  return asJson<FlowSpec>(await fetch(`${BASE}/chat/flow`));
+}
+
+export async function saveFlowPrompt(node: string, text: string): Promise<{ node: string; text: string }> {
+  return asJson(await fetch(`${BASE}/chat/flow/${node}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+  }));
+}
+
+export async function getPersona(name: string): Promise<Persona> {
+  return asJson<Persona>(await fetch(`${BASE}/personas/${name}`));
+}
+
+export async function savePersona(name: string, text: string): Promise<Persona> {
+  return asJson<Persona>(await fetch(`${BASE}/personas/${name}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
   }));
 }

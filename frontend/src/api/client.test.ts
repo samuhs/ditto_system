@@ -4,12 +4,16 @@ import {
   createChatConfig,
   createExperiment,
   getExperiment,
+  getFlow,
   getOptions,
+  getPersona,
   getPersonas,
   getPrompts,
   ingest,
   listExperiments,
   saveDialogue,
+  saveFlowPrompt,
+  savePersona,
   savePrompt,
   sendChat,
 } from "./client";
@@ -127,6 +131,38 @@ describe("api client", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ config_id: 1, messages: [{ role: "user", content: "oi" }] }),
+    });
+  });
+
+  it("getFlow fetches the flow spec", async () => {
+    const body = { nodes: [{ id: "triage", label: "Triagem", type: "prompt", description: "d", prompt: "{question}", required_placeholders: ["question"] }], edges: [] };
+    vi.stubGlobal("fetch", mockFetchOnce(body));
+    await expect(getFlow()).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith("/api/chat/flow");
+  });
+
+  it("saveFlowPrompt PUTs the node prompt", async () => {
+    const fetchMock = mockFetchOnce({ node: "triage", text: "t {question}" });
+    vi.stubGlobal("fetch", fetchMock);
+    await saveFlowPrompt("triage", "t {question}");
+    expect(fetchMock).toHaveBeenCalledWith("/api/chat/flow/triage", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "t {question}" }),
+    });
+  });
+
+  it("getPersona fetches a persona", async () => {
+    const fetchMock = mockFetchOnce({ name: "travel_guide", text: "guia" });
+    vi.stubGlobal("fetch", fetchMock);
+    await getPersona("travel_guide");
+    expect(fetchMock).toHaveBeenCalledWith("/api/personas/travel_guide");
+  });
+
+  it("savePersona PUTs the persona text", async () => {
+    const fetchMock = mockFetchOnce({ name: "travel_guide", text: "novo" });
+    vi.stubGlobal("fetch", fetchMock);
+    await savePersona("travel_guide", "novo");
+    expect(fetchMock).toHaveBeenCalledWith("/api/personas/travel_guide", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "novo" }),
     });
   });
 });
