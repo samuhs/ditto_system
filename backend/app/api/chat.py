@@ -110,7 +110,10 @@ def chat(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
         if cfg is None:
             raise HTTPException(status_code=404, detail="chat config not found")
         cfg_persona, cfg_llm = cfg.persona, cfg.llm
-        retriever = _build_chat_retriever(deps, cfg)
+        try:
+            retriever = _build_chat_retriever(deps, cfg)
+        except KeyError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
     finally:
         session.close()
     try:

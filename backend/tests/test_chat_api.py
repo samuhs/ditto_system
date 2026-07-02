@@ -84,3 +84,30 @@ def test_save_dialogue_persists_messages(client):
     assert resp.status_code == 200
     did = resp.json()["id"]
     assert isinstance(did, int)
+
+
+def test_chat_unknown_retriever_returns_400():
+    """A config whose retriever is unknown maps the registry KeyError to 400, not 500."""
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+
+    def _raising_retriever_factory(name, **kwargs):
+        raise KeyError(f"retrieval '{name}' not found")
+
+    deps = ChatDeps(
+        store=QdrantStore(client=QdrantClient(":memory:")),
+        session_factory=session_factory,
+        chat_model_factory=lambda name: object(),
+        embedder_factory=lambda name, **kw: object(),
+        retriever_factory=_raising_retriever_factory,
+    )
+    app = create_app()
+    app.dependency_overrides[get_chat_deps] = lambda: deps
+    c = TestClient(app)
+    cid = c.post("/chat-configs", json={
+        "name": "bad", "base": "viagem", "chunking": "recursive", "embedding": "gemini",
+        "retriever": "bogus", "llm": "gemini", "persona": "travel_guide",
+    }).json()["id"]
+    resp = c.post("/chat", json={"config_id": cid, "messages": [{"role": "user", "content": "Oi"}]})
+    assert resp.status_code == 400
