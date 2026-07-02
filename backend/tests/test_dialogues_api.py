@@ -133,3 +133,59 @@ def test_list_invalid_params(env):
     assert client.get("/dialogues?rated=bogus").status_code == 422
     assert client.get("/dialogues?sort=bogus").status_code == 422
     assert client.get("/dialogues?date=nope").status_code == 422
+
+
+def test_get_detail_returns_messages_in_order(env):
+    client, sf = env
+    did = _seed(
+        sf,
+        snapshot={"name": "c1", "persona": "travel_guide", "base": "viagem"},
+        messages=(("user", "Pergunta"), ("assistant", "Resposta")),
+    )
+    body = client.get(f"/dialogues/{did}").json()
+    assert body["id"] == did
+    assert body["config_snapshot"]["persona"] == "travel_guide"
+    assert body["messages"] == [
+        {"role": "user", "content": "Pergunta"},
+        {"role": "assistant", "content": "Resposta"},
+    ]
+
+
+def test_get_detail_404(env):
+    client, _ = env
+    assert client.get("/dialogues/9999").status_code == 404
+
+
+def test_put_rating_persists(env):
+    client, sf = env
+    did = _seed(sf)
+    resp = client.put(f"/dialogues/{did}/rating", json={"rating": 8})
+    assert resp.status_code == 200
+    assert resp.json() == {"id": did, "rating": 8}
+    assert client.get(f"/dialogues/{did}").json()["rating"] == 8
+    # rated_at was stamped
+    session = sf()
+    try:
+        assert session.get(Dialogue, did).rated_at is not None
+    finally:
+        session.close()
+
+
+def test_put_rating_is_editable(env):
+    client, sf = env
+    did = _seed(sf)
+    client.put(f"/dialogues/{did}/rating", json={"rating": 8})
+    client.put(f"/dialogues/{did}/rating", json={"rating": 3})
+    assert client.get(f"/dialogues/{did}").json()["rating"] == 3
+
+
+def test_put_rating_out_of_range(env):
+    client, sf = env
+    did = _seed(sf)
+    assert client.put(f"/dialogues/{did}/rating", json={"rating": 11}).status_code == 422
+    assert client.put(f"/dialogues/{did}/rating", json={"rating": -1}).status_code == 422
+
+
+def test_put_rating_404(env):
+    client, _ = env
+    assert client.put("/dialogues/9999/rating", json={"rating": 5}).status_code == 404

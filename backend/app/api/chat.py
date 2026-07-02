@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 
 from app.core.chat.deps import ChatDeps
@@ -287,5 +287,50 @@ def list_dialogues(
             "page": page,
             "page_size": page_size,
         }
+    finally:
+        session.close()
+
+
+@router.get("/dialogues/{dialogue_id}")
+def get_dialogue(dialogue_id: int, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
+    """Return a saved dialogue with its messages in order and config snapshot."""
+    session = deps.session_factory()
+    try:
+        d = session.get(Dialogue, dialogue_id)
+        if d is None:
+            raise HTTPException(status_code=404, detail="dialogue not found")
+        messages = [
+            {"role": m.role, "content": m.content}
+            for m in sorted(d.messages, key=lambda m: m.position)
+        ]
+        return {
+            "id": d.id,
+            "created_at": d.created_at.isoformat() if d.created_at else None,
+            "rating": d.rating,
+            "config_snapshot": d.config_snapshot or {},
+            "messages": messages,
+        }
+    finally:
+        session.close()
+
+
+class RatingBody(BaseModel):
+    rating: int = Field(ge=0, le=10)
+
+
+@router.put("/dialogues/{dialogue_id}/rating")
+def set_dialogue_rating(
+    dialogue_id: int, body: RatingBody, deps: ChatDeps = Depends(get_chat_deps)
+) -> dict:
+    """Set or update the human rating (0-10) for a dialogue."""
+    session = deps.session_factory()
+    try:
+        d = session.get(Dialogue, dialogue_id)
+        if d is None:
+            raise HTTPException(status_code=404, detail="dialogue not found")
+        d.rating = body.rating
+        d.rated_at = datetime.utcnow()
+        session.commit()
+        return {"id": dialogue_id, "rating": body.rating}
     finally:
         session.close()
