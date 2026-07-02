@@ -104,6 +104,15 @@ def test_list_sort_rating_asc_puts_unrated_last(env):
     assert ratings == [2, 5, None]
 
 
+def test_list_sort_rating_desc_puts_unrated_last(env):
+    client, sf = env
+    _seed(sf, rating=5)
+    _seed(sf, rating=2)
+    _seed(sf, rating=None)
+    ratings = [it["rating"] for it in client.get("/dialogues?sort=rating_desc").json()["items"]]
+    assert ratings == [5, 2, None]
+
+
 def test_list_item_fields(env):
     client, sf = env
     long_q = "P" * 100
