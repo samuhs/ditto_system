@@ -86,6 +86,8 @@ class Dialogue(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     config_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     messages: Mapped[list["DialogueMessage"]] = relationship(
         back_populates="dialogue", cascade="all, delete-orphan"
