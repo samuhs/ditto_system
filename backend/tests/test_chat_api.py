@@ -83,6 +83,18 @@ def test_save_dialogue_persists_messages(client):
     assert isinstance(did, int)
 
 
+def test_save_dialogue_snapshot_includes_rag(client):
+    from app.core.db.models import Dialogue
+
+    cid = _make_config(client).json()["id"]
+    did = client.post("/dialogues", json={"config_id": cid, "messages": [
+        {"role": "user", "content": "Oi"},
+    ]}).json()["id"]
+    # read back the persisted snapshot via the detail endpoint
+    snapshot = client.get(f"/dialogues/{did}").json()["config_snapshot"]
+    assert snapshot["rag"] == "naive"
+
+
 def test_chat_unknown_config_value_returns_400():
     """A KeyError from run_flow (unknown llm/rag/retriever/persona) maps to 400."""
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)

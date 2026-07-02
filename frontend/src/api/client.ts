@@ -3,6 +3,9 @@ import type {
   ChatConfigInput,
   ChatMessage,
   ChatTurn,
+  DialogueDetail,
+  DialogueList,
+  DialogueListParams,
   ExperimentDetail,
   ExperimentRef,
   ExperimentSummary,
@@ -128,5 +131,31 @@ export async function getPersona(name: string): Promise<Persona> {
 export async function savePersona(name: string, text: string): Promise<Persona> {
   return asJson<Persona>(await fetch(`${BASE}/personas/${name}`, {
     method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+  }));
+}
+
+export async function listDialogues(params: DialogueListParams = {}): Promise<DialogueList> {
+  const q = new URLSearchParams();
+  if (params.page) q.set("page", String(params.page));
+  if (params.page_size) q.set("page_size", String(params.page_size));
+  if (params.date) q.set("date", params.date);
+  if (params.rated) q.set("rated", params.rated);
+  if (params.sort) q.set("sort", params.sort);
+  const qs = q.toString();
+  return asJson<DialogueList>(await fetch(`${BASE}/dialogues${qs ? `?${qs}` : ""}`));
+}
+
+export async function getDialogue(id: number): Promise<DialogueDetail> {
+  return asJson<DialogueDetail>(await fetch(`${BASE}/dialogues/${id}`));
+}
+
+export async function saveDialogueRating(
+  id: number,
+  rating: number,
+): Promise<{ id: number; rating: number }> {
+  return asJson(await fetch(`${BASE}/dialogues/${id}/rating`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating }),
   }));
 }

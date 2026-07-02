@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createChatConfig,
   createExperiment,
+  getDialogue,
   getExperiment,
   getFlow,
   getOptions,
@@ -10,8 +11,10 @@ import {
   getPersonas,
   getPrompts,
   ingest,
+  listDialogues,
   listExperiments,
   saveDialogue,
+  saveDialogueRating,
   saveFlowPrompt,
   savePersona,
   savePrompt,
@@ -163,6 +166,41 @@ describe("api client", () => {
     await savePersona("travel_guide", "novo");
     expect(fetchMock).toHaveBeenCalledWith("/api/personas/travel_guide", {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "novo" }),
+    });
+  });
+
+  it("listDialogues builds the query string", async () => {
+    const body = { items: [], total: 0, page: 1, page_size: 20 };
+    vi.stubGlobal("fetch", mockFetchOnce(body));
+    await expect(
+      listDialogues({ page: 2, page_size: 20, rated: "unrated", sort: "rating_asc", date: "2026-03-10" }),
+    ).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/dialogues?page=2&page_size=20&date=2026-03-10&rated=unrated&sort=rating_asc",
+    );
+  });
+
+  it("listDialogues with no params hits the bare endpoint", async () => {
+    vi.stubGlobal("fetch", mockFetchOnce({ items: [], total: 0, page: 1, page_size: 20 }));
+    await listDialogues();
+    expect(fetch).toHaveBeenCalledWith("/api/dialogues");
+  });
+
+  it("getDialogue fetches the detail", async () => {
+    const body = { id: 5, created_at: "x", rating: null, config_snapshot: {}, messages: [] };
+    vi.stubGlobal("fetch", mockFetchOnce(body));
+    await expect(getDialogue(5)).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith("/api/dialogues/5");
+  });
+
+  it("saveDialogueRating PUTs the rating", async () => {
+    const fetchMock = mockFetchOnce({ id: 5, rating: 8 });
+    vi.stubGlobal("fetch", fetchMock);
+    await saveDialogueRating(5, 8);
+    expect(fetchMock).toHaveBeenCalledWith("/api/dialogues/5/rating", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating: 8 }),
     });
   });
 });

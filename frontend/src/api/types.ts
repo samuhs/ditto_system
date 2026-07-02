@@ -107,3 +107,36 @@ export interface Persona {
   name: string;
   text: string;
 }
+
+export interface DialogueListItem {
+  id: number;
+  created_at: string | null;
+  rating: number | null;
+  name: string | null;
+  persona: string | null;
+  message_count: number;
+  preview: string | null;
+}
+
+export interface DialogueList {
+  items: DialogueListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface DialogueDetail {
+  id: number;
+  created_at: string | null;
+  rating: number | null;
+  config_snapshot: Record<string, string>;
+  messages: ChatMessage[];
+}
+
+export interface DialogueListParams {
+  page?: number;
+  page_size?: number;
+  date?: string | null;
+  rated?: "all" | "rated" | "unrated";
+  sort?: "recent" | "oldest" | "rating_asc" | "rating_desc";
+}
