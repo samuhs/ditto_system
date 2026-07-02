@@ -1,13 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createChatConfig,
   createExperiment,
   getExperiment,
   getOptions,
+  getPersonas,
   getPrompts,
   ingest,
   listExperiments,
+  saveDialogue,
   savePrompt,
+  sendChat,
 } from "./client";
 
 function mockFetchOnce(body: unknown, ok = true, status = 200) {
@@ -82,6 +86,47 @@ describe("api client", () => {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: "t {context} {question}" }),
+    });
+  });
+
+  it("getPersonas fetches personas", async () => {
+    const body = { personas: ["travel_guide", "assistant"] };
+    vi.stubGlobal("fetch", mockFetchOnce(body));
+    await expect(getPersonas()).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith("/api/personas");
+  });
+
+  it("createChatConfig posts the config", async () => {
+    const cfg = { name: "c1", base: "viagem", chunking: "recursive", embedding: "gemini", retriever: "similarity", llm: "gemini", persona: "travel_guide" };
+    const fetchMock = mockFetchOnce({ id: 1, name: "c1" });
+    vi.stubGlobal("fetch", fetchMock);
+    await createChatConfig(cfg);
+    expect(fetchMock).toHaveBeenCalledWith("/api/chat-configs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cfg),
+    });
+  });
+
+  it("sendChat posts config_id and messages", async () => {
+    const fetchMock = mockFetchOnce({ reply: "olá", contexts: [] });
+    vi.stubGlobal("fetch", fetchMock);
+    await sendChat(1, [{ role: "user", content: "oi" }]);
+    expect(fetchMock).toHaveBeenCalledWith("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config_id: 1, messages: [{ role: "user", content: "oi" }] }),
+    });
+  });
+
+  it("saveDialogue posts the dialogue", async () => {
+    const fetchMock = mockFetchOnce({ id: 7 });
+    vi.stubGlobal("fetch", fetchMock);
+    await saveDialogue(1, [{ role: "user", content: "oi" }]);
+    expect(fetchMock).toHaveBeenCalledWith("/api/dialogues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config_id: 1, messages: [{ role: "user", content: "oi" }] }),
     });
   });
 });

@@ -58,3 +58,26 @@ export interface PromptInfo {
 }
 
 export type PromptsResponse = Record<string, Record<string, PromptInfo>>;
+
+export interface ChatConfig {
+  id: number;
+  name: string;
+  base: string;
+  chunking: string;
+  embedding: string;
+  retriever: string;
+  llm: string;
+  persona: string;
+}
+
+export type ChatConfigInput = Omit<ChatConfig, "id">;
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatTurn {
+  reply: string;
+  contexts: string[];
+}
