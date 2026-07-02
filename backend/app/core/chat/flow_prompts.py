@@ -20,7 +20,7 @@ DEFAULT_FLOW_PROMPTS: dict[str, str] = {
     ),
     "triage": (
         "Classifique a mensagem do usuário. Responda APENAS com uma palavra:\n"
-        "'RAG' se responder bem exige buscar informação no material do domínio, ou\n"
+        "'RAG' se a resposta exige buscar informação no material do domínio, ou\n"
         "'DIRECT' se é saudação/conversa/algo respondível sem buscar.\n\n"
         "Mensagem: {question}"
     ),

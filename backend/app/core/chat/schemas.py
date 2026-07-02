@@ -17,3 +17,16 @@ class ChatTurnResult:
 
     answer: str
     contexts: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ChatConfigView:
+    """Plain snapshot of a chat config, decoupled from the ORM."""
+
+    base: str
+    chunking: str
+    embedding: str
+    retriever: str
+    rag: str
+    llm: str
+    persona: str
