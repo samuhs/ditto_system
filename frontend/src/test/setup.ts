@@ -1,6 +1,8 @@
 import "@testing-library/jest-dom";
 
 // jsdom stubs for browser APIs used by Mantine components.
+Element.prototype.scrollIntoView = () => {};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).ResizeObserver = class ResizeObserver {
   observe() {}

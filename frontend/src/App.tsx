@@ -12,6 +12,7 @@ import { IngestPage } from "./pages/IngestPage";
 import { ChatConfigsPage } from "./pages/ChatConfigsPage";
 import { AgentePage } from "./pages/AgentePage";
 import { ChatPage } from "./pages/ChatPage";
+import { DialoguesPage } from "./pages/DialoguesPage";
 import { PromptsPage } from "./pages/PromptsPage";
 import { ResultsPage } from "./pages/ResultsPage";
 
@@ -87,6 +88,14 @@ export function App() {
                   element={
                     <PageTransition>
                       <ChatPage />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/dialogues"
+                  element={
+                    <PageTransition>
+                      <DialoguesPage />
                     </PageTransition>
                   }
                 />
