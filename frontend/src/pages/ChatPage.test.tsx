@@ -18,7 +18,7 @@ function renderPage() {
 
 beforeEach(() => {
   vi.mocked(client.listChatConfigs).mockResolvedValue([
-    { id: 1, name: "c1", base: "viagem", chunking: "recursive", embedding: "gemini", retriever: "similarity", llm: "gemini", persona: "travel_guide" },
+    { id: 1, name: "c1", base: "viagem", chunking: "recursive", embedding: "gemini", retriever: "similarity", rag: "naive", llm: "gemini", persona: "travel_guide" },
   ]);
   vi.mocked(client.sendChat).mockResolvedValue({ reply: "Olá! Sou seu guia.", contexts: [] });
   vi.mocked(client.saveDialogue).mockResolvedValue({ id: 5 });

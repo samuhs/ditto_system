@@ -39,4 +39,16 @@ describe("ChatConfigsPage", () => {
     await user.click(screen.getByRole("button", { name: /criar/i }));
     await waitFor(() => expect(client.createChatConfig).toHaveBeenCalled());
   });
+
+  it("includes rag in the created config", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/nome/i), "c-rag");
+    await user.click(screen.getByRole("button", { name: /criar/i }));
+    await waitFor(() =>
+      expect(client.createChatConfig).toHaveBeenCalledWith(
+        expect.objectContaining({ rag: expect.any(String) }),
+      ),
+    );
+  });
 });

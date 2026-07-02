@@ -101,7 +101,7 @@ describe("api client", () => {
   });
 
   it("createChatConfig posts the config", async () => {
-    const cfg = { name: "c1", base: "viagem", chunking: "recursive", embedding: "gemini", retriever: "similarity", llm: "gemini", persona: "travel_guide" };
+    const cfg = { name: "c1", base: "viagem", chunking: "recursive", embedding: "gemini", retriever: "similarity", rag: "naive", llm: "gemini", persona: "travel_guide" };
     const fetchMock = mockFetchOnce({ id: 1, name: "c1" });
     vi.stubGlobal("fetch", fetchMock);
     await createChatConfig(cfg);

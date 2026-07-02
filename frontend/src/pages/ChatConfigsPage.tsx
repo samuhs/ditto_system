@@ -20,6 +20,7 @@ export function ChatConfigsPage() {
   const [chunking, setChunking] = useState("");
   const [embedding, setEmbedding] = useState("");
   const [retriever, setRetriever] = useState("");
+  const [rag, setRag] = useState("");
   const [llm, setLlm] = useState("gemini");
   const [persona, setPersona] = useState("travel_guide");
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +36,7 @@ export function ChatConfigsPage() {
       if (opts.chunkings.length > 0) setChunking(opts.chunkings[0]);
       if (opts.embeddings.length > 0) setEmbedding(opts.embeddings[0]);
       if (opts.retrievers.length > 0) setRetriever(opts.retrievers[0]);
+      if (opts.rags.length > 0) setRag(opts.rags[0]);
       if (opts.llms.length > 0) setLlm(opts.llms[0]);
     }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
     getPersonas().then((p) => {
@@ -47,7 +49,7 @@ export function ChatConfigsPage() {
   async function submit() {
     setError(null);
     try {
-      await createChatConfig({ name, base, chunking, embedding, retriever, llm, persona });
+      await createChatConfig({ name, base, chunking, embedding, retriever, rag, llm, persona });
       setName("");
       refresh();
     } catch (e) {
@@ -55,7 +57,7 @@ export function ChatConfigsPage() {
     }
   }
 
-  const canSubmit = name.trim() !== "" && base && chunking && embedding && retriever && persona;
+  const canSubmit = name.trim() !== "" && base && chunking && embedding && retriever && rag && persona;
 
   return (
     <div>
@@ -75,6 +77,7 @@ export function ChatConfigsPage() {
           <Group grow align="flex-start">
             <Select label="Embedding" data={options?.embeddings ?? []} value={embedding || null} onChange={(v) => setEmbedding(v ?? "")} searchable />
             <Select label="Retriever" data={options?.retrievers ?? []} value={retriever || null} onChange={(v) => setRetriever(v ?? "")} searchable />
+            <Select label="RAG" data={options?.rags ?? []} value={rag || null} onChange={(v) => setRag(v ?? "")} searchable />
           </Group>
           <Group grow align="flex-start">
             <Select label="Modelo (LLM)" data={options?.llms ?? []} value={llm || null} onChange={(v) => setLlm(v ?? "gemini")} searchable />
