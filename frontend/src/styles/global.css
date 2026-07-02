@@ -942,3 +942,36 @@ body::before {
   color: var(--text-hi);
   margin: 0;
 }
+
+/* ---------- Chat window ---------- */
+.ditto-chat-window {
+  padding: 20px;
+  min-height: 320px;
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ditto-chat-msg {
+  display: flex;
+}
+.ditto-chat-msg[data-role="user"] {
+  justify-content: flex-end;
+}
+.ditto-chat-bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  line-height: 1.5;
+  font-size: 0.92rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--stroke);
+  color: var(--text-hi);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ditto-chat-msg[data-role="user"] .ditto-chat-bubble {
+  background: var(--grad-brand-soft);
+  border-color: var(--stroke-strong);
+}

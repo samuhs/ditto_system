@@ -17,6 +17,7 @@ const NAV: NavItem[] = [
   { to: "/results", label: "Resultados", icon: <ChartIcon /> },
   { to: "/prompts", label: "Prompts", icon: <FlaskIcon /> },
   { to: "/chat-configs", label: "Config. de chat", icon: <FlaskIcon /> },
+  { to: "/chat", label: "Conversa", icon: <FlaskIcon /> },
 ];
 
 export function Sidebar() {
