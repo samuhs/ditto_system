@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-import { ChartIcon, FlaskIcon, HomeIcon, UploadIcon } from "./icons";
+import { ChartIcon, FlaskIcon, GearIcon, HomeIcon, UploadIcon } from "./icons";
 
 interface NavItem {
   to: string;
@@ -54,6 +54,17 @@ export function Sidebar() {
           </Link>
         );
       })}
+
+      <Link
+        to="/configuracoes"
+        className="ditto-navlink"
+        data-active={pathname.startsWith("/configuracoes")}
+        aria-current={pathname.startsWith("/configuracoes") ? "page" : undefined}
+        style={{ marginTop: "auto" }}
+      >
+        <GearIcon />
+        <span>Configurações</span>
+      </Link>
 
       <div className="ditto-sidebar-foot">
         <div>v0.1 · pesquisa de doutorado</div>

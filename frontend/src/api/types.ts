@@ -141,3 +141,13 @@ export interface DialogueListParams {
   rated?: "all" | "rated" | "unrated";
   sort?: "recent" | "oldest" | "rating_asc" | "rating_desc";
 }
+
+export interface OllamaModel {
+  id: string;
+  model: string;
+}
+
+export interface AppSettings {
+  gemini_api_key_set: boolean;
+  ollama_models: OllamaModel[];
+}
