@@ -1,4 +1,4 @@
-.PHONY: up down logs test build install
+.PHONY: up down logs test build install ollama-up ollama-down
 
 build:
 	docker compose build
@@ -26,3 +26,17 @@ front-test:
 
 front-build:
 	cd frontend && npm run build
+
+ollama-up:
+	@if curl -sf http://localhost:11434/api/tags >/dev/null 2>&1; then \
+		echo "ollama ja esta rodando"; \
+	else \
+		echo "iniciando ollama serve..."; \
+		nohup ollama serve >/tmp/ollama.log 2>&1 & \
+		until curl -sf http://localhost:11434/api/tags >/dev/null 2>&1; do sleep 1; done; \
+		echo "ollama pronto"; \
+	fi; \
+	ollama list
+
+ollama-down:
+	@pkill -f "ollama serve" && echo "ollama parado" || echo "nenhum processo 'ollama serve' rodando"
