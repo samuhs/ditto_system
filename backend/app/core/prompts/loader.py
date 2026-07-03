@@ -11,6 +11,17 @@ PROMPT_SPECS: dict[str, dict[str, set[str]]] = {
         "answer": {"context", "question"},
     },
     "multi_query": {"generate": {"n", "question"}},
+    "hyde": {"hypothesis": {"question"}, "answer": {"context", "question"}},
+    "rerank": {"rerank": {"question", "documents"}, "answer": {"context", "question"}},
+    "crag": {
+        "grade": {"question", "context"},
+        "rewrite": {"question"},
+        "answer": {"context", "question"},
+    },
+    "compression": {
+        "compress": {"question", "context"},
+        "answer": {"context", "question"},
+    },
 }
 
 # Built-in fallbacks (used when a .md file is absent).
@@ -39,6 +50,62 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
         "generate": (
             "Generate {n} alternative search queries, one per line, that rephrase "
             "the following question to improve document retrieval. Question: {question}"
+        ),
+    },
+    "hyde": {
+        "hypothesis": (
+            "Escreva um paragrafo hipotetico, como se fosse um trecho de documento, "
+            "que responderia a pergunta abaixo. Escreva como um texto informativo "
+            "direto, sem dizer que e hipotetico.\n\nPergunta: {question}\n\nParagrafo:"
+        ),
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
+        ),
+    },
+    "rerank": {
+        "rerank": (
+            "Abaixo ha documentos numerados. Ordene-os do mais relevante ao menos "
+            "relevante para responder a pergunta. Responda apenas com os numeros "
+            "separados por virgula, do mais para o menos relevante (ex.: 2,0,1)."
+            "\n\nPergunta: {question}\n\nDocumentos:\n{documents}\n\nOrdem:"
+        ),
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
+        ),
+    },
+    "crag": {
+        "grade": (
+            "Avalie se o contexto abaixo e suficiente para responder a pergunta. "
+            "Responda comecando exatamente com 'SUFICIENTE' ou 'INSUFICIENTE', "
+            "seguido de uma breve justificativa.\n\nPergunta: {question}\n\n"
+            "Contexto:\n{context}\n\nAvaliacao:"
+        ),
+        "rewrite": (
+            "A busca anterior nao trouxe contexto suficiente. Reescreva a pergunta "
+            "como uma consulta de busca melhor e mais especifica. Responda apenas "
+            "com a nova consulta.\n\nPergunta: {question}\n\nNova consulta:"
+        ),
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
+        ),
+    },
+    "compression": {
+        "compress": (
+            "Extraia do contexto abaixo apenas as partes relevantes para responder "
+            "a pergunta, descartando o que for irrelevante. Preserve os fatos; nao "
+            "invente. Responda apenas com o extrato condensado.\n\n"
+            "Pergunta: {question}\n\nContexto:\n{context}\n\nExtrato relevante:"
+        ),
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
         ),
     },
 }
