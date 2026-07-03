@@ -11,6 +11,7 @@ PROMPT_SPECS: dict[str, dict[str, set[str]]] = {
         "answer": {"context", "question"},
     },
     "multi_query": {"generate": {"n", "question"}},
+    "hyde": {"hypothesis": {"question"}, "answer": {"context", "question"}},
 }
 
 # Built-in fallbacks (used when a .md file is absent).
@@ -39,6 +40,18 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
         "generate": (
             "Generate {n} alternative search queries, one per line, that rephrase "
             "the following question to improve document retrieval. Question: {question}"
+        ),
+    },
+    "hyde": {
+        "hypothesis": (
+            "Escreva um paragrafo hipotetico, como se fosse um trecho de documento, "
+            "que responderia a pergunta abaixo. Escreva como um texto informativo "
+            "direto, sem dizer que e hipotetico.\n\nPergunta: {question}\n\nParagrafo:"
+        ),
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
         ),
     },
 }
