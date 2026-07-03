@@ -1,5 +1,5 @@
 """Gemini embedding provider (via langchain-google-genai)."""
-from app.core.config.settings import get_settings
+from app.core.config.runtime import get_gemini_key
 from app.core.embedding.base import Embedder, embedding_registry
 
 
@@ -17,7 +17,7 @@ class GeminiEmbedder(Embedder):
 
             client = GoogleGenerativeAIEmbeddings(
                 model=model,
-                google_api_key=api_key or get_settings().gemini_api_key,
+                google_api_key=api_key or get_gemini_key(),
             )
         self._client = client
         self._dimension: int | None = None

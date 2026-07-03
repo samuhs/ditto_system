@@ -9,6 +9,16 @@ from app.core.db.base import Base
 from app.main import create_app
 
 
+@pytest.fixture(autouse=True)
+def _disable_dotenv(monkeypatch):
+    """Prevent the project .env from being loaded during tests.
+
+    Tests that need specific env values should set them explicitly via
+    monkeypatch.setenv. This avoids real secrets leaking into assertions.
+    """
+    monkeypatch.setenv("ENV_FILE", "")
+
+
 @pytest.fixture
 def client():
     """Test client for the FastAPI application."""

@@ -47,6 +47,7 @@ export interface ExperimentDetail {
   id: number;
   name: string;
   status: string;
+  pause_requested?: boolean;
   error?: string | null;
   progress?: ExperimentProgress;
   results: ExperimentResultRow[];
@@ -140,4 +141,14 @@ export interface DialogueListParams {
   date?: string | null;
   rated?: "all" | "rated" | "unrated";
   sort?: "recent" | "oldest" | "rating_asc" | "rating_desc";
+}
+
+export interface OllamaModel {
+  id: string;
+  model: string;
+}
+
+export interface AppSettings {
+  gemini_api_key_set: boolean;
+  ollama_models: OllamaModel[];
 }

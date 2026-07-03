@@ -12,7 +12,7 @@ from app.core.db.models import Experiment, ExperimentRun, RunResult
 from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
 from app.core.evaluation.runner import evaluate_sample
-from app.core.llm.base import build_llm
+from app.core.llm.factory import resolve_llm
 from app.core.prompts import PROMPT_SPECS
 from app.core.rag.base import build_rag
 from app.core.retrieval.base import build_retriever
@@ -45,7 +45,7 @@ class ExperimentDeps:
 
     store: QdrantStore
     session_factory: Callable[[], Session]
-    llm_factory: Callable = build_llm
+    llm_factory: Callable = resolve_llm
     embedder_factory: Callable = build_embedder
     retriever_factory: Callable = build_retriever
     rag_factory: Callable = build_rag

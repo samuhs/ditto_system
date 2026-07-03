@@ -1,4 +1,5 @@
 import type {
+  AppSettings,
   ChatConfig,
   ChatConfigInput,
   ChatMessage,
@@ -11,6 +12,7 @@ import type {
   ExperimentSummary,
   FlowSpec,
   IngestResult,
+  OllamaModel,
   Options,
   Persona,
   PromptsResponse,
@@ -157,5 +159,27 @@ export async function saveDialogueRating(
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rating }),
+  }));
+}
+
+export async function getSettings(): Promise<AppSettings> {
+  return asJson<AppSettings>(await fetch(`${BASE}/settings`));
+}
+
+export async function saveGeminiKey(key: string): Promise<{ gemini_api_key_set: boolean }> {
+  return asJson(await fetch(`${BASE}/settings/gemini-key`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key }),
+  }));
+}
+
+export async function saveOllamaModels(
+  models: OllamaModel[],
+): Promise<{ ollama_models: OllamaModel[] }> {
+  return asJson(await fetch(`${BASE}/settings/ollama-models`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ models }),
   }));
 }

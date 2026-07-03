@@ -16,6 +16,7 @@ import { DialoguePage } from "./pages/DialoguePage";
 import { DialoguesPage } from "./pages/DialoguesPage";
 import { PromptsPage } from "./pages/PromptsPage";
 import { ResultsPage } from "./pages/ResultsPage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 export function App() {
   const location = useLocation();
@@ -113,6 +114,14 @@ export function App() {
                   element={
                     <PageTransition>
                       <AgentePage />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/configuracoes"
+                  element={
+                    <PageTransition>
+                      <SettingsPage />
                     </PageTransition>
                   }
                 />

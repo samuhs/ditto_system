@@ -1,5 +1,5 @@
 """Gemini LLM provider (via langchain-google-genai)."""
-from app.core.config.settings import get_settings
+from app.core.config.runtime import get_gemini_key
 from app.core.llm.base import LLM, llm_registry
 
 
@@ -17,7 +17,7 @@ class GeminiLLM(LLM):
 
             client = ChatGoogleGenerativeAI(
                 model=model,
-                google_api_key=api_key or get_settings().gemini_api_key,
+                google_api_key=api_key or get_gemini_key(),
             )
         self._client = client
 
