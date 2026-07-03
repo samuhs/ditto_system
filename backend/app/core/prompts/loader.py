@@ -13,6 +13,11 @@ PROMPT_SPECS: dict[str, dict[str, set[str]]] = {
     "multi_query": {"generate": {"n", "question"}},
     "hyde": {"hypothesis": {"question"}, "answer": {"context", "question"}},
     "rerank": {"rerank": {"question", "documents"}, "answer": {"context", "question"}},
+    "crag": {
+        "grade": {"question", "context"},
+        "rewrite": {"question"},
+        "answer": {"context", "question"},
+    },
 }
 
 # Built-in fallbacks (used when a .md file is absent).
@@ -61,6 +66,24 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
             "relevante para responder a pergunta. Responda apenas com os numeros "
             "separados por virgula, do mais para o menos relevante (ex.: 2,0,1)."
             "\n\nPergunta: {question}\n\nDocumentos:\n{documents}\n\nOrdem:"
+        ),
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
+        ),
+    },
+    "crag": {
+        "grade": (
+            "Avalie se o contexto abaixo e suficiente para responder a pergunta. "
+            "Responda comecando exatamente com 'SUFICIENTE' ou 'INSUFICIENTE', "
+            "seguido de uma breve justificativa.\n\nPergunta: {question}\n\n"
+            "Contexto:\n{context}\n\nAvaliacao:"
+        ),
+        "rewrite": (
+            "A busca anterior nao trouxe contexto suficiente. Reescreva a pergunta "
+            "como uma consulta de busca melhor e mais especifica. Responda apenas "
+            "com a nova consulta.\n\nPergunta: {question}\n\nNova consulta:"
         ),
         "answer": (
             "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
