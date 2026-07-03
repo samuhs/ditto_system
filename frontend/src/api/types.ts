@@ -47,6 +47,7 @@ export interface ExperimentDetail {
   id: number;
   name: string;
   status: string;
+  pause_requested?: boolean;
   error?: string | null;
   progress?: ExperimentProgress;
   results: ExperimentResultRow[];

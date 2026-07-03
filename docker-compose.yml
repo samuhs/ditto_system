@@ -3,6 +3,7 @@ services:
     build: ./backend
     volumes:
       - ./backend/prompts:/app/prompts
+      - ./backend/config:/app/config
     ports:
       - "8000:8000"
     environment:

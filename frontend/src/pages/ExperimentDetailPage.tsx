@@ -216,16 +216,24 @@ export function ExperimentDetailPage() {
             {results.length} resultado(s) · {metricKeys.length} métrica(s)
           </Text>
           {isRunning && (
-            <Button
-              size="xs"
-              variant="light"
-              color="yellow"
-              loading={pausing}
-              onClick={handlePause}
-              ml="auto"
-            >
-              {pausing ? "Pausando…" : "Pausar"}
-            </Button>
+            <>
+              <Button
+                size="xs"
+                variant="light"
+                color="yellow"
+                loading={pausing}
+                disabled={pausing || (detail?.pause_requested ?? false)}
+                onClick={handlePause}
+                ml="auto"
+              >
+                {pausing || detail?.pause_requested ? "Pausando…" : "Pausar"}
+              </Button>
+              {detail?.pause_requested && (
+                <Text size="xs" c="dimmed">
+                  aguardando a combinação atual terminar…
+                </Text>
+              )}
+            </>
           )}
         </Group>
       )}

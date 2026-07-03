@@ -9,7 +9,7 @@ from app.core.prompts import PROMPT_SPECS, load_technique
 from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.naming import generate_experiment_name
-from app.experiments.orchestrator import ExperimentDeps, request_pause, run_experiment
+from app.experiments.orchestrator import ExperimentDeps, _pause_requested, request_pause, run_experiment
 from app.experiments.schemas import ExperimentConfig
 
 router = APIRouter()
@@ -150,6 +150,7 @@ def get_experiment(
             "id": experiment.id,
             "name": experiment.name,
             "status": experiment.status,
+            "pause_requested": _pause_requested(experiment_id),
             "error": cfg.get("error") or None,
             "progress": {"completed": completed_combos, "total": total_combos},
             "prompts": cfg.get("prompts"),

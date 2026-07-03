@@ -151,6 +151,20 @@ describe("ExperimentDetailPage", () => {
     expect(await screen.findByText(/Answer using/)).toBeInTheDocument();
   });
 
+  it("shows the pausing state when pause is requested", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "running-exp",
+      status: "running",
+      pause_requested: true,
+      progress: { completed: 1, total: 4 },
+      results: [],
+    });
+    renderPage();
+    expect(await screen.findByText(/aguardando a combinação atual terminar/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /pausando/i })).toBeDisabled();
+  });
+
   it("shows a notice when the experiment has no prompt snapshot", async () => {
     vi.mocked(client.getExperiment).mockResolvedValue({
       id: 7, name: "old-exp", status: "done", results: [

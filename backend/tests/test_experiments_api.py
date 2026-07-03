@@ -134,6 +134,18 @@ def test_experiment_records_llm_dimension(client):
     assert llms_in_rows == {"gemini", "custom"}
 
 
+def test_get_experiment_reports_pause_requested(client):
+    from app.experiments.orchestrator import _pause_requests, request_pause
+
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    request_pause(exp_id)
+    try:
+        assert client.get(f"/experiments/{exp_id}").json()["pause_requested"] is True
+    finally:
+        _pause_requests.discard(exp_id)
+
+
 def test_experiment_snapshots_prompts(client):
     config = {
         "base": "viagem",
