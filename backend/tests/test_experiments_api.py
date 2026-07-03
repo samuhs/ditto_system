@@ -120,6 +120,20 @@ def test_create_experiment_csv_missing_column_422(client):
     assert response.status_code == 422
 
 
+def test_experiment_records_llm_dimension(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    config = json.dumps({
+        "base": "viagem", "chunkings": ["recursive"], "embeddings": ["gemini"],
+        "rags": ["naive"], "retrievers": ["similarity"], "metrics": ["answer_relevancy"],
+        "llms": ["gemini", "custom"],
+    })
+    resp = client.post("/experiments", data={"config": config}, files=files)
+    assert resp.status_code == 200
+    detail = client.get(f"/experiments/{resp.json()['id']}").json()
+    llms_in_rows = {row["llm"] for row in detail["results"]}
+    assert llms_in_rows == {"gemini", "custom"}
+
+
 def test_experiment_snapshots_prompts(client):
     config = {
         "base": "viagem",

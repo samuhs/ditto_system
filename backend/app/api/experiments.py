@@ -128,6 +128,7 @@ def get_experiment(
                         "embedding": run.embedding,
                         "rag": run.rag_technique,
                         "retriever": run.retriever,
+                        "llm": run.llm or "gemini",
                         "question": result.question,
                         "answer": result.generated_answer,
                         "scores": result.scores,
@@ -136,11 +137,13 @@ def get_experiment(
                     }
                 )
         cfg = experiment.config or {}
+        n_llms = len(cfg.get("llms", [])) or 1
         total_combos = (
             len(cfg.get("chunkings", []))
             * len(cfg.get("embeddings", []))
             * len(cfg.get("rags", []))
             * len(cfg.get("retrievers", []))
+            * n_llms
         )
         completed_combos = sum(1 for run in experiment.runs if run.status == "done")
         return {

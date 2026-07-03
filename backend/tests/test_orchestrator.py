@@ -296,6 +296,49 @@ def test_run_experiment_cartesian_product(session_factory):
     check.close()
 
 
+def test_run_experiment_includes_llm_dimension(session_factory):
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="One. Two. Three sentences here.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"]),
+        store,
+        embedder_factory=_embedder_factory,
+    )
+    session = session_factory()
+    experiment = Experiment(name="llm-dim", status="pending", config={})
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+
+    seen_llm_names = []
+
+    def _recording_llm_factory(name, **kwargs):
+        seen_llm_names.append(name)
+        return _FakeLLM()
+
+    config = ExperimentConfig(
+        base="viagem", chunkings=["recursive"], embeddings=["gemini"],
+        rags=["naive"], retrievers=["similarity"], metrics=["answer_relevancy"],
+        llms=["gemini", "ollama"],
+    )
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=_recording_llm_factory,
+        embedder_factory=_embedder_factory,
+    )
+
+    run_experiment(experiment_id, config, [QuestionItem(text="q")], deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert len(stored.runs) == 2  # 1*1*1*1*2 llms
+    assert {r.llm for r in stored.runs} == {"gemini", "ollama"}
+    check.close()
+    assert set(seen_llm_names) == {"gemini", "ollama"}
+
+
 def test_rag_not_in_prompt_specs_receives_no_prompts_kwarg(session_factory):
     """A RAG technique absent from PROMPT_SPECS must not be passed a prompts kwarg."""
     from app.core.rag.base import RAGResult

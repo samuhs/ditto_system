@@ -19,5 +19,5 @@ class ExperimentConfig(BaseModel):
     rags: list[str]
     retrievers: list[str]
     metrics: list[str]
-    llm: str = "gemini"
+    llms: list[str] = ["gemini"]
     eval_embedding: str = "gemini"
