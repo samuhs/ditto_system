@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends
 
 from app.core.chunking.base import chunking_registry
+from app.core.config.runtime import get_ollama_models
 from app.core.embedding.base import embedding_registry
 from app.core.evaluation.base import evaluation_registry
 from app.core.llm.base import llm_registry
@@ -33,7 +34,7 @@ def options(store: QdrantStore = Depends(get_store)) -> dict[str, list[str]]:
         "bases": bases,
         "chunkings": chunking_registry.names(),
         "embeddings": embedding_registry.names(),
-        "llms": llm_registry.names(),
+        "llms": llm_registry.names() + [m["id"] for m in get_ollama_models()],
         "rags": rag_registry.names(),
         "retrievers": retrieval_registry.names(),
         "metrics": evaluation_registry.names(),
