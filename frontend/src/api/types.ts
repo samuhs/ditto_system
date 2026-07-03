@@ -30,6 +30,7 @@ export interface ExperimentResultRow {
   embedding: string;
   rag: string;
   retriever: string;
+  llm: string;
   question: string;
   answer: string;
   scores: Record<string, number>;

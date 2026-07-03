@@ -64,6 +64,7 @@ export function ExperimentDetailPage() {
   const [fEmbeddings, setFEmbeddings] = useState<string[]>([]);
   const [fRags, setFRags] = useState<string[]>([]);
   const [fRetrievers, setFRetrievers] = useState<string[]>([]);
+  const [fLlms, setFLlms] = useState<string[]>([]);
 
   // sorting & pagination
   const [sortKey, setSortKey] = useState<string>(MEDIA_KEY);
@@ -139,9 +140,10 @@ export function ExperimentDetailPage() {
         (fChunkings.length === 0 || fChunkings.includes(r.chunking)) &&
         (fEmbeddings.length === 0 || fEmbeddings.includes(r.embedding)) &&
         (fRags.length === 0 || fRags.includes(r.rag)) &&
-        (fRetrievers.length === 0 || fRetrievers.includes(r.retriever)),
+        (fRetrievers.length === 0 || fRetrievers.includes(r.retriever)) &&
+        (fLlms.length === 0 || fLlms.includes(r.llm)),
     );
-  }, [results, fChunkings, fEmbeddings, fRags, fRetrievers]);
+  }, [results, fChunkings, fEmbeddings, fRags, fRetrievers, fLlms]);
 
   const sorted = useMemo(() => {
     const val = (r: ExperimentResultRow): number =>
@@ -154,7 +156,7 @@ export function ExperimentDetailPage() {
   // reset to first page whenever the visible set changes
   useEffect(() => {
     setPage(1);
-  }, [fChunkings, fEmbeddings, fRags, fRetrievers, sortKey, sortDir, pageSize]);
+  }, [fChunkings, fEmbeddings, fRags, fRetrievers, fLlms, sortKey, sortDir, pageSize]);
 
   const size = Number(pageSize);
   const pageCount = Math.max(1, Math.ceil(sorted.length / size));
@@ -179,7 +181,8 @@ export function ExperimentDetailPage() {
     fChunkings.length > 0 ||
     fEmbeddings.length > 0 ||
     fRags.length > 0 ||
-    fRetrievers.length > 0;
+    fRetrievers.length > 0 ||
+    fLlms.length > 0;
 
   return (
     <div>
@@ -325,6 +328,15 @@ export function ExperimentDetailPage() {
               clearable
               size="xs"
             />
+            <MultiSelect
+              label="LLMs"
+              placeholder="Todos"
+              data={distinct((r) => r.llm)}
+              value={fLlms}
+              onChange={setFLlms}
+              clearable
+              size="xs"
+            />
             {hasFilters && (
               <Button
                 variant="subtle"
@@ -336,6 +348,7 @@ export function ExperimentDetailPage() {
                   setFEmbeddings([]);
                   setFRags([]);
                   setFRetrievers([]);
+                  setFLlms([]);
                 }}
               >
                 Limpar filtros
@@ -399,6 +412,7 @@ export function ExperimentDetailPage() {
                           <span>{row.embedding}</span>
                           <span>{row.rag}</span>
                           <span>{row.retriever}</span>
+                          <span>{row.llm}</span>
                         </div>
                       </td>
                       <td className="ditto-cell-clip">
@@ -491,6 +505,7 @@ export function ExperimentDetailPage() {
               <span>{modalRow.embedding}</span>
               <span>{modalRow.rag}</span>
               <span>{modalRow.retriever}</span>
+              <span>{modalRow.llm}</span>
             </div>
 
             <Text className="ditto-eyebrow" mb={6}>
