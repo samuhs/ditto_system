@@ -2,6 +2,7 @@
 from app.core.llm.base import LLM, build_llm, llm_registry
 from app.core.llm.custom import CustomLLM
 from app.core.llm.gemini import GeminiLLM
+from app.core.llm.ollama import OllamaLLM
 
 
 class _FakeResponse:
@@ -50,3 +51,44 @@ def test_build_llm_constructs_provider():
     )
     assert isinstance(custom, CustomLLM)
     assert custom.generate("y") == "generated answer"
+
+
+def test_ollama_registered():
+    assert "ollama" in llm_registry.names()
+
+
+def test_ollama_generate_uses_injected_client():
+    client = _FakeClient()
+    llm = OllamaLLM(client=client)
+    assert llm.generate("hi") == "generated answer"
+    assert client.last_prompt == "hi"
+
+
+def test_ollama_uses_settings_defaults(monkeypatch):
+    import langchain_openai
+
+    from app.core.config.settings import get_settings
+
+    captured = {}
+
+    class _FakeChatOpenAI:
+        def __init__(self, model, base_url, api_key):
+            captured["model"] = model
+            captured["base_url"] = base_url
+            captured["api_key"] = api_key
+
+        def invoke(self, prompt):
+            return _FakeResponse("ok")
+
+    monkeypatch.setattr(langchain_openai, "ChatOpenAI", _FakeChatOpenAI)
+    monkeypatch.setenv("OLLAMA_MODEL", "qwen2.5:3b-instruct")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434/v1")
+    get_settings.cache_clear()
+    try:
+        llm = OllamaLLM()
+        assert captured["model"] == "qwen2.5:3b-instruct"
+        assert captured["base_url"] == "http://host.docker.internal:11434/v1"
+        assert captured["api_key"] == "ollama"
+        assert llm.generate("x") == "ok"
+    finally:
+        get_settings.cache_clear()
