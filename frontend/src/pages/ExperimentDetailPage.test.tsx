@@ -92,9 +92,8 @@ describe("ExperimentDetailPage", () => {
     await screen.findAllByText(/recursive/);
     await user.click(screen.getAllByLabelText(/llms/i)[0]);
     await user.click(await screen.findByRole("option", { name: "ollama" }));
-    await waitFor(() => {
-      expect(screen.queryAllByText("gemini").length).toBeGreaterThan(0);
-    });
+    await waitFor(() => expect(screen.queryByText("Pergunta A")).not.toBeInTheDocument());
+    expect(screen.getByText("Pergunta B")).toBeInTheDocument();
   });
 
   it("opens a modal with full pergunta and resposta when a row is clicked", async () => {
