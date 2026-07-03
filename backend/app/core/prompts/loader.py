@@ -18,6 +18,10 @@ PROMPT_SPECS: dict[str, dict[str, set[str]]] = {
         "rewrite": {"question"},
         "answer": {"context", "question"},
     },
+    "compression": {
+        "compress": {"question", "context"},
+        "answer": {"context", "question"},
+    },
 }
 
 # Built-in fallbacks (used when a .md file is absent).
@@ -84,6 +88,19 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
             "A busca anterior nao trouxe contexto suficiente. Reescreva a pergunta "
             "como uma consulta de busca melhor e mais especifica. Responda apenas "
             "com a nova consulta.\n\nPergunta: {question}\n\nNova consulta:"
+        ),
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
+        ),
+    },
+    "compression": {
+        "compress": (
+            "Extraia do contexto abaixo apenas as partes relevantes para responder "
+            "a pergunta, descartando o que for irrelevante. Preserve os fatos; nao "
+            "invente. Responda apenas com o extrato condensado.\n\n"
+            "Pergunta: {question}\n\nContexto:\n{context}\n\nExtrato relevante:"
         ),
         "answer": (
             "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "

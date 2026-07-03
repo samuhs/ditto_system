@@ -1,6 +1,7 @@
 """RAG package. Importing it registers the built-in techniques."""
 from app.core.rag.agentic import AgenticRAG
 from app.core.rag.base import RAG, RAGResult, build_rag, format_context, rag_registry
+from app.core.rag.compression import CompressionRAG
 from app.core.rag.crag import CragRAG
 from app.core.rag.hyde import HydeRAG
 from app.core.rag.naive import NaiveRAG
@@ -14,6 +15,7 @@ __all__ = [
     "rag_registry",
     "NaiveRAG",
     "AgenticRAG",
+    "CompressionRAG",
     "CragRAG",
     "HydeRAG",
     "RerankRAG",
