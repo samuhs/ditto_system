@@ -55,4 +55,16 @@ describe("ExperimentPage", () => {
     await user.click(screen.getByRole("button", { name: /limpar tudo/i }));
     expect(screen.getByRole("button", { name: /preencher tudo/i })).toBeInTheDocument();
   });
+
+  it("includes llms in the submitted config", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    const fillBtn = await screen.findByRole("button", { name: /preencher tudo/i });
+    await user.click(fillBtn);
+    await user.click(screen.getByRole("button", { name: /gerar/i }));
+    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    const form = vi.mocked(client.createExperiment).mock.calls[0][0] as FormData;
+    const config = JSON.parse(form.get("config") as string);
+    expect(config.llms).toEqual(["gemini"]);
+  });
 });

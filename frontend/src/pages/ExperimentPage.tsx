@@ -25,6 +25,7 @@ export function ExperimentPage() {
   const [embeddings, setEmbeddings] = useState<string[]>([]);
   const [rags, setRags] = useState<string[]>([]);
   const [retrievers, setRetrievers] = useState<string[]>([]);
+  const [llms, setLlms] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
   const [csv, setCsv] = useState<File | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export function ExperimentPage() {
     embeddings.length === options.embeddings.length &&
     rags.length === options.rags.length &&
     retrievers.length === options.retrievers.length &&
+    llms.length === options.llms.length &&
     metrics.length === options.metrics.length;
 
   function toggleAll() {
@@ -45,12 +47,14 @@ export function ExperimentPage() {
       setEmbeddings([]);
       setRags([]);
       setRetrievers([]);
+      setLlms([]);
       setMetrics([]);
     } else {
       setChunkings(options?.chunkings ?? []);
       setEmbeddings(options?.embeddings ?? []);
       setRags(options?.rags ?? []);
       setRetrievers(options?.retrievers ?? []);
+      setLlms(options?.llms ?? []);
       setMetrics(options?.metrics ?? []);
     }
   }
@@ -69,6 +73,7 @@ export function ExperimentPage() {
         embeddings,
         rags,
         retrievers,
+        llms,
         metrics,
       };
       const form = new FormData();
@@ -157,14 +162,24 @@ export function ExperimentPage() {
               searchable
             />
           </Group>
-          <MultiSelect
-            label="Métricas"
-            placeholder="Selecione"
-            data={options?.metrics ?? []}
-            value={metrics}
-            onChange={setMetrics}
-            searchable
-          />
+          <Group grow align="flex-start">
+            <MultiSelect
+              label="LLMs"
+              placeholder="Selecione"
+              data={options?.llms ?? []}
+              value={llms}
+              onChange={setLlms}
+              searchable
+            />
+            <MultiSelect
+              label="Métricas"
+              placeholder="Selecione"
+              data={options?.metrics ?? []}
+              value={metrics}
+              onChange={setMetrics}
+              searchable
+            />
+          </Group>
           <FileInput
             label="Perguntas (CSV)"
             placeholder="Escolher arquivo .csv"
