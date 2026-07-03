@@ -12,6 +12,7 @@ PROMPT_SPECS: dict[str, dict[str, set[str]]] = {
     },
     "multi_query": {"generate": {"n", "question"}},
     "hyde": {"hypothesis": {"question"}, "answer": {"context", "question"}},
+    "rerank": {"rerank": {"question", "documents"}, "answer": {"context", "question"}},
 }
 
 # Built-in fallbacks (used when a .md file is absent).
@@ -47,6 +48,19 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
             "Escreva um paragrafo hipotetico, como se fosse um trecho de documento, "
             "que responderia a pergunta abaixo. Escreva como um texto informativo "
             "direto, sem dizer que e hipotetico.\n\nPergunta: {question}\n\nParagrafo:"
+        ),
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
+        ),
+    },
+    "rerank": {
+        "rerank": (
+            "Abaixo ha documentos numerados. Ordene-os do mais relevante ao menos "
+            "relevante para responder a pergunta. Responda apenas com os numeros "
+            "separados por virgula, do mais para o menos relevante (ex.: 2,0,1)."
+            "\n\nPergunta: {question}\n\nDocumentos:\n{documents}\n\nOrdem:"
         ),
         "answer": (
             "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
