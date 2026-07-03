@@ -52,5 +52,26 @@ def test_experiment_config_defaults():
         metrics=["answer_relevancy"],
     )
     assert config.name is None
-    assert config.llm == "gemini"
+    assert config.llms == ["gemini"]
     assert config.eval_embedding == "gemini"
+
+
+def test_experiment_config_llms_defaults_to_gemini():
+    from app.experiments.schemas import ExperimentConfig
+
+    cfg = ExperimentConfig(
+        base="viagem", chunkings=["recursive"], embeddings=["gemini"],
+        rags=["naive"], retrievers=["similarity"], metrics=["answer_relevancy"],
+    )
+    assert cfg.llms == ["gemini"]
+
+
+def test_experiment_config_parses_llms_list():
+    from app.experiments.schemas import ExperimentConfig
+
+    cfg = ExperimentConfig(
+        base="viagem", chunkings=["recursive"], embeddings=["gemini"],
+        rags=["naive"], retrievers=["similarity"], metrics=["answer_relevancy"],
+        llms=["gemini", "ollama"],
+    )
+    assert cfg.llms == ["gemini", "ollama"]

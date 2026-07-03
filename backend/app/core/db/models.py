@@ -35,6 +35,7 @@ class ExperimentRun(Base):
     embedding: Mapped[str] = mapped_column(String(60))
     rag_technique: Mapped[str] = mapped_column(String(60))
     retriever: Mapped[str] = mapped_column(String(60))
+    llm: Mapped[str | None] = mapped_column(String(60), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")
 
     experiment: Mapped["Experiment"] = relationship(back_populates="runs")

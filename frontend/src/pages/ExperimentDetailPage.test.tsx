@@ -1,5 +1,5 @@
 import { MantineProvider } from "@mantine/core";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -33,6 +33,7 @@ beforeEach(() => {
         embedding: "gemini",
         rag: "naive",
         retriever: "similarity",
+        llm: "gemini",
         question: "Pergunta A",
         answer: "Resposta A completa.",
         scores: { answer_relevancy: 0.2, faithfulness: 0.4 },
@@ -44,6 +45,7 @@ beforeEach(() => {
         embedding: "gemini",
         rag: "agentic",
         retriever: "mmr",
+        llm: "ollama",
         question: "Pergunta B",
         answer: "Resposta B completa.",
         scores: { answer_relevancy: 0.9, faithfulness: 0.8 },
@@ -81,6 +83,16 @@ describe("ExperimentDetailPage", () => {
     await user.click(option);
     // Only Pergunta B uses mmr
     expect(screen.queryByText("Pergunta A")).not.toBeInTheDocument();
+    expect(screen.getByText("Pergunta B")).toBeInTheDocument();
+  });
+
+  it("filters rows by llm (ollama)", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await screen.findAllByText(/recursive/);
+    await user.click(screen.getAllByLabelText(/llms/i)[0]);
+    await user.click(await screen.findByRole("option", { name: "ollama" }));
+    await waitFor(() => expect(screen.queryByText("Pergunta A")).not.toBeInTheDocument());
     expect(screen.getByText("Pergunta B")).toBeInTheDocument();
   });
 
@@ -127,6 +139,7 @@ describe("ExperimentDetailPage", () => {
       results: [
         {
           chunking: "recursive", embedding: "gemini", rag: "naive", retriever: "similarity",
+          llm: "gemini",
           question: "Q", answer: "A", scores: { faithfulness: 0.8 }, latency_ms: 1, tokens: 1,
         },
       ],
@@ -142,6 +155,7 @@ describe("ExperimentDetailPage", () => {
     vi.mocked(client.getExperiment).mockResolvedValue({
       id: 7, name: "old-exp", status: "done", results: [
         { chunking: "recursive", embedding: "gemini", rag: "naive", retriever: "similarity",
+          llm: "gemini",
           question: "Q", answer: "A", scores: { faithfulness: 0.8 }, latency_ms: 1, tokens: 1 },
       ],
     });

@@ -128,12 +128,11 @@ def run_experiment(
         session.commit()
 
         prompt_snapshot = (experiment.config or {}).get("prompts", {})
-        llm = deps.llm_factory(config.llm)
         eval_embedder = deps.embedder_factory(config.eval_embedding)
 
         paused = False
-        for chunking, embedding, rag_name, retriever_name in itertools.product(
-            config.chunkings, config.embeddings, config.rags, config.retrievers
+        for chunking, embedding, rag_name, retriever_name, llm_name in itertools.product(
+            config.chunkings, config.embeddings, config.rags, config.retrievers, config.llms
         ):
             # Checkpoint: stop before starting a new combination if paused.
             if _pause_requested(experiment_id):
@@ -146,12 +145,14 @@ def run_experiment(
                 embedding=embedding,
                 rag_technique=rag_name,
                 retriever=retriever_name,
+                llm=llm_name,
                 status="running",
             )
             session.add(run)
             session.commit()
 
             embedder = deps.embedder_factory(embedding)
+            llm = deps.llm_factory(llm_name)
             col = collection_name(config.base, chunking, embedding)
             retriever = _build_retriever(
                 deps, retriever_name, col, embedder, llm,
