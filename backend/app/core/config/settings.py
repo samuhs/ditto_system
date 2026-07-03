@@ -1,4 +1,5 @@
 """Application configuration read from environment."""
+import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,5 +19,10 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Returns cached application settings."""
-    return Settings()
+    """Returns cached application settings.
+
+    Respects ENV_FILE env var: set to empty string to disable .env reading
+    (useful in tests to prevent the project .env from leaking into assertions).
+    """
+    env_file = os.environ.get("ENV_FILE", ".env") or None
+    return Settings(_env_file=env_file)
