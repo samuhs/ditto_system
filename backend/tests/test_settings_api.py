@@ -39,6 +39,22 @@ def test_put_ollama_models_persists(client):
     assert resp.json()["ollama_models"] == [{"id": "qwen", "model": "qwen2.5:3b-instruct"}]
 
 
+def test_get_settings_empty_env_key_is_not_set(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app.core.config.settings import get_settings
+    from app.main import create_app
+
+    monkeypatch.setenv("APP_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    get_settings.cache_clear()
+    try:
+        c = TestClient(create_app())
+        assert c.get("/settings").json()["gemini_api_key_set"] is False
+    finally:
+        get_settings.cache_clear()
+
+
 def test_put_ollama_models_rejects_collision(client):
     resp = client.put("/settings/ollama-models", json={"models": [{"id": "gemini", "model": "x"}]})
     assert resp.status_code == 422

@@ -41,8 +41,9 @@ def save_config(data: dict) -> None:
 
 
 def get_gemini_key() -> str | None:
-    """The runtime Gemini key if set, else the env default."""
-    return load_config().get("gemini_api_key") or get_settings().gemini_api_key
+    """The runtime Gemini key if set (non-empty), else the env default (or None)."""
+    key = load_config().get("gemini_api_key") or get_settings().gemini_api_key
+    return key or None
 
 
 def set_gemini_key(key: str | None) -> None:

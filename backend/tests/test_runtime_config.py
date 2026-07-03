@@ -25,6 +25,17 @@ def test_gemini_key_file_overrides_env(cfg_dir, monkeypatch):
         get_settings.cache_clear()
 
 
+def test_empty_env_gemini_key_is_none(cfg_dir, monkeypatch):
+    from app.core.config.settings import get_settings
+
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    get_settings.cache_clear()
+    try:
+        assert runtime.get_gemini_key() is None
+    finally:
+        get_settings.cache_clear()
+
+
 def test_ollama_models_roundtrip(cfg_dir):
     assert runtime.get_ollama_models() == []
     runtime.set_ollama_models(
