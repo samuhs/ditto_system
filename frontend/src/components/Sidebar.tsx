@@ -55,18 +55,17 @@ export function Sidebar() {
         );
       })}
 
-      <Link
-        to="/configuracoes"
-        className="ditto-navlink"
-        data-active={pathname.startsWith("/configuracoes")}
-        aria-current={pathname.startsWith("/configuracoes") ? "page" : undefined}
-        style={{ marginTop: "auto" }}
-      >
-        <GearIcon />
-        <span>Configurações</span>
-      </Link>
-
-      <div className="ditto-sidebar-foot">
+      <div className="ditto-sidebar-foot" style={{ marginTop: "auto" }}>
+        <Link
+          to="/configuracoes"
+          className="ditto-navlink ditto-foot-link"
+          data-active={pathname.startsWith("/configuracoes")}
+          aria-current={pathname.startsWith("/configuracoes") ? "page" : undefined}
+          style={{ marginBottom: 12 }}
+        >
+          <GearIcon />
+          <span>Configurações</span>
+        </Link>
         <div>v0.1 · pesquisa de doutorado</div>
         <div>RAG · chunking × embedding × técnica</div>
       </div>
