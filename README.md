@@ -105,7 +105,7 @@ make ollama-down
 #    it then appears as an LLM option in experiments and chat.
 ```
 
-> **Note:** local generation still uses **Gemini for embeddings** in the default Docker image. To run embeddings locally too, install the local extra (`sentence-transformers`) and run the backend from source (see below) — the `e5` / `paraphrase` embedders download model weights on first use.
+> **Note:** the Docker image bundles the local embedders (`e5`, `paraphrase`, via `sentence-transformers`) so you can run **fully offline** — combine a local Ollama LLM with a local embedder and skip Gemini entirely. The models download their weights on first use (cached in the `hf_cache` volume, so it happens only once). This makes the image larger; if you only use Gemini embeddings, drop the `[local]` extra from `backend/Dockerfile` to slim it down.
 
 ---
 

@@ -3,7 +3,9 @@ FROM python:3.11-slim
 WORKDIR /app
 
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir .
+# Install with the "local" extra so the sentence-transformers embedders
+# (e5, paraphrase) work in-container, not only the Gemini provider.
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir ".[local]"
 
 COPY . .
 

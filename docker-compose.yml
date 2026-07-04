@@ -4,6 +4,7 @@ services:
     volumes:
       - ./backend/prompts:/app/prompts
       - ./backend/config:/app/config
+      - hf_cache:/root/.cache/huggingface
     ports:
       - "8000:8000"
     environment:
@@ -52,3 +53,4 @@ services:
 volumes:
   pgdata:
   qdrantdata:
+  hf_cache:
