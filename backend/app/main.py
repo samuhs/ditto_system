@@ -23,7 +23,14 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI instance."""
-    app = FastAPI(title="Ditto - Fatia A", lifespan=lifespan)
+    app = FastAPI(
+        title="Ditto — RAG Experimentation Platform",
+        description=(
+            "Ingest documents, run RAG experiments across "
+            "chunking × embedding × rag × retriever × llm, and rank by quality metrics."
+        ),
+        lifespan=lifespan,
+    )
     app.include_router(health.router)
     app.include_router(options.router)
     app.include_router(ingest.router)
