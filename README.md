@@ -64,9 +64,9 @@ make up          # api:8000 · frontend:3000 · qdrant:6333 · postgres:5432
 
 Now open **http://localhost:3000** and walk through it:
 
-1. **Inserir documentos** — upload your files, or use the sample in `database/`.
-2. **Gerar teste** — pick the combinations you want and a questions CSV. The columns are `pergunta,resposta_referencia`.
-3. **Resultados** — see which combinations won, ranked by metric.
+1. **Inserir documentos**: upload your files, or use the sample in `database/`.
+2. **Gerar teste**: pick the combinations you want and a questions CSV. The columns are `pergunta,resposta_referencia`.
+3. **Resultados**: see which combinations won, ranked by metric.
 
 A few more commands when you need them:
 
