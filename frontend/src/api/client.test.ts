@@ -59,11 +59,14 @@ describe("api client", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/experiments", { method: "POST", body: form });
   });
 
-  it("listExperiments returns the summary list", async () => {
-    const summaries = [{ id: 1, name: "kind-ember-89", status: "done" }];
-    vi.stubGlobal("fetch", mockFetchOnce(summaries));
-    await expect(listExperiments()).resolves.toEqual(summaries);
-    expect(fetch).toHaveBeenCalledWith("/api/experiments");
+  it("listExperiments returns the paginated envelope", async () => {
+    const body = {
+      items: [{ id: 1, name: "kind-ember-89", status: "done", created_at: "2026-07-05T10:00:00" }],
+      total: 1, page: 1, page_size: 20,
+    };
+    vi.stubGlobal("fetch", mockFetchOnce(body));
+    await expect(listExperiments()).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith("/api/experiments?page=1&page_size=20");
   });
 
   it("getExperiment returns the detail", async () => {

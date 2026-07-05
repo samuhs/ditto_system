@@ -23,6 +23,14 @@ export interface ExperimentSummary {
   id: number;
   name: string;
   status: string;
+  created_at: string;
+}
+
+export interface ExperimentList {
+  items: ExperimentSummary[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 export interface ExperimentResultRow {
@@ -47,6 +55,8 @@ export interface ExperimentDetail {
   id: number;
   name: string;
   status: string;
+  created_at?: string;
+  finished_at?: string;
   pause_requested?: boolean;
   error?: string | null;
   progress?: ExperimentProgress;
