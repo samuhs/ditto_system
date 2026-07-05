@@ -1,5 +1,5 @@
 """Endpoints to create and inspect experiments."""
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
@@ -98,12 +98,27 @@ def pause_experiment(
 
 
 @router.get("/experiments")
-def list_experiments(deps: ExperimentDeps = Depends(get_experiment_deps)) -> list[dict]:
-    """List experiments, most recent first."""
+def list_experiments(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    deps: ExperimentDeps = Depends(get_experiment_deps),
+) -> dict:
+    """List experiments (paginated), most recent first."""
     session = deps.session_factory()
     try:
-        rows = session.query(Experiment).order_by(Experiment.id.desc()).all()
-        return [{"id": e.id, "name": e.name, "status": e.status} for e in rows]
+        query = session.query(Experiment).order_by(Experiment.id.desc())
+        total = query.count()
+        rows = query.offset((page - 1) * page_size).limit(page_size).all()
+        items = [
+            {
+                "id": e.id,
+                "name": e.name,
+                "status": e.status,
+                "created_at": e.created_at.isoformat() if e.created_at else None,
+            }
+            for e in rows
+        ]
+        return {"items": items, "total": total, "page": page, "page_size": page_size}
     finally:
         session.close()
 
@@ -150,6 +165,8 @@ def get_experiment(
             "id": experiment.id,
             "name": experiment.name,
             "status": experiment.status,
+            "created_at": experiment.created_at.isoformat() if experiment.created_at else None,
+            "finished_at": experiment.finished_at.isoformat() if experiment.finished_at else None,
             "pause_requested": _pause_requested(experiment_id),
             "error": cfg.get("error") or None,
             "progress": {"completed": completed_combos, "total": total_combos},
