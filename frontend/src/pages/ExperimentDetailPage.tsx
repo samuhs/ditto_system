@@ -15,6 +15,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getExperiment, pauseExperiment } from "../api/client";
 import type { ExperimentDetail, ExperimentResultRow } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
+import { formatDuration } from "../utils/duration";
 
 const MEDIA_KEY = "__media__";
 const PAGE_SIZES = ["10", "25", "50", "100"];
@@ -24,6 +25,18 @@ function statusColor(status: string): string {
   if (status === "failed") return "#f26dcf";
   if (status === "paused") return "#f2ec91";
   return "#05dbf2";
+}
+
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("pt-BR");
+}
+
+function experimentDurationMs(createdAt?: string, finishedAt?: string): number | null {
+  if (!createdAt) return null;
+  const start = new Date(createdAt).getTime();
+  const end = finishedAt ? new Date(finishedAt).getTime() : Date.now();
+  return end - start;
 }
 
 function scoreColor(value: number): string {
@@ -215,6 +228,12 @@ export function ExperimentDetailPage() {
           <Text size="sm" c="dimmed">
             {results.length} resultado(s) · {metricKeys.length} métrica(s)
           </Text>
+          {detail.created_at && (
+            <Text size="sm" c="dimmed">
+              Iniciado em {formatDate(detail.created_at)} · Duração{" "}
+              {formatDuration(experimentDurationMs(detail.created_at, detail.finished_at) ?? 0)}
+            </Text>
+          )}
           {isRunning && (
             <>
               <Button

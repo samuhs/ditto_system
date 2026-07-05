@@ -176,4 +176,36 @@ describe("ExperimentDetailPage", () => {
     renderPage();
     expect(await screen.findByText(/Prompts não registrados/i)).toBeInTheDocument();
   });
+
+  it("shows start time and computed duration for a finished experiment", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "timed",
+      status: "done",
+      created_at: "2026-07-05T10:00:00.000Z",
+      finished_at: "2026-07-05T10:02:10.000Z",
+      progress: { completed: 1, total: 1 },
+      results: [
+        {
+          chunking: "recursive", embedding: "gemini", rag: "naive", retriever: "similarity",
+          llm: "gemini", question: "Q", answer: "A", scores: { faithfulness: 0.8 }, latency_ms: 1, tokens: 1,
+        },
+      ],
+    });
+    renderPage();
+    expect(await screen.findByText(/Duração 2m 10s/)).toBeInTheDocument();
+  });
+
+  it("shows a live duration while running", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "running",
+      status: "running",
+      created_at: new Date(Date.now() - 45000).toISOString(),
+      progress: { completed: 0, total: 4 },
+      results: [],
+    });
+    renderPage();
+    expect(await screen.findByText(/Duração/)).toBeInTheDocument();
+  });
 });
