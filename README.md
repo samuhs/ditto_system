@@ -1,170 +1,168 @@
-# Ditto — RAG Experimentation Platform
+# Ditto
 
-Ditto is a self-hosted platform for **experimenting with Retrieval-Augmented Generation (RAG)**. You ingest your documents, then run a full grid of pipeline combinations — **chunking × embedding × RAG technique × retriever × LLM** — over a set of questions, and Ditto ranks each combination by quality metrics. It also ships a **conversational agent** (built on LangGraph) with swappable personas that reuses the same RAG pipelines.
+Ever tried to pick the "best" RAG setup and realized you're just guessing? Which chunker, which embedder, which retriever, which prompt trick, which model? Ditto runs the whole grid for you.
 
-It was built as a PhD research tool, but it works as a general playground for comparing RAG strategies on your own data.
+You feed it your documents and a list of questions. It tries every combination of **chunking × embedding × RAG technique × retriever × LLM**, scores each one on quality metrics, and shows you a ranked table. There's also a chat agent (built on LangGraph) with swappable personas that reuses the same pipelines, so you can actually talk to your data once you've found a setup you like.
 
-> **Language note:** the code (identifiers, docstrings) is in English; the **web UI is in Portuguese (PT-BR)**.
+I built it for my PhD, but it works fine as a general playground for comparing RAG strategies on your own stuff.
 
----
-
-## Features
-
-- **Experiment matrix** — combine 4 chunkers × 3 embedders × 6 RAG techniques × 4 retrievers × N LLMs in one run, over a CSV of questions, and rank by metrics.
-- **Pluggable everything** — every technique lives behind an *interface + registry*. Adding one = write a class and register it; it shows up automatically in the UI.
-  - **Chunking:** `fixed`, `recursive`, `token`, `semantic`
-  - **Embeddings:** `gemini` (+ local `e5`, `paraphrase` via the `local` extra)
-  - **RAG techniques:** `naive`, `agentic`, `hyde`, `rerank`, `crag`, `compression`
-  - **Retrievers:** `similarity`, `mmr`, `multi_query`, `parent_document`
-  - **LLMs:** `gemini`, `ollama` (local, plus any named Ollama models you register), `custom` (any OpenAI-compatible endpoint)
-  - **Metrics:** `answer_relevancy`, `faithfulness`, `context_precision`, `context_recall`, `answer_correctness`, `rouge_l`
-- **Results explorer** — sortable/filterable table per experiment, per-metric columns, pagination.
-- **Conversational agent** — LangGraph flow (guardrail → triage → RAG → memory → persona) with editable prompts and swappable personas; save dialogues and score them 0–10.
-- **Prompt management** — view/edit the prompts each technique uses; each experiment snapshots the prompts it ran with.
-- **Local or cloud LLMs** — use Google Gemini, or run fully local generation with [Ollama](https://ollama.com) (register your models with friendly names in the Settings screen).
-- **Settings screen** — manage the Gemini API key and named Ollama models at runtime.
+> The code is in English. The web UI is in Portuguese (PT-BR), so heads up if that's not your language.
 
 ---
 
-## Architecture
+## What you get
+
+- **The big grid.** 4 chunkers, 3 embedders, 6 RAG techniques, 4 retrievers, and however many LLMs you want, run over a CSV of questions and ranked by metrics.
+- **Everything is a plugin.** Each technique sits behind an interface and a registry. Write a class, register it, and it shows up in the UI on its own. No wiring.
+  - Chunking: `fixed`, `recursive`, `token`, `semantic`
+  - Embeddings: `gemini`, plus local `e5` and `paraphrase`
+  - RAG: `naive`, `agentic`, `hyde`, `rerank`, `crag`, `compression`
+  - Retrievers: `similarity`, `mmr`, `multi_query`, `parent_document`
+  - LLMs: `gemini`, `ollama` (local, name as many models as you want), `custom` (any OpenAI-compatible endpoint)
+  - Metrics: `answer_relevancy`, `faithfulness`, `context_precision`, `context_recall`, `answer_correctness`, `rouge_l`
+- **A results table that doesn't fight you.** Sort by any metric, filter by any dimension, paginate.
+- **A chat agent.** LangGraph flow (guardrail, triage, RAG, memory, persona) with prompts you can edit and personas you can swap. Save the conversations and rate them 0 to 10.
+- **Prompt control.** See and edit the prompts each technique uses. Every experiment saves a snapshot of the prompts it ran with, so old results stay reproducible.
+- **Run it fully offline.** Pair a local Ollama model with a local embedder and you never touch a paid API.
+
+---
+
+## How it fits together
 
 ```
-┌───────────┐     ┌──────────────────────────┐     ┌──────────┐
-│ Frontend  │ ──▶ │ API (FastAPI, modular)   │ ──▶ │ Qdrant   │  vectors
-│ React+Vite│     │ ingestion / experiments  │     ├──────────┤
+┌───────────┐     ┌───────────────────────────┐     ┌──────────┐
+│ Frontend  │ ──▶ │ API (FastAPI, modular)    │ ──▶ │ Qdrant   │  vectors
+│ React+Vite│     │ ingestion / experiments   │     ├──────────┤
 │  (nginx)  │     │ chat / prompts / settings │ ──▶ │ Postgres │  runs & results
-└───────────┘     └──────────────────────────┘     └──────────┘
+└───────────┘     └───────────────────────────┘     └──────────┘
                           │
-                          ▼  (optional, on the host)
-                      Ollama  — local LLM generation
+                          ▼  (optional, on your host)
+                      Ollama  ·  local LLM generation
 ```
 
-- **`backend/`** — FastAPI modular monolith. Core lives in `backend/app/core/` (`chunking/`, `embedding/`, `retrieval/`, `rag/`, `llm/`, `evaluation/`, `chat/`, `vectorstore/`), each a registry of pluggable techniques. HTTP routers in `backend/app/api/`.
-- **`frontend/`** — React + Vite + TypeScript + Mantine; nginx proxies `/api/` to the backend.
-- **`database/`** — a sample document (a travel-guide FAQ) to try things out.
-- **`docs/superpowers/`** — design specs and implementation plans (development history).
+- `backend/` is a FastAPI modular monolith. The interesting parts live in `backend/app/core/` (`chunking/`, `embedding/`, `retrieval/`, `rag/`, `llm/`, `evaluation/`, `chat/`, `vectorstore/`), each one a registry of pluggable techniques. HTTP routes sit in `backend/app/api/`.
+- `frontend/` is React + Vite + TypeScript + Mantine. nginx proxies `/api/` to the backend.
+- `database/` has a sample document (a travel-guide FAQ) so you can kick the tires right away.
+- `docs/superpowers/` keeps the design specs and plans, if you want to see how it grew.
 
 ---
 
-## Quickstart (Docker)
+## Get it running (Docker)
 
-**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) + Docker Compose, and **either** a [Google Gemini API key](https://aistudio.google.com/apikey) **or** a local [Ollama](https://ollama.com) install. A Gemini key is the simplest way to get running (it powers the default embeddings).
+You'll need [Docker](https://docs.docker.com/get-docker/) with Compose, and either a [Gemini API key](https://aistudio.google.com/apikey) or a local [Ollama](https://ollama.com). Grabbing a Gemini key is the fastest way in, since it powers the default embeddings.
 
 ```bash
 git clone https://github.com/samuhs/ditto_system.git
 cd ditto_system
 
 cp .env.example .env
-#  → open .env and set GEMINI_API_KEY=...   (or leave blank and use the Settings screen later)
+# open .env and drop your key in GEMINI_API_KEY=...
+# (or leave it blank and set it later in the Settings screen)
 
 make up          # api:8000 · frontend:3000 · qdrant:6333 · postgres:5432
 ```
 
-Open **http://localhost:3000** and follow the flow:
+Now open **http://localhost:3000** and walk through it:
 
-1. **Inserir documentos** — ingest your files (or the sample in `database/`).
-2. **Gerar teste** — pick the combinations and a questions CSV (columns: `pergunta,resposta_referencia`).
-3. **Resultados** — compare combinations, ranked by metric.
+1. **Inserir documentos** — upload your files, or use the sample in `database/`.
+2. **Gerar teste** — pick the combinations you want and a questions CSV. The columns are `pergunta,resposta_referencia`.
+3. **Resultados** — see which combinations won, ranked by metric.
 
-Useful commands:
+A few more commands when you need them:
 
 ```bash
-make logs        # follow logs
-make down        # stop the stack
+make logs        # tail the logs
+make down        # stop everything
 make test        # backend tests (pytest)
 make front-test  # frontend tests (vitest)
 ```
 
 ---
 
-## Configuration
+## Configuring it
 
-Runtime config comes from `.env` (see `.env.example`):
+Most config comes from `.env` (there's a `.env.example` to copy):
 
-| Variable | Purpose | Default (Docker) |
+| Variable | What it's for | Docker default |
 |---|---|---|
 | `DATABASE_URL` | Postgres connection | `postgresql://ditto:ditto@postgres:5432/ditto` |
 | `QDRANT_URL` | Qdrant connection | `http://qdrant:6333` |
-| `GEMINI_API_KEY` | Google Gemini key (embeddings + Gemini LLM) | *(empty)* |
+| `GEMINI_API_KEY` | Gemini key (embeddings + Gemini LLM) | *(empty)* |
 
-The **Gemini API key** and **named Ollama models** can also be managed at runtime in the **Configurações** (Settings) screen — no restart needed. Runtime settings are stored in `backend/config/app_settings.json` (git-ignored; **plaintext**, so keep it local).
+You can also set the **Gemini key** and add **named Ollama models** straight from the **Configurações** screen in the app, no restart needed. Those runtime settings land in `backend/config/app_settings.json`. It's git-ignored and stored in plaintext, so keep it on your own machine.
 
-### Local LLMs with Ollama
+### Going local with Ollama
 
-The Docker image reaches an Ollama server running on your **host**.
+The Docker container talks to an Ollama server running on your host.
 
 ```bash
-# 1. install Ollama (https://ollama.com) and pull a model
+# grab a model
 ollama pull qwen2.5:3b-instruct
 
-# 2. start/stop the Ollama server (helpers)
-make ollama-up      # starts `ollama serve` if not already running
+# start and stop the server (there are helpers)
+make ollama-up      # boots `ollama serve` if it isn't up yet
 make ollama-down
 
-# 3. in the Settings screen, register a named model, e.g. id "qwen" → model "qwen2.5:3b-instruct"
-#    it then appears as an LLM option in experiments and chat.
+# then open the Settings screen and add a model:
+# id "qwen"  →  model "qwen2.5:3b-instruct"
+# it shows up as an LLM option in experiments and chat.
 ```
 
-> **Note:** the Docker image bundles the local embedders (`e5`, `paraphrase`, via `sentence-transformers`) so you can run **fully offline** — combine a local Ollama LLM with a local embedder and skip Gemini entirely. The models download their weights on first use (cached in the `hf_cache` volume, so it happens only once). This makes the image larger; if you only use Gemini embeddings, drop the `[local]` extra from `backend/Dockerfile` to slim it down.
+Want to skip Google entirely? The Docker image already bundles the local embedders (`e5`, `paraphrase`). Pick one of those plus a local Ollama model and nothing leaves your machine. The embedder pulls its weights the first time you use it and caches them in the `hf_cache` volume, so it only happens once. That does make the image chunky (PyTorch comes along for the ride). If you only ever use Gemini embeddings, drop the `[local]` extra from `backend/Dockerfile` and the image slims right back down.
 
 ---
 
-## Development (from source)
+## Running from source
 
-**Prerequisites:** Python 3.11+ and Node 22. You still need Qdrant and Postgres — the simplest way is `make up` for the datastores and running the app locally against them.
+You'll want Python 3.11+ and Node 22. You still need Qdrant and Postgres around, and the easy move is `make up` for just the datastores while you run the app locally.
 
 ```bash
-# Backend
+# backend
 cd backend
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"          # add "[dev,local]" for local embedders
-python -m pytest                 # run tests
+pip install -e ".[dev]"          # use "[dev,local]" if you want local embedders
+python -m pytest
 uvicorn app.main:app --reload
 
-# Frontend
+# frontend
 cd frontend
 npm install
-npm run dev                      # Vite dev server
-npm test                         # vitest (add -- --run for a single pass)
+npm run dev
+npm test                         # add -- --run for a single pass
 ```
 
-Conventions:
-- Every pluggable technique = **interface + registry**; adding one = create a class and register it.
-- Code (identifiers, docstrings, errors) in **English**; UI copy and prompt content in **PT-BR**.
-- Tests never touch the network or Postgres (Qdrant `:memory:`, SQLite, injected fakes).
+Three things to know before you touch the code:
 
-### Extending Ditto
+- Every technique is an interface plus a registry entry. To add one, you write a class and register it.
+- Code stays in English (names, docstrings, errors). UI copy and prompts stay in PT-BR.
+- Tests never hit the network or Postgres. They use Qdrant `:memory:`, SQLite, and injected fakes.
 
-To add, say, a new RAG technique:
+### Adding your own technique
 
-1. Create `backend/app/core/rag/<name>.py` implementing the `RAG` interface (`answer(query) -> RAGResult`).
+Say you want a new RAG technique:
+
+1. Drop `backend/app/core/rag/<name>.py` in place, implementing the `RAG` interface (`answer(query) -> RAGResult`).
 2. Call `rag_registry.register("<name>", YourClass)` and import it in `backend/app/core/rag/__init__.py`.
-3. (If it uses prompts) add its entry to `PROMPT_SPECS`/`DEFAULT_PROMPTS` and drop `.md` files under `backend/prompts/<name>/`.
+3. If it uses prompts, add an entry to `PROMPT_SPECS`/`DEFAULT_PROMPTS` and drop the `.md` files under `backend/prompts/<name>/`.
 
-It now appears automatically in `/options`, the experiment matrix, chat config, and the prompt-management screen. The same pattern applies to chunkers, embedders, retrievers, metrics, and LLM providers.
+That's it. It now shows up in `/options`, the experiment grid, the chat config, and the prompt editor. Same recipe for chunkers, embedders, retrievers, metrics, and LLM providers.
 
 ---
 
-## Security
+## One security note
 
-Ditto is a **local research tool**. It has **no authentication** and assumes a trusted, single-user environment. Do **not** expose it to the public internet. Secrets (the Gemini key) live in `.env` and `backend/config/app_settings.json` in plaintext — both are git-ignored; keep them on your machine. The default Postgres credentials (`ditto:ditto`) are for local use only — change them for any shared deployment.
+Ditto has no login and assumes it's running somewhere you trust, for one person. Please don't put it on the open internet. Your secrets (the Gemini key) sit in `.env` and `backend/config/app_settings.json` as plaintext. Both are git-ignored, so keep them local. The default Postgres password (`ditto:ditto`) is fine for your laptop and nothing else, so change it if you ever share the setup.
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Please:
-
-- Keep the interface + registry pattern for new techniques.
-- Add tests (backend: pytest, hermetic; frontend: vitest) and keep the suites green (`make test`, `make front-test`).
-- Match the surrounding code style; English in code, PT-BR in UI copy.
-
-Open an issue to discuss larger changes before a PR.
+Pull requests are welcome. Keep the interface-plus-registry pattern for new techniques, add tests (pytest for backend, vitest for frontend), and keep both suites green with `make test` and `make front-test`. English in the code, PT-BR in the UI. For anything big, open an issue first so we can talk it through.
 
 ---
 
 ## License
 
-[MIT](LICENSE) © 2026 Samuel Henrique Silva.
+[MIT](LICENSE), © 2026 Samuel Henrique Silva.
 
-Built as part of a PhD research project. If Ditto helps your work, a mention is appreciated.
+This started as a PhD project. If Ditto helps your work, a shout-out goes a long way.
