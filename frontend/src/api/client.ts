@@ -8,8 +8,8 @@ import type {
   DialogueList,
   DialogueListParams,
   ExperimentDetail,
+  ExperimentList,
   ExperimentRef,
-  ExperimentSummary,
   FlowSpec,
   IngestResult,
   OllamaModel,
@@ -58,8 +58,8 @@ export async function pauseExperiment(id: number): Promise<{ id: number; status:
   return asJson(await fetch(`${BASE}/experiments/${id}/pause`, { method: "POST" }));
 }
 
-export async function listExperiments(): Promise<ExperimentSummary[]> {
-  return asJson<ExperimentSummary[]>(await fetch(`${BASE}/experiments`));
+export async function listExperiments(page = 1, pageSize = 20): Promise<ExperimentList> {
+  return asJson<ExperimentList>(await fetch(`${BASE}/experiments?page=${page}&page_size=${pageSize}`));
 }
 
 export async function getPrompts(): Promise<PromptsResponse> {

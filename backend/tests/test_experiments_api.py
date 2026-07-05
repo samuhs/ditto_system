@@ -96,12 +96,27 @@ def test_create_experiment_runs_and_persists(client):
     assert "answer_relevancy" in detail["results"][0]["scores"]
 
 
-def test_list_experiments(client):
-    files = {"questions": ("q.csv", io.BytesIO(b"pergunta\nWhere?\n"), "text/csv")}
+def test_list_experiments_paginated(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
     client.post("/experiments", data={"config": _config_payload()}, files=files)
-    listing = client.get("/experiments").json()
-    assert len(listing) >= 1
-    assert {"id", "name", "status"} <= set(listing[0])
+    body = client.get("/experiments").json()
+    assert set(body.keys()) == {"items", "total", "page", "page_size"}
+    assert body["total"] >= 1
+    assert body["page"] == 1 and body["page_size"] == 20
+    item = body["items"][0]
+    assert {"id", "name", "status", "created_at"} <= set(item.keys())
+    assert item["created_at"]  # ISO string present
+    assert item["created_at"].endswith("+00:00")
+
+
+def test_get_experiment_includes_timestamps(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["created_at"]  # present
+    assert detail["created_at"].endswith("+00:00")
+    assert detail["finished_at"]  # experiment ran to completion → finished_at set
+    assert detail["finished_at"].endswith("+00:00")
 
 
 def test_get_missing_experiment_404(client):
