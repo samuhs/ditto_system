@@ -1,4 +1,5 @@
 """Endpoints to create and inspect experiments."""
+from datetime import timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +14,11 @@ from app.experiments.orchestrator import ExperimentDeps, _pause_requested, reque
 from app.experiments.schemas import ExperimentConfig
 
 router = APIRouter()
+
+
+def _iso_utc(dt):
+    """Serialize a naive-UTC datetime as a tz-aware ISO string (or None)."""
+    return dt.replace(tzinfo=timezone.utc).isoformat() if dt else None
 
 
 def _snapshot_prompts(config: ExperimentConfig) -> dict[str, dict[str, str]]:
@@ -114,7 +120,7 @@ def list_experiments(
                 "id": e.id,
                 "name": e.name,
                 "status": e.status,
-                "created_at": e.created_at.isoformat() if e.created_at else None,
+                "created_at": _iso_utc(e.created_at),
             }
             for e in rows
         ]
@@ -165,8 +171,8 @@ def get_experiment(
             "id": experiment.id,
             "name": experiment.name,
             "status": experiment.status,
-            "created_at": experiment.created_at.isoformat() if experiment.created_at else None,
-            "finished_at": experiment.finished_at.isoformat() if experiment.finished_at else None,
+            "created_at": _iso_utc(experiment.created_at),
+            "finished_at": _iso_utc(experiment.finished_at),
             "pause_requested": _pause_requested(experiment_id),
             "error": cfg.get("error") or None,
             "progress": {"completed": completed_combos, "total": total_combos},
