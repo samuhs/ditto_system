@@ -1,4 +1,4 @@
-.PHONY: up down logs test build install ollama-up ollama-down
+.PHONY: up down logs test build install ollama-up ollama-down docker-clean
 
 build:
 	docker compose build
@@ -11,6 +11,12 @@ down:
 
 logs:
 	docker compose logs -f
+
+# Frees build cache and dangling images left by rebuilds. Never touches volumes (data).
+docker-clean:
+	docker builder prune -f
+	docker image prune -f
+	docker system df
 
 install:
 	cd backend && pip install -e ".[dev]"
