@@ -181,3 +181,66 @@ def test_experiment_snapshots_prompts(client):
     assert "naive" in detail["prompts"]
     assert "answer" in detail["prompts"]["naive"]
     assert "{context}" in detail["prompts"]["naive"]["answer"]
+
+
+def _seed_experiment(client, name="Exp Árvore/1"):
+    """Insert an experiment with two results, one of them missing a metric."""
+    from app.core.db.models import Experiment, ExperimentRun, RunResult
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    try:
+        experiment = Experiment(name=name, status="done", config={})
+        run = ExperimentRun(
+            chunking="recursive", embedding="gemini", rag_technique="naive",
+            retriever="similarity", llm="gemini", status="done",
+        )
+        run.results = [
+            RunResult(
+                question="Onde fica?", reference_answer="Ali", generated_answer="Lá, perto",
+                scores={"faithfulness": 0.5, "answer_relevancy": 1.0}, latency_ms=120, tokens=42,
+            ),
+            RunResult(
+                question="Quando?", reference_answer=None, generated_answer="Amanhã",
+                scores={"answer_relevancy": 0.25}, latency_ms=80, tokens=10,
+            ),
+        ]
+        experiment.runs = [run]
+        session.add(experiment)
+        session.commit()
+        return experiment.id
+    finally:
+        session.close()
+
+
+def test_export_experiment_csv(client):
+    import csv
+
+    exp_id = _seed_experiment(client)
+    response = client.get(f"/experiments/{exp_id}/export.csv")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    disposition = response.headers["content-disposition"]
+    assert disposition.startswith("attachment;")
+    assert 'filename="Exp_Arvore_1.csv"' in disposition
+
+    text = response.content.decode("utf-8")
+    assert text.startswith("﻿")  # BOM so Excel detects UTF-8
+    rows = list(csv.reader(io.StringIO(text.lstrip("﻿"))))
+    assert rows[0] == [
+        "chunking", "embedding", "rag", "retriever", "llm",
+        "pergunta", "resposta_referencia", "resposta",
+        "answer_relevancy", "faithfulness", "media", "latency_ms", "tokens",
+    ]
+    assert len(rows) == 3
+    assert rows[1] == [
+        "recursive", "gemini", "naive", "similarity", "gemini",
+        "Onde fica?", "Ali", "Lá, perto", "1.0", "0.5", "0.75", "120", "42",
+    ]
+    # missing metric → empty cell; media averages only present scores
+    assert rows[2][6] == ""
+    assert rows[2][8:] == ["0.25", "", "0.25", "80", "10"]
+
+
+def test_export_missing_experiment_404(client):
+    assert client.get("/experiments/99999/export.csv").status_code == 404

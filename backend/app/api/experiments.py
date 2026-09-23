@@ -1,6 +1,11 @@
 """Endpoints to create and inspect experiments."""
+import csv
+import io
+import re
+import unicodedata
 from datetime import timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import Response
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
@@ -19,6 +24,56 @@ router = APIRouter()
 def _iso_utc(dt):
     """Serialize a naive-UTC datetime as a tz-aware ISO string (or None)."""
     return dt.replace(tzinfo=timezone.utc).isoformat() if dt else None
+
+
+def _result_rows(experiment: Experiment) -> list[dict]:
+    """Flatten an experiment's runs into one row per (combination, question)."""
+    rows = []
+    for run in experiment.runs:
+        for result in run.results:
+            rows.append(
+                {
+                    "chunking": run.chunking,
+                    "embedding": run.embedding,
+                    "rag": run.rag_technique,
+                    "retriever": run.retriever,
+                    "llm": run.llm or "gemini",
+                    "question": result.question,
+                    "reference": result.reference_answer,
+                    "answer": result.generated_answer,
+                    "scores": result.scores,
+                    "latency_ms": result.latency_ms,
+                    "tokens": result.tokens,
+                }
+            )
+    return rows
+
+
+def _safe_filename(name: str) -> str:
+    """Reduce an experiment name to an ASCII-only, filesystem-safe stem."""
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", ascii_name).strip("_") or "experiment"
+
+
+def _results_csv(rows: list[dict]) -> str:
+    """Render result rows as CSV with one column per metric plus the row mean."""
+    metric_keys = sorted({k for row in rows for k in row["scores"]})
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        ["chunking", "embedding", "rag", "retriever", "llm",
+         "pergunta", "resposta_referencia", "resposta",
+         *metric_keys, "media", "latency_ms", "tokens"]
+    )
+    for row in rows:
+        scores = row["scores"]
+        mean = sum(scores.values()) / len(scores) if scores else ""
+        writer.writerow(
+            [row["chunking"], row["embedding"], row["rag"], row["retriever"], row["llm"],
+             row["question"], row["reference"] or "", row["answer"],
+             *(scores.get(k, "") for k in metric_keys), mean, row["latency_ms"], row["tokens"]]
+        )
+    return buffer.getvalue()
 
 
 def _snapshot_prompts(config: ExperimentConfig) -> dict[str, dict[str, str]]:
@@ -140,23 +195,7 @@ def get_experiment(
         experiment = session.get(Experiment, experiment_id)
         if experiment is None:
             raise HTTPException(status_code=404, detail="experiment not found")
-        results = []
-        for run in experiment.runs:
-            for result in run.results:
-                results.append(
-                    {
-                        "chunking": run.chunking,
-                        "embedding": run.embedding,
-                        "rag": run.rag_technique,
-                        "retriever": run.retriever,
-                        "llm": run.llm or "gemini",
-                        "question": result.question,
-                        "answer": result.generated_answer,
-                        "scores": result.scores,
-                        "latency_ms": result.latency_ms,
-                        "tokens": result.tokens,
-                    }
-                )
+        results = _result_rows(experiment)
         cfg = experiment.config or {}
         n_llms = len(cfg.get("llms", [])) or 1
         total_combos = (
@@ -181,3 +220,25 @@ def get_experiment(
         }
     finally:
         session.close()
+
+
+@router.get("/experiments/{experiment_id}/export.csv")
+def export_experiment_csv(
+    experiment_id: int,
+    deps: ExperimentDeps = Depends(get_experiment_deps),
+) -> Response:
+    """Download every per-question result of an experiment as a CSV file."""
+    session = deps.session_factory()
+    try:
+        experiment = session.get(Experiment, experiment_id)
+        if experiment is None:
+            raise HTTPException(status_code=404, detail="experiment not found")
+        content = "\ufeff" + _results_csv(_result_rows(experiment))
+        filename = f"{_safe_filename(experiment.name)}.csv"
+    finally:
+        session.close()
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

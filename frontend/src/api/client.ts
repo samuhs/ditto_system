@@ -54,6 +54,10 @@ export async function getExperiment(id: number): Promise<ExperimentDetail> {
   return asJson<ExperimentDetail>(await fetch(`${BASE}/experiments/${id}`));
 }
 
+export function exportExperimentUrl(id: number): string {
+  return `${BASE}/experiments/${id}/export.csv`;
+}
+
 export async function pauseExperiment(id: number): Promise<{ id: number; status: string }> {
   return asJson(await fetch(`${BASE}/experiments/${id}/pause`, { method: "POST" }));
 }

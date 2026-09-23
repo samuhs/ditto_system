@@ -4,6 +4,7 @@ import {
   createChatConfig,
   createExperiment,
   getDialogue,
+  exportExperimentUrl,
   getExperiment,
   getFlow,
   getOptions,
@@ -74,6 +75,10 @@ describe("api client", () => {
     vi.stubGlobal("fetch", mockFetchOnce(detail));
     await expect(getExperiment(1)).resolves.toEqual(detail);
     expect(fetch).toHaveBeenCalledWith("/api/experiments/1");
+  });
+
+  it("exportExperimentUrl points at the CSV export route", () => {
+    expect(exportExperimentUrl(7)).toBe("/api/experiments/7/export.csv");
   });
 
   it("throws on http error", async () => {

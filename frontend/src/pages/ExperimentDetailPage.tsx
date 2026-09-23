@@ -12,7 +12,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { getExperiment, pauseExperiment } from "../api/client";
+import { exportExperimentUrl, getExperiment, pauseExperiment } from "../api/client";
 import type { ExperimentDetail, ExperimentResultRow } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
 import { formatDuration } from "../utils/duration";
@@ -234,6 +234,16 @@ export function ExperimentDetailPage() {
               {formatDuration(experimentDurationMs(detail.created_at, detail.finished_at) ?? 0)}
             </Text>
           )}
+          <Button
+            component="a"
+            href={exportExperimentUrl(detail.id)}
+            download
+            size="xs"
+            variant="light"
+            ml="auto"
+          >
+            Exportar CSV
+          </Button>
           {isRunning && (
             <>
               <Button
@@ -243,7 +253,6 @@ export function ExperimentDetailPage() {
                 loading={pausing}
                 disabled={pausing || (detail?.pause_requested ?? false)}
                 onClick={handlePause}
-                ml="auto"
               >
                 {pausing || detail?.pause_requested ? "Pausando…" : "Pausar"}
               </Button>

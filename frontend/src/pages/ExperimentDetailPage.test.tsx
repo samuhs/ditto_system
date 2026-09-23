@@ -208,4 +208,13 @@ describe("ExperimentDetailPage", () => {
     renderPage();
     expect(await screen.findByText(/Duração/)).toBeInTheDocument();
   });
+
+  it("offers a CSV export link for the experiment", async () => {
+    vi.mocked(client.exportExperimentUrl).mockReturnValue("/api/experiments/7/export.csv");
+    renderPage();
+    const link = await screen.findByRole("link", { name: /Exportar CSV/ });
+    expect(link).toHaveAttribute("href", "/api/experiments/7/export.csv");
+    expect(link).toHaveAttribute("download");
+    expect(client.exportExperimentUrl).toHaveBeenCalledWith(7);
+  });
 });
