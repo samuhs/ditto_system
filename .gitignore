@@ -12,3 +12,4 @@ dist/
 vite.config.d.ts
 vite.config.js
 backend/config/app_settings.json
+graphify-out/
