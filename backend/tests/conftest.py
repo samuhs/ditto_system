@@ -27,6 +27,14 @@ def _no_ollama_server(monkeypatch):
     monkeypatch.setattr(options, "list_ollama_models", lambda: [])
 
 
+@pytest.fixture(autouse=True)
+def _no_llm_probe(monkeypatch):
+    """Device policy never probes a real LLM server in tests: none is resident."""
+    from app.core.llm import ollama
+
+    monkeypatch.setattr(ollama, "local_llm_resident", lambda *a, **k: False)
+
+
 @pytest.fixture
 def client():
     """Test client for the FastAPI application."""

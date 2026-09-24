@@ -38,3 +38,24 @@ def list_ollama_models(base_url: str | None = None, timeout: float = 2.0) -> lis
     resp = httpx.get(f"{root}/v1/models", timeout=timeout)
     resp.raise_for_status()
     return [m["id"] for m in resp.json().get("data", [])]
+
+
+def local_llm_resident(base_url: str | None = None, timeout: float = 1.0) -> bool:
+    """Whether the local LLM server may hold a model in memory right now.
+
+    Ollama lists loaded models at /api/ps. Servers without it (MLX, llama.cpp)
+    cannot say, so a reachable one counts as resident; so does a malformed
+    reply. An unreachable server holds nothing. Never raises.
+    """
+    import httpx
+
+    root = (base_url or get_settings().ollama_base_url).rstrip("/").removesuffix("/v1")
+    try:
+        resp = httpx.get(f"{root}/api/ps", timeout=timeout)
+        if resp.status_code < 400:
+            return bool(resp.json().get("models"))
+        return httpx.get(f"{root}/v1/models", timeout=timeout).status_code < 400
+    except httpx.HTTPError:
+        return False
+    except (ValueError, AttributeError):
+        return True
