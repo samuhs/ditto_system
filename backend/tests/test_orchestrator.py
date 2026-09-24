@@ -643,3 +643,148 @@ def test_experiments_run_one_at_a_time(session_factory, monkeypatch):
     for job in jobs:
         job.join(10)
     assert peak[0] == 1
+
+
+class _EventLLM:
+    def __init__(self, events):
+        self._events = events
+
+    def generate(self, prompt):
+        self._events.append("gen")
+        return "Resposta gerada."
+
+
+def _staged_deps(store, session_factory, events, max_local=1):
+    from app.core.memory.manager import ModelManager
+
+    def factory(name, **kwargs):
+        events.append(f"load:{name}")
+        return _FakeEmbedder()
+
+    models = ModelManager(factory, max_local=max_local, is_local=lambda n: n in {"e5", "paraphrase"},
+                          on_evict=lambda: events.append("evict"))
+    return ExperimentDeps(store=store, session_factory=session_factory,
+                          llm_factory=lambda name, **kw: _EventLLM(events), models=models)
+
+
+def _indexed_store(embedding):
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="Para one.\n\nPara two here.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=[embedding]),
+        store, embedder_factory=_embedder_factory,
+    )
+    return store
+
+
+def _new_experiment(session_factory, name):
+    session = session_factory()
+    experiment = Experiment(name=name, status="pending", config={})
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    return experiment_id
+
+
+def _staged_config(**kw):
+    base = dict(base="viagem", chunkings=["recursive"], embeddings=["e5"], rags=["naive"],
+                retrievers=["similarity"], metrics=["answer_relevancy"], llms=["qwen3:1.7b"],
+                eval_embedding="e5")
+    return ExperimentConfig(**{**base, **kw})
+
+
+def _results(session_factory, experiment_id):
+    check = session_factory()
+    experiment = check.get(Experiment, experiment_id)
+    rows = [r for run in experiment.runs for r in run.results]
+    status = experiment.status
+    config = dict(experiment.config)
+    check.close()
+    return status, rows, config
+
+
+def test_staged_run_keeps_embedders_out_of_memory_while_generating(session_factory):
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "staged-1")
+    run_experiment(experiment_id, _staged_config(),
+                   [QuestionItem(text="Where?"), QuestionItem(text="When?")],
+                   _staged_deps(store, session_factory, events))
+    first_gen = events.index("gen")
+    last_gen = len(events) - 1 - events[::-1].index("gen")
+    assert "load:e5" in events[:first_gen]                               # A: question vectors
+    assert "evict" in events[events.index("load:e5"):first_gen]          # freed before the LLM
+    assert not any(e.startswith("load:") for e in events[first_gen:last_gen])  # B: nothing loads
+    assert "load:e5" in events[last_gen:]                                # C: eval embedder
+    status, rows, config = _results(session_factory, experiment_id)
+    assert status == "done" and "phase" not in config
+    assert len(rows) == 2 and all("answer_relevancy" in r.scores for r in rows)
+
+
+def test_staged_hyde_loads_the_embedder_only_for_generated_text(session_factory):
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "staged-hyde")
+    run_experiment(experiment_id, _staged_config(rags=["hyde"], metrics=["rouge_l"]),
+                   [QuestionItem(text="Where?", reference="Aqui.")],
+                   _staged_deps(store, session_factory, events))
+    first_gen = events.index("gen")
+    assert [e for e in events[first_gen:] if e.startswith("load:")] == ["load:e5"]  # HyDE miss only
+    _, [row], _ = _results(session_factory, experiment_id)
+    assert "rouge_l" in row.scores  # rouge_l needs no embedder: stage C loaded nothing
+
+
+def test_staged_skips_failed_questions_when_scoring(session_factory, monkeypatch):
+    from app.experiments import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_RETRY_DELAY_S", 0)
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "staged-err")
+    deps = _staged_deps(store, session_factory, events)
+
+    class _Flaky:
+        def generate(self, prompt):
+            if "Boom" in prompt:
+                raise RuntimeError("LLM down")
+            return "ok"
+
+    deps.llm_factory = lambda name, **kw: _Flaky()
+    run_experiment(experiment_id, _staged_config(),
+                   [QuestionItem(text="Boom?"), QuestionItem(text="Fine?")], deps)
+    _, rows, _ = _results(session_factory, experiment_id)
+    by_q = {r.question: r for r in rows}
+    assert by_q["Boom?"].generated_answer.startswith("[ERRO: ") and by_q["Boom?"].scores == {}
+    assert "answer_relevancy" in by_q["Fine?"].scores
+
+
+def test_paused_staged_run_still_scores_what_it_generated(session_factory):
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "staged-pause")
+    deps = _staged_deps(store, session_factory, events)
+
+    class _PausingLLM:
+        def generate(self, prompt):
+            request_pause(experiment_id)
+            return "ok"
+
+    deps.llm_factory = lambda name, **kw: _PausingLLM()
+    run_experiment(experiment_id, _staged_config(retrievers=["similarity", "mmr"]),
+                   [QuestionItem(text="Where?")], deps)
+    status, rows, _ = _results(session_factory, experiment_id)
+    assert status == "paused" and len(rows) == 1
+    assert "answer_relevancy" in rows[0].scores
+
+
+def test_unstaged_run_holds_the_retrieval_embedder_across_runs(session_factory):
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "unstaged")
+    run_experiment(
+        experiment_id,
+        _staged_config(staged=False, retrievers=["similarity", "mmr"], eval_embedding="paraphrase"),
+        [QuestionItem(text="Where?")], _staged_deps(store, session_factory, events),
+    )
+    assert events.count("load:e5") == 1  # not reloaded for the second retriever

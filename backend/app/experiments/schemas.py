@@ -37,6 +37,9 @@ class ExperimentConfig(BaseModel):
     # when the LLM server serves concurrent requests (e.g. OLLAMA_NUM_PARALLEL);
     # per-question latency then includes time queued on the server.
     concurrency: int = Field(default=1, ge=1, le=32)
+    # One model in memory at a time: embed the questions, generate, then score
+    # (memory spec 3.4). False runs everything in one pass (escape hatch).
+    staged: bool = True
 
 
 def index_pairs(config: ExperimentConfig) -> list[tuple[str, str]]:

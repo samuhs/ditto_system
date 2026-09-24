@@ -5,6 +5,7 @@ import threading
 import time
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -13,9 +14,12 @@ from sqlalchemy.orm import Session
 from app.core.db.models import Experiment, ExperimentRun, RunResult
 from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
-from app.core.evaluation.runner import evaluate_sample
-from app.core.llm.factory import resolve_llm
+from app.core.config.runtime import get_ollama_models
+from app.core.evaluation.runner import evaluate_sample, metrics_need_embedder
+from app.core.llm import ollama
+from app.core.llm.factory import is_local_llm, resolve_llm
 from app.core.memory.device import resolve_embedding_device
+from app.core.memory.leases import CachedQueryEmbedder, LeaseSwitcher
 from app.core.memory.manager import ModelManager
 from app.core.memory.profile import active_profile
 from app.core.memory.stats import process_memory_bytes
@@ -29,6 +33,9 @@ logger = logging.getLogger(__name__)
 
 _MAX_RETRIES = 3
 _RETRY_DELAY_S = 5
+
+# Marks a question that failed after every retry (stored as its answer).
+ERROR_PREFIX = "[ERRO: "
 
 # In-memory set of experiment ids for which a pause has been requested.
 # Valid because the API runs as a single uvicorn process: the pause endpoint
@@ -169,13 +176,98 @@ def run_experiment(
         _run_experiment(experiment_id, config, questions, deps)
 
 
+def _set_phase(session: Session, experiment: Experiment, phase: str | None) -> None:
+    """Record the stage a staged experiment is in (shown by the UI); None clears it."""
+    config = {k: v for k, v in (experiment.config or {}).items() if k != "phase"}
+    if phase is not None:
+        config["phase"] = phase
+    experiment.config = config
+    session.commit()
+
+
+def _question_vectors(
+    deps: ExperimentDeps, config: ExperimentConfig, questions: list[QuestionItem], device: str
+) -> dict[str, dict[str, list[float]]]:
+    """Stage A: embed every question once per retrieval embedding, then free the models."""
+    texts = list(dict.fromkeys(q.text for q in questions))
+    vectors: dict[str, dict[str, list[float]]] = {}
+    for embedding in dict.fromkeys(e for _, e in index_pairs(config)):
+        with deps.models.acquire(embedding, device) as embedder:
+            # Injected embedders may predate embed_queries: fall back to one call per text.
+            batch = getattr(embedder, "embed_queries", None)
+            embedded = batch(texts) if batch else [embedder.embed_query(t) for t in texts]
+            vectors[embedding] = dict(zip(texts, embedded))
+    deps.models.evict_idle()  # the LLM gets the memory from here on
+    return vectors
+
+
+def _llm_server_model(name: str) -> str:
+    """The model name the local LLM server knows (legacy named ids map to their model)."""
+    for entry in get_ollama_models():
+        if entry.get("id") == name:
+            return entry["model"]
+    return name
+
+
+def _score_with_retry(sample: EvalSample, metrics: list, eval_embedder) -> dict[str, float]:
+    """evaluate_sample with the same retry policy as generation; {} if it keeps failing."""
+    for attempt in range(_MAX_RETRIES):
+        try:
+            return evaluate_sample(sample, metrics, embedder=eval_embedder)
+        except Exception as exc:  # noqa: BLE001
+            if attempt < _MAX_RETRIES - 1:
+                logger.warning("scoring failed (attempt %d/%d): %s", attempt + 1, _MAX_RETRIES, exc)
+                time.sleep(_RETRY_DELAY_S)
+            else:
+                logger.error("scoring failed after %d attempts: %s", _MAX_RETRIES, exc)
+    return {}
+
+
+def _score_results(
+    session: Session, experiment_id: int, config: ExperimentConfig, deps: ExperimentDeps
+) -> None:
+    """Stage C: free the LLM, load the eval embedder once, score every stored answer."""
+    for llm_name in dict.fromkeys(config.llms):
+        if is_local_llm(llm_name):
+            ollama.unload_local_llm(_llm_server_model(llm_name))
+    rows = (
+        session.query(RunResult)
+        .join(ExperimentRun)
+        .filter(ExperimentRun.experiment_id == experiment_id)
+        .all()
+    )
+    pending = [r for r in rows if not r.scores and not r.generated_answer.startswith(ERROR_PREFIX)]
+    if not pending:
+        return
+    device = resolve_embedding_device(active_profile())
+    eval_context = (
+        deps.models.acquire(config.eval_embedding, device)
+        if metrics_need_embedder(config.metrics)
+        else nullcontext(None)
+    )
+    with eval_context as eval_embedder:
+        for row in pending:
+            sample = EvalSample(
+                question=row.question,
+                answer=row.generated_answer,
+                contexts=[c.get("text", "") for c in row.retrieved_context],
+                reference_answer=row.reference_answer,
+            )
+            row.scores = _score_with_retry(sample, config.metrics, eval_embedder)
+        session.commit()
+
+
 def _run_experiment(
     experiment_id: int,
     config: ExperimentConfig,
     questions: list[QuestionItem],
     deps: ExperimentDeps,
 ) -> None:
-    """Run every combination over every question and persist the results."""
+    """Run every combination over every question and persist the results.
+
+    Staged (the default): A) embed the questions, B) generate LLM by LLM with
+    only the LLM in memory, C) score. Unstaged: one pass, scoring as it goes.
+    """
     session = deps.session_factory()
     try:
         experiment = session.get(Experiment, experiment_id)
@@ -191,10 +283,20 @@ def _run_experiment(
                 "concurrency %d capped to %d by the %s memory profile",
                 config.concurrency, concurrency, profile.name,
             )
+        staged = config.staged
+        vectors = _question_vectors(deps, config, questions, device) if staged else {}
+        if staged:
+            _set_phase(session, experiment, "generating")
+        eval_context = (
+            deps.models.acquire(config.eval_embedding, device)
+            if not staged and metrics_need_embedder(config.metrics)
+            else nullcontext(None)
+        )
+        inline_metrics = [] if staged else config.metrics
 
         paused = False
         loaded_llm_name, llm = None, None
-        with deps.models.acquire(config.eval_embedding, device) as eval_embedder:
+        with eval_context as eval_embedder, LeaseSwitcher(deps.models) as leases:
             for llm_name, (chunking, embedding), rag_name, retriever_name in _combinations(config):
                 # Checkpoint: stop before starting a new combination if paused.
                 if _pause_requested(experiment_id):
@@ -215,54 +317,62 @@ def _run_experiment(
 
                 if llm_name != loaded_llm_name:
                     llm, loaded_llm_name = deps.llm_factory(llm_name), llm_name
-                with deps.models.acquire(embedding, device) as embedder:
-                    col = collection_name(config.base, chunking, embedding)
-                    retriever = _build_retriever(
-                        deps, retriever_name, col, embedder, llm,
-                        prompts=prompt_snapshot.get("multi_query"),
+                if staged:
+                    cached = vectors[embedding]
+                    embedder = CachedQueryEmbedder(
+                        cached,
+                        # Only text the LLM writes (HyDE, multi-query, rewrites) loads the model.
+                        fallback=lambda name=embedding: leases.get(name, device),
+                        dimension=len(next(iter(cached.values()), [])),
                     )
-                    rag_kwargs = {"retriever": retriever, "llm": llm}
-                    if rag_name in PROMPT_SPECS:
-                        rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
-                    rag = deps.rag_factory(rag_name, **rag_kwargs)
+                else:
+                    embedder = leases.get(embedding, device)
+                col = collection_name(config.base, chunking, embedding)
+                retriever = _build_retriever(
+                    deps, retriever_name, col, embedder, llm,
+                    prompts=prompt_snapshot.get("multi_query"),
+                )
+                rag_kwargs = {"retriever": retriever, "llm": llm}
+                if rag_name in PROMPT_SPECS:
+                    rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
+                rag = deps.rag_factory(rag_name, **rag_kwargs)
 
-                    # DB writes stay on this thread: the Session is not thread-safe.
-                    for question, outcome in _run_questions(
-                        rag, questions, config.metrics, eval_embedder,
-                        concurrency, experiment_id,
-                    ):
-                        # Checkpoint: questions not started before a pause are skipped.
-                        if outcome is None:
-                            paused = True
-                            continue
+                # DB writes stay on this thread: the Session is not thread-safe.
+                for question, outcome in _run_questions(
+                    rag, questions, inline_metrics, eval_embedder, concurrency, experiment_id,
+                ):
+                    # Checkpoint: questions not started before a pause are skipped.
+                    if outcome is None:
+                        paused = True
+                        continue
 
-                        answer_text, contexts, scores, latency_ms, tokens, error = outcome
-                        if error is not None:
-                            session.add(
-                                RunResult(
-                                    run_id=run.id,
-                                    question=question.text,
-                                    reference_answer=question.reference,
-                                    generated_answer=f"[ERRO: {error}]",
-                                    retrieved_context=[],
-                                    scores={},
-                                    latency_ms=0,
-                                    tokens=0,
-                                )
+                    answer_text, contexts, scores, latency_ms, tokens, error = outcome
+                    if error is not None:
+                        session.add(
+                            RunResult(
+                                run_id=run.id,
+                                question=question.text,
+                                reference_answer=question.reference,
+                                generated_answer=f"{ERROR_PREFIX}{error}]",
+                                retrieved_context=[],
+                                scores={},
+                                latency_ms=0,
+                                tokens=0,
                             )
-                        else:
-                            session.add(
-                                RunResult(
-                                    run_id=run.id,
-                                    question=question.text,
-                                    reference_answer=question.reference,
-                                    generated_answer=answer_text,
-                                    retrieved_context=contexts,
-                                    scores=scores,
-                                    latency_ms=latency_ms,
-                                    tokens=tokens,
-                                )
+                        )
+                    else:
+                        session.add(
+                            RunResult(
+                                run_id=run.id,
+                                question=question.text,
+                                reference_answer=question.reference,
+                                generated_answer=answer_text,
+                                retrieved_context=contexts,
+                                scores=scores,
+                                latency_ms=latency_ms,
+                                tokens=tokens,
                             )
+                        )
                 logger.info("run %d finished; API memory %.0f MB", run.id, process_memory_bytes() / 1e6)
 
                 if paused:
@@ -273,15 +383,20 @@ def _run_experiment(
                 run.status = "done"
                 session.commit()
 
+        if staged:
+            # Scores what was generated, paused or not.
+            _set_phase(session, experiment, "evaluating")
+            _score_results(session, experiment_id, config, deps)
         experiment.status = "paused" if paused else "done"
         experiment.finished_at = datetime.now(UTC)
-        session.commit()
+        _set_phase(session, experiment, None)
     except Exception as exc:  # noqa: BLE001  background task records failure, never raises
         session.rollback()
         experiment = session.get(Experiment, experiment_id)
         if experiment is not None:
             experiment.status = "failed"
-            experiment.config = {**experiment.config, "error": str(exc)}
+            config_without_phase = {k: v for k, v in (experiment.config or {}).items() if k != "phase"}
+            experiment.config = {**config_without_phase, "error": str(exc)}
             experiment.finished_at = datetime.now(UTC)
             session.commit()
     finally:
