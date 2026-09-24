@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
+from app.core.memory.manager import get_model_manager
 from app.core.prompts import PROMPT_SPECS, load_technique
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
@@ -86,7 +87,7 @@ def _snapshot_prompts(config: ExperimentConfig) -> dict[str, dict[str, str]]:
 
 def get_experiment_deps() -> ExperimentDeps:
     """FastAPI dependency providing the production experiment dependencies."""
-    return ExperimentDeps(store=QdrantStore(), session_factory=SessionLocal)
+    return ExperimentDeps(store=QdrantStore(), session_factory=SessionLocal, models=get_model_manager())
 
 
 def _check_indexes_exist(config: ExperimentConfig, store: QdrantStore) -> None:

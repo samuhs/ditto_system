@@ -528,3 +528,118 @@ def test_indexes_run_only_the_listed_pairs(session_factory):
     runs = check.get(Experiment, experiment_id).runs
     assert [(r.chunking, r.embedding) for r in runs] == [("recursive", "gemini")]
     check.close()
+
+
+def _setup_two_llm_experiment(session_factory, name="llm-major", **config_overrides):
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="Para one.\n\nPara two here.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"]),
+        store,
+        embedder_factory=_embedder_factory,
+    )
+    session = session_factory()
+    experiment = Experiment(name=name, status="pending", config={})
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    config = ExperimentConfig(
+        base="viagem", chunkings=["recursive"], embeddings=["gemini"],
+        rags=["naive"], retrievers=["similarity", "mmr"],
+        metrics=["answer_relevancy"], llms=["gemini", "gemini-2.5-flash-lite"],
+        **config_overrides,
+    )
+    return store, experiment_id, config
+
+
+def test_runs_are_llm_major_and_each_llm_is_built_once(session_factory):
+    store, experiment_id, config = _setup_two_llm_experiment(session_factory)
+    built = []
+
+    def llm_factory(name, **kwargs):
+        built.append(name)
+        return _FakeLLM()
+
+    deps = ExperimentDeps(store=store, session_factory=session_factory,
+                          llm_factory=llm_factory, embedder_factory=_embedder_factory)
+    run_experiment(experiment_id, config, [QuestionItem(text="Where?")], deps)
+
+    check = session_factory()
+    runs = sorted(check.get(Experiment, experiment_id).runs, key=lambda r: r.id)
+    assert [r.llm for r in runs] == ["gemini", "gemini", "gemini-2.5-flash-lite", "gemini-2.5-flash-lite"]
+    assert built == ["gemini", "gemini-2.5-flash-lite"]
+    check.close()
+
+
+def test_embedders_load_once_per_experiment(session_factory):
+    store, experiment_id, config = _setup_two_llm_experiment(session_factory)
+    loads = []
+
+    def embedder_factory(name, **kwargs):
+        loads.append(name)
+        return _FakeEmbedder()
+
+    deps = ExperimentDeps(store=store, session_factory=session_factory,
+                          llm_factory=_llm_factory, embedder_factory=embedder_factory)
+    run_experiment(experiment_id, config, [QuestionItem(text="Where?")], deps)
+    assert loads == ["gemini"]  # eval and retrieval share one instance
+
+
+def test_concurrency_is_capped_by_the_profile(session_factory, monkeypatch):
+    from app.core.config.settings import get_settings
+    from app.experiments import orchestrator
+
+    monkeypatch.setenv("MEMORY_PROFILE", "low")
+    get_settings.cache_clear()
+    store, experiment_id, config = _setup_two_llm_experiment(session_factory, concurrency=8)
+    seen = []
+    real = orchestrator._run_questions
+
+    def spy(rag, questions, metrics, eval_embedder, concurrency, exp_id):
+        seen.append(concurrency)
+        return real(rag, questions, metrics, eval_embedder, concurrency, exp_id)
+
+    monkeypatch.setattr(orchestrator, "_run_questions", spy)
+    deps = ExperimentDeps(store=store, session_factory=session_factory,
+                          llm_factory=_llm_factory, embedder_factory=_embedder_factory)
+    try:
+        run_experiment(experiment_id, config, [QuestionItem(text="Where?")], deps)
+    finally:
+        get_settings.cache_clear()
+    assert seen and set(seen) == {2}
+
+
+def test_experiments_run_one_at_a_time(session_factory, monkeypatch):
+    import threading
+    import time
+
+    from app.experiments import orchestrator
+
+    active, peak, lock = [0], [0], threading.Lock()
+    real = orchestrator._run_experiment
+
+    def tracked(*args, **kwargs):
+        with lock:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+        try:
+            time.sleep(0.05)
+            return real(*args, **kwargs)
+        finally:
+            with lock:
+                active[0] -= 1
+
+    monkeypatch.setattr(orchestrator, "_run_experiment", tracked)
+    jobs = []
+    for i in range(2):
+        store, experiment_id, config = _setup_two_llm_experiment(session_factory, name=f"exp-{i}")
+        deps = ExperimentDeps(store=store, session_factory=session_factory,
+                              llm_factory=_llm_factory, embedder_factory=_embedder_factory)
+        jobs.append(threading.Thread(target=run_experiment,
+                                     args=(experiment_id, config, [QuestionItem(text="Q?")], deps)))
+    for job in jobs:
+        job.start()
+    for job in jobs:
+        job.join(10)
+    assert peak[0] == 1
