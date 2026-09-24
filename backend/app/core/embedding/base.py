@@ -7,6 +7,9 @@ from app.core.registry import Registry
 class Embedder(ABC):
     """Minimal interface every embedding provider implements."""
 
+    # True when the model's weights live in this process (counted by the ModelManager).
+    is_local: bool = False
+
     @abstractmethod
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         """Embed a batch of documents."""

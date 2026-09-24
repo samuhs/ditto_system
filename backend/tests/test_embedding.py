@@ -74,3 +74,29 @@ def test_local_embedders_registered():
 def test_paraphrase_built_with_injected_model():
     emb = ParaphraseEmbedder(model=_FakeSentenceTransformer())
     assert emb.dimension == 4
+
+
+def test_local_embedders_declare_locality():
+    from app.core.embedding import E5Embedder, GeminiEmbedder, ParaphraseEmbedder
+
+    assert E5Embedder.is_local and ParaphraseEmbedder.is_local
+    assert not GeminiEmbedder.is_local
+
+
+def test_huggingface_embedder_passes_the_device(monkeypatch):
+    import sys
+    import types
+
+    seen = {}
+
+    class _ST:
+        def __init__(self, name, device=None):
+            seen["args"] = (name, device)
+
+    monkeypatch.setitem(sys.modules, "sentence_transformers", types.SimpleNamespace(SentenceTransformer=_ST))
+    from app.core.embedding import E5Embedder
+
+    E5Embedder(device="cpu")
+    assert seen["args"] == ("intfloat/multilingual-e5-small", "cpu")
+    E5Embedder(device="auto")
+    assert seen["args"] == ("intfloat/multilingual-e5-small", None)

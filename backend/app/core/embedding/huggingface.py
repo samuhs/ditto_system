@@ -5,11 +5,14 @@ from app.core.embedding.base import Embedder, embedding_registry
 class HuggingFaceEmbedder(Embedder):
     """Embeds text with a local SentenceTransformer model."""
 
-    def __init__(self, model_name: str, model=None) -> None:
+    is_local = True
+
+    def __init__(self, model_name: str, model=None, device: str | None = None) -> None:
         if model is None:
             from sentence_transformers import SentenceTransformer
 
-            model = SentenceTransformer(model_name)
+            # "auto" (or None) lets sentence-transformers pick the device.
+            model = SentenceTransformer(model_name, device=None if device in (None, "auto") else device)
         self._model = model
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
@@ -29,15 +32,15 @@ class HuggingFaceEmbedder(Embedder):
 class E5Embedder(HuggingFaceEmbedder):
     """Local embedder using multilingual-e5-small."""
 
-    def __init__(self, model=None) -> None:
-        super().__init__("intfloat/multilingual-e5-small", model=model)
+    def __init__(self, model=None, device: str | None = None) -> None:
+        super().__init__("intfloat/multilingual-e5-small", model=model, device=device)
 
 
 class ParaphraseEmbedder(HuggingFaceEmbedder):
     """Local embedder using paraphrase-multilingual-MiniLM."""
 
-    def __init__(self, model=None) -> None:
-        super().__init__("paraphrase-multilingual-MiniLM-L12-v2", model=model)
+    def __init__(self, model=None, device: str | None = None) -> None:
+        super().__init__("paraphrase-multilingual-MiniLM-L12-v2", model=model, device=device)
 
 
 embedding_registry.register("e5", E5Embedder)
