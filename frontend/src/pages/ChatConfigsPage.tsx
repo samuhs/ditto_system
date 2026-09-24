@@ -10,6 +10,7 @@ import {
 } from "../api/client";
 import type { ChatConfig, Options } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
+import { llmOptionRenderer, llmSelectData } from "../components/llmOptions";
 
 export function ChatConfigsPage() {
   const [options, setOptions] = useState<Options | null>(null);
@@ -80,7 +81,7 @@ export function ChatConfigsPage() {
             <Select label="RAG" data={options?.rags ?? []} value={rag || null} onChange={(v) => setRag(v ?? "")} searchable />
           </Group>
           <Group grow align="flex-start">
-            <Select label="Modelo (LLM)" data={options?.llms ?? []} value={llm || null} onChange={(v) => setLlm(v ?? "gemini")} searchable />
+            <Select label="Modelo (LLM)" data={llmSelectData(options)} renderOption={llmOptionRenderer(options)} value={llm || null} onChange={(v) => setLlm(v ?? "gemini")} searchable />
             <Select label="Persona" data={personas} value={persona || null} onChange={(v) => setPersona(v ?? "")} searchable />
           </Group>
           <Button

@@ -19,6 +19,14 @@ def _disable_dotenv(monkeypatch):
     monkeypatch.setenv("ENV_FILE", "")
 
 
+@pytest.fixture(autouse=True)
+def _no_ollama_server(monkeypatch):
+    """Keep /options from querying a real Ollama server; tests see none by default."""
+    from app.api import options
+
+    monkeypatch.setattr(options, "list_ollama_models", lambda: [])
+
+
 @pytest.fixture
 def client():
     """Test client for the FastAPI application."""

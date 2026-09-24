@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Prepares this machine to serve the LLM with Ollama on the host (GPU-backed):
-# installs Ollama if missing, starts it reachable from Docker, pulls MODEL,
-# smoke-tests it and registers it in the app settings.
+# installs Ollama if missing, starts it reachable from Docker, pulls MODEL and
+# smoke-tests it. The app lists the server's models live (GET /options).
 #
-# Env: MODEL (default qwen2.5:3b-instruct), OLLAMA_ID (name shown in the app),
+# Env: MODEL (default qwen2.5:3b-instruct),
 #      PARALLEL (OLLAMA_NUM_PARALLEL, default 4), YES=1 (answer yes to every prompt).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -163,19 +163,12 @@ case "$processor" in
   *) warn "modelo em '$processor': parte roda na CPU (pouca VRAM?). Considere um modelo menor." ;;
 esac
 
-step "Registro no Ditto"
-if has python3; then
-  ok "$(python3 scripts/app_models.py add "$MODEL" ${OLLAMA_ID:+"$OLLAMA_ID"})"
-else
-  warn "python3 ausente: adicione o modelo na tela Configurações (id à sua escolha, model '$MODEL')."
-fi
-
 step "Conexão Docker → Ollama"
 if [ -n "$(docker compose ps -q api 2>/dev/null)" ]; then
   if docker compose exec -T api python -c \
     "import urllib.request; urllib.request.urlopen('http://host.docker.internal:11434/api/tags', timeout=5)" \
     >/dev/null 2>&1; then
-    ok "o container da API alcança o Ollama"
+    ok "o container da API alcança o Ollama; o modelo aparece como '$MODEL' no app"
   else
     warn "o container da API NÃO alcança o Ollama em host.docker.internal:11434"
   fi

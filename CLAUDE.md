@@ -11,7 +11,7 @@ make setup       # 1ª vez: checa Docker, cria .env, pede chave Gemini
 make up          # sobe tudo: api:8000, frontend:3000, qdrant:6333, postgres:5432
 make down        # derruba o stack
 make logs        # logs em tempo real
-make llm-setup   # prepara Ollama no host (GPU, OLLAMA_NUM_PARALLEL), baixa MODEL=..., registra no app
+make llm-setup   # prepara Ollama no host (GPU, OLLAMA_NUM_PARALLEL), baixa MODEL=... (o app lista os modelos do servidor ao vivo)
 make model-add qwen3:1.7b | make model-rm qwen3:1.7b | make model-list
 make bench-llm MODEL=...   # throughput do servidor de LLM por nível de paralelismo
 ```

@@ -7,7 +7,7 @@ help:
 	@echo "Primeira vez:"
 	@echo "  make setup        checa o Docker, cria o .env e pede a chave Gemini (opcional)"
 	@echo "  make up           sobe api:8000, frontend:3000, qdrant:6333, postgres:5432"
-	@echo "  make llm-setup    prepara o Ollama (GPU, PARALLEL=4) e registra o modelo; MODEL=... para trocar"
+	@echo "  make llm-setup    prepara o Ollama (GPU, PARALLEL=4) e baixa o modelo; MODEL=... para trocar"
 	@echo ""
 	@echo "Modelos:   make model-add qwen3:1.7b | model-rm qwen3:1.7b | model-list"
 	@echo "Benchmark: make bench-llm MODEL=... [LEVELS=1,2,4,8 N=16]"

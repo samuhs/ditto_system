@@ -18,3 +18,13 @@ class OllamaLLM(CustomLLM):
 
 
 llm_registry.register("ollama", OllamaLLM)
+
+
+def list_ollama_models(base_url: str | None = None, timeout: float = 2.0) -> list[str]:
+    """Names of the models pulled on the Ollama server (raises if unreachable)."""
+    import httpx
+
+    root = (base_url or get_settings().ollama_base_url).rstrip("/").removesuffix("/v1")
+    resp = httpx.get(f"{root}/api/tags", timeout=timeout)
+    resp.raise_for_status()
+    return [m["name"] for m in resp.json().get("models", [])]

@@ -15,6 +15,7 @@ import { createExperiment, getOptions } from "../api/client";
 import type { Options } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon } from "../components/icons";
+import { llmOptionRenderer, llmSelectData } from "../components/llmOptions";
 import { useTasks } from "../context/TasksContext";
 
 export function ExperimentPage() {
@@ -169,7 +170,8 @@ export function ExperimentPage() {
             <MultiSelect
               label="LLMs"
               placeholder="Selecione"
-              data={options?.llms ?? []}
+              data={llmSelectData(options)}
+              renderOption={llmOptionRenderer(options)}
               value={llms}
               onChange={setLlms}
               searchable

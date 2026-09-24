@@ -2,13 +2,15 @@
 from app.core.config.runtime import get_gemini_key
 from app.core.llm.base import LLM, llm_registry
 
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
+
 
 class GeminiLLM(LLM):
     """Generates answers with a Google Gemini chat model."""
 
     def __init__(
         self,
-        model: str = "gemini-2.5-flash-lite",
+        model: str = DEFAULT_GEMINI_MODEL,
         api_key: str | None = None,
         client=None,
     ) -> None:

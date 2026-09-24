@@ -18,7 +18,7 @@ I built it for my PhD, but it works fine as a general playground for comparing R
   - Embeddings: `gemini`, plus local `e5` and `paraphrase`
   - RAG: `naive`, `agentic`, `hyde`, `rerank`, `crag`, `compression`
   - Retrievers: `similarity`, `mmr`, `multi_query`, `parent_document`
-  - LLMs: `gemini`, `ollama` (local, name as many models as you want), `custom` (any OpenAI-compatible endpoint)
+  - LLMs: Gemini (`gemini-2.5-flash-lite`) and every model pulled on your Ollama server, each listed by its real name and tagged `local` or `remoto`. There's also `custom` for any OpenAI-compatible endpoint.
   - Metrics: `answer_relevancy`, `faithfulness`, `context_precision`, `context_recall`, `answer_correctness`, `rouge_l`
 - **A results table that doesn't fight you.** Sort by any metric, filter by any dimension, paginate.
 - **A chat agent.** LangGraph flow (guardrail, triage, RAG, memory, persona) with prompts you can edit and personas you can swap. Save the conversations and rate them 0 to 10.
@@ -105,7 +105,7 @@ It walks through these steps and tells you what it found at each one:
 2. Installs Ollama if it's missing, after asking first. On macOS it uses `brew install ollama`. On Linux it runs the official `install.sh`.
 3. Starts the server. On Linux it makes sure Ollama listens beyond `localhost` (`OLLAMA_HOST=0.0.0.0`) so the containers can reach it. That also exposes port 11434 on your network, so firewall it on shared machines.
 4. Pulls the model, sends it a test prompt and checks that it loaded 100% on the GPU.
-5. Registers the model in the app settings. It shows up as an LLM option in experiments and chat, with no restart needed.
+5. The app asks the Ollama server for its models, so every pulled model shows up by its real name in experiments and chat, with no restart needed.
 6. If the stack is up, checks that the API container can reach Ollama.
 
 Run it again whenever you like. Steps that are already done get skipped. To start and stop the server by hand, use `make ollama-up` and `make ollama-down`.
@@ -115,9 +115,9 @@ Run it again whenever you like. Steps that are already done get skipped. To star
 **Managing models:**
 
 ```bash
-make model-add qwen3:1.7b     # pull into Ollama and register it in the app
-make model-rm qwen3:1.7b      # remove it from the app and from Ollama
-make model-list               # what's downloaded and what's registered
+make model-add qwen3:1.7b     # pull into Ollama (it shows up in the app)
+make model-rm qwen3:1.7b      # delete it from Ollama (it leaves the app)
+make model-list               # what's on the Ollama server
 ```
 
 **Running experiments faster:** the **Gerar teste** screen has a **Perguntas em paralelo** field (1 to 32). Above 1, Ditto answers that many questions of each combination at the same time. That only speeds things up if the server can serve requests concurrently (`OLLAMA_NUM_PARALLEL`, `llama-server -np`, vLLM). Keep in mind that the per-question latency then also counts the time a request spent waiting in the server's queue.

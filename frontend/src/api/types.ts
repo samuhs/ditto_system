@@ -1,8 +1,15 @@
+export interface LlmOption {
+  value: string;
+  label: string;
+  location: "local" | "remote";
+}
+
 export interface Options {
   bases: string[];
   chunkings: string[];
   embeddings: string[];
   llms: string[];
+  llm_options?: LlmOption[];
   rags: string[];
   retrievers: string[];
   metrics: string[];
