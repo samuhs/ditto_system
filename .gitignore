@@ -21,3 +21,6 @@ graphify-out/
 .impeccable/*.cache.json
 frontend/.impeccable/
 .claude/skills/impeccable/scripts/bin/
+
+# host CAs exported for Docker builds (scripts/host-certs.sh)
+certs/*.pem

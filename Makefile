@@ -1,4 +1,4 @@
-.PHONY: help setup llm-setup model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
+.PHONY: help certs setup llm-setup model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
 
 MODEL ?= qwen2.5:3b-instruct
 PARALLEL ?= 4
@@ -44,10 +44,14 @@ BASE_URL ?= http://localhost:11434/v1
 bench-llm:
 	@python3 scripts/bench_llm.py --base-url "$(BASE_URL)" --model "$(MODEL)" --levels "$(LEVELS)" -n "$(N)"
 
-build:
+# Exports the host's trusted CAs for the Docker builds (VPN/proxy-safe builds).
+certs:
+	@./scripts/host-certs.sh
+
+build: certs
 	docker compose build
 
-up:
+up: certs
 	docker compose up -d
 
 down:

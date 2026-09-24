@@ -2,6 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Trust the CAs the host trusts (certs/host-ca.pem, filled by scripts/host-certs.sh),
+# so pip and runtime downloads work behind VPNs/proxies that inspect HTTPS.
+# An empty or missing file leaves the default CAs untouched.
+COPY --from=certs . /tmp/host-certs/
+RUN if [ -s /tmp/host-certs/host-ca.pem ]; then \
+      cp /tmp/host-certs/host-ca.pem /usr/local/share/ca-certificates/host-ca.crt \
+      && update-ca-certificates >/dev/null; \
+    fi; rm -rf /tmp/host-certs
+# pip, requests, httpx and huggingface all read the system bundle through these.
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+
 COPY pyproject.toml ./
 # Install with the "local" extra so the sentence-transformers embedders
 # (e5, paraphrase) work in-container, not only the Gemini provider.

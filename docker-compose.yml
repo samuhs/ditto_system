@@ -1,6 +1,11 @@
 services:
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      # Host-trusted CAs (make up/build fill certs/host-ca.pem) so builds and
+      # downloads work behind VPNs that inspect HTTPS.
+      additional_contexts:
+        certs: ./certs
     volumes:
       - ./backend/prompts:/app/prompts
       - ./backend/config:/app/config
@@ -44,7 +49,10 @@ services:
       - qdrantdata:/qdrant/storage
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      additional_contexts:
+        certs: ./certs
     ports:
       - "3000:80"
     depends_on:
