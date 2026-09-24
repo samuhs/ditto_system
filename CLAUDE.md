@@ -7,9 +7,11 @@ Sistema de doutorado: ingere documentos, roda experimentos de RAG (chunking × e
 
 ## Como iniciar o sistema (Docker)
 ```bash
+make setup       # 1ª vez: checa Docker, cria .env, pede chave Gemini
 make up          # sobe tudo: api:8000, frontend:3000, qdrant:6333, postgres:5432
 make down        # derruba o stack
 make logs        # logs em tempo real
+make llm-setup   # prepara Ollama no host (GPU), baixa MODEL=..., registra no app
 ```
 - Frontend: http://localhost:3000 · API: http://localhost:8000 (`/health`, `/options`, `/ingest`, `/experiments`)
 - Precisa de `GEMINI_API_KEY` no `.env` (já configurado, gitignored). No Docker use embedding `gemini` (a imagem não traz os embedders locais).

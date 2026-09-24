@@ -55,11 +55,9 @@ You'll need [Docker](https://docs.docker.com/get-docker/) with Compose, and eith
 git clone https://github.com/samuhs/ditto_system.git
 cd ditto_system
 
-cp .env.example .env
-# open .env and drop your key in GEMINI_API_KEY=...
-# (or leave it blank and set it later in the Settings screen)
-
+make setup       # checks Docker, creates .env, asks for your Gemini key (optional)
 make up          # api:8000 · frontend:3000 · qdrant:6333 · postgres:5432
+make llm-setup   # optional: serve a local LLM with Ollama on your GPU (see below)
 ```
 
 Now open **http://localhost:3000** and walk through it:
@@ -93,20 +91,24 @@ You can also set the **Gemini key** and add **named Ollama models** straight fro
 
 ### Going local with Ollama
 
-The Docker container talks to an Ollama server running on your host.
+Ollama runs on your host, not in Docker, so it can use your GPU (Metal on Apple Silicon, CUDA/ROCm on Linux). One command sets it up:
 
 ```bash
-# grab a model
-ollama pull qwen2.5:3b-instruct
-
-# start and stop the server (there are helpers)
-make ollama-up      # boots `ollama serve` if it isn't up yet
-make ollama-down
-
-# then open the Settings screen and add a model:
-# id "qwen"  →  model "qwen2.5:3b-instruct"
-# it shows up as an LLM option in experiments and chat.
+make llm-setup                              # default model: qwen2.5:3b-instruct
+make llm-setup MODEL=llama3.1:8b            # or pick another one
+YES=1 make llm-setup                        # answer yes to every prompt
 ```
+
+It walks through these steps and tells you what it found at each one:
+
+1. Detects your GPU. With no GPU it warns you and carries on in CPU mode, which is slow.
+2. Installs Ollama if it's missing, after asking first. On macOS it uses `brew install ollama`. On Linux it runs the official `install.sh`.
+3. Starts the server. On Linux it makes sure Ollama listens beyond `localhost` (`OLLAMA_HOST=0.0.0.0`) so the containers can reach it. That also exposes port 11434 on your network, so firewall it on shared machines.
+4. Pulls the model, sends it a test prompt and checks that it loaded 100% on the GPU.
+5. Registers the model in the app settings. It shows up as an LLM option in experiments and chat, with no restart needed.
+6. If the stack is up, checks that the API container can reach Ollama.
+
+Run it again whenever you like. Steps that are already done get skipped. To start and stop the server by hand, use `make ollama-up` and `make ollama-down`.
 
 Want to skip Google entirely? The Docker image already bundles the local embedders (`e5`, `paraphrase`). Pick one of those plus a local Ollama model and nothing leaves your machine. The embedder pulls its weights the first time you use it and caches them in the `hf_cache` volume, so it only happens once. That does make the image chunky (PyTorch comes along for the ride). If you only ever use Gemini embeddings, drop the `[local]` extra from `backend/Dockerfile` and the image slims right back down.
 
