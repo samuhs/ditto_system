@@ -1,8 +1,9 @@
 """Hermetic tests for the conversation graph (fake LLM + fake RAG, no network)."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from app.core.chat.graph import ChatConfigView, build_graph, run_flow
 from app.core.chat.schemas import ChatMessage
+from app.core.memory.manager import ModelManager
 from app.core.rag.base import RAGResult
 
 
@@ -59,17 +60,37 @@ def test_rag_path_runs_rag_and_passes_contexts():
     assert result["contexts"] == ["ctx do doc"]
 
 
-def test_run_flow_wires_deps_and_returns_result():
+def _flow_deps(loads):
+    def embedder_factory(name, **kw):
+        loads.append(name)
+        return object()
+
     @dataclass
     class _Deps:
         store: object = None
         llm_factory: object = staticmethod(lambda name: _FakeLLM())
-        embedder_factory: object = staticmethod(lambda name, **kw: object())
         retriever_factory: object = staticmethod(lambda name, **kw: object())
         rag_factory: object = staticmethod(lambda name, **kw: _FakeRAG())
+        models: object = field(
+            default_factory=lambda: ModelManager(embedder_factory, max_local=1, is_local=lambda n: False)
+        )
 
-    cfg = ChatConfigView(base="viagem", chunking="recursive", embedding="gemini",
-                         retriever="similarity", rag="naive", llm="gemini", persona="travel_guide")
-    out = run_flow(cfg, [ChatMessage(role="user", content="onde fica o centro?")], _Deps())
+    return _Deps()
+
+
+_CFG = ChatConfigView(base="viagem", chunking="recursive", embedding="gemini",
+                      retriever="similarity", rag="naive", llm="gemini", persona="travel_guide")
+
+
+def test_run_flow_wires_deps_and_returns_result():
+    out = run_flow(_CFG, [ChatMessage(role="user", content="onde fica o centro?")], _flow_deps([]))
     assert out.answer == "RESPOSTA FINAL"
     assert out.contexts == ["ctx do doc"]
+
+
+def test_run_flow_reuses_the_embedder_across_turns():
+    loads = []
+    deps = _flow_deps(loads)
+    for _ in range(2):
+        run_flow(_CFG, [ChatMessage(role="user", content="onde fica o centro?")], deps)
+    assert loads == ["gemini"]

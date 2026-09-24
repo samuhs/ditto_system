@@ -5,6 +5,8 @@ from langgraph.graph import END, START, StateGraph
 
 from app.core.chat.flow_prompts import load_flow_prompts
 from app.core.chat.schemas import ChatConfigView, ChatMessage, ChatTurnResult
+from app.core.memory.device import resolve_embedding_device
+from app.core.memory.profile import active_profile
 from app.core.personas import load_persona
 from app.core.vectorstore.qdrant import collection_name
 
@@ -94,16 +96,17 @@ def build_graph(llm, rag, persona_text: str, prompts: dict[str, str]):
 def run_flow(cfg: ChatConfigView, messages: list[ChatMessage], deps) -> ChatTurnResult:
     """Build the graph from a config snapshot and run one conversational turn."""
     llm = deps.llm_factory(cfg.llm)
-    embedder = deps.embedder_factory(cfg.embedding)
-    collection = collection_name(cfg.base, cfg.chunking, cfg.embedding)
-    kwargs = {"store": deps.store, "collection": collection, "embedder": embedder}
-    if cfg.retriever == "multi_query":
-        kwargs["llm"] = llm
-    retriever = deps.retriever_factory(cfg.retriever, **kwargs)
-    rag = deps.rag_factory(cfg.rag, retriever=retriever, llm=llm)
-    persona_text = load_persona(cfg.persona)
-    graph = build_graph(llm, rag, persona_text, load_flow_prompts())
-    question = messages[-1].content if messages else ""
-    history = messages[:-1]
-    result = graph.invoke({"question": question, "history": history})
+    device = resolve_embedding_device(active_profile(), [cfg.llm])
+    with deps.models.acquire(cfg.embedding, device) as embedder:
+        collection = collection_name(cfg.base, cfg.chunking, cfg.embedding)
+        kwargs = {"store": deps.store, "collection": collection, "embedder": embedder}
+        if cfg.retriever == "multi_query":
+            kwargs["llm"] = llm
+        retriever = deps.retriever_factory(cfg.retriever, **kwargs)
+        rag = deps.rag_factory(cfg.rag, retriever=retriever, llm=llm)
+        persona_text = load_persona(cfg.persona)
+        graph = build_graph(llm, rag, persona_text, load_flow_prompts())
+        question = messages[-1].content if messages else ""
+        history = messages[:-1]
+        result = graph.invoke({"question": question, "history": history})
     return ChatTurnResult(answer=result.get("answer", ""), contexts=result.get("contexts", []))

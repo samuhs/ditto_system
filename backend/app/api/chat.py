@@ -9,6 +9,7 @@ from app.core.chat.deps import ChatDeps
 from app.core.chat.schemas import ChatConfigView, ChatMessage
 from app.core.db.base import SessionLocal
 from app.core.db.models import ChatConfig, Dialogue, DialogueMessage
+from app.core.memory.manager import get_model_manager
 from app.core.chat.flow_prompts import (
     FLOW_PROMPT_SPECS,
     load_flow_prompt,
@@ -39,7 +40,7 @@ _FLOW_EDGES = [
 
 def get_chat_deps() -> ChatDeps:
     """Production chat dependencies."""
-    return ChatDeps(store=QdrantStore(), session_factory=SessionLocal)
+    return ChatDeps(store=QdrantStore(), session_factory=SessionLocal, models=get_model_manager())
 
 
 class ChatConfigBody(BaseModel):

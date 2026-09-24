@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from app.core.chunking.base import chunking_registry
 from app.core.embedding.base import Embedder, build_embedder, embedding_registry
+from app.core.memory.manager import ModelManager, get_model_manager
+from app.core.memory.profile import active_profile
 from app.core.vectorstore.qdrant import QdrantStore
 from app.ingestion.pipeline import ingest_documents
 from app.ingestion.schemas import Document, IngestConfig, IngestResult
@@ -20,6 +22,15 @@ def get_store() -> QdrantStore:
 def get_embedder_factory() -> Callable[..., Embedder]:
     """FastAPI dependency providing the embedder factory."""
     return build_embedder
+
+
+def get_models(
+    embedder_factory: Callable[..., Embedder] = Depends(get_embedder_factory),
+) -> ModelManager:
+    """The shared model cache; a test-injected factory gets a private one."""
+    if embedder_factory is build_embedder:
+        return get_model_manager()
+    return ModelManager(embedder_factory, max_local=active_profile().max_local_models)
 
 
 def _csv(value: str) -> list[str]:
@@ -45,7 +56,7 @@ async def ingest(
     embeddings: str = Form(...),
     files: list[UploadFile] = File(...),
     store: QdrantStore = Depends(get_store),
-    embedder_factory: Callable[..., Embedder] = Depends(get_embedder_factory),
+    models: ModelManager = Depends(get_models),
 ) -> IngestResult:
     """Ingest uploaded documents under the given configuration."""
     documents = []
@@ -64,4 +75,4 @@ async def ingest(
     )
     _validate(config.chunkings, chunking_registry.names(), "chunking")
     _validate(config.embeddings, embedding_registry.names(), "embedding")
-    return ingest_documents(documents, config, store, embedder_factory=embedder_factory)
+    return ingest_documents(documents, config, store, models=models)
