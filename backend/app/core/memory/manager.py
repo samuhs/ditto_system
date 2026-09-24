@@ -81,7 +81,8 @@ class ModelManager:
         self._on_evict = on_evict
         self._entries: OrderedDict[tuple[str, str], _Entry] = OrderedDict()  # LRU first
         self._cond = threading.Condition()
-        self._leases = threading.local()
+        # Leases held per thread: a caller that already holds one must not wait.
+        self._held_by: dict[int, int] = {}
 
     @property
     def max_local(self) -> int:
@@ -100,11 +101,20 @@ class ModelManager:
         local = self._is_local(name)
         key = (name, device if local else _REMOTE)
         entry = self._checkout(key, local, wait_timeout_s)
-        self._leases.count = self._held() + 1
+        # Counted against the thread that took the lease, even if another thread
+        # releases it (a lease opened in a worker and closed by the orchestrator).
+        owner = threading.get_ident()
+        with self._cond:
+            self._held_by[owner] = self._held_by.get(owner, 0) + 1
         try:
             yield entry.embedder
         finally:
-            self._leases.count = self._held() - 1
+            with self._cond:
+                remaining = self._held_by.get(owner, 0) - 1
+                if remaining > 0:
+                    self._held_by[owner] = remaining
+                else:
+                    self._held_by.pop(owner, None)
             self._checkin(key)
 
     def loaded(self) -> list[LoadedModel]:
@@ -126,7 +136,7 @@ class ModelManager:
             return len(idle)
 
     def _held(self) -> int:
-        return getattr(self._leases, "count", 0)
+        return self._held_by.get(threading.get_ident(), 0)
 
     def _local_count(self) -> int:
         return sum(1 for e in self._entries.values() if e.local)
