@@ -13,7 +13,9 @@ RUN if [ -s /tmp/host-certs/host-ca.pem ]; then \
 # pip, requests, httpx and huggingface all read the system bundle through these.
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10
 
 COPY pyproject.toml ./
 # Install with the "local" extra so the sentence-transformers embedders
