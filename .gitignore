@@ -24,3 +24,6 @@ frontend/.impeccable/
 
 # host CAs exported for Docker builds (scripts/host-certs.sh)
 certs/*.pem
+
+# repo-local dev tools installed by make setup-dev when no uv/pipx exists
+.tools/

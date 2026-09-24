@@ -132,6 +132,14 @@ Want to skip Google entirely? The Docker image already bundles the local embedde
 
 You'll want Python 3.11+ and Node 22. You still need Qdrant and Postgres around, and the easy move is `make up` for just the datastores while you run the app locally.
 
+The quick way is one command. It creates `backend/.venv`, installs the frontend packages, sets up graphify (the code knowledge graph and its git hooks) and fetches the impeccable design engine. It is safe to re-run and works behind corporate VPNs:
+
+```bash
+make setup-dev          # add LOCAL=1 for the local embedders (pulls torch)
+```
+
+Or by hand:
+
 ```bash
 # backend
 cd backend

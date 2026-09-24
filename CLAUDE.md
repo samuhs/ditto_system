@@ -18,6 +18,13 @@ make bench-llm MODEL=...   # throughput do servidor de LLM por nível de paralel
 - Frontend: http://localhost:3000 · API: http://localhost:8000 (`/health`, `/options`, `/ingest`, `/experiments`)
 - Precisa de `GEMINI_API_KEY` no `.env` (já configurado, gitignored). No Docker use embedding `gemini` (a imagem não traz os embedders locais).
 
+## Ambiente de desenvolvimento
+```bash
+make setup-dev          # venv do backend, npm ci, graphify (grafo + hooks de git), engine do impeccable
+LOCAL=1 make setup-dev  # idem + embedders locais (sentence-transformers/torch)
+```
+Idempotente e funciona atrás de VPN corporativa (reaproveita as CAs do host). Os hooks do Claude chamam o graphify por `scripts/graphify.sh`, que acha a instalação em qualquer máquina.
+
 ## Testes
 ```bash
 make test         # backend (pytest) — ou: cd backend && ./.venv/bin/python -m pytest

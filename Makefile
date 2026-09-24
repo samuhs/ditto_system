@@ -1,4 +1,4 @@
-.PHONY: help certs setup llm-setup model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
+.PHONY: help certs setup setup-dev llm-setup model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
 
 MODEL ?= qwen2.5:3b-instruct
 PARALLEL ?= 4
@@ -13,10 +13,15 @@ help:
 	@echo "Benchmark: make bench-llm MODEL=... [LEVELS=1,2,4,8 N=16]"
 	@echo ""
 	@echo "Dia a dia: make down | logs | build | ollama-up | ollama-down | docker-clean"
-	@echo "Dev:       make install | test | front-install | front-test | front-build"
+	@echo "Dev:       make setup-dev (venv, npm, graphify, hooks) | test | front-test | front-build"
 
 setup:
 	@./scripts/setup.sh
+
+# Development environment: backend venv, frontend packages, graphify + git hooks,
+# impeccable engine. LOCAL=1 also installs the local embedders (torch).
+setup-dev:
+	@LOCAL="$(LOCAL)" ./scripts/setup-dev.sh
 
 llm-setup:
 	@MODEL="$(MODEL)" PARALLEL="$(PARALLEL)" ./scripts/llm-setup.sh
@@ -66,11 +71,14 @@ docker-clean:
 	docker image prune -f
 	docker system df
 
+# The backend venv (made by setup-dev) when present, else the python on PATH.
+BACKEND_PY = $(if $(wildcard backend/.venv/bin/python),.venv/bin/python,python)
+
 install:
-	cd backend && pip install -e ".[dev]"
+	cd backend && $(BACKEND_PY) -m pip install -e ".[dev]"
 
 test:
-	cd backend && python -m pytest -v
+	cd backend && $(BACKEND_PY) -m pytest -v
 
 front-install:
 	cd frontend && npm install
