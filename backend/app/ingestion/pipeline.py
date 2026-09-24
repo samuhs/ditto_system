@@ -23,8 +23,13 @@ def ingest_documents(
     store: QdrantStore,
     embedder_factory: Callable[..., Embedder] = build_embedder,
     models: ModelManager | None = None,
+    batch_size: int = 256,
 ) -> IngestResult:
-    """Chunk, embed, and store every chunking x embedding combination."""
+    """Chunk, embed, and store every chunking x embedding combination.
+
+    Chunks are embedded and stored `batch_size` at a time, so a large document
+    never holds all its vectors in memory at once.
+    """
     profile = active_profile()
     models = models or ModelManager(embedder_factory, max_local=profile.max_local_models)
     device = resolve_embedding_device(profile)
@@ -36,22 +41,23 @@ def ingest_documents(
                 name = collection_name(config.base, chunking, embedding)
                 store.ensure_collection(name, embedder.dimension)
                 chunker = _build_chunker_for(chunking, embedder)
+                next_id = store.count(name)
                 for document in documents:
                     chunks = chunker.split(document.text)
-                    if not chunks:
-                        continue
-                    vectors = embedder.embed_documents(chunks)
-                    payloads = [
-                        {
-                            "source_doc": document.name,
-                            "chunking_strategy": chunking,
-                            "embedding_model": embedding,
-                            "chunk_index": index,
-                            "text": chunk,
-                        }
-                        for index, chunk in enumerate(chunks)
-                    ]
-                    store.add(name, vectors, payloads)
+                    for start in range(0, len(chunks), batch_size):
+                        batch = chunks[start : start + batch_size]
+                        payloads = [
+                            {
+                                "source_doc": document.name,
+                                "chunking_strategy": chunking,
+                                "embedding_model": embedding,
+                                "chunk_index": start + offset,
+                                "text": chunk,
+                            }
+                            for offset, chunk in enumerate(batch)
+                        ]
+                        store.add(name, embedder.embed_documents(batch), payloads, start_id=next_id)
+                        next_id += len(batch)
                     total_chunks += len(chunks)
                 collections.append(name)
     return IngestResult(collections=collections, total_chunks=total_chunks)

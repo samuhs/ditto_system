@@ -48,18 +48,26 @@ class QdrantStore:
             vectors_config=VectorParams(size=dimension, distance=Distance.COSINE),
         )
 
+    def count(self, name: str) -> int:
+        """Number of points in the collection."""
+        return self._client.count(name).count
+
     def add(
         self,
         name: str,
         vectors: list[list[float]],
         payloads: list[dict],
+        start_id: int | None = None,
     ) -> None:
-        """Insert vectors with their metadata payloads under sequential ids."""
+        """Insert vectors with their metadata payloads under sequential ids.
+
+        `start_id` saves a count() round trip when the caller tracks the ids.
+        """
         if len(vectors) != len(payloads):
             raise ValueError("vectors and payloads must have the same length")
-        count = self._client.count(name).count
+        first = self.count(name) if start_id is None else start_id
         points = [
-            PointStruct(id=count + i, vector=vector, payload=payload)
+            PointStruct(id=first + i, vector=vector, payload=payload)
             for i, (vector, payload) in enumerate(zip(vectors, payloads))
         ]
         self._client.upsert(collection_name=name, points=points)

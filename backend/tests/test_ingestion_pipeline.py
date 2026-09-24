@@ -66,3 +66,34 @@ def test_ingest_real_travel_guide_document():
     config = IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"])
     result = ingest_documents(docs, config, store, embedder_factory=_factory)
     assert result.total_chunks > 5
+
+
+def test_ingestion_embeds_and_stores_in_batches():
+    from qdrant_client import QdrantClient
+
+    from app.core.vectorstore.qdrant import QdrantStore
+
+    batches = []
+
+    class _E:
+        def embed_documents(self, texts):
+            batches.append(len(texts))
+            return [[1.0, 0.0, float(i)] for i, _ in enumerate(texts)]
+
+        def embed_query(self, text):
+            return [1.0, 0.0, 0.0]
+
+        @property
+        def dimension(self):
+            return 3
+
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    text = "\n\n".join(f"Parágrafo número {i} com algum texto sobre o tema." for i in range(100))
+    config = IngestConfig(base="b", chunkings=["recursive"], embeddings=["gemini"])
+    result = ingest_documents([Document(name="a.txt", text=text)], config, store,
+                              embedder_factory=lambda n, **k: _E(), batch_size=2)
+    assert result.total_chunks >= 5
+    assert max(batches) <= 2
+    points = store.scroll(result.collections[0])
+    assert len({p["id"] for p in points}) == result.total_chunks  # no id collisions
+    assert sorted(p["payload"]["chunk_index"] for p in points) == list(range(result.total_chunks))
