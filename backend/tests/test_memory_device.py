@@ -3,6 +3,7 @@ import httpx
 import pytest
 
 from app.core.llm.factory import is_local_llm
+from app.core.llm import ollama
 from app.core.llm.ollama import local_llm_resident
 from app.core.memory.device import resolve_embedding_device
 from app.core.memory.profile import PROFILES
@@ -81,3 +82,32 @@ def test_malformed_reply_counts_as_resident(monkeypatch):
 def test_unreachable_server_is_not_resident(monkeypatch):
     monkeypatch.setattr(httpx, "get", _fake_get({}))
     assert local_llm_resident("http://x/v1") is False
+
+
+# Captured at import, before conftest's autouse fixture stubs the module attribute.
+_real_unload = getattr(ollama, "unload_local_llm", None)
+
+
+def test_unload_asks_ollama_to_drop_the_model(monkeypatch):
+    sent = []
+
+    def post(url, json, timeout):
+        sent.append((url, json))
+        return _Resp(200, {})
+
+    monkeypatch.setattr(httpx, "post", post)
+    assert _real_unload("qwen3:1.7b", "http://x/v1") is True
+    assert sent == [("http://x/api/generate", {"model": "qwen3:1.7b", "keep_alive": 0})]
+
+
+def test_unload_on_a_server_without_the_api_is_a_no_op(monkeypatch):
+    monkeypatch.setattr(httpx, "post", lambda url, json, timeout: _Resp(404))
+    assert _real_unload("mlx-community/X", "http://x/v1") is False
+
+
+def test_unload_never_raises(monkeypatch):
+    def post(url, json, timeout):
+        raise httpx.ConnectError("down")
+
+    monkeypatch.setattr(httpx, "post", post)
+    assert _real_unload("q", "http://x/v1") is False

@@ -59,3 +59,21 @@ def local_llm_resident(base_url: str | None = None, timeout: float = 1.0) -> boo
         return False
     except (ValueError, AttributeError):
         return True
+
+
+def unload_local_llm(model: str, base_url: str | None = None, timeout: float = 5.0) -> bool:
+    """Ask the local LLM server to free `model` now. True if it confirmed; never raises.
+
+    Ollama unloads on a generate call with keep_alive=0. MLX and llama.cpp have
+    no such API (the MLX server keeps one model and swaps it on demand).
+    """
+    import httpx
+
+    root = (base_url or get_settings().ollama_base_url).rstrip("/").removesuffix("/v1")
+    try:
+        resp = httpx.post(
+            f"{root}/api/generate", json={"model": model, "keep_alive": 0}, timeout=timeout
+        )
+        return resp.status_code < 400
+    except httpx.HTTPError:
+        return False

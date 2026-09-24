@@ -29,10 +29,11 @@ def _no_ollama_server(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def _no_llm_probe(monkeypatch):
-    """Device policy never probes a real LLM server in tests: none is resident."""
+    """Tests never talk to a real LLM server: none is resident, unloads are no-ops."""
     from app.core.llm import ollama
 
     monkeypatch.setattr(ollama, "local_llm_resident", lambda *a, **k: False)
+    monkeypatch.setattr(ollama, "unload_local_llm", lambda *a, **k: False)
 
 
 @pytest.fixture
