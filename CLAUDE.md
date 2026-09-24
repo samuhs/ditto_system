@@ -41,7 +41,7 @@ Dev backend usa o venv `backend/.venv` (Python 3.13). Frontend usa Node 22.
 
 ## Estrutura
 - `backend/app/` — FastAPI monólito modular (`core/`, `ingestion/`, `experiments/`, `api/`)
-- `backend/app/core/memory/` — perfis de memória, `ModelManager` (todo embedder passa por ele: cache com limite de modelos locais) e política de device (embedder nunca divide a GPU com LLM local)
+- `backend/app/core/memory/` — `leases.py`: cache de vetores das perguntas e troca de reserva para experimentos em etapas; perfis de memória, `ModelManager` (todo embedder passa por ele: cache com limite de modelos locais) e política de device (embedder nunca divide a GPU com LLM local)
 - `frontend/` — React + Vite + TS + Mantine (nginx faz proxy `/api/` → api)
 - `docs/superpowers/{specs,plans}/` — specs e planos de implementação
 - `database/` — documento de teste (FAQ de guia de viagem)

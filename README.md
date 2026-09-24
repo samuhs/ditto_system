@@ -157,6 +157,8 @@ Running an LLM and embedders locally on an 8 GB Mac is tight. Ditto has two memo
 
 In both profiles an embedder never shares the GPU with a local LLM, experiments run one at a time (the rest wait as "Na fila"), and combinations run LLM by LLM so each model loads once.
 
+Experiments run in three stages so that only one model sits in memory at a time. First every question is embedded once per embedding model, and the embedder is unloaded. Then the answers are generated LLM by LLM, with retrieval served from those precomputed vectors. Finally the local LLM is asked to unload (Ollama only; MLX keeps one model and swaps it) and the answers are scored with the evaluation embedder, which the page shows as "Avaliando as respostas". The embedder comes back during generation only for text the LLM writes itself (HyDE, multi-query, CRAG/agentic rewrites), and then on the CPU. `"staged": false` in an experiment's config runs the old single pass.
+
 ```bash
 make memory-profile                    # active profile and what it changes
 make memory-profile PROFILE=standard   # switch (restarts the LLM server); then make up or make up-local

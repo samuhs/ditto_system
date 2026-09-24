@@ -1,6 +1,6 @@
 # Gestão de memória com modelos locais (Macs de 8 GB)
 
-**Status:** Fases 0, 1, 2 e 3.1–3.3 implementadas (plano `docs/superpowers/plans/2026-09-24-gestao-de-memoria-parte-1.md`); 3.4 e 4 ficam para a parte 2
+**Status:** implementada. Fases 0, 1, 2 e 3.1–3.3 no plano `docs/superpowers/plans/2026-09-24-gestao-de-memoria-parte-1.md`; Fases 3.4 e 4 no `...-parte-2.md`. Da Fase 4 ficou de fora o `on_disk` do Qdrant: a medição mostrou ~300 MB com uma base, e o limite do container subiu para 1 GB.
 **Contexto:** no M4 Pro de 8 GB a RAM acaba quando o sistema usa LLM e embeddings locais. Este documento mapeia onde a memória vai e propõe mudanças em fases, das mais baratas às estruturais.
 
 ## 1. Orçamento de memória num Mac de 8 GB
@@ -103,7 +103,7 @@ Testes: um embedder fake que conta instanciações, verificando que duas runs co
 1. **Reordenar o produto cartesiano** para `llm → (chunking, embedding) → rag → retriever`. Cada LLM carrega uma vez por experimento e cada embedder uma vez por LLM. A ordem das runs muda, mas os resultados não (resolve P2).
 2. **Fila global de experimentos.** Um semáforo no processo deixa um experimento rodando por vez e os demais com status `queued`. O front já lida com status, então basta mostrar "na fila".
 3. **Pré-checagem de memória.** Antes de rodar, estima o pico: maior LLM (tamanho do `/api/tags` do Ollama ou da pasta do modelo no cache HF do MLX) + embedders locais + overhead, comparado com a RAM livre. Acima do limite, a UI avisa antes de começar.
-4. **Execução em estágios** (padrão nos dois perfis, com a flag `staged=false` como saída de emergência). Garante um modelo por vez mesmo com embedders locais:
+4. **Execução em estágios** (padrão nos dois perfis; `"staged": false` na config do experimento é a saída de emergência). Garante um modelo por vez mesmo com embedders locais:
    - **A. Embeddings das perguntas:** para cada embedding, calcula os vetores de todas as perguntas de uma vez (as perguntas já são conhecidas) e descarrega o embedder.
    - **B. Geração:** para cada LLM, roda as combinações com os vetores pré-calculados. Só o LLM fica residente. Exceções: `hyde` e `multi_query` embedam texto gerado pelo LLM, então precisam dos dois modelos juntos. Nesses casos o embedder roda em CPU enquanto o LLM está na GPU (regra 6 da Fase 2), então nunca disputam a mesma memória de GPU.
    - **C. Avaliação:** descarrega o LLM, carrega o `eval_embedder` uma vez e pontua todos os `RunResult` persistidos em lote. De quebra, dá para reavaliar com outras métricas sem gerar as respostas de novo.
