@@ -11,6 +11,8 @@ cd "$(dirname "$0")/.."
 . scripts/common.sh
 
 # ---------------------------------------------------------------------------
+icloud_warning
+
 step "Certificados (VPN/proxy)"
 ./scripts/host-certs.sh >/dev/null
 host_ca="$PWD/certs/host-ca.pem"

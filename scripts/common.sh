@@ -77,10 +77,21 @@ ollama_cli() {
 }
 
 # --- MLX (Apple Silicon) -----------------------------------------------------
-MLX_DIR=".tools/mlx"
+# Outside the repo on purpose: a project under an iCloud-synced folder
+# (Desktop/Documents) gets venv files evicted to the cloud, and a timed-out
+# on-demand download stalls the server's startup. DITTO_HOME moves it.
+MLX_DIR="${DITTO_HOME:-$HOME/.ditto}/mlx"
 MLX_PY="$MLX_DIR/bin/python"
 mlx_port() { local p; p="$(env_get MLX_PORT)"; echo "${p:-11436}"; }
-mlx_url() { echo "http://localhost:$(mlx_port)"; }
+# 127.0.0.1 so the API container reaches it via host.docker.internal; `make
+# up-local` uses ::1 instead (IPv6 loopback survives VPNs that break IPv4).
+mlx_host() { local h; h="$(env_get MLX_HOST)"; echo "${h:-127.0.0.1}"; }
+mlx_url() {
+  case "$(mlx_host)" in
+    *:*) echo "http://[$(mlx_host)]:$(mlx_port)" ;;
+    *) echo "http://localhost:$(mlx_port)" ;;
+  esac
+}
 mlx_up() { curl -sf "$(mlx_url)/v1/models" >/dev/null 2>&1; }
 
 # Short names are MLX community conversions: Qwen2.5-7B-Instruct-4bit ->
@@ -95,7 +106,7 @@ mlx_env() {
   local ca="certs/host-ca.pem" bundle="$MLX_DIR/ca-bundle.pem"
   if [ -s "$ca" ] && [ -x "$MLX_PY" ]; then
     cat "$("$MLX_PY" -c 'import certifi; print(certifi.where())')" "$ca" >"$bundle" 2>/dev/null \
-      && export SSL_CERT_FILE="$PWD/$bundle" REQUESTS_CA_BUNDLE="$PWD/$bundle"
+      && export SSL_CERT_FILE="$bundle" REQUESTS_CA_BUNDLE="$bundle"
   fi
   return 0
 }
@@ -114,6 +125,25 @@ except OSError as e:
     sys.exit(0 if e.errno == errno.EADDRNOTAVAIL else 1)
 sys.exit(1)
 PY
+}
+
+# True when the project sits in an iCloud Drive synced folder (macOS
+# "Desktop & Documents in iCloud"), where venv and node_modules files can be
+# evicted to the cloud and time out when read.
+in_icloud() {
+  [ "$(uname -s)" = Darwin ] || return 1
+  local dir="$PWD"
+  while [ "$dir" != "/" ] && [ "$dir" != "$HOME" ]; do
+    xattr -p com.apple.file-provider-domain-id "$dir" 2>/dev/null | grep -q CloudDocs && return 0
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+icloud_warning() {
+  in_icloud || return 0
+  warn "o projeto está numa pasta sincronizada pelo iCloud ($PWD)"
+  warn "o macOS pode tirar do disco arquivos do venv/node_modules e travar a inicialização"
+  warn "recomendado: mover o projeto para fora da Mesa/Documentos (ex.: ~/doutorado)"
 }
 
 # Undo what the previous `make llm-setup` mode left behind before switching.

@@ -1,4 +1,4 @@
-.PHONY: help certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
+.PHONY: help up-local down-local status-local doctor certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
 
 # MODEL and PARALLEL are optional: each LLM server has its own defaults.
 
@@ -15,6 +15,8 @@ help:
 	@echo "Benchmark: make bench-llm MODEL=... [LEVELS=1,2,4,8 N=16]"
 	@echo ""
 	@echo "Dia a dia: make down | logs | build | llm-up | llm-down | llm-status | docker-clean"
+	@echo "Sem Docker p/ API e front: make up-local | down-local | status-local (só banco e Qdrant no Docker)"
+	@echo "Diagnóstico de rede (VPN): make doctor"
 	@echo "Dev:       make setup-dev (venv, npm, graphify, hooks) | test | front-test | front-build"
 
 setup:
@@ -79,12 +81,30 @@ build: prepare
 
 # --build picks up code and the freshly built frontend; unchanged layers are cached.
 up: prepare
+	@./scripts/local.sh stop-apps
 	@./scripts/check-ports.sh
 	docker compose up -d --build
 	@./scripts/llm.sh up || true
 
 down:
 	docker compose down
+
+# Alternative to `make up`: API and frontend run on the host (backend/.venv,
+# Vite), only Postgres and Qdrant in Docker, every local hop over IPv6
+# loopback. For machines whose VPN breaks 127.0.0.1 or where Docker cannot
+# reach a host LLM server. Needs `make setup-dev` once.
+up-local:
+	@./scripts/local.sh up
+
+down-local:
+	@./scripts/local.sh down
+
+status-local:
+	@./scripts/local.sh status
+
+# Tests every network hop the app relies on and says which one fails.
+doctor:
+	@./scripts/doctor.sh
 
 logs:
 	docker compose logs -f

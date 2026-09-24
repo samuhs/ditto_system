@@ -108,11 +108,23 @@ YES=1 make llm-setup                             # answer yes to every prompt
 
 The choice is saved in `.env` (`LLM_SERVER`), so later runs, `make up` (which also starts the server) and the model commands all follow it. Switching servers cleans up after the previous one. `make llm-up`, `make llm-down` and `make llm-status` start, stop and check it by hand.
 
-**MLX** is Apple's framework for Apple Silicon: one process with an OpenAI-compatible API and batched decoding. It lives in `.tools/mlx`, listens on `localhost:11436` (`MLX_PORT`), and serves `PARALLEL` requests at once (default 4). Models come from Hugging Face, ready-made MLX conversions live at [huggingface.co/mlx-community](https://huggingface.co/mlx-community), and they're cached in `~/.cache/huggingface`.
+**MLX** is Apple's framework for Apple Silicon: one process with an OpenAI-compatible API and batched decoding. It lives in `~/.ditto/mlx` (outside the repo, so iCloud-synced folders can't evict it; `DITTO_HOME` moves it), listens on `localhost:11436` (`MLX_PORT`), and serves `PARALLEL` requests at once (default 4). Models come from Hugging Face, ready-made MLX conversions live at [huggingface.co/mlx-community](https://huggingface.co/mlx-community), and they're cached in `~/.cache/huggingface`.
 
 **Native Ollama:** on Linux `llm-setup` makes it listen beyond `localhost` (`OLLAMA_HOST=0.0.0.0`) so the containers can reach it, which also exposes port 11434 on your network, so firewall it on shared machines. It sets `OLLAMA_NUM_PARALLEL` (default 4); on macOS that goes through `launchctl setenv`, which doesn't survive a reboot.
 
 **Behind a corporate VPN (Ollama in Docker):** some VPN/security agents on macOS break outgoing connections to `127.0.0.1` ("can't assign requested address"). Native Ollama talks to its own runner over a fixed `127.0.0.1` port, and the API container reaches host servers through the host's loopback, so neither MLX nor native Ollama works there. `make llm-setup` detects this and offers Ollama in Docker: the container's loopback lives inside the Docker VM, out of the agent's reach. It's slower on a Mac because Docker has no Metal GPU, so prefer small models. If the container can't download models on your network, run `ollama pull <model>` on the host and repeat the command: it mounts `~/.ollama/models`. The container also answers on the host at `localhost:11435`.
+
+**Without Docker for the app (`make up-local`):** runs the API (`backend/.venv`) and the frontend (Vite) on the host, and keeps only Postgres and Qdrant in Docker. Every local connection goes over IPv6 loopback (`[::1]`), including MLX. That's the way to get GPU speed on machines whose VPN breaks `127.0.0.1`: there the API container can't reach a server on the host, but a host-run API can. `make llm-setup` notices the broken loopback and sets MLX up for this mode.
+
+```bash
+make setup-dev          # once: backend venv + frontend packages (LOCAL=1 for the e5/paraphrase embedders)
+make up-local           # Postgres + Qdrant in Docker, API + frontend + MLX on the host
+make status-local       # what's running
+make down-local         # stop it (the LLM server keeps running; make llm-down stops it)
+make doctor             # tests every network hop and says which mode fits this machine
+```
+
+`make up` and `make up-local` share the same ports and data, and each one stops the other's API and frontend, so you can switch freely. Logs live in `.tools/local/`.
 
 **Managing models** works the same on every server; the app lists them live, no restart needed:
 

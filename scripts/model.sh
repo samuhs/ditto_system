@@ -22,8 +22,13 @@ if [ "$(llm_server)" = mlx ]; then
     add)
       id="$(mlx_model_id "$model")"
       step "Baixando $id"
-      "$MLX_DIR/bin/hf" download "$id" >/dev/null \
-        || fail "não achei '$id' no Hugging Face. Modelos MLX prontos: https://huggingface.co/mlx-community"
+      if ! out="$("$MLX_DIR/bin/hf" download "$id" 2>&1)"; then
+        echo "$out" | grep -v '^\s*$' | tail -n 3 >&2
+        if echo "$out" | grep -qiE "not found|404|Repository Not Found"; then
+          fail "não achei '$id' no Hugging Face. Modelos MLX prontos: https://huggingface.co/mlx-community"
+        fi
+        fail "o download de '$id' falhou (erro acima)"
+      fi
       ok "disponível no app (Gerar teste e Chat) como '$id'"
       ;;
     rm)

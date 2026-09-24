@@ -10,18 +10,30 @@ cd "$(dirname "$0")/.."
 
 MLX_PID="$MLX_DIR/server.pid"
 MLX_LOG="$MLX_DIR/server.log"
+MLX_HOST_FILE="$MLX_DIR/server.host"   # the address the running server is bound to
+mlx_pattern() { echo "mlx_lm.server --host .* --port $(mlx_port)"; }
 
 mlx_start() {
-  mlx_up && { ok "MLX já está rodando em $(mlx_url)"; return 0; }
+  if pgrep -f "$(mlx_pattern)" >/dev/null; then
+    if [ "$(cat "$MLX_HOST_FILE" 2>/dev/null)" = "$(mlx_host)" ] && mlx_up; then
+      ok "MLX já está rodando em $(mlx_url)"
+      return 0
+    fi
+    mlx_stop >/dev/null   # bound to another address: restart on the requested one
+  fi
   [ -x "$MLX_DIR/bin/mlx_lm.server" ] || fail "MLX não instalado. Rode: make llm-setup"
   mlx_env
   local parallel; parallel="$(env_get MLX_PARALLEL)"
-  # Loopback only: the API container reaches it through host.docker.internal.
-  nohup "$MLX_DIR/bin/mlx_lm.server" --host 127.0.0.1 --port "$(mlx_port)" \
+  # Loopback only (see mlx_host): never exposed to the network.
+  nohup "$MLX_DIR/bin/mlx_lm.server" --host "$(mlx_host)" --port "$(mlx_port)" \
     --decode-concurrency "${parallel:-4}" --max-tokens 1024 \
     >"$MLX_LOG" 2>&1 &
   echo $! >"$MLX_PID"
-  for _ in $(seq 1 60); do
+  mlx_host >"$MLX_HOST_FILE"
+  # Startup imports MLX and transformers: seconds normally, minutes on a
+  # machine short of memory.
+  for i in $(seq 1 180); do
+    [ "$i" = 30 ] && echo "  ainda iniciando o MLX (máquina com pouca memória livre?)..."
     mlx_up && { ok "MLX rodando em $(mlx_url) (log: $MLX_LOG)"; return 0; }
     kill -0 "$(cat "$MLX_PID")" 2>/dev/null || break
     sleep 1
@@ -32,14 +44,14 @@ mlx_start() {
 
 mlx_stop() {
   [ -f "$MLX_PID" ] && kill "$(cat "$MLX_PID")" 2>/dev/null
-  pkill -f "mlx_lm.server --host 127.0.0.1 --port $(mlx_port)" 2>/dev/null
-  rm -f "$MLX_PID"
+  pkill -f "$(mlx_pattern)" 2>/dev/null
+  rm -f "$MLX_PID" "$MLX_HOST_FILE"
   # Wait for the port to be released so an immediate restart can bind it.
   for _ in $(seq 1 15); do
-    mlx_up || pgrep -f "mlx_lm.server --host 127.0.0.1 --port $(mlx_port)" >/dev/null || { ok "MLX parado"; return 0; }
+    pgrep -f "$(mlx_pattern)" >/dev/null || { ok "MLX parado"; return 0; }
     sleep 1
   done
-  pkill -9 -f "mlx_lm.server --host 127.0.0.1 --port $(mlx_port)" 2>/dev/null
+  pkill -9 -f "$(mlx_pattern)" 2>/dev/null
   ok "MLX parado (forçado)"
 }
 

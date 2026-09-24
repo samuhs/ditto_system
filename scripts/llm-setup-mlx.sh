@@ -3,7 +3,7 @@
 # local option on Apple Silicon. mlx_lm.server is a single process with an
 # OpenAI-compatible API and batched decoding (PARALLEL requests at once).
 #
-# Installs mlx-lm into .tools/mlx, records the choice in .env, starts the
+# Installs mlx-lm into ~/.ditto/mlx (DITTO_HOME), records the choice in .env, starts the
 # server, downloads MODEL (a Hugging Face id; short names mean
 # mlx-community/<name>) and smoke-tests it from the API container.
 # Env: MODEL, PARALLEL (default 4), MLX_PORT (default 11436), YES=1.
@@ -17,13 +17,15 @@ PARALLEL="${PARALLEL:-4}"
 step "MLX (Apple Silicon)"
 [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ] \
   || fail "MLX só roda em Mac com Apple Silicon. Use: make llm-setup LLM_SERVER=host (ou docker)"
+LOCAL_ONLY=0
 if ipv4_loopback_broken; then
+  # The API container reaches host servers through the host's IPv4 loopback,
+  # which is blocked here; the host-run app (make up-local) talks to MLX over
+  # IPv6 loopback instead, which still works.
+  LOCAL_ONLY=1
+  export MLX_HOST=::1
   warn "o loopback IPv4 (127.0.0.1) está bloqueado nesta máquina (agente de VPN/segurança)"
-  warn "a API no Docker não consegue falar com um servidor no host"
-  if confirm "Usar o Ollama dentro do Docker (sem GPU, mas funciona com a VPN)?"; then
-    exec ./scripts/llm-setup-docker.sh
-  fi
-  fail "sem o 127.0.0.1 o MLX não é alcançável; rode: make llm-setup LLM_SERVER=docker"
+  warn "o MLX vai escutar em [::1]; rode o sistema com 'make up-local' (API e front fora do Docker)"
 fi
 ok "Metal GPU disponível"
 
@@ -37,6 +39,12 @@ for candidate in python3.13 python3.12 python3.11 python3; do
 done
 [ -n "$PY" ] || fail "Python 3.11+ nativo (arm64) não encontrado. Instale o Python 3.13 (https://www.python.org/downloads/)."
 
+# Older versions kept it in the repo (.tools/mlx); it now lives in $MLX_DIR.
+if [ -d .tools/mlx ]; then
+  pkill -f "\.tools/mlx/bin/mlx_lm.server" 2>/dev/null || true
+  rm -rf .tools/mlx
+fi
+mkdir -p "$(dirname "$MLX_DIR")"
 [ -x "$MLX_PY" ] || "$PY" -m venv "$MLX_DIR"
 pip_env=()
 if [ -s certs/host-ca.pem ]; then
@@ -71,6 +79,10 @@ reply="$(curl -sf "$(mlx_url)/v1/chat/completions" -H 'Content-Type: application
 ok "resposta em $(( $(date +%s) - start ))s (inclui carregar o modelo): $reply"
 
 step "Conexão API → MLX"
+if [ "$LOCAL_ONLY" = 1 ]; then
+  ok "use 'make up-local': a API roda no host e fala com o MLX em [::1]"
+  exit 0
+fi
 if [ -n "$(docker compose ps -q api 2>/dev/null)" ]; then
   docker compose up -d api >/dev/null 2>&1   # pick up the new OLLAMA_BASE_URL
   for _ in $(seq 1 20); do

@@ -14,6 +14,8 @@ make logs        # logs em tempo real
 make llm-setup   # servidor de LLM local: MLX no Apple Silicon (GPU, padrão), senão Ollama nativo; baixa MODEL=...
 make llm-setup LLM_SERVER=host|docker|mlx  # troca: Ollama nativo | Ollama num container (atrás de VPN que quebra 127.0.0.1; sem GPU no Mac) | MLX
 make llm-up | llm-down | llm-status        # sobe/para/checa o servidor escolhido (make up também sobe)
+make up-local | down-local | status-local  # alternativa ao make up: API e front no host (venv + Vite), só Postgres/Qdrant no Docker, tudo via [::1] (para VPN que bloqueia 127.0.0.1)
+make doctor                                # testa cada conexão de rede e recomenda make up ou make up-local
 make model-add <modelo> | model-rm <modelo> | model-list   # MLX: Qwen2.5-7B-Instruct-4bit (mlx-community) ou org/repo; Ollama: qwen3:1.7b
 make bench-llm MODEL=...   # throughput do servidor de LLM por nível de paralelismo
 ```
