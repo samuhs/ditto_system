@@ -8,6 +8,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { getOptions, ingest } from "../api/client";
 import type { Options } from "../api/types";
@@ -18,7 +19,8 @@ import { useTasks } from "../context/TasksContext";
 export function IngestPage() {
   const { addIngestTask } = useTasks();
   const [options, setOptions] = useState<Options | null>(null);
-  const [base, setBase] = useState("");
+  const [searchParams] = useSearchParams();
+  const [base, setBase] = useState(searchParams.get("base") ?? "");
   const [chunkings, setChunkings] = useState<string[]>([]);
   const [embeddings, setEmbeddings] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);

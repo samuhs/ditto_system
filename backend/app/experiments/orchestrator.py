@@ -18,7 +18,7 @@ from app.core.prompts import PROMPT_SPECS
 from app.core.rag.base import build_rag
 from app.core.retrieval.base import build_retriever
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
-from app.experiments.schemas import ExperimentConfig, QuestionItem
+from app.experiments.schemas import ExperimentConfig, QuestionItem, index_pairs
 
 logger = logging.getLogger(__name__)
 
@@ -155,8 +155,8 @@ def run_experiment(
         eval_embedder = deps.embedder_factory(config.eval_embedding)
 
         paused = False
-        for chunking, embedding, rag_name, retriever_name, llm_name in itertools.product(
-            config.chunkings, config.embeddings, config.rags, config.retrievers, config.llms
+        for (chunking, embedding), rag_name, retriever_name, llm_name in itertools.product(
+            index_pairs(config), config.rags, config.retrievers, config.llms
         ):
             # Checkpoint: stop before starting a new combination if paused.
             if _pause_requested(experiment_id):

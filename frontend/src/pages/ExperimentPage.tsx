@@ -1,5 +1,6 @@
 import {
   Alert,
+  Anchor,
   Button,
   FileInput,
   Group,
@@ -10,9 +11,10 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { createExperiment, getOptions } from "../api/client";
-import type { Options } from "../api/types";
+import type { IndexPair, Options } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon } from "../components/icons";
 import { llmOptionRenderer, llmSelectData } from "../components/llmOptions";
@@ -23,8 +25,7 @@ export function ExperimentPage() {
   const [options, setOptions] = useState<Options | null>(null);
   const [name, setName] = useState("");
   const [base, setBase] = useState("");
-  const [chunkings, setChunkings] = useState<string[]>([]);
-  const [embeddings, setEmbeddings] = useState<string[]>([]);
+  const [indexKeys, setIndexKeys] = useState<string[]>([]);
   const [rags, setRags] = useState<string[]>([]);
   const [retrievers, setRetrievers] = useState<string[]>([]);
   const [llms, setLlms] = useState<string[]>([]);
@@ -34,11 +35,18 @@ export function ExperimentPage() {
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const baseIndexes: IndexPair[] = (base && options?.base_indexes?.[base]) || [];
+  const allIndexKeys = baseIndexes.map(indexKey);
+
+  function chooseBase(value: string) {
+    setBase(value);
+    setIndexKeys(((value && options?.base_indexes?.[value]) || []).map(indexKey));
+  }
+
   const allFilled =
     options !== null &&
-    options.chunkings.length > 0 &&
-    chunkings.length === options.chunkings.length &&
-    embeddings.length === options.embeddings.length &&
+    options.rags.length > 0 &&
+    indexKeys.length === allIndexKeys.length &&
     rags.length === options.rags.length &&
     retrievers.length === options.retrievers.length &&
     llms.length === options.llms.length &&
@@ -46,15 +54,13 @@ export function ExperimentPage() {
 
   function toggleAll() {
     if (allFilled) {
-      setChunkings([]);
-      setEmbeddings([]);
+      setIndexKeys([]);
       setRags([]);
       setRetrievers([]);
       setLlms([]);
       setMetrics([]);
     } else {
-      setChunkings(options?.chunkings ?? []);
-      setEmbeddings(options?.embeddings ?? []);
+      setIndexKeys(allIndexKeys);
       setRags(options?.rags ?? []);
       setRetrievers(options?.retrievers ?? []);
       setLlms(options?.llms ?? []);
@@ -69,11 +75,13 @@ export function ExperimentPage() {
   async function submit() {
     setSubmitError(null);
     try {
+      const indexes = baseIndexes.filter((i) => indexKeys.includes(indexKey(i)));
       const config = {
         name: name || undefined,
         base,
-        chunkings,
-        embeddings,
+        chunkings: unique(indexes.map((i) => i.chunking)),
+        embeddings: unique(indexes.map((i) => i.embedding)),
+        indexes,
         rags,
         retrievers,
         llms,
@@ -126,28 +134,30 @@ export function ExperimentPage() {
               placeholder="Selecione a base ingerida"
               data={options?.bases ?? []}
               value={base || null}
-              onChange={(v) => setBase(v ?? "")}
+              onChange={(v) => chooseBase(v ?? "")}
               searchable
             />
           </Group>
-          <Group grow align="flex-start">
+          <Stack gap={4}>
             <MultiSelect
-              label="Cortes"
-              placeholder="Selecione"
-              data={options?.chunkings ?? []}
-              value={chunkings}
-              onChange={setChunkings}
+              label="Índices da base"
+              description="Variações de corte × embedding já indexadas para esta base."
+              placeholder={base ? "Selecione" : "Escolha a base primeiro"}
+              data={baseIndexes.map((i) => ({ value: indexKey(i), label: `${i.chunking} · ${i.embedding}` }))}
+              value={indexKeys}
+              onChange={setIndexKeys}
+              disabled={!base}
               searchable
             />
-            <MultiSelect
-              label="Embeddings"
-              placeholder="Selecione"
-              data={options?.embeddings ?? []}
-              value={embeddings}
-              onChange={setEmbeddings}
-              searchable
-            />
-          </Group>
+            <Anchor
+              component={Link}
+              to={base ? `/ingest?base=${encodeURIComponent(base)}` : "/ingest"}
+              size="xs"
+              c="dimmed"
+            >
+              {base ? "Indexar mais variações desta base →" : "Indexar documentos →"}
+            </Anchor>
+          </Stack>
           <Group grow align="flex-start">
             <MultiSelect
               label="RAGs"
@@ -225,4 +235,12 @@ export function ExperimentPage() {
       )}
     </div>
   );
+}
+
+function indexKey(i: IndexPair): string {
+  return `${i.chunking}|${i.embedding}`;
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values)];
 }

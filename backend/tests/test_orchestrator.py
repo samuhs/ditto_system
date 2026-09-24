@@ -494,3 +494,37 @@ def test_pause_with_concurrency_stops_new_questions(session_factory):
     assert stored.status == "paused"
     assert 1 <= len(stored.runs[0].results) <= 2
     check.close()
+
+
+def test_indexes_run_only_the_listed_pairs(session_factory):
+    """Explicit index pairs replace the chunking x embedding cartesian product."""
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="One. Two. Three. Four sentences here.")],
+        IngestConfig(base="viagem", chunkings=["recursive", "token"], embeddings=["gemini"]),
+        store,
+        embedder_factory=_embedder_factory,
+    )
+    experiment_id = _new_experiment(session_factory, "indexes")
+    config = ExperimentConfig(
+        base="viagem",
+        chunkings=["recursive", "token"],
+        embeddings=["gemini", "e5"],
+        indexes=[{"chunking": "recursive", "embedding": "gemini"}],
+        rags=["naive"],
+        retrievers=["similarity"],
+        metrics=["answer_relevancy"],
+    )
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=_llm_factory,
+        embedder_factory=_embedder_factory,
+    )
+
+    run_experiment(experiment_id, config, [QuestionItem(text="q")], deps)
+
+    check = session_factory()
+    runs = check.get(Experiment, experiment_id).runs
+    assert [(r.chunking, r.embedding) for r in runs] == [("recursive", "gemini")]
+    check.close()

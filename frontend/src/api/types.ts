@@ -4,8 +4,14 @@ export interface LlmOption {
   location: "local" | "remote";
 }
 
+export interface IndexPair {
+  chunking: string;
+  embedding: string;
+}
+
 export interface Options {
   bases: string[];
+  base_indexes?: Record<string, IndexPair[]>;
   chunkings: string[];
   embeddings: string[];
   llms: string[];

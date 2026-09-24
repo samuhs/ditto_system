@@ -82,3 +82,23 @@ def test_ingest_rejects_unknown_technique(client):
     response = client.post("/ingest", data=data, files=files)
     assert response.status_code == 422
     assert "chunking" in response.json()["detail"]
+
+
+def test_options_lists_indexes_per_base():
+    from app.api.options import get_store as options_get_store
+
+    class _Store:
+        def list_collections(self):
+            return ["viagem__fixed__e5", "viagem__recursive__gemini", "faq__token__e5", "stray"]
+
+    app = create_app()
+    app.dependency_overrides[options_get_store] = lambda: _Store()
+    body = TestClient(app).get("/options").json()
+    assert body["bases"] == ["faq", "viagem"]
+    assert body["base_indexes"] == {
+        "faq": [{"chunking": "token", "embedding": "e5"}],
+        "viagem": [
+            {"chunking": "fixed", "embedding": "e5"},
+            {"chunking": "recursive", "embedding": "gemini"},
+        ],
+    }

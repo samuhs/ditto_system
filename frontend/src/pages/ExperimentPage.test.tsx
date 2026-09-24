@@ -1,6 +1,7 @@
 import { MantineProvider } from "@mantine/core";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as client from "../api/client";
@@ -11,19 +12,27 @@ vi.mock("../api/client");
 
 function renderPage() {
   return render(
-    <MantineProvider>
-      <TasksProvider>
-        <ExperimentPage />
-      </TasksProvider>
-    </MantineProvider>,
+    <MemoryRouter>
+      <MantineProvider>
+        <TasksProvider>
+          <ExperimentPage />
+        </TasksProvider>
+      </MantineProvider>
+    </MemoryRouter>,
   );
 }
 
 beforeEach(() => {
   vi.mocked(client.getOptions).mockResolvedValue({
     bases: ["teste-1"],
-    chunkings: ["recursive"],
-    embeddings: ["gemini"],
+    base_indexes: {
+      "teste-1": [
+        { chunking: "fixed", embedding: "e5" },
+        { chunking: "recursive", embedding: "gemini" },
+      ],
+    },
+    chunkings: ["recursive", "fixed", "token"],
+    embeddings: ["gemini", "e5"],
     llms: ["gemini"],
     rags: ["naive"],
     retrievers: ["similarity"],
@@ -95,5 +104,29 @@ describe("ExperimentPage", () => {
     expect(await screen.findByText("qwen2.5:3b-instruct")).toBeInTheDocument();
     expect(screen.getByText("local")).toBeInTheDocument();
     expect(screen.getByText("remoto")).toBeInTheDocument();
+  });
+
+  it("offers only the indexes of the chosen base, all preselected, and submits the pairs", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await screen.findByRole("button", { name: /preencher tudo/i });
+    await user.click(screen.getByRole("textbox", { name: /^base$/i }));
+    await user.click(await screen.findByRole("option", { name: "teste-1" }));
+    expect(screen.getAllByText("fixed · e5").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("recursive · gemini").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: /indexar mais variações/i })).toHaveAttribute(
+      "href",
+      "/ingest?base=teste-1",
+    );
+    await user.click(screen.getByRole("button", { name: /gerar/i }));
+    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    const form = vi.mocked(client.createExperiment).mock.calls[0][0] as FormData;
+    const config = JSON.parse(form.get("config") as string);
+    expect(config.indexes).toEqual([
+      { chunking: "fixed", embedding: "e5" },
+      { chunking: "recursive", embedding: "gemini" },
+    ]);
+    expect(config.chunkings).toEqual(["fixed", "recursive"]);
+    expect(config.embeddings).toEqual(["e5", "gemini"]);
   });
 });

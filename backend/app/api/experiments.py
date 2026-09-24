@@ -12,11 +12,11 @@ from sqlalchemy.exc import IntegrityError
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
 from app.core.prompts import PROMPT_SPECS, load_technique
-from app.core.vectorstore.qdrant import QdrantStore
+from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.naming import generate_experiment_name
 from app.experiments.orchestrator import ExperimentDeps, _pause_requested, request_pause, run_experiment
-from app.experiments.schemas import ExperimentConfig
+from app.experiments.schemas import ExperimentConfig, index_pairs
 
 router = APIRouter()
 
@@ -89,6 +89,21 @@ def get_experiment_deps() -> ExperimentDeps:
     return ExperimentDeps(store=QdrantStore(), session_factory=SessionLocal)
 
 
+def _check_indexes_exist(config: ExperimentConfig, store: QdrantStore) -> None:
+    """Reject index pairs that were never ingested for the base (422)."""
+    existing = set(store.list_collections())
+    missing = [
+        f"{chunking} × {embedding}"
+        for chunking, embedding in index_pairs(config)
+        if collection_name(config.base, chunking, embedding) not in existing
+    ]
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail=f"base '{config.base}' has no index for: {', '.join(missing)}",
+        )
+
+
 @router.post("/experiments")
 async def create_experiment(
     background_tasks: BackgroundTasks,
@@ -101,6 +116,8 @@ async def create_experiment(
         parsed = ExperimentConfig.model_validate_json(config)
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=exc.errors()) from exc
+    if parsed.indexes is not None:
+        _check_indexes_exist(parsed, deps.store)
     if not parsed.name:
         parsed.name = generate_experiment_name()
     raw = await questions.read()

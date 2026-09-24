@@ -34,25 +34,36 @@ def _llm_options(list_ollama: Callable[[], list[str]]) -> list[dict[str, str]]:
     return llms
 
 
-def _ingested_bases(store: QdrantStore) -> list[str]:
-    """Base names derived from collection names; empty if the store is unreachable."""
+def _base_indexes(store: QdrantStore) -> dict[str, list[dict[str, str]]]:
+    """Indexed chunking x embedding pairs per base, parsed from collection names.
+
+    Empty if the store is unreachable: a vector-store outage must not break the form pages.
+    """
     try:
         names = store.list_collections()
-    except Exception:  # noqa: BLE001  a vector-store outage must not break the form pages
-        return []
-    return sorted({n.split("__")[0] for n in names if "__" in n})
+    except Exception:  # noqa: BLE001
+        return {}
+    indexes: dict[str, list[dict[str, str]]] = {}
+    for name in sorted(names):
+        parts = name.rsplit("__", 2)
+        if len(parts) != 3:
+            continue
+        base, chunking, embedding = parts
+        indexes.setdefault(base, []).append({"chunking": chunking, "embedding": embedding})
+    return dict(sorted(indexes.items()))
 
 
 @router.get("/options")
 def options(
     store: QdrantStore = Depends(get_store),
     list_ollama: Callable[[], list[str]] = Depends(get_ollama_lister),
-) -> dict[str, list]:
+) -> dict:
     """List the registered techniques, ingested bases and available LLM models."""
-    bases = _ingested_bases(store)
+    base_indexes = _base_indexes(store)
     llm_options = _llm_options(list_ollama)
     return {
-        "bases": bases,
+        "bases": list(base_indexes),
+        "base_indexes": base_indexes,
         "chunkings": chunking_registry.names(),
         "embeddings": embedding_registry.names(),
         "llms": [o["value"] for o in llm_options],

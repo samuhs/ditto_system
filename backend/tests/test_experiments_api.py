@@ -244,3 +244,32 @@ def test_export_experiment_csv(client):
 
 def test_export_missing_experiment_404(client):
     assert client.get("/experiments/99999/export.csv").status_code == 404
+
+
+def _indexes_payload(indexes):
+    return json.dumps(
+        {
+            "base": "viagem",
+            "chunkings": sorted({i["chunking"] for i in indexes}),
+            "embeddings": sorted({i["embedding"] for i in indexes}),
+            "indexes": indexes,
+            "rags": ["naive"],
+            "retrievers": ["similarity"],
+            "metrics": ["answer_relevancy"],
+        }
+    )
+
+
+def test_create_experiment_with_existing_indexes(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = _indexes_payload([{"chunking": "recursive", "embedding": "gemini"}])
+    response = client.post("/experiments", data={"config": payload}, files=files)
+    assert response.status_code == 200
+
+
+def test_create_experiment_rejects_missing_index(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = _indexes_payload([{"chunking": "fixed", "embedding": "e5"}])
+    response = client.post("/experiments", data={"config": payload}, files=files)
+    assert response.status_code == 422
+    assert "fixed" in response.json()["detail"]

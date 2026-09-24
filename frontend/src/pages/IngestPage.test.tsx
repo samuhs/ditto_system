@@ -1,6 +1,7 @@
 import { MantineProvider } from "@mantine/core";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as client from "../api/client";
@@ -9,13 +10,15 @@ import { IngestPage } from "./IngestPage";
 
 vi.mock("../api/client");
 
-function renderPage() {
+function renderPage(url = "/ingest") {
   return render(
-    <MantineProvider>
-      <TasksProvider>
-        <IngestPage />
-      </TasksProvider>
-    </MantineProvider>,
+    <MemoryRouter initialEntries={[url]}>
+      <MantineProvider>
+        <TasksProvider>
+          <IngestPage />
+        </TasksProvider>
+      </MantineProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -61,5 +64,10 @@ describe("IngestPage", () => {
     await waitFor(() =>
       expect(client.ingest).toHaveBeenCalledWith(expect.any(FormData)),
     );
+  });
+
+  it("prefills the base name from ?base=", async () => {
+    renderPage("/ingest?base=santo%20Antonio");
+    expect(await screen.findByDisplayValue("santo Antonio")).toBeInTheDocument();
   });
 });
