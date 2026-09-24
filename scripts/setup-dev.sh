@@ -112,6 +112,10 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+step "Perfil de memória"
+./scripts/memory-profile.sh init
+ok "perfil ativo: $(memory_profile) (make memory-profile mostra o que ele muda)"
+
 step "Pronto"
 ok "testes do backend:  make test"
 ok "testes do frontend: make front-test"

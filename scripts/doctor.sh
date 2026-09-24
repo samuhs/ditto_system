@@ -140,3 +140,6 @@ if [ "$ipv4_bad" = 1 ]; then
 else
   ok "'make up' funciona nesta máquina; 'make up-local' também é uma opção"
 fi
+
+./scripts/memory-profile.sh show
+./scripts/memory-profile.sh hint-up

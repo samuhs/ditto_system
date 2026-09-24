@@ -1,0 +1,17 @@
+# Loaded through COMPOSE_FILE when MEMORY_PROFILE=low (make memory-profile).
+# Caps the containers so the Docker VM leaves RAM for the LLM server on 8 GB machines.
+services:
+  api:
+    mem_limit: 2g
+  qdrant:
+    mem_limit: 512m
+  postgres:
+    mem_limit: 256m
+  frontend:
+    mem_limit: 128m
+  ollama:
+    environment:
+      OLLAMA_NUM_PARALLEL: 2
+      OLLAMA_MAX_LOADED_MODELS: 1
+      OLLAMA_FLASH_ATTENTION: 1
+      OLLAMA_KV_CACHE_TYPE: q8_0

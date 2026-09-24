@@ -1,4 +1,4 @@
-.PHONY: help up-local down-local status-local doctor certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
+.PHONY: help memory-profile mem-watch up-local down-local status-local doctor certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
 
 # MODEL and PARALLEL are optional: each LLM server has its own defaults.
 
@@ -17,6 +17,7 @@ help:
 	@echo "Dia a dia: make down | logs | build | llm-up | llm-down | llm-status | docker-clean"
 	@echo "Sem Docker p/ API e front: make up-local | down-local | status-local (só banco e Qdrant no Docker)"
 	@echo "Diagnóstico de rede (VPN): make doctor"
+	@echo "Memória:   make memory-profile [PROFILE=low|standard] (perfil ativo / trocar) | mem-watch"
 	@echo "Dev:       make setup-dev (venv, npm, graphify, hooks) | test | front-test | front-build"
 
 setup:
@@ -81,10 +82,20 @@ build: prepare
 
 # --build picks up code and the freshly built frontend; unchanged layers are cached.
 up: prepare
+	@./scripts/memory-profile.sh init
 	@./scripts/local.sh stop-apps
 	@./scripts/check-ports.sh
 	docker compose up -d --build
 	@./scripts/llm.sh up || true
+	@./scripts/memory-profile.sh hint-up
+
+# Memory profile: show it, or switch with PROFILE=low|standard (restarts the LLM server).
+memory-profile:
+	@./scripts/memory-profile.sh $(if $(PROFILE),set "$(PROFILE)",show)
+
+# Free memory, swap, API RSS/loaded models and MLX RSS every INTERVAL seconds.
+mem-watch:
+	@INTERVAL="$(or $(INTERVAL),2)" ./scripts/mem-watch.sh
 
 down:
 	docker compose down

@@ -157,3 +157,29 @@ reset_llm_server() {
   done
   unset COMPOSE_PROFILES OLLAMA_BASE_URL
 }
+
+# --- Memory profile ------------------------------------------------------------
+# low (<= 8 GB of RAM) or standard, stored as MEMORY_PROFILE in .env.
+# See docs/superpowers/specs/2026-09-24-gestao-de-memoria-design.md.
+total_ram_bytes() {
+  case "$(uname -s)" in
+    Darwin) sysctl -n hw.memsize 2>/dev/null ;;
+    Linux) awk '/^MemTotal:/ {printf "%d\n", $2 * 1024}' /proc/meminfo 2>/dev/null ;;
+  esac
+}
+detect_memory_profile() {
+  local ram; ram="$(total_ram_bytes)"
+  if [ -n "$ram" ] && [ "$ram" -le 9000000000 ]; then echo low; else echo standard; fi
+}
+memory_profile() {
+  case "$(env_get MEMORY_PROFILE | tr '[:upper:]' '[:lower:]' | tr -d ' ')" in
+    low) echo low ;; standard) echo standard ;; *) detect_memory_profile ;;
+  esac
+}
+# profile_value LOW STANDARD -> the one for the active profile
+profile_value() { if [ "$(memory_profile)" = low ]; then echo "$1"; else echo "$2"; fi; }
+# Extra Ollama variables of the active profile, one KEY=VALUE per line.
+ollama_profile_vars() {
+  [ "$(memory_profile)" = low ] || return 0
+  printf '%s\n' OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0
+}

@@ -19,6 +19,11 @@ services:
       # Host Ollama by default; `make llm-setup LLM_SERVER=docker` points it
       # at the ollama service below (http://ollama:11434/v1) via .env.
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+      # Memory profile (make memory-profile); empty overrides mean "use the profile".
+      MEMORY_PROFILE: ${MEMORY_PROFILE:-standard}
+      MAX_LOCAL_MODELS: ${MAX_LOCAL_MODELS:-}
+      EMBEDDING_DEVICE: ${EMBEDDING_DEVICE:-}
+      MAX_EXPERIMENT_CONCURRENCY: ${MAX_EXPERIMENT_CONCURRENCY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

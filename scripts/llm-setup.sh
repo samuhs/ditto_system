@@ -31,7 +31,9 @@ fi
 MODEL="${MODEL:-qwen2.5:3b-instruct}"
 case "$MODEL" in *:*) ;; *) MODEL="$MODEL:latest" ;; esac
 OLLAMA_URL="http://localhost:11434"
-PARALLEL="${PARALLEL:-4}"
+PARALLEL="${PARALLEL:-$(profile_value 2 4)}"
+# Extra variables of the memory profile (low: one model loaded, quantized KV cache).
+PROFILE_VARS="$(ollama_profile_vars | tr '\n' ' ')"
 OS="$(uname -s)"
 
 # Native Ollama reaches its runner over 127.0.0.1; see ipv4_loopback_broken.
@@ -109,15 +111,34 @@ has_systemd_unit() {
 
 # Linux: Ollama defaults to 127.0.0.1, which containers cannot reach via host.docker.internal.
 serve_env() {
-  if [ "$OS" = "Linux" ]; then echo "OLLAMA_HOST=0.0.0.0:11434 OLLAMA_NUM_PARALLEL=$PARALLEL"
-  elif [ "$IPV6_LOOPBACK" = 1 ]; then echo "OLLAMA_HOST=[::1] OLLAMA_NUM_PARALLEL=$PARALLEL"
-  else echo "OLLAMA_NUM_PARALLEL=$PARALLEL"; fi
+  if [ "$OS" = "Linux" ]; then echo "OLLAMA_HOST=0.0.0.0:11434 OLLAMA_NUM_PARALLEL=$PARALLEL $PROFILE_VARS"
+  elif [ "$IPV6_LOOPBACK" = 1 ]; then echo "OLLAMA_HOST=[::1] OLLAMA_NUM_PARALLEL=$PARALLEL $PROFILE_VARS"
+  else echo "OLLAMA_NUM_PARALLEL=$PARALLEL $PROFILE_VARS"; fi
+}
+
+# The macOS app reads launchctl's environment: true when it already matches the profile.
+launchctl_env_matches() {
+  [ "$(launchctl getenv OLLAMA_NUM_PARALLEL)" = "$PARALLEL" ] || return 1
+  local key
+  for key in OLLAMA_MAX_LOADED_MODELS OLLAMA_FLASH_ATTENTION OLLAMA_KV_CACHE_TYPE; do
+    [ "$(launchctl getenv "$key")" = "$(ollama_profile_vars | sed -n "s/^$key=//p")" ] || return 1
+  done
+}
+launchctl_set_env() {
+  launchctl setenv OLLAMA_NUM_PARALLEL "$PARALLEL"
+  local key value
+  for key in OLLAMA_MAX_LOADED_MODELS OLLAMA_FLASH_ATTENTION OLLAMA_KV_CACHE_TYPE; do
+    value="$(ollama_profile_vars | sed -n "s/^$key=//p")"
+    if [ -n "$value" ]; then launchctl setenv "$key" "$value"; else launchctl unsetenv "$key"; fi
+  done
 }
 
 write_systemd_override() {
   sudo mkdir -p /etc/systemd/system/ollama.service.d
-  printf '[Service]\nEnvironment="OLLAMA_HOST=0.0.0.0:11434"\nEnvironment="OLLAMA_NUM_PARALLEL=%s"\n' "$PARALLEL" \
-    | sudo tee /etc/systemd/system/ollama.service.d/override.conf >/dev/null
+  {
+    printf '[Service]\nEnvironment="OLLAMA_HOST=0.0.0.0:11434"\nEnvironment="OLLAMA_NUM_PARALLEL=%s"\n' "$PARALLEL"
+    ollama_profile_vars | sed 's/.*/Environment="&"/'
+  } | sudo tee /etc/systemd/system/ollama.service.d/override.conf >/dev/null
   sudo systemctl daemon-reload
 }
 
@@ -128,10 +149,11 @@ start_detached() {
 
 mac_app_running() { [ "$OS" = "Darwin" ] && pgrep -f "Ollama.app/Contents/MacOS/Ollama" >/dev/null 2>&1; }
 
-step "Servidor Ollama (OLLAMA_NUM_PARALLEL=$PARALLEL)"
+step "Servidor Ollama (OLLAMA_NUM_PARALLEL=$PARALLEL $PROFILE_VARS; perfil de memória $(memory_profile))"
 override=/etc/systemd/system/ollama.service.d/override.conf
 if has_systemd_unit; then
   if ! grep -q "OLLAMA_NUM_PARALLEL=$PARALLEL\"" "$override" 2>/dev/null \
+    || [ "$(grep -cE 'OLLAMA_MAX_LOADED_MODELS|OLLAMA_KV_CACHE_TYPE' "$override" 2>/dev/null)" != "$(ollama_profile_vars | grep -cE 'MAX_LOADED|KV_CACHE')" ] \
     || ! grep -q 'OLLAMA_HOST=0.0.0.0' "$override" 2>/dev/null; then
     confirm "Configurar o serviço systemd com OLLAMA_HOST=0.0.0.0 (acessível na rede local) e OLLAMA_NUM_PARALLEL=$PARALLEL, reiniciando o Ollama?" \
       || fail "sem essa configuração os containers não alcançam o Ollama."
@@ -143,9 +165,9 @@ if has_systemd_unit; then
   fi
 elif [ "$OS" = "Darwin" ] && { mac_app_running || { ! reachable && [ -d /Applications/Ollama.app ]; }; }; then
   # The macOS app reads its environment from launchctl (not persisted across reboots).
-  if [ "$(launchctl getenv OLLAMA_NUM_PARALLEL)" != "$PARALLEL" ] || ! reachable; then
-    if [ "$(launchctl getenv OLLAMA_NUM_PARALLEL)" = "$PARALLEL" ] || confirm "Definir OLLAMA_NUM_PARALLEL=$PARALLEL no app do Ollama e reiniciá-lo? (interrompe gerações em andamento)"; then
-      launchctl setenv OLLAMA_NUM_PARALLEL "$PARALLEL"
+  if ! launchctl_env_matches || ! reachable; then
+    if launchctl_env_matches || confirm "Definir OLLAMA_NUM_PARALLEL=$PARALLEL $PROFILE_VARS no app do Ollama e reiniciá-lo? (interrompe gerações em andamento)"; then
+      launchctl_set_env
       [ "$IPV6_LOOPBACK" = 1 ] && launchctl setenv OLLAMA_HOST "[::1]"
       if mac_app_running; then
         osascript -e 'quit app "Ollama"' >/dev/null 2>&1 || true

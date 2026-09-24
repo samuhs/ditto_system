@@ -23,10 +23,17 @@ mlx_start() {
   fi
   [ -x "$MLX_DIR/bin/mlx_lm.server" ] || fail "MLX não instalado. Rode: make llm-setup"
   mlx_env
-  local parallel; parallel="$(env_get MLX_PARALLEL)"
+  # Explicit .env values win; otherwise the memory profile decides. The
+  # prompt cache holds KV caches of past prompts, which RAG rarely reuses.
+  local parallel cache_size cache_bytes
+  parallel="$(env_get MLX_PARALLEL | grep . || profile_value 2 4)"
+  cache_size="$(env_get MLX_PROMPT_CACHE_SIZE | grep . || profile_value 2 10)"
+  cache_bytes="$(env_get MLX_PROMPT_CACHE_BYTES | grep . || profile_value 512M '')"
+  local extra=(--prompt-cache-size "$cache_size")
+  [ -n "$cache_bytes" ] && extra+=(--prompt-cache-bytes "$cache_bytes")
   # Loopback only (see mlx_host): never exposed to the network.
   nohup "$MLX_DIR/bin/mlx_lm.server" --host "$(mlx_host)" --port "$(mlx_port)" \
-    --decode-concurrency "${parallel:-4}" --max-tokens 1024 \
+    --decode-concurrency "$parallel" "${extra[@]}" --max-tokens 1024 \
     >"$MLX_LOG" 2>&1 &
   echo $! >"$MLX_PID"
   mlx_host >"$MLX_HOST_FILE"
@@ -62,7 +69,8 @@ ollama_host_start() {
   fi
   has ollama || fail "ollama não instalado. Rode: make llm-setup LLM_SERVER=host"
   local parallel; parallel="$(env_get PARALLEL)"
-  export OLLAMA_NUM_PARALLEL="${parallel:-4}"
+  export OLLAMA_NUM_PARALLEL="${parallel:-$(profile_value 2 4)}"
+  while IFS= read -r kv; do [ -n "$kv" ] && export "${kv?}"; done < <(ollama_profile_vars)
   [ "$(uname -s)" = Linux ] && export OLLAMA_HOST=0.0.0.0:11434
   nohup ollama serve >/tmp/ollama.log 2>&1 &
   for _ in $(seq 1 30); do

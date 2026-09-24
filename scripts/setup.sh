@@ -43,6 +43,10 @@ else
   fi
 fi
 
+step "Memória"
+./scripts/memory-profile.sh init
+./scripts/memory-profile.sh show
+
 step "Portas"
 ./scripts/check-ports.sh || warn "resolva as portas antes do 'make up'"
 

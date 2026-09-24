@@ -56,6 +56,7 @@ llm_url_local() {
 }
 
 up() {
+  ./scripts/memory-profile.sh init
   step "Pré-requisitos"
   [ -x backend/.venv/bin/uvicorn ] || fail "backend/.venv não existe. Rode: make setup-dev"
   [ -d frontend/node_modules ] || fail "frontend/node_modules não existe. Rode: make setup-dev"
@@ -118,6 +119,10 @@ up() {
       QDRANT_URL="http://[::1]:$QD_PORT" \
       OLLAMA_BASE_URL="$LLM_URL" \
       GEMINI_API_KEY="$(env_get GEMINI_API_KEY)" \
+      MEMORY_PROFILE="$(memory_profile)" \
+      MAX_LOCAL_MODELS="$(env_get MAX_LOCAL_MODELS)" \
+      EMBEDDING_DEVICE="$(env_get EMBEDDING_DEVICE)" \
+      MAX_EXPERIMENT_CONCURRENCY="$(env_get MAX_EXPERIMENT_CONCURRENCY)" \
       APP_CONFIG_DIR="$PWD/config" \
       PROMPTS_DIR="$PWD/prompts" \
       nohup ./.venv/bin/uvicorn app.main:app --host ::1 --port "$API_PORT" \

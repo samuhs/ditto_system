@@ -6,13 +6,15 @@
 # Installs mlx-lm into ~/.ditto/mlx (DITTO_HOME), records the choice in .env, starts the
 # server, downloads MODEL (a Hugging Face id; short names mean
 # mlx-community/<name>) and smoke-tests it from the API container.
-# Env: MODEL, PARALLEL (default 4), MLX_PORT (default 11436), YES=1.
+# Env: MODEL, PARALLEL (default: 2 on the low memory profile, 4 otherwise),
+#      MLX_PORT (default 11436), YES=1.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/common.sh
 
 MODEL="$(mlx_model_id "${MODEL:-Qwen2.5-3B-Instruct-4bit}")"
-PARALLEL="${PARALLEL:-4}"
+# Given explicitly it is pinned in .env; otherwise the memory profile decides.
+PARALLEL="${PARALLEL:-}"
 
 step "MLX (Apple Silicon)"
 [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ] \
@@ -60,7 +62,7 @@ if [ "$(env_file_get LLM_SERVER)" != mlx ]; then
   reset_llm_server
 fi
 env_set LLM_SERVER mlx
-env_set MLX_PARALLEL "$PARALLEL"
+if [ -n "$PARALLEL" ]; then env_set MLX_PARALLEL "$PARALLEL"; else env_unset MLX_PARALLEL; fi
 env_set OLLAMA_BASE_URL "http://host.docker.internal:$(mlx_port)/v1"
 ok ".env: LLM_SERVER=mlx, OLLAMA_BASE_URL=http://host.docker.internal:$(mlx_port)/v1"
 # Restart so a new PARALLEL takes effect.
