@@ -93,7 +93,7 @@ up: prepare
 memory-profile:
 	@./scripts/memory-profile.sh $(if $(PROFILE),set "$(PROFILE)",show)
 
-# Free memory, swap, API RSS/loaded models and MLX RSS every INTERVAL seconds.
+# Free memory, swap, API/MLX memory (macOS footprint) and loaded models every INTERVAL seconds.
 mem-watch:
 	@INTERVAL="$(or $(INTERVAL),2)" ./scripts/mem-watch.sh
 

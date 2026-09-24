@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Prints memory use every INTERVAL seconds (default 2) while you use the app:
-# free memory, swap, the API's RSS and loaded embedders, and the MLX server's RSS.
+# free memory, swap, the API's memory and loaded embedders, and the MLX server's memory.
+# On macOS process memory is the physical footprint (Activity Monitor's "Memory"):
+# RSS leaves out compressed, swapped and Metal pages and badly undercounts MLX.
 # Ctrl+C stops.
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -19,7 +21,7 @@ api_summary() {
 import json, sys
 d = json.load(sys.stdin)
 models = ",".join(m["name"] + "@" + m["device"] for m in d["loaded_models"]) or "nenhum"
-print(str(d["process_rss_bytes"] // 2**20) + "M", models)'
+print(str(d["process_memory_bytes"] // 2**20) + "M", models)'
 }
 free_pct() {
   if has memory_pressure; then
@@ -32,19 +34,21 @@ swap_used() {
   if [ "$(uname -s)" = Darwin ]; then sysctl -n vm.swapusage | awk '{print $6}'
   else free -m | awk '/Swap/ {print $3 "M"}'; fi
 }
-mlx_rss() {
+mlx_mem() {
   local pid; pid="$(pgrep -f 'mlx_lm.server' | head -1)"
-  if [ -n "$pid" ]; then echo "$(( $(ps -o rss= -p "$pid") / 1024 ))M"; else echo "-"; fi
+  if [ -z "$pid" ]; then echo "-"
+  elif [ "$(uname -s)" = Darwin ]; then top -l 1 -pid "$pid" -stats mem | tail -1
+  else echo "$(( $(ps -o rss= -p "$pid") / 1024 ))M"; fi
 }
 
 echo "perfil: $(memory_profile) · a cada ${INTERVAL}s · Ctrl+C para parar"
-printf '%-8s %-6s %-9s %-9s %-8s %s\n' hora livre swap api_rss mlx_rss modelos
+printf '%-8s %-6s %-9s %-9s %-8s %s\n' hora livre swap api_mem mlx_mem modelos
 while true; do
   api="-" models="(API fora do ar)"
   body="$(api_json)"
   if [ -n "$body" ]; then
     read -r api models < <(printf '%s' "$body" | api_summary)
   fi
-  printf '%-8s %-6s %-9s %-9s %-8s %s\n' "$(date +%H:%M:%S)" "$(free_pct)" "$(swap_used)" "$api" "$(mlx_rss)" "$models"
+  printf '%-8s %-6s %-9s %-9s %-8s %s\n' "$(date +%H:%M:%S)" "$(free_pct)" "$(swap_used)" "$api" "$(mlx_mem)" "$models"
   sleep "$INTERVAL"
 done

@@ -177,7 +177,8 @@ export interface MemoryStatus {
   profile: { name: string; max_local_models: number; embedding_device: string; max_concurrency: number };
   total_bytes: number;
   available_bytes: number;
-  process_rss_bytes: number;
+  /** Memory the API process uses (physical footprint on macOS, RSS elsewhere). */
+  process_memory_bytes: number;
   loaded_models: { name: string; device: string; local: boolean; in_use: number }[];
 }
 

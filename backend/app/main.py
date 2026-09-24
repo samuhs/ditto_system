@@ -1,4 +1,5 @@
 """FastAPI application entry point."""
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -21,8 +22,20 @@ async def lifespan(app: FastAPI):
     yield
 
 
+def _configure_logging() -> None:
+    """Emit the app's INFO logs (model loads, run progress); uvicorn only sets up its own."""
+    logger = logging.getLogger("app")
+    if logger.handlers:
+        return
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI instance."""
+    _configure_logging()
     app = FastAPI(
         title="Ditto — RAG Experimentation Platform",
         description=(

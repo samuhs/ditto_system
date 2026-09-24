@@ -13,4 +13,4 @@ def test_memory_endpoint_reports_profile_and_models(client):
         body = client.get("/system/memory").json()
     assert body["profile"]["name"] == "standard"
     assert body["loaded_models"] == [{"name": "e5", "device": "cpu", "local": True, "in_use": 1}]
-    assert body["total_bytes"] > 0 and body["process_rss_bytes"] > 0
+    assert body["total_bytes"] > 0 and body["process_memory_bytes"] > 0

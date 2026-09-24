@@ -160,7 +160,7 @@ In both profiles an embedder never shares the GPU with a local LLM, experiments 
 ```bash
 make memory-profile                    # active profile and what it changes
 make memory-profile PROFILE=standard   # switch (restarts the LLM server); then make up or make up-local
-make mem-watch                         # free memory, swap, API/MLX RSS and loaded models every 2 s
+make mem-watch                         # free memory, swap, API/MLX memory and loaded models every 2 s
 ```
 
 On `low`, `make up` recommends `make up-local`: without the API in the Docker VM, more RAM is left for the LLM. Values set explicitly in `.env` (`MLX_PARALLEL`, `MAX_LOCAL_MODELS`, `MAX_EXPERIMENT_CONCURRENCY`, `EMBEDDING_DEVICE=cpu`) win over the profile. The **Configurações** screen shows the active profile, what is loaded, and the command to switch.

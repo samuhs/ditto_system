@@ -115,7 +115,7 @@ export function SettingsPage() {
                 </p>
                 <p className="ditto-read">
                   Memória: {gb(memory.available_bytes)} livres de {gb(memory.total_bytes)} · API usando{" "}
-                  {gb(memory.process_rss_bytes)} · modelos carregados:{" "}
+                  {gb(memory.process_memory_bytes)} · modelos carregados:{" "}
                   {memory.loaded_models.length === 0
                     ? "nenhum"
                     : memory.loaded_models.map((m) => `${m.name} (${m.device})`).join(", ")}

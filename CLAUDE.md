@@ -20,7 +20,7 @@ make model-add <modelo> | model-rm <modelo> | model-list   # MLX: Qwen2.5-7B-Ins
 make bench-llm MODEL=...   # throughput do servidor de LLM por nível de paralelismo
 make memory-profile                        # perfil de memória ativo (low ≤ 8 GB, standard) e o que ele muda
 make memory-profile PROFILE=low|standard   # troca o perfil (reinicia o servidor de LLM; depois make up/up-local)
-make mem-watch                             # memória livre, swap, RSS da API/MLX e modelos carregados, a cada 2s
+make mem-watch                             # memória livre, swap, memória da API/MLX (footprint no macOS) e modelos carregados, a cada 2s
 ```
 - Frontend: http://localhost:3000 · API: http://localhost:8000 (`/health`, `/options`, `/ingest`, `/experiments`)
 - Precisa de `GEMINI_API_KEY` no `.env` (já configurado, gitignored). A imagem Docker já traz os embedders locais (`e5`, `paraphrase`, torch CPU).

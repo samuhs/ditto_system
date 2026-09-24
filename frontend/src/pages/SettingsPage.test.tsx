@@ -26,7 +26,7 @@ beforeEach(() => {
     profile: { name: "low", max_local_models: 1, embedding_device: "cpu", max_concurrency: 2 },
     total_bytes: 8 * 1024 ** 3,
     available_bytes: 2 * 1024 ** 3,
-    process_rss_bytes: 1024 ** 3,
+    process_memory_bytes: 1024 ** 3,
     loaded_models: [{ name: "e5", device: "cpu", local: true, in_use: 0 }],
   });
   vi.mocked(client.saveOllamaModels).mockResolvedValue({

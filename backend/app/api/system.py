@@ -17,6 +17,6 @@ def memory(models: ModelManager = Depends(get_model_manager)) -> dict:
         "profile": asdict(active_profile()),
         "total_bytes": stats.total_memory_bytes(),
         "available_bytes": stats.available_memory_bytes(),
-        "process_rss_bytes": stats.process_rss_bytes(),
+        "process_memory_bytes": stats.process_memory_bytes(),
         "loaded_models": [asdict(m) for m in models.loaded()],
     }

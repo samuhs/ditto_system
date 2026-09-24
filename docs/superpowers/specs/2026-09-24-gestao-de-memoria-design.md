@@ -51,9 +51,9 @@ No `make up-local`, o SentenceTransformer escolhe `mps` sozinho. O pool de cache
 ## 3. Proposta
 
 ### Fase 0: medir antes de mudar (pequena)
-- `GET /system/memory`: RSS do processo da API (`psutil`), memória MPS (`torch.mps.current_allocated_memory()`, se o torch estiver carregado), modelos carregados pelo `ModelManager` (Fase 2) e os modelos do servidor de LLM (Ollama `/api/ps`).
-- Log de RSS no início e no fim de cada combinação do orquestrador.
-- `make mem-watch`: monitor que imprime a cada 2 s a memória livre, o swap, o RSS da API e do `mlx_lm.server` e os modelos carregados, enquanto você roda algo no app. Serve de linha de base antes e depois de cada fase.
+- `GET /system/memory`: memória do processo da API (no macOS o *physical footprint*, porque o RSS ignora páginas comprimidas, em swap e do Metal; RSS nos outros sistemas), memória MPS (`torch.mps.current_allocated_memory()`, se o torch estiver carregado), modelos carregados pelo `ModelManager` (Fase 2) e os modelos do servidor de LLM (Ollama `/api/ps`).
+- Log da memória da API no fim de cada combinação do orquestrador.
+- `make mem-watch`: monitor que imprime a cada 2 s a memória livre, o swap, a memória da API e do `mlx_lm.server` (footprint no macOS) e os modelos carregados, enquanto você roda algo no app. Serve de linha de base antes e depois de cada fase.
 
 ### Fase 1: ganhos rápidos de configuração (sem mexer no domínio)
 Um perfil `MEMORY_PROFILE=low|standard` no `.env`. O `make setup` detecta via `sysctl hw.memsize` e escolhe `low` quando a RAM é ≤ 8 GB. No perfil `low`:

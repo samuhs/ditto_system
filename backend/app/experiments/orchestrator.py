@@ -18,7 +18,7 @@ from app.core.llm.factory import resolve_llm
 from app.core.memory.device import resolve_embedding_device
 from app.core.memory.manager import ModelManager
 from app.core.memory.profile import active_profile
-from app.core.memory.stats import process_rss_bytes
+from app.core.memory.stats import process_memory_bytes
 from app.core.prompts import PROMPT_SPECS
 from app.core.rag.base import build_rag
 from app.core.retrieval.base import build_retriever
@@ -263,7 +263,7 @@ def _run_experiment(
                                     tokens=tokens,
                                 )
                             )
-                logger.info("run %d finished; API RSS %.0f MB", run.id, process_rss_bytes() / 1e6)
+                logger.info("run %d finished; API memory %.0f MB", run.id, process_memory_bytes() / 1e6)
 
                 if paused:
                     run.status = "paused"
