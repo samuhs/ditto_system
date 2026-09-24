@@ -110,6 +110,20 @@ It walks through these steps and tells you what it found at each one:
 
 Run it again whenever you like. Steps that are already done get skipped. To start and stop the server by hand, use `make ollama-up` and `make ollama-down`.
 
+`llm-setup` also sets `OLLAMA_NUM_PARALLEL` (default 4, change it with `PARALLEL=...`) so that Ollama answers several requests at once. On macOS that goes through `launchctl setenv`, which doesn't survive a reboot, so run `make llm-setup` again after restarting.
+
+**Managing models:**
+
+```bash
+make model-add qwen3:1.7b     # pull into Ollama and register it in the app
+make model-rm qwen3:1.7b      # remove it from the app and from Ollama
+make model-list               # what's downloaded and what's registered
+```
+
+**Running experiments faster:** the **Gerar teste** screen has a **Perguntas em paralelo** field (1 to 32). Above 1, Ditto answers that many questions of each combination at the same time. That only speeds things up if the server can serve requests concurrently (`OLLAMA_NUM_PARALLEL`, `llama-server -np`, vLLM). Keep in mind that the per-question latency then also counts the time a request spent waiting in the server's queue.
+
+**Measuring your machine:** `make bench-llm MODEL=qwen2.5:3b-instruct` sends RAG-shaped prompts at 1, 2, 4 and 8 concurrent requests and prints wall time, tokens/s and p50/p95 latency. It takes `LEVELS=1,2,4 N=16 BASE_URL=...` and works against any OpenAI-compatible server. Use it to pick a sensible parallelism. For a comparison of inference servers for small models, see [docs/research/2026-09-23-inferencia-small-llms.md](docs/research/2026-09-23-inferencia-small-llms.md).
+
 Want to skip Google entirely? The Docker image already bundles the local embedders (`e5`, `paraphrase`). Pick one of those plus a local Ollama model and nothing leaves your machine. The embedder pulls its weights the first time you use it and caches them in the `hf_cache` volume, so it only happens once. That does make the image chunky (PyTorch comes along for the ride). If you only ever use Gemini embeddings, drop the `[local]` extra from `backend/Dockerfile` and the image slims right back down.
 
 ---

@@ -4,7 +4,7 @@
 # smoke-tests it and registers it in the app settings.
 #
 # Env: MODEL (default qwen2.5:3b-instruct), OLLAMA_ID (name shown in the app),
-#      YES=1 (answer yes to every prompt).
+#      PARALLEL (OLLAMA_NUM_PARALLEL, default 4), YES=1 (answer yes to every prompt).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/common.sh
@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 MODEL="${MODEL:-qwen2.5:3b-instruct}"
 case "$MODEL" in *:*) ;; *) MODEL="$MODEL:latest" ;; esac
 OLLAMA_URL="http://localhost:11434"
-SETTINGS_FILE="backend/config/app_settings.json"
+PARALLEL="${PARALLEL:-4}"
 OS="$(uname -s)"
 
 reachable() { curl -sf "$OLLAMA_URL/api/tags" >/dev/null 2>&1; }
@@ -68,46 +68,76 @@ else
 fi
 
 has_systemd_unit() {
-  [ "$OS" = "Linux" ] && has systemctl && systemctl list-unit-files ollama.service >/dev/null 2>&1 \
-    && systemctl list-unit-files ollama.service | grep -q '^ollama.service'
+  [ "$OS" = "Linux" ] && has systemctl && systemctl list-unit-files ollama.service 2>/dev/null | grep -q '^ollama.service'
 }
 
-step "Servidor Ollama"
-if reachable; then
-  ok "já está rodando em $OLLAMA_URL"
-else
-  if has_systemd_unit; then
-    echo "  iniciando o serviço systemd 'ollama' (sudo)..."
-    sudo systemctl enable --now ollama
-  elif [ "$OS" = "Darwin" ] && [ -d /Applications/Ollama.app ]; then
-    open -a Ollama
-  else
-    # On Linux the container reaches the host through the Docker bridge, so bind beyond loopback.
-    if [ "$OS" = "Linux" ]; then export OLLAMA_HOST=0.0.0.0:11434; fi
-    nohup ollama serve >/tmp/ollama.log 2>&1 &
-  fi
-  wait_up || fail "o Ollama não respondeu em 30s (veja /tmp/ollama.log ou 'journalctl -u ollama')."
-  ok "rodando em $OLLAMA_URL"
-fi
-
 # Linux: Ollama defaults to 127.0.0.1, which containers cannot reach via host.docker.internal.
+serve_env() {
+  if [ "$OS" = "Linux" ]; then echo "OLLAMA_HOST=0.0.0.0:11434 OLLAMA_NUM_PARALLEL=$PARALLEL"
+  else echo "OLLAMA_NUM_PARALLEL=$PARALLEL"; fi
+}
+
+write_systemd_override() {
+  sudo mkdir -p /etc/systemd/system/ollama.service.d
+  printf '[Service]\nEnvironment="OLLAMA_HOST=0.0.0.0:11434"\nEnvironment="OLLAMA_NUM_PARALLEL=%s"\n' "$PARALLEL" \
+    | sudo tee /etc/systemd/system/ollama.service.d/override.conf >/dev/null
+  sudo systemctl daemon-reload
+}
+
+start_detached() {
+  # shellcheck disable=SC2046
+  nohup env $(serve_env) ollama serve >/tmp/ollama.log 2>&1 &
+}
+
+mac_app_running() { [ "$OS" = "Darwin" ] && pgrep -f "Ollama.app/Contents/MacOS/Ollama" >/dev/null 2>&1; }
+
+step "Servidor Ollama (OLLAMA_NUM_PARALLEL=$PARALLEL)"
+override=/etc/systemd/system/ollama.service.d/override.conf
+if has_systemd_unit; then
+  if ! grep -q "OLLAMA_NUM_PARALLEL=$PARALLEL\"" "$override" 2>/dev/null \
+    || ! grep -q 'OLLAMA_HOST=0.0.0.0' "$override" 2>/dev/null; then
+    confirm "Configurar o serviço systemd com OLLAMA_HOST=0.0.0.0 (acessível na rede local) e OLLAMA_NUM_PARALLEL=$PARALLEL, reiniciando o Ollama?" \
+      || fail "sem essa configuração os containers não alcançam o Ollama."
+    write_systemd_override
+    sudo systemctl enable ollama >/dev/null 2>&1 || true
+    sudo systemctl restart ollama
+  elif ! reachable; then
+    sudo systemctl enable --now ollama
+  fi
+elif [ "$OS" = "Darwin" ] && { mac_app_running || { ! reachable && [ -d /Applications/Ollama.app ]; }; }; then
+  # The macOS app reads its environment from launchctl (not persisted across reboots).
+  if [ "$(launchctl getenv OLLAMA_NUM_PARALLEL)" != "$PARALLEL" ] || ! reachable; then
+    if [ "$(launchctl getenv OLLAMA_NUM_PARALLEL)" = "$PARALLEL" ] || confirm "Definir OLLAMA_NUM_PARALLEL=$PARALLEL no app do Ollama e reiniciá-lo? (interrompe gerações em andamento)"; then
+      launchctl setenv OLLAMA_NUM_PARALLEL "$PARALLEL"
+      if mac_app_running; then
+        osascript -e 'quit app "Ollama"' >/dev/null 2>&1 || true
+        for _ in $(seq 1 15); do mac_app_running || break; sleep 1; done
+      fi
+      open -a Ollama
+    else
+      warn "mantido como está; o Ollama pode estar atendendo uma requisição por vez."
+    fi
+  fi
+elif reachable; then
+  if pgrep -f "ollama serve" >/dev/null 2>&1 && confirm "Reiniciar o 'ollama serve' com $(serve_env)? (interrompe gerações em andamento)"; then
+    pkill -f "ollama serve" || true
+    sleep 1
+    start_detached
+  else
+    warn "servidor já rodando; confirme que ele foi iniciado com $(serve_env)."
+  fi
+else
+  start_detached
+fi
+wait_up || fail "o Ollama não respondeu em 30s (veja /tmp/ollama.log ou 'journalctl -u ollama')."
+ok "rodando em $OLLAMA_URL"
+
 if [ "$OS" = "Linux" ] && has ss; then
   listen=$(ss -ltnH 'sport = :11434' 2>/dev/null | awk '{print $4}')
   if [ -n "$listen" ] && ! echo "$listen" | grep -qvE '^(127\.0\.0\.1|\[::1\]):'; then
-    warn "o Ollama escuta só em localhost; os containers não conseguem acessá-lo."
-    if has_systemd_unit && confirm "Configurar o serviço com OLLAMA_HOST=0.0.0.0 (fica acessível na rede local)?"; then
-      sudo mkdir -p /etc/systemd/system/ollama.service.d
-      printf '[Service]\nEnvironment="OLLAMA_HOST=0.0.0.0:11434"\n' \
-        | sudo tee /etc/systemd/system/ollama.service.d/override.conf >/dev/null
-      sudo systemctl daemon-reload
-      sudo systemctl restart ollama
-      wait_up || fail "o Ollama não voltou após o restart."
-      ok "Ollama agora escuta em 0.0.0.0:11434 (proteja a porta com firewall em redes compartilhadas)"
-    else
-      warn "reinicie o Ollama com OLLAMA_HOST=0.0.0.0:11434 para o Docker enxergá-lo."
-    fi
+    warn "o Ollama escuta só em localhost; os containers não conseguem acessá-lo. Reinicie-o com OLLAMA_HOST=0.0.0.0:11434."
   else
-    ok "acessível pelos containers"
+    ok "acessível pelos containers (proteja a porta 11434 com firewall em redes compartilhadas)"
   fi
 fi
 
@@ -135,28 +165,7 @@ esac
 
 step "Registro no Ditto"
 if has python3; then
-  msg=$(MODEL="$MODEL" OLLAMA_ID="${OLLAMA_ID:-}" SETTINGS_FILE="$SETTINGS_FILE" python3 - <<'PY'
-import json, os, re
-from pathlib import Path
-
-path = Path(os.environ["SETTINGS_FILE"])
-model = os.environ["MODEL"]
-data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-models = data.setdefault("ollama_models", [])
-existing = next((m for m in models if m.get("model") == model), None)
-if existing:
-    print(f"já registrado como '{existing['id']}'")
-else:
-    mid = os.environ.get("OLLAMA_ID") or re.sub(r"[^\w-]", "-", model.removesuffix(":latest"))
-    if mid in {"gemini", "ollama", "custom"} or any(m.get("id") == mid for m in models):
-        mid += "-local"
-    models.append({"id": mid, "model": model})
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"registrado como '{mid}' (aparece como opção de LLM nos experimentos e no chat)")
-PY
-)
-  ok "$msg"
+  ok "$(python3 scripts/app_models.py add "$MODEL" ${OLLAMA_ID:+"$OLLAMA_ID"})"
 else
   warn "python3 ausente: adicione o modelo na tela Configurações (id à sua escolha, model '$MODEL')."
 fi

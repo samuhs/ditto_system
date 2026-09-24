@@ -387,3 +387,110 @@ def test_rag_not_in_prompt_specs_receives_no_prompts_kwarg(session_factory):
 
     assert "prompts" not in received_kwargs
     assert received_kwargs.get("retriever") is not None
+
+
+def _seeded_store():
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="One. Two. Three. Four sentences here.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"]),
+        store,
+        embedder_factory=_embedder_factory,
+    )
+    return store
+
+
+def _new_experiment(session_factory, name):
+    session = session_factory()
+    experiment = Experiment(name=name, status="pending", config={})
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    return experiment_id
+
+
+def _single_combo_config(concurrency):
+    return ExperimentConfig(
+        base="viagem",
+        chunkings=["recursive"],
+        embeddings=["gemini"],
+        rags=["naive"],
+        retrievers=["similarity"],
+        metrics=["answer_relevancy"],
+        concurrency=concurrency,
+    )
+
+
+def test_concurrency_defaults_to_one():
+    config = ExperimentConfig(
+        base="b", chunkings=["c"], embeddings=["e"], rags=["r"], retrievers=["s"], metrics=["m"]
+    )
+    assert config.concurrency == 1
+
+
+def test_concurrent_questions_run_in_parallel_and_keep_order(session_factory):
+    """With concurrency N, slow LLM calls overlap and results keep question order."""
+    import threading
+    import time as _time
+
+    lock = threading.Lock()
+    state = {"active": 0, "peak": 0}
+
+    class _SlowLLM:
+        def generate(self, prompt: str) -> str:
+            with lock:
+                state["active"] += 1
+                state["peak"] = max(state["peak"], state["active"])
+            _time.sleep(0.2)
+            with lock:
+                state["active"] -= 1
+            return "answer"
+
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "concurrent")
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=lambda *a, **kw: _SlowLLM(),
+        embedder_factory=_embedder_factory,
+    )
+    questions = [QuestionItem(text=f"q{i}") for i in range(8)]
+
+    run_experiment(experiment_id, _single_combo_config(4), questions, deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "done"
+    results = sorted(stored.runs[0].results, key=lambda r: r.id)
+    assert [r.question for r in results] == [f"q{i}" for i in range(8)]
+    assert state["peak"] > 1, "questions should overlap when concurrency > 1"
+    assert state["peak"] <= 4
+    check.close()
+
+
+def test_pause_with_concurrency_stops_new_questions(session_factory):
+    """A pause stops questions that have not started; in-flight ones are kept."""
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "concurrent-pause")
+
+    class _PausingLLM:
+        def generate(self, prompt: str) -> str:
+            request_pause(experiment_id)
+            return "answer"
+
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=lambda *a, **kw: _PausingLLM(),
+        embedder_factory=_embedder_factory,
+    )
+    questions = [QuestionItem(text=f"q{i}") for i in range(10)]
+
+    run_experiment(experiment_id, _single_combo_config(2), questions, deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "paused"
+    assert 1 <= len(stored.runs[0].results) <= 2
+    check.close()

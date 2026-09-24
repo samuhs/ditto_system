@@ -4,6 +4,7 @@ import {
   FileInput,
   Group,
   MultiSelect,
+  NumberInput,
   Select,
   Stack,
   TextInput,
@@ -27,6 +28,7 @@ export function ExperimentPage() {
   const [retrievers, setRetrievers] = useState<string[]>([]);
   const [llms, setLlms] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
+  const [concurrency, setConcurrency] = useState<number>(1);
   const [csv, setCsv] = useState<File | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -75,6 +77,7 @@ export function ExperimentPage() {
         retrievers,
         llms,
         metrics,
+        concurrency,
       };
       const form = new FormData();
       form.append("config", JSON.stringify(config));
@@ -180,6 +183,15 @@ export function ExperimentPage() {
               searchable
             />
           </Group>
+          <NumberInput
+            label="Perguntas em paralelo"
+            description="Acima de 1 só acelera se o servidor da LLM atende em paralelo (ex.: OLLAMA_NUM_PARALLEL)."
+            min={1}
+            max={32}
+            value={concurrency}
+            onChange={(v) => setConcurrency(typeof v === "number" && v >= 1 ? v : 1)}
+            style={{ maxWidth: 240 }}
+          />
           <FileInput
             label="Perguntas (CSV)"
             placeholder="Escolher arquivo .csv"

@@ -11,7 +11,9 @@ make setup       # 1ª vez: checa Docker, cria .env, pede chave Gemini
 make up          # sobe tudo: api:8000, frontend:3000, qdrant:6333, postgres:5432
 make down        # derruba o stack
 make logs        # logs em tempo real
-make llm-setup   # prepara Ollama no host (GPU), baixa MODEL=..., registra no app
+make llm-setup   # prepara Ollama no host (GPU, OLLAMA_NUM_PARALLEL), baixa MODEL=..., registra no app
+make model-add qwen3:1.7b | make model-rm qwen3:1.7b | make model-list
+make bench-llm MODEL=...   # throughput do servidor de LLM por nível de paralelismo
 ```
 - Frontend: http://localhost:3000 · API: http://localhost:8000 (`/health`, `/options`, `/ingest`, `/experiments`)
 - Precisa de `GEMINI_API_KEY` no `.env` (já configurado, gitignored). No Docker use embedding `gemini` (a imagem não traz os embedders locais).

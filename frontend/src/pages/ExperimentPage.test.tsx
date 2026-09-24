@@ -67,4 +67,14 @@ describe("ExperimentPage", () => {
     const config = JSON.parse(form.get("config") as string);
     expect(config.llms).toEqual(["gemini"]);
   });
+
+  it("sends concurrency 1 by default", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /preencher tudo/i }));
+    await user.click(screen.getByRole("button", { name: /gerar/i }));
+    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    const form = vi.mocked(client.createExperiment).mock.calls[0][0] as FormData;
+    expect(JSON.parse(form.get("config") as string).concurrency).toBe(1);
+  });
 });

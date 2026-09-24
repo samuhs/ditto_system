@@ -1,5 +1,5 @@
 """Pydantic schemas for experiments."""
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class QuestionItem(BaseModel):
@@ -21,3 +21,7 @@ class ExperimentConfig(BaseModel):
     metrics: list[str]
     llms: list[str] = ["gemini"]
     eval_embedding: str = "gemini"
+    # Questions processed in parallel within each combination. >1 only pays off
+    # when the LLM server serves concurrent requests (e.g. OLLAMA_NUM_PARALLEL);
+    # per-question latency then includes time queued on the server.
+    concurrency: int = Field(default=1, ge=1, le=32)

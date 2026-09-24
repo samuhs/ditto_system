@@ -2,7 +2,8 @@
 import itertools
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -114,6 +115,29 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
     return None, None, None, None, None, str(last_exc)
 
 
+def _run_questions(
+    rag, questions: list[QuestionItem], metrics: list, eval_embedder,
+    concurrency: int, experiment_id: int,
+) -> Iterator[tuple[QuestionItem, tuple | None]]:
+    """Yield (question, outcome) in question order, running up to `concurrency` at once.
+
+    The outcome is None for a question skipped because a pause was requested
+    before it started; questions already in flight run to completion.
+    """
+
+    def work(question: QuestionItem):
+        if _pause_requested(experiment_id):
+            return None
+        return _process_question_with_retry(rag, question, metrics, eval_embedder)
+
+    if concurrency <= 1:
+        for question in questions:
+            yield question, work(question)
+        return
+    with ThreadPoolExecutor(max_workers=concurrency) as pool:
+        yield from zip(questions, pool.map(work, questions))
+
+
 def run_experiment(
     experiment_id: int,
     config: ExperimentConfig,
@@ -163,17 +187,17 @@ def run_experiment(
                 rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
             rag = deps.rag_factory(rag_name, **rag_kwargs)
 
-            for question in questions:
-                # Checkpoint: stop mid-combination between questions if paused.
-                if _pause_requested(experiment_id):
+            # DB writes stay on this thread: the Session is not thread-safe.
+            for question, outcome in _run_questions(
+                rag, questions, config.metrics, eval_embedder,
+                config.concurrency, experiment_id,
+            ):
+                # Checkpoint: questions not started before a pause are skipped.
+                if outcome is None:
                     paused = True
-                    break
+                    continue
 
-                answer_text, contexts, scores, latency_ms, tokens, error = (
-                    _process_question_with_retry(
-                        rag, question, config.metrics, eval_embedder
-                    )
-                )
+                answer_text, contexts, scores, latency_ms, tokens, error = outcome
                 if error is not None:
                     session.add(
                         RunResult(
