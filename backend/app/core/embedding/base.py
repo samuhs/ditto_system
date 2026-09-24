@@ -18,6 +18,10 @@ class Embedder(ABC):
     def embed_query(self, text: str) -> list[float]:
         """Embed a single query string."""
 
+    def embed_queries(self, texts: list[str]) -> list[list[float]]:
+        """Embed several queries (as queries, not documents). Providers may batch it."""
+        return [self.embed_query(text) for text in texts]
+
     @property
     @abstractmethod
     def dimension(self) -> int:

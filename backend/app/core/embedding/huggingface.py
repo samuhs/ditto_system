@@ -1,6 +1,15 @@
 """Local sentence-transformers embedding providers (multilingual)."""
 from app.core.embedding.base import Embedder, embedding_registry
 
+_BATCH_SIZE = 32
+
+
+def _floats(values):
+    """Vectors as plain Python floats (numpy's tolist is one fast call)."""
+    if hasattr(values, "tolist"):
+        return values.tolist()
+    return [float(v) if isinstance(v, (int, float)) else _floats(v) for v in values]
+
 
 class HuggingFaceEmbedder(Embedder):
     """Embeds text with a local SentenceTransformer model."""
@@ -17,11 +26,15 @@ class HuggingFaceEmbedder(Embedder):
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         """Embed a batch of documents."""
-        return [list(map(float, vector)) for vector in self._model.encode(texts)]
+        return _floats(self._model.encode(texts, batch_size=_BATCH_SIZE, convert_to_numpy=True))
+
+    def embed_queries(self, texts: list[str]) -> list[list[float]]:
+        """Local models embed queries and documents the same way: one batched call."""
+        return self.embed_documents(texts)
 
     def embed_query(self, text: str) -> list[float]:
         """Embed a single query string."""
-        return list(map(float, self._model.encode(text)))
+        return _floats(self._model.encode(text, convert_to_numpy=True))
 
     @property
     def dimension(self) -> int:

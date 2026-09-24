@@ -51,7 +51,7 @@ def test_gemini_registered_and_built():
 class _FakeSentenceTransformer:
     """Stands in for a SentenceTransformer model (4-dim)."""
 
-    def encode(self, text):
+    def encode(self, text, **kwargs):
         if isinstance(text, list):
             return [[float(len(t)), 0.0, 0.0, 1.0] for t in text]
         return [float(len(text)), 0.0, 0.0, 1.0]
@@ -100,3 +100,41 @@ def test_huggingface_embedder_passes_the_device(monkeypatch):
     assert seen["args"] == ("intfloat/multilingual-e5-small", "cpu")
     E5Embedder(device="auto")
     assert seen["args"] == ("intfloat/multilingual-e5-small", None)
+
+
+def test_embed_queries_defaults_to_embed_query():
+    from app.core.embedding.base import Embedder
+
+    class _E(Embedder):
+        def embed_documents(self, texts):
+            raise AssertionError("queries must not be embedded as documents")
+
+        def embed_query(self, text):
+            return [float(len(text))]
+
+        @property
+        def dimension(self):
+            return 1
+
+    assert _E().embed_queries(["a", "bb"]) == [[1.0], [2.0]]
+
+
+def test_huggingface_batches_and_returns_plain_floats():
+    import numpy as np
+
+    from app.core.embedding.huggingface import HuggingFaceEmbedder
+
+    calls = []
+
+    class _Model:
+        def encode(self, texts, **kwargs):
+            calls.append((texts, kwargs.get("batch_size")))
+            if isinstance(texts, str):
+                return np.array([0.5, 1.0], dtype=np.float32)
+            return np.ones((len(texts), 2), dtype=np.float32)
+
+    emb = HuggingFaceEmbedder("x", model=_Model())
+    out = emb.embed_queries(["a", "b", "c"])
+    assert out == [[1.0, 1.0]] * 3 and type(out[0][0]) is float
+    assert calls[-1] == (["a", "b", "c"], 32)
+    assert emb.embed_query("q") == [0.5, 1.0]
