@@ -63,6 +63,17 @@ function submittedConfig() {
 }
 
 describe("ExperimentPage", () => {
+  it("shows memory warnings returned on creation", async () => {
+    vi.mocked(client.createExperiment).mockResolvedValue({
+      id: 8, name: "x", status: "pending", warnings: ["A concorrência pedida (8) passa do limite"],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: /gerar experimento/i }));
+    expect(await screen.findByText(/concorrência pedida \(8\)/)).toBeInTheDocument();
+  });
+
   it("keeps Gerar disabled and lists what is missing until the form is complete", async () => {
     renderPage();
     await screen.findByRole("button", { name: /preencher tudo/i });

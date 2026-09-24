@@ -88,6 +88,7 @@ def test_create_experiment_runs_and_persists(client):
     body = response.json()
     assert body["status"] in {"pending", "done"}
     assert body["name"]
+    assert body["warnings"] == []
 
     detail = client.get(f"/experiments/{body['id']}").json()
     assert detail["status"] == "done"

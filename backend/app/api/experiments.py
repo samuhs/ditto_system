@@ -12,11 +12,13 @@ from sqlalchemy.exc import IntegrityError
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
 from app.core.memory.manager import get_model_manager
+from app.core.memory.profile import active_profile
 from app.core.prompts import PROMPT_SPECS, load_technique
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.naming import generate_experiment_name
 from app.experiments.orchestrator import ExperimentDeps, _pause_requested, request_pause, run_experiment
+from app.experiments.preflight import memory_warnings
 from app.experiments.schemas import ExperimentConfig, index_pairs
 
 router = APIRouter()
@@ -151,7 +153,8 @@ async def create_experiment(
         session.close()
 
     background_tasks.add_task(run_experiment, experiment_id, parsed, items, deps)
-    return {"id": experiment_id, "name": name, "status": "pending"}
+    warnings = memory_warnings(parsed, active_profile())
+    return {"id": experiment_id, "name": name, "status": "pending", "warnings": warnings}
 
 
 @router.post("/experiments/{experiment_id}/pause")

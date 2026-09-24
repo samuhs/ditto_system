@@ -353,6 +353,11 @@ export function ExperimentPage() {
               <Link to={`/results/${created.id}`}>Acompanhar</Link>
             </p>
           )}
+          {created?.warnings?.map((w) => (
+            <Note key={w} title="Atenção à memória">
+              {w}
+            </Note>
+          ))}
         </div>
       </div>
     </div>

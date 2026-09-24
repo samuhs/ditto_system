@@ -30,6 +30,8 @@ export interface ExperimentRef {
   id: number;
   name: string;
   status: string;
+  /** Memory limits the experiment will hit under the active profile (PT-BR). */
+  warnings?: string[];
 }
 
 export interface ExperimentSummary {
