@@ -6,22 +6,25 @@ from qdrant_client.models import (
     Filter,
     MatchValue,
     PointStruct,
+    Range,
     VectorParams,
 )
 
 from app.core.config.settings import get_settings
 
 
-def _payload_filter(where: dict | None) -> Filter | None:
-    """Build a Qdrant equality filter from a payload dict, or None."""
-    if not where:
-        return None
-    return Filter(
-        must=[
-            FieldCondition(key=key, match=MatchValue(value=value))
-            for key, value in where.items()
-        ]
-    )
+def _payload_filter(
+    where: dict | None, ranges: dict[str, tuple[int, int]] | None = None
+) -> Filter | None:
+    """Build a Qdrant filter from equality matches and inclusive (low, high) ranges, or None."""
+    conditions = [
+        FieldCondition(key=key, match=MatchValue(value=value)) for key, value in (where or {}).items()
+    ]
+    conditions += [
+        FieldCondition(key=key, range=Range(gte=low, lte=high))
+        for key, (low, high) in (ranges or {}).items()
+    ]
+    return Filter(must=conditions) if conditions else None
 
 
 def collection_name(base: str, chunking: str, embedding: str) -> str:
@@ -101,11 +104,12 @@ class QdrantStore:
         name: str,
         where: dict | None = None,
         limit: int = 1000,
+        ranges: dict[str, tuple[int, int]] | None = None,
     ) -> list[dict]:
         """Return points matching a payload filter (no similarity ranking)."""
         points, _ = self._client.scroll(
             collection_name=name,
-            scroll_filter=_payload_filter(where),
+            scroll_filter=_payload_filter(where, ranges),
             limit=limit,
             with_payload=True,
             with_vectors=False,

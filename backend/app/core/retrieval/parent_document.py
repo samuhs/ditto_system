@@ -35,7 +35,12 @@ class ParentDocumentRetriever(Retriever):
             payload = hit["payload"]
             source = payload["source_doc"]
             index = payload["chunk_index"]
-            siblings = self._store.scroll(self._collection, where={"source_doc": source})
+            # Only the window around the hit, not the whole document.
+            siblings = self._store.scroll(
+                self._collection,
+                where={"source_doc": source},
+                ranges={"chunk_index": (index - self._window, index + self._window)},
+            )
             window_chunks = sorted(
                 (
                     s["payload"]

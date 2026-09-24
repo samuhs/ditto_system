@@ -77,3 +77,30 @@ def test_advanced_retrievers_registered(store):
         llm=_ScriptedLLM(),
     )
     assert isinstance(multi, MultiQueryRetriever)
+
+
+def test_parent_document_fetches_only_the_neighbour_window():
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    store.ensure_collection("long", 3)
+    store.add(
+        "long",
+        vectors=[[1.0, 0.0, 0.0] if i == 15 else [0.0, 1.0, float(i)] for i in range(30)],
+        payloads=[{"source_doc": "d.txt", "chunk_index": i, "text": f"c{i}"} for i in range(30)],
+    )
+    fetched = []
+    real_scroll = store.scroll
+
+    def spy(*args, **kwargs):
+        points = real_scroll(*args, **kwargs)
+        fetched.append(len(points))
+        return points
+
+    store.scroll = spy
+
+    class _Query:
+        def embed_query(self, text):
+            return [1.0, 0.0, 0.0]
+
+    [hit] = ParentDocumentRetriever(store, "long", _Query(), top_k=1, window=1).retrieve("q")
+    assert hit["text"] == "c14 c15 c16"
+    assert fetched and max(fetched) <= 3
