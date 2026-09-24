@@ -2,6 +2,7 @@
 import os
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,8 +14,21 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_model: str = "qwen2.5:3b-instruct"
+    # Memory profile (low | standard) and explicit overrides; empty means unset.
+    memory_profile: str = "standard"
+    max_local_models: int | None = None
+    embedding_device: str | None = None
+    max_experiment_concurrency: int | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @field_validator(
+        "max_local_models", "embedding_device", "max_experiment_concurrency", mode="before"
+    )
+    @classmethod
+    def _empty_is_unset(cls, value):
+        """Compose passes unset .env keys through as empty strings."""
+        return None if value == "" else value
 
 
 @lru_cache
