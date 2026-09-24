@@ -278,7 +278,8 @@ export function ExperimentDetailPage() {
       {detail && (
         <div className="ditto-meta">
           <StatusTag status={detail.status} />
-          {isRunning && detail.progress && detail.progress.total > 0 && (
+          {isRunning && detail.progress?.phase === "evaluating" && <span>Avaliando as respostas</span>}
+          {isRunning && detail.progress && detail.progress.total > 0 && detail.progress.phase !== "evaluating" && (
             <span>
               {detail.progress.completed} de {detail.progress.total} combinações
             </span>

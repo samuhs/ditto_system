@@ -205,6 +205,20 @@ describe("ExperimentDetailPage", () => {
     expect(await screen.findByText(/Prompts não registrados/i)).toBeInTheDocument();
   });
 
+  it("says the answers are being scored during the evaluation stage", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 9,
+      name: "avaliando",
+      status: "running",
+      created_at: "2026-07-05T10:00:00.000Z",
+      progress: { completed: 1, total: 1, phase: "evaluating" },
+      results: [],
+    });
+    renderPage();
+    expect(await screen.findByText("Avaliando as respostas")).toBeInTheDocument();
+    expect(screen.queryByText(/1 de 1 combinações/)).not.toBeInTheDocument();
+  });
+
   it("shows start time and computed duration for a finished experiment", async () => {
     vi.mocked(client.getExperiment).mockResolvedValue({
       id: 7,

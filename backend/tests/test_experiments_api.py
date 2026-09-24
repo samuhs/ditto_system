@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.api.experiments import get_experiment_deps
 from app.core.db.base import Base
+from app.core.db.models import Experiment
 from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.orchestrator import ExperimentDeps
 from app.ingestion.pipeline import ingest_documents
@@ -274,3 +275,19 @@ def test_create_experiment_rejects_missing_index(client):
     response = client.post("/experiments", data={"config": payload}, files=files)
     assert response.status_code == 422
     assert "fixed" in response.json()["detail"]
+
+
+def test_detail_reports_the_evaluation_phase(client):
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = Experiment(
+        name="avaliando", status="running",
+        config={"chunkings": ["recursive"], "embeddings": ["gemini"], "rags": ["naive"],
+                "retrievers": ["similarity"], "llms": ["gemini"], "phase": "evaluating"},
+    )
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    progress = client.get(f"/experiments/{experiment_id}").json()["progress"]
+    assert progress["phase"] == "evaluating"

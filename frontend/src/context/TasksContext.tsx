@@ -59,7 +59,11 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         .then((detail) => {
           const p = detail.progress;
           const progressMsg =
-            p && p.total > 0 ? `${p.completed}/${p.total} combinações` : undefined;
+            p?.phase === "evaluating"
+              ? "avaliando as respostas"
+              : p && p.total > 0
+                ? `${p.completed}/${p.total} combinações`
+                : undefined;
           if (detail.status === "done") {
             patch(taskId, {
               status: "done",

@@ -64,6 +64,8 @@ export interface ExperimentResultRow {
 export interface ExperimentProgress {
   completed: number;
   total: number;
+  /** Staged runs: "generating", then "evaluating" while the answers are scored. */
+  phase?: string | null;
 }
 
 export interface ExperimentDetail {

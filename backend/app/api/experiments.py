@@ -235,7 +235,12 @@ def get_experiment(
             "finished_at": _iso_utc(experiment.finished_at),
             "pause_requested": _pause_requested(experiment_id),
             "error": cfg.get("error") or None,
-            "progress": {"completed": completed_combos, "total": total_combos},
+            "progress": {
+                "completed": completed_combos,
+                "total": total_combos,
+                # Staged runs: "generating", then "evaluating" (scoring the answers).
+                "phase": cfg.get("phase"),
+            },
             "prompts": cfg.get("prompts"),
             "results": results,
         }
