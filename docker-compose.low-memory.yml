@@ -4,7 +4,9 @@ services:
   api:
     mem_limit: 2g
   qdrant:
-    mem_limit: 512m
+    # Measured at ~350 MB with one small base; 512m left too little headroom
+    # for more bases (the container would be OOM-killed).
+    mem_limit: 1g
   postgres:
     mem_limit: 256m
   frontend:

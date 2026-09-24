@@ -64,7 +64,7 @@ Um perfil `MEMORY_PROFILE=low|standard` no `.env`. O `make setup` detecta via `s
 | MLX `--decode-concurrency` | 4 | 2 |
 | Modelo padrão do `llm-setup` | 3B-4bit | 3B-4bit, com aviso em `model-add` para modelos > 3 GB |
 | Ollama | `NUM_PARALLEL=4` | `NUM_PARALLEL=2`, `MAX_LOADED_MODELS=1`, `KEEP_ALIVE=5m`, `FLASH_ATTENTION=1`, `KV_CACHE_TYPE=q8_0` |
-| Docker | sem limites | `mem_limit` por serviço (api 1,5g, qdrant 512m, postgres 256m) |
+| Docker | sem limites | `mem_limit` por serviço (api 2g, qdrant 1g, postgres 256m, frontend 128m) |
 | Recomendação do `make doctor` | `up` ou `up-local` | `up-local` (sem a VM do Docker nem uma segunda cópia do torch) |
 | `concurrency` máximo aceito pela API | 32 | igual ao `decode-concurrency` do servidor |
 
