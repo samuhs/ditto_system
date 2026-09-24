@@ -49,9 +49,10 @@ class LoadedModel:
 
 @dataclass
 class _Entry:
-    embedder: Embedder
+    embedder: Embedder | None
     local: bool
     refs: int = 0
+    ready: bool = False  # False while the model is still loading
 
 
 class ModelManager:
@@ -61,7 +62,8 @@ class ModelManager:
     waits up to `wait_timeout_s` for one to free up; a caller that already
     holds a model (it could never free its own slot) or whose wait times out
     loads beyond the limit, with a warning, and the extra model is evicted
-    as soon as it is released.
+    as soon as it is released. Loading happens outside the lock, so status
+    reads and other models are never stuck behind a slow load or download.
     """
 
     def __init__(
@@ -87,11 +89,17 @@ class ModelManager:
         return self._max_local
 
     @contextmanager
-    def acquire(self, name: str, device: str = "auto") -> Iterator[Embedder]:
-        """Lease the embedder for the duration of the block, loading it if needed."""
+    def acquire(
+        self, name: str, device: str = "auto", wait_timeout_s: float | None = None
+    ) -> Iterator[Embedder]:
+        """Lease the embedder for the duration of the block, loading it if needed.
+
+        `wait_timeout_s` overrides how long to wait for a free slot (interactive
+        callers wait less).
+        """
         local = self._is_local(name)
         key = (name, device if local else _REMOTE)
-        entry = self._checkout(key, local)
+        entry = self._checkout(key, local, wait_timeout_s)
         self._leases.count = self._held() + 1
         try:
             yield entry.embedder
@@ -100,12 +108,22 @@ class ModelManager:
             self._checkin(key)
 
     def loaded(self) -> list[LoadedModel]:
-        """Resident models, least recently used first."""
+        """Resident models, least recently used first (models still loading are left out)."""
         with self._cond:
             return [
                 LoadedModel(name=n, device=d, local=e.local, in_use=e.refs)
                 for (n, d), e in self._entries.items()
+                if e.ready
             ]
+
+    def evict_idle(self) -> int:
+        """Unload every idle local model (before handing the machine to the LLM)."""
+        with self._cond:
+            idle = [k for k, e in self._entries.items() if e.local and e.ready and e.refs == 0]
+            for key in idle:
+                self._evict(key)
+            self._cond.notify_all()
+            return len(idle)
 
     def _held(self) -> int:
         return getattr(self._leases, "count", 0)
@@ -113,18 +131,34 @@ class ModelManager:
     def _local_count(self) -> int:
         return sum(1 for e in self._entries.values() if e.local)
 
-    def _checkout(self, key: tuple[str, str], local: bool) -> _Entry:
+    def _checkout(self, key: tuple[str, str], local: bool, wait_timeout_s: float | None) -> _Entry:
         with self._cond:
-            entry = self._entries.get(key)
-            if entry is None:
-                if local:
-                    self._evict_other_devices(key)
-                    self._make_room()
-                embedder = self._load(key, local)
-                entry = self._entries[key] = _Entry(embedder, local)
-            entry.refs += 1
+            while True:
+                entry = self._entries.get(key)
+                if entry is None:
+                    break
+                if entry.ready:
+                    entry.refs += 1
+                    self._entries.move_to_end(key)
+                    return entry
+                self._cond.wait()  # another thread is loading this model
+            if local:
+                self._evict_other_devices(key)
+                self._make_room(wait_timeout_s)
+            # A placeholder holds the slot (and makes same-key callers wait) during the load.
+            entry = self._entries[key] = _Entry(embedder=None, local=local, refs=1)
+        try:
+            embedder = self._load(key, local)
+        except BaseException:
+            with self._cond:
+                del self._entries[key]
+                self._cond.notify_all()
+            raise
+        with self._cond:
+            entry.embedder, entry.ready = embedder, True
             self._entries.move_to_end(key)
-            return entry
+            self._cond.notify_all()
+        return entry
 
     def _load(self, key: tuple[str, str], local: bool) -> Embedder:
         name, device = key
@@ -141,14 +175,19 @@ class ModelManager:
 
     def _evict_other_devices(self, key: tuple[str, str]) -> None:
         """Drop idle copies of the same model on another device."""
-        for other in [k for k, e in self._entries.items() if k[0] == key[0] and e.refs == 0]:
+        for other in [
+            k for k, e in self._entries.items() if k[0] == key[0] and e.ready and e.refs == 0
+        ]:
             self._evict(other)
 
-    def _make_room(self) -> None:
+    def _make_room(self, wait_timeout_s: float | None = None) -> None:
         """Evict idle local models until one more fits, waiting for busy ones if allowed."""
-        deadline = time.monotonic() + self._wait_timeout_s
+        timeout = self._wait_timeout_s if wait_timeout_s is None else wait_timeout_s
+        deadline = time.monotonic() + timeout
         while self._local_count() >= self._max_local:
-            idle = next((k for k, e in self._entries.items() if e.local and e.refs == 0), None)
+            idle = next(
+                (k for k, e in self._entries.items() if e.local and e.ready and e.refs == 0), None
+            )
             if idle is not None:
                 self._evict(idle)
                 continue

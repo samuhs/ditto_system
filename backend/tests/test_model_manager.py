@@ -138,3 +138,102 @@ def test_failed_load_leaves_no_entry():
         with manager.acquire("e5", "cpu"):
             pass
     assert manager.loaded() == []
+
+
+def _blocking_factory(release, started, loads):
+    def factory(name, **kwargs):
+        loads.append(name)
+        started.set()
+        release.wait(5)
+        return _Emb(name, kwargs.get("device"))
+    return factory
+
+
+def test_status_is_readable_while_a_model_loads():
+    release, started, loads = threading.Event(), threading.Event(), []
+    manager = ModelManager(_blocking_factory(release, started, loads), max_local=1,
+                           is_local=lambda n: True, on_evict=lambda: None)
+
+    def use():
+        with manager.acquire("e5", "cpu"):
+            pass
+
+    t = threading.Thread(target=use)
+    t.start()
+    started.wait(5)
+    began = time.monotonic()
+    try:
+        assert manager.loaded() == []          # the loading model is not listed yet
+        assert time.monotonic() - began < 0.5  # and the call did not block
+    finally:
+        release.set()
+        t.join(5)
+
+
+def test_same_model_requested_while_loading_loads_once():
+    release, started, loads = threading.Event(), threading.Event(), []
+    manager = ModelManager(_blocking_factory(release, started, loads), max_local=1,
+                           is_local=lambda n: True, on_evict=lambda: None)
+    got = []
+
+    def use():
+        with manager.acquire("e5", "cpu") as emb:
+            got.append(emb)
+
+    threads = [threading.Thread(target=use) for _ in range(2)]
+    for t in threads:
+        t.start()
+    started.wait(5)
+    time.sleep(0.05)
+    release.set()
+    for t in threads:
+        t.join(5)
+    assert loads == ["e5"] and got[0] is got[1]
+
+
+def test_the_slot_is_freed_when_a_load_fails():
+    calls = []
+
+    def factory(name, **kwargs):
+        calls.append(name)
+        if len(calls) == 1:
+            raise OSError("boom")
+        return _Emb(name, kwargs.get("device"))
+
+    manager = ModelManager(factory, max_local=1, is_local=lambda n: True, on_evict=lambda: None,
+                           wait_timeout_s=5)
+    with pytest.raises(OSError):
+        with manager.acquire("e5", "cpu"):
+            pass
+    began = time.monotonic()
+    with manager.acquire("paraphrase", "cpu") as emb:  # no leaked slot to wait for
+        assert emb.name == "paraphrase"
+    assert time.monotonic() - began < 1
+
+
+def test_per_call_wait_timeout_overrides_the_default():
+    manager, _, _ = _manager(max_local=1, timeout=30)
+    release, holder = _hold(manager, "e5")
+    began = time.monotonic()
+    try:
+        with manager.acquire("paraphrase", "cpu", wait_timeout_s=0.1):
+            pass
+    finally:
+        release.set()
+        holder.join(5)
+    assert time.monotonic() - began < 2
+
+
+def test_evict_idle_unloads_idle_local_models_only():
+    manager, _, _ = _manager(max_local=3)
+    with manager.acquire("e5", "cpu"):
+        pass
+    with manager.acquire("gemini"):
+        pass
+    release, holder = _hold(manager, "paraphrase")
+    try:
+        assert manager.evict_idle() == 1
+        assert {m.name for m in manager.loaded()} == {"gemini", "paraphrase"}
+    finally:
+        release.set()
+        holder.join(5)

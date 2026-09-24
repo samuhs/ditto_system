@@ -94,3 +94,22 @@ def test_run_flow_reuses_the_embedder_across_turns():
     for _ in range(2):
         run_flow(_CFG, [ChatMessage(role="user", content="onde fica o centro?")], deps)
     assert loads == ["gemini"]
+
+
+def test_chat_waits_briefly_for_a_model_slot():
+    from contextlib import contextmanager
+
+    from app.core.chat.graph import CHAT_WAIT_S
+
+    seen = {}
+
+    class _SpyModels:
+        @contextmanager
+        def acquire(self, name, device="auto", wait_timeout_s=None):
+            seen["wait"] = wait_timeout_s
+            yield object()
+
+    deps = _flow_deps([])
+    deps.models = _SpyModels()
+    run_flow(_CFG, [ChatMessage(role="user", content="onde fica o centro?")], deps)
+    assert seen["wait"] == CHAT_WAIT_S <= 5

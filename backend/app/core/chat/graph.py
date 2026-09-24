@@ -93,11 +93,16 @@ def build_graph(llm, rag, persona_text: str, prompts: dict[str, str]):
     return graph.compile()
 
 
+# A chat turn waits at most this long for a model slot held by an experiment,
+# then loads beyond the limit instead of stalling the conversation.
+CHAT_WAIT_S = 5.0
+
+
 def run_flow(cfg: ChatConfigView, messages: list[ChatMessage], deps) -> ChatTurnResult:
     """Build the graph from a config snapshot and run one conversational turn."""
     llm = deps.llm_factory(cfg.llm)
     device = resolve_embedding_device(active_profile(), [cfg.llm])
-    with deps.models.acquire(cfg.embedding, device) as embedder:
+    with deps.models.acquire(cfg.embedding, device, wait_timeout_s=CHAT_WAIT_S) as embedder:
         collection = collection_name(cfg.base, cfg.chunking, cfg.embedding)
         kwargs = {"store": deps.store, "collection": collection, "embedder": embedder}
         if cfg.retriever == "multi_query":
