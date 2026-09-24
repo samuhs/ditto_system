@@ -1,5 +1,6 @@
 import type {
   AppSettings,
+  MemoryStatus,
   ChatConfig,
   ChatConfigInput,
   ChatMessage,
@@ -164,6 +165,10 @@ export async function saveDialogueRating(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rating }),
   }));
+}
+
+export async function getMemory(): Promise<MemoryStatus> {
+  return asJson<MemoryStatus>(await fetch(`${BASE}/system/memory`));
 }
 
 export async function getSettings(): Promise<AppSettings> {

@@ -22,12 +22,33 @@ beforeEach(() => {
     ollama_models: [{ id: "qwen", model: "qwen2.5:3b-instruct" }],
   });
   vi.mocked(client.saveGeminiKey).mockResolvedValue({ gemini_api_key_set: true });
+  vi.mocked(client.getMemory).mockResolvedValue({
+    profile: { name: "low", max_local_models: 1, embedding_device: "cpu", max_concurrency: 2 },
+    total_bytes: 8 * 1024 ** 3,
+    available_bytes: 2 * 1024 ** 3,
+    process_rss_bytes: 1024 ** 3,
+    loaded_models: [{ name: "e5", device: "cpu", local: true, in_use: 0 }],
+  });
   vi.mocked(client.saveOllamaModels).mockResolvedValue({
     ollama_models: [{ id: "qwen", model: "qwen2.5:3b-instruct" }],
   });
 });
 
 describe("SettingsPage", () => {
+  it("shows the memory profile and how to switch it", async () => {
+    renderPage();
+    expect(await screen.findByText("Perfil low")).toBeInTheDocument();
+    expect(screen.getByText("make memory-profile PROFILE=standard")).toBeInTheDocument();
+    expect(screen.getByText(/e5 \(cpu\)/)).toBeInTheDocument();
+  });
+
+  it("keeps the page working when memory status fails", async () => {
+    vi.mocked(client.getMemory).mockRejectedValue(new Error("down"));
+    renderPage();
+    expect(await screen.findByText(/Não foi possível ler o estado da memória/)).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("qwen")).toBeInTheDocument();
+  });
+
   it("loads settings and shows key state + models", async () => {
     renderPage();
     expect(await screen.findByText(/Nenhuma chave configurada/)).toBeInTheDocument();

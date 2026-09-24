@@ -1,11 +1,19 @@
 import { Button, PasswordInput, TextInput } from "@mantine/core";
 import { useEffect, useState } from "react";
 
-import { getSettings, saveGeminiKey, saveOllamaModels } from "../api/client";
-import type { OllamaModel } from "../api/types";
+import { getMemory, getSettings, saveGeminiKey, saveOllamaModels } from "../api/client";
+import type { MemoryStatus, OllamaModel } from "../api/types";
 import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { StatusTag } from "../components/StatusTag";
+
+const PROFILE_TEXT: Record<string, string> = {
+  low: "Para máquinas com até 8 GB. Um modelo local na memória por vez, embeddings na CPU e menos perguntas em paralelo. Os experimentos ficam mais lentos, mas a RAM não estoura.",
+  standard:
+    "Para máquinas com folga de RAM. Até 3 modelos locais na memória, embeddings na GPU quando o LLM não a está usando e mais perguntas em paralelo. Mais rápido, mas pode usar swap se a RAM não comportar.",
+};
+const OTHER_PROFILE: Record<string, string> = { low: "standard", standard: "low" };
+const gb = (bytes: number) => `${(bytes / 1024 ** 3).toFixed(1)} GB`;
 
 export function SettingsPage() {
   const [keySet, setKeySet] = useState(false);
@@ -14,6 +22,15 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [keySaved, setKeySaved] = useState(false);
   const [modelsSaved, setModelsSaved] = useState(false);
+  const [memory, setMemory] = useState<MemoryStatus | null>(null);
+  const [memoryError, setMemoryError] = useState(false);
+
+  // Separate from the settings load: a memory-status failure must not hide the rest.
+  useEffect(() => {
+    getMemory()
+      .then(setMemory)
+      .catch(() => setMemoryError(true));
+  }, []);
 
   useEffect(() => {
     getSettings()
@@ -76,6 +93,43 @@ export function SettingsPage() {
       )}
 
       <div className="ditto-form">
+        <section className="ditto-sec">
+          <div className="ditto-sec-head">
+            <h2 className="ditto-h2">Memória</h2>
+            <p className="ditto-read">Quanto o Ditto pode ocupar com modelos locais nesta máquina.</p>
+          </div>
+          <div className="ditto-sec-body">
+            {memoryError && (
+              <p className="ditto-read" style={{ margin: 0 }}>
+                Não foi possível ler o estado da memória.
+              </p>
+            )}
+            {memory && (
+              <>
+                <StatusTag status="done" label={`Perfil ${memory.profile.name}`} />
+                <p className="ditto-read">{PROFILE_TEXT[memory.profile.name]}</p>
+                <p className="ditto-read">
+                  Em vigor: até {memory.profile.max_local_models} modelo(s) local(is) carregado(s) · embeddings{" "}
+                  {memory.profile.embedding_device === "cpu" ? "na CPU" : "na GPU quando livre"} · até{" "}
+                  {memory.profile.max_concurrency} pergunta(s) em paralelo.
+                </p>
+                <p className="ditto-read">
+                  Memória: {gb(memory.available_bytes)} livres de {gb(memory.total_bytes)} · API usando{" "}
+                  {gb(memory.process_rss_bytes)} · modelos carregados:{" "}
+                  {memory.loaded_models.length === 0
+                    ? "nenhum"
+                    : memory.loaded_models.map((m) => `${m.name} (${m.device})`).join(", ")}
+                </p>
+                <p className="ditto-read">
+                  Para trocar de perfil, rode no terminal, na pasta do projeto:{" "}
+                  <code>make memory-profile PROFILE={OTHER_PROFILE[memory.profile.name] ?? "low"}</code>. Depois
+                  reinicie a API com <code>make up</code> ou <code>make up-local</code>.
+                </p>
+              </>
+            )}
+          </div>
+        </section>
+
         <section className="ditto-sec">
           <div className="ditto-sec-head">
             <h2 className="ditto-h2">Chave do Gemini</h2>

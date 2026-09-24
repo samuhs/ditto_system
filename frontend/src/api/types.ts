@@ -173,6 +173,14 @@ export interface OllamaModel {
   model: string;
 }
 
+export interface MemoryStatus {
+  profile: { name: string; max_local_models: number; embedding_device: string; max_concurrency: number };
+  total_bytes: number;
+  available_bytes: number;
+  process_rss_bytes: number;
+  loaded_models: { name: string; device: string; local: boolean; in_use: number }[];
+}
+
 export interface AppSettings {
   gemini_api_key_set: boolean;
   ollama_models: OllamaModel[];
