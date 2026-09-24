@@ -8,10 +8,11 @@ Sistema de doutorado: ingere documentos, roda experimentos de RAG (chunking × e
 ## Como iniciar o sistema (Docker)
 ```bash
 make setup       # 1ª vez: checa Docker, cria .env, pede chave Gemini
-make up          # sobe tudo: api:8000, frontend:3000, qdrant:6333, postgres:5432
+make up          # sobe tudo: api:8000, frontend:3000, qdrant:6333, postgres:5432 (portas mudam via .env: API_PORT etc.)
 make down        # derruba o stack
 make logs        # logs em tempo real
 make llm-setup   # prepara Ollama no host (GPU, OLLAMA_NUM_PARALLEL), baixa MODEL=... (o app lista os modelos do servidor ao vivo)
+make llm-setup LLM_SERVER=docker  # Ollama num container (funciona atrás de VPN que quebra o 127.0.0.1; sem GPU no Mac). LLM_SERVER=host volta ao nativo
 make model-add qwen3:1.7b | make model-rm qwen3:1.7b | make model-list
 make bench-llm MODEL=...   # throughput do servidor de LLM por nível de paralelismo
 ```

@@ -18,13 +18,22 @@ ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     PIP_RETRIES=10
 
 COPY pyproject.toml ./
-# Install with the "local" extra so the sentence-transformers embedders
-# (e5, paraphrase) work in-container, not only the Gemini provider.
-# torch comes from the CPU-only index first: the default Linux wheel bundles
-# ~4 GB of CUDA libraries that are useless under Docker Desktop (no GPU).
+# torch: prefer the wheel `make up` fetched on the host (backend/wheels/, see
+# scripts/prepare-artifacts.sh) for networks where the container cannot reach
+# download.pytorch.org; otherwise download the CPU build here. The CPU index
+# avoids the default Linux wheel's ~4 GB of CUDA libraries (no GPU in Docker).
+# The "local" extra makes the sentence-transformers embedders (e5, paraphrase)
+# work in-container, not only the Gemini provider.
+COPY wheels/ /tmp/wheels/
 RUN pip install --no-cache-dir --upgrade pip \
- && pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
- && pip install --no-cache-dir ".[local]"
+ && wheel="$(ls /tmp/wheels/torch-*"$(uname -m)".whl 2>/dev/null | head -1)" \
+ && if [ -n "$wheel" ]; then \
+      echo "instalando torch do host: $wheel" && pip install --no-cache-dir "$wheel"; \
+    else \
+      pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu; \
+    fi \
+ && pip install --no-cache-dir ".[local]" \
+ && rm -rf /tmp/wheels
 
 COPY . .
 

@@ -112,6 +112,15 @@ Run it again whenever you like. Steps that are already done get skipped. To star
 
 `llm-setup` also sets `OLLAMA_NUM_PARALLEL` (default 4, change it with `PARALLEL=...`) so that Ollama answers several requests at once. On macOS that goes through `launchctl setenv`, which doesn't survive a reboot, so run `make llm-setup` again after restarting.
 
+**Behind a corporate VPN (Ollama in Docker):** some VPN/security agents on macOS break outgoing connections to `127.0.0.1` ("can't assign requested address"). Native Ollama talks to its own llama.cpp runner over a fixed `127.0.0.1` port, so generation fails there whatever you set in `OLLAMA_HOST`. `make llm-setup` detects this and offers the alternative, or you can pick it yourself:
+
+```bash
+make llm-setup LLM_SERVER=docker   # Ollama in a container: VPN-proof, CPU only on macOS
+make llm-setup LLM_SERVER=host     # back to the native Ollama (GPU)
+```
+
+Docker mode writes `LLM_SERVER`, `COMPOSE_PROFILES` and `OLLAMA_BASE_URL` to `.env`, so `make up`/`down` bring the `ollama` service along and the API talks to it at `http://ollama:11434/v1`. The container's loopback lives inside the Docker VM, out of the VPN agent's reach. It's slower on a Mac because Docker has no Metal GPU, so prefer small models there. If the container can't download models on your network, run `ollama pull <model>` on the host and repeat the command: it mounts `~/.ollama/models`. `make model-*` commands follow whichever server is active, and the container also answers on the host at `localhost:11435`.
+
 **Managing models:**
 
 ```bash

@@ -11,12 +11,14 @@ services:
       - ./backend/config:/app/config
       - hf_cache:/root/.cache/huggingface
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     environment:
       DATABASE_URL: postgresql://ditto:ditto@postgres:5432/ditto
       QDRANT_URL: http://qdrant:6333
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      OLLAMA_BASE_URL: http://host.docker.internal:11434/v1
+      # Host Ollama by default; `make llm-setup LLM_SERVER=docker` points it
+      # at the ollama service below (http://ollama:11434/v1) via .env.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -32,7 +34,7 @@ services:
       POSTGRES_PASSWORD: ditto
       POSTGRES_DB: ditto
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -44,9 +46,27 @@ services:
   qdrant:
     image: qdrant/qdrant:v1.19.1
     ports:
-      - "6333:6333"
+      - "${QDRANT_PORT:-6333}:6333"
     volumes:
       - qdrantdata:/qdrant/storage
+
+  # Optional LLM server inside Docker (profile "ollama-docker", enabled by
+  # `make llm-setup LLM_SERVER=docker`). CPU-only on macOS (no Metal in the
+  # Docker VM), but its internal loopback lives in the VM, so it works on hosts
+  # where a VPN/security agent breaks 127.0.0.1 connections.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama-docker"]
+    environment:
+      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-2}
+      OLLAMA_KEEP_ALIVE: 30m
+    ports:
+      # Host access (bench, curl). 11435 avoids clashing with a host Ollama.
+      - "${OLLAMA_DOCKER_PORT:-11435}:11434"
+    volumes:
+      # A named volume by default; OLLAMA_MODELS_DIR=$HOME/.ollama/models reuses
+      # models pulled on the host when the container cannot download them.
+      - ${OLLAMA_MODELS_DIR:-ollama_models}:/root/.ollama/models
 
   frontend:
     build:
@@ -54,11 +74,12 @@ services:
       additional_contexts:
         certs: ./certs
     ports:
-      - "3000:80"
+      - "${WEB_PORT:-3000}:80"
     depends_on:
       - api
 
 volumes:
+  ollama_models:
   pgdata:
   qdrantdata:
   hf_cache:

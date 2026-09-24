@@ -21,3 +21,47 @@ confirm() {
 }
 
 has() { command -v "$1" >/dev/null 2>&1; }
+
+# .env helpers. env_file_get reads only .env; env_get the environment first.
+env_file_get() {
+  [ -f .env ] || return 0
+  local v; v="$(sed -n "s/^$1=//p" .env | tail -1)"
+  v="${v%\"}"; v="${v#\"}"
+  printf '%s' "$v"
+}
+env_get() {
+  local v="${!1:-}"
+  if [ -z "$v" ] && [ -f .env ]; then
+    v="$(sed -n "s/^$1=//p" .env | tail -1)"
+    v="${v%\"}"; v="${v#\"}"
+  fi
+  printf '%s' "$v"
+}
+env_set() {
+  [ -f .env ] || cp .env.example .env
+  local tmp; tmp="$(mktemp)"
+  grep -v "^$1=" .env >"$tmp" || true
+  printf '%s=%s\n' "$1" "$2" >>"$tmp"
+  mv "$tmp" .env
+}
+env_unset() {
+  [ -f .env ] || return 0
+  local tmp; tmp="$(mktemp)"
+  grep -v "^$1=" .env >"$tmp" || true
+  mv "$tmp" .env
+}
+
+# Where the LLM server runs: "host" (native Ollama, GPU) or "docker"
+# (Ollama container, CPU on macOS; immune to VPNs that break host loopback).
+llm_server() {
+  case "$(env_get LLM_SERVER)" in docker) echo docker ;; *) echo host ;; esac
+}
+
+# The ollama CLI of the active server.
+ollama_cli() {
+  if [ "$(llm_server)" = docker ]; then
+    docker compose exec -T ollama ollama "$@"
+  else
+    ollama "$@"
+  fi
+}

@@ -44,21 +44,8 @@ else
 fi
 
 step "Portas"
-if [ -n "$(docker compose ps -q 2>/dev/null)" ]; then
-  ok "stack já está rodando (portas em uso por ele)"
-elif has lsof; then
-  busy=0
-  for port in 3000 8000 5432 6333; do
-    if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
-      warn "porta $port já está em uso por outro processo"
-      busy=1
-    fi
-  done
-  [ "$busy" = 0 ] && ok "3000, 8000, 5432 e 6333 livres"
-else
-  warn "lsof não disponível; pulei a checagem de portas"
-fi
+./scripts/check-ports.sh || warn "resolva as portas antes do 'make up'"
 
 step "Pronto"
-echo "  make up          # sobe api:8000, frontend:3000, qdrant:6333, postgres:5432"
+echo "  make up          # sobe api:8000, frontend:3000, qdrant:6333, postgres:5432 (portas mudam via .env)"
 echo "  make llm-setup   # (opcional) prepara o Ollama para servir a LLM localmente com GPU"

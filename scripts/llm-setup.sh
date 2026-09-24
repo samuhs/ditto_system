@@ -4,16 +4,54 @@
 # smoke-tests it. The app lists the server's models live (GET /options).
 #
 # Env: MODEL (default qwen2.5:3b-instruct),
-#      PARALLEL (OLLAMA_NUM_PARALLEL, default 4), YES=1 (answer yes to every prompt).
+#      PARALLEL (OLLAMA_NUM_PARALLEL, default 4), YES=1 (answer yes to every prompt),
+#      LLM_SERVER=host|docker (docker: Ollama in a container, see llm-setup-docker.sh).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/common.sh
+
+# An explicit LLM_SERVER wins; otherwise keep what .env recorded last time.
+case "${LLM_SERVER:-$(llm_server)}" in
+  docker) exec ./scripts/llm-setup-docker.sh ;;
+esac
+if [ "$(env_file_get LLM_SERVER)" = docker ]; then
+  # Switching back from the container to the native Ollama.
+  docker compose --profile ollama-docker rm -sf ollama >/dev/null 2>&1 || true
+  for key in LLM_SERVER COMPOSE_PROFILES OLLAMA_BASE_URL OLLAMA_NUM_PARALLEL OLLAMA_MODELS_DIR; do env_unset "$key"; done
+  unset COMPOSE_PROFILES OLLAMA_BASE_URL
+  # Recreate the api so it points at the host Ollama again.
+  [ -n "$(docker compose ps -q api 2>/dev/null)" ] && docker compose up -d api >/dev/null 2>&1
+  ok "voltando ao Ollama nativo do host (.env limpo, container removido)"
+fi
 
 MODEL="${MODEL:-qwen2.5:3b-instruct}"
 case "$MODEL" in *:*) ;; *) MODEL="$MODEL:latest" ;; esac
 OLLAMA_URL="http://localhost:11434"
 PARALLEL="${PARALLEL:-4}"
 OS="$(uname -s)"
+
+# Some corporate VPN/security agents break outgoing IPv4 loopback connections
+# on macOS ("Can't assign requested address", errno 49) while [::1] still
+# works. Detect it and talk to Ollama over IPv6 loopback instead.
+IPV6_LOOPBACK=0
+ipv4_loopback_broken() {
+  [ "$OS" = "Darwin" ] && has python3 || return 1
+  python3 - <<'PY' 2>/dev/null
+import errno, socket, sys
+s = socket.socket()
+s.settimeout(1)
+try:
+    s.connect(("127.0.0.1", 1))
+except OSError as e:
+    sys.exit(0 if e.errno == errno.EADDRNOTAVAIL else 1)
+sys.exit(1)
+PY
+}
+if ipv4_loopback_broken; then
+  IPV6_LOOPBACK=1
+  export OLLAMA_HOST="[::1]"
+  OLLAMA_URL="http://[::1]:11434"
+fi
 
 reachable() { curl -sf "$OLLAMA_URL/api/tags" >/dev/null 2>&1; }
 wait_up() {
@@ -46,6 +84,15 @@ case "$OS" in
   *) fail "Sistema $OS não suportado. Use macOS ou Linux (no Windows, via WSL)." ;;
 esac
 
+if [ "$IPV6_LOOPBACK" = 1 ]; then
+  warn "o loopback IPv4 (127.0.0.1) está bloqueado nesta máquina (provável agente de VPN/segurança)"
+  warn "o Ollama nativo usa 127.0.0.1 internamente para gerar; aqui a geração vai falhar"
+  if confirm "Usar o Ollama dentro do Docker (funciona com a VPN, mas sem GPU)?"; then
+    exec ./scripts/llm-setup-docker.sh
+  fi
+  warn "seguindo com o Ollama nativo via IPv6 ([::1]); para trocar depois: make llm-setup LLM_SERVER=docker"
+fi
+
 step "Instalação do Ollama"
 if has ollama; then
   ok "ollama instalado ($(ollama --version 2>/dev/null | tail -1))"
@@ -74,6 +121,7 @@ has_systemd_unit() {
 # Linux: Ollama defaults to 127.0.0.1, which containers cannot reach via host.docker.internal.
 serve_env() {
   if [ "$OS" = "Linux" ]; then echo "OLLAMA_HOST=0.0.0.0:11434 OLLAMA_NUM_PARALLEL=$PARALLEL"
+  elif [ "$IPV6_LOOPBACK" = 1 ]; then echo "OLLAMA_HOST=[::1] OLLAMA_NUM_PARALLEL=$PARALLEL"
   else echo "OLLAMA_NUM_PARALLEL=$PARALLEL"; fi
 }
 
@@ -109,6 +157,7 @@ elif [ "$OS" = "Darwin" ] && { mac_app_running || { ! reachable && [ -d /Applica
   if [ "$(launchctl getenv OLLAMA_NUM_PARALLEL)" != "$PARALLEL" ] || ! reachable; then
     if [ "$(launchctl getenv OLLAMA_NUM_PARALLEL)" = "$PARALLEL" ] || confirm "Definir OLLAMA_NUM_PARALLEL=$PARALLEL no app do Ollama e reiniciá-lo? (interrompe gerações em andamento)"; then
       launchctl setenv OLLAMA_NUM_PARALLEL "$PARALLEL"
+      [ "$IPV6_LOOPBACK" = 1 ] && launchctl setenv OLLAMA_HOST "[::1]"
       if mac_app_running; then
         osascript -e 'quit app "Ollama"' >/dev/null 2>&1 || true
         for _ in $(seq 1 15); do mac_app_running || break; sleep 1; done

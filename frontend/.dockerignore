@@ -1,2 +1,2 @@
 node_modules
-dist
+# dist/ is NOT ignored: `make up` builds it on the host and the image serves it.

@@ -27,3 +27,7 @@ certs/*.pem
 
 # repo-local dev tools installed by make setup-dev when no uv/pipx exists
 .tools/
+
+# host-built artifacts for the Docker images (scripts/prepare-artifacts.sh)
+backend/wheels/*.whl
+frontend/.host-build
