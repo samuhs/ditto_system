@@ -11,9 +11,10 @@ make setup       # 1ª vez: checa Docker, cria .env, pede chave Gemini
 make up          # sobe tudo: api:8000, frontend:3000, qdrant:6333, postgres:5432 (portas mudam via .env: API_PORT etc.)
 make down        # derruba o stack
 make logs        # logs em tempo real
-make llm-setup   # prepara Ollama no host (GPU, OLLAMA_NUM_PARALLEL), baixa MODEL=... (o app lista os modelos do servidor ao vivo)
-make llm-setup LLM_SERVER=docker  # Ollama num container (funciona atrás de VPN que quebra o 127.0.0.1; sem GPU no Mac). LLM_SERVER=host volta ao nativo
-make model-add qwen3:1.7b | make model-rm qwen3:1.7b | make model-list
+make llm-setup   # servidor de LLM local: MLX no Apple Silicon (GPU, padrão), senão Ollama nativo; baixa MODEL=...
+make llm-setup LLM_SERVER=host|docker|mlx  # troca: Ollama nativo | Ollama num container (atrás de VPN que quebra 127.0.0.1; sem GPU no Mac) | MLX
+make llm-up | llm-down | llm-status        # sobe/para/checa o servidor escolhido (make up também sobe)
+make model-add <modelo> | model-rm <modelo> | model-list   # MLX: Qwen2.5-7B-Instruct-4bit (mlx-community) ou org/repo; Ollama: qwen3:1.7b
 make bench-llm MODEL=...   # throughput do servidor de LLM por nível de paralelismo
 ```
 - Frontend: http://localhost:3000 · API: http://localhost:8000 (`/health`, `/options`, `/ingest`, `/experiments`)

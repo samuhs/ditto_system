@@ -51,10 +51,20 @@ env_unset() {
   mv "$tmp" .env
 }
 
-# Where the LLM server runs: "host" (native Ollama, GPU) or "docker"
-# (Ollama container, CPU on macOS; immune to VPNs that break host loopback).
+# Where the LLM server runs, as recorded in .env by `make llm-setup`:
+#   mlx    - Apple MLX on the host (Metal GPU, fastest on Apple Silicon)
+#   host   - native Ollama on the host (GPU)
+#   docker - Ollama in a container (CPU on macOS; immune to VPNs that break
+#            host loopback)
+# .env is the only source of truth here: LLM_SERVER on the command line is a
+# request to llm-setup, not the server currently running.
 llm_server() {
-  case "$(env_get LLM_SERVER)" in docker) echo docker ;; *) echo host ;; esac
+  case "$(env_file_get LLM_SERVER)" in docker) echo docker ;; mlx) echo mlx ;; *) echo host ;; esac
+}
+
+# The server new setups get: MLX on Apple Silicon, native Ollama elsewhere.
+default_llm_server() {
+  if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then echo mlx; else echo host; fi
 }
 
 # The ollama CLI of the active server.
@@ -64,4 +74,56 @@ ollama_cli() {
   else
     ollama "$@"
   fi
+}
+
+# --- MLX (Apple Silicon) -----------------------------------------------------
+MLX_DIR=".tools/mlx"
+MLX_PY="$MLX_DIR/bin/python"
+mlx_port() { local p; p="$(env_get MLX_PORT)"; echo "${p:-11436}"; }
+mlx_url() { echo "http://localhost:$(mlx_port)"; }
+mlx_up() { curl -sf "$(mlx_url)/v1/models" >/dev/null 2>&1; }
+
+# Short names are MLX community conversions: Qwen2.5-7B-Instruct-4bit ->
+# mlx-community/Qwen2.5-7B-Instruct-4bit. Full Hugging Face ids pass through.
+mlx_model_id() {
+  case "$1" in */*) echo "$1" ;; *) echo "mlx-community/$1" ;; esac
+}
+
+# Python in the MLX venv trusts the host CAs too (Hugging Face downloads
+# behind VPNs that inspect HTTPS).
+mlx_env() {
+  local ca="certs/host-ca.pem" bundle="$MLX_DIR/ca-bundle.pem"
+  if [ -s "$ca" ] && [ -x "$MLX_PY" ]; then
+    cat "$("$MLX_PY" -c 'import certifi; print(certifi.where())')" "$ca" >"$bundle" 2>/dev/null \
+      && export SSL_CERT_FILE="$PWD/$bundle" REQUESTS_CA_BUNDLE="$PWD/$bundle"
+  fi
+  return 0
+}
+
+# Some corporate VPN/security agents on macOS break outgoing IPv4 loopback
+# connections ("Can't assign requested address", errno 49).
+ipv4_loopback_broken() {
+  [ "$(uname -s)" = Darwin ] && has python3 || return 1
+  python3 - <<'PY' 2>/dev/null
+import errno, socket, sys
+s = socket.socket()
+s.settimeout(1)
+try:
+    s.connect(("127.0.0.1", 1))
+except OSError as e:
+    sys.exit(0 if e.errno == errno.EADDRNOTAVAIL else 1)
+sys.exit(1)
+PY
+}
+
+# Undo what the previous `make llm-setup` mode left behind before switching.
+reset_llm_server() {
+  case "$(env_file_get LLM_SERVER)" in
+    docker) docker compose --profile ollama-docker rm -sf ollama >/dev/null 2>&1 || true ;;
+    mlx) ./scripts/llm.sh down >/dev/null 2>&1 || true ;;  # .env still says mlx here
+  esac
+  for key in LLM_SERVER COMPOSE_PROFILES OLLAMA_BASE_URL OLLAMA_NUM_PARALLEL OLLAMA_MODELS_DIR MLX_PARALLEL; do
+    env_unset "$key"
+  done
+  unset COMPOSE_PROFILES OLLAMA_BASE_URL
 }

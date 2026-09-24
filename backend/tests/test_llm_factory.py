@@ -46,6 +46,12 @@ def test_resolve_llm_ollama_model_name(cfg_dir):
     assert isinstance(llm, OllamaLLM)
 
 
+def test_resolve_llm_huggingface_model_name(cfg_dir):
+    # MLX (and other OpenAI-compatible local servers) name models "org/repo".
+    llm = resolve_llm("mlx-community/Qwen2.5-3B-Instruct-4bit", client=object())
+    assert isinstance(llm, OllamaLLM)
+
+
 def _options(lister):
     app = create_app()
     app.dependency_overrides[get_store] = lambda: _FakeStore()

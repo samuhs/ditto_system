@@ -15,7 +15,7 @@ export function llmChoices(options: Options | null): Choice[] {
       tag: LOCATION_LABEL[location] ?? location,
       description:
         location === "local"
-          ? "Roda no servidor Ollama, sem custo de API."
+          ? "Roda no servidor local (MLX ou Ollama), sem custo de API."
           : "Chamado via API externa.",
     }));
   }

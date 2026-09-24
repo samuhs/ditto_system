@@ -1,19 +1,20 @@
-.PHONY: help certs prepare setup setup-dev llm-setup model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
+.PHONY: help certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
 
-MODEL ?= qwen2.5:3b-instruct
-PARALLEL ?= 4
+# MODEL and PARALLEL are optional: each LLM server has its own defaults.
 
 help:
 	@echo "Primeira vez:"
 	@echo "  make setup        checa o Docker, cria o .env e pede a chave Gemini (opcional)"
 	@echo "  make up           sobe api:8000, frontend:3000, qdrant:6333, postgres:5432"
-	@echo "  make llm-setup    prepara o Ollama (GPU, PARALLEL=4) e baixa o modelo; MODEL=... para trocar"
+	@echo "  make llm-setup    prepara o servidor de LLM local e baixa um modelo (MODEL=..., PARALLEL=...)"
+	@echo "                    Mac Apple Silicon: MLX (GPU, o mais rápido). LLM_SERVER=host usa o Ollama nativo;"
 	@echo "                    LLM_SERVER=docker roda o Ollama no Docker (funciona atrás de VPN, sem GPU)"
 	@echo ""
-	@echo "Modelos:   make model-add qwen3:1.7b | model-rm qwen3:1.7b | model-list"
+	@echo "Modelos:   make model-add <modelo> | model-rm <modelo> | model-list"
+	@echo "           MLX: Qwen2.5-7B-Instruct-4bit (mlx-community) ou org/repo · Ollama: qwen3:1.7b"
 	@echo "Benchmark: make bench-llm MODEL=... [LEVELS=1,2,4,8 N=16]"
 	@echo ""
-	@echo "Dia a dia: make down | logs | build | ollama-up | ollama-down | docker-clean"
+	@echo "Dia a dia: make down | logs | build | llm-up | llm-down | llm-status | docker-clean"
 	@echo "Dev:       make setup-dev (venv, npm, graphify, hooks) | test | front-test | front-build"
 
 setup:
@@ -27,7 +28,17 @@ setup-dev:
 # LLM_SERVER=docker runs Ollama in a container (VPN-proof, CPU-only on macOS);
 # LLM_SERVER=host goes back to the native Ollama. Omitted: keeps the last choice.
 llm-setup:
-	@MODEL="$(MODEL)" PARALLEL="$(PARALLEL)" $(if $(LLM_SERVER),LLM_SERVER="$(LLM_SERVER)") ./scripts/llm-setup.sh
+	@$(if $(MODEL),MODEL="$(MODEL)") $(if $(PARALLEL),PARALLEL="$(PARALLEL)") $(if $(LLM_SERVER),LLM_SERVER="$(LLM_SERVER)") ./scripts/llm-setup.sh
+
+# Start/stop/check whichever server llm-setup chose (make up also starts it).
+llm-up:
+	@./scripts/llm.sh up
+
+llm-down:
+	@./scripts/llm.sh down
+
+llm-status:
+	@./scripts/llm.sh status
 
 # Model name: positional (make model-add qwen3:1.7b) or MODEL=... given explicitly.
 ifneq ($(filter model-add model-rm,$(firstword $(MAKECMDGOALS))),)
@@ -48,8 +59,9 @@ model-list:
 
 LEVELS ?= 1,2,4,8
 N ?= 16
-BASE_URL ?= http://localhost:11434/v1
+BASE_URL ?= $(shell ./scripts/llm.sh url 2>/dev/null)
 bench-llm:
+	@[ -n "$(MODEL)" ] || { echo "informe o modelo: make bench-llm MODEL=... (veja make model-list)"; exit 1; }
 	@python3 scripts/bench_llm.py --base-url "$(BASE_URL)" --model "$(MODEL)" --levels "$(LEVELS)" -n "$(N)"
 
 # Exports the host's trusted CAs for the Docker builds (VPN/proxy-safe builds).
@@ -65,9 +77,11 @@ prepare: certs
 build: prepare
 	docker compose build
 
+# --build picks up code and the freshly built frontend; unchanged layers are cached.
 up: prepare
 	@./scripts/check-ports.sh
-	docker compose up -d
+	docker compose up -d --build
+	@./scripts/llm.sh up || true
 
 down:
 	docker compose down
@@ -100,18 +114,7 @@ front-build:
 	@[ -d frontend/node_modules ] || (cd frontend && npm ci)
 	cd frontend && npm run build
 
-ollama-up:
-	@if curl -sf http://localhost:11434/api/tags >/dev/null 2>&1; then \
-		echo "ollama ja esta rodando"; \
-	else \
-		echo "iniciando ollama serve..."; \
-		export OLLAMA_NUM_PARALLEL=$(PARALLEL); \
-		if [ "$$(uname -s)" = Linux ]; then export OLLAMA_HOST=0.0.0.0:11434; fi; \
-		nohup ollama serve >/tmp/ollama.log 2>&1 & \
-		until curl -sf http://localhost:11434/api/tags >/dev/null 2>&1; do sleep 1; done; \
-		echo "ollama pronto"; \
-	fi; \
-	ollama list
+# Legacy names for llm-up / llm-down.
+ollama-up: llm-up
 
-ollama-down:
-	@pkill -f "ollama serve" && echo "ollama parado" || echo "nenhum processo 'ollama serve' rodando"
+ollama-down: llm-down

@@ -10,18 +10,22 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/common.sh
 
-# An explicit LLM_SERVER wins; otherwise keep what .env recorded last time.
-case "${LLM_SERVER:-$(llm_server)}" in
+# An explicit LLM_SERVER wins, then the last choice in .env, then the default
+# for this machine (MLX on Apple Silicon, native Ollama elsewhere).
+mode="${LLM_SERVER:-$(env_file_get LLM_SERVER)}"
+mode="${mode:-$(default_llm_server)}"
+case "$mode" in
+  mlx) exec ./scripts/llm-setup-mlx.sh ;;
   docker) exec ./scripts/llm-setup-docker.sh ;;
+  host) ;;
+  *) fail "LLM_SERVER inválido: '$mode' (use mlx, host ou docker)" ;;
 esac
-if [ "$(env_file_get LLM_SERVER)" = docker ]; then
-  # Switching back from the container to the native Ollama.
-  docker compose --profile ollama-docker rm -sf ollama >/dev/null 2>&1 || true
-  for key in LLM_SERVER COMPOSE_PROFILES OLLAMA_BASE_URL OLLAMA_NUM_PARALLEL OLLAMA_MODELS_DIR; do env_unset "$key"; done
-  unset COMPOSE_PROFILES OLLAMA_BASE_URL
+if [ "$(env_file_get LLM_SERVER)" != host ]; then
+  reset_llm_server
+  env_set LLM_SERVER host
+  ok "servidor de LLM: Ollama nativo do host"
   # Recreate the api so it points at the host Ollama again.
   [ -n "$(docker compose ps -q api 2>/dev/null)" ] && docker compose up -d api >/dev/null 2>&1
-  ok "voltando ao Ollama nativo do host (.env limpo, container removido)"
 fi
 
 MODEL="${MODEL:-qwen2.5:3b-instruct}"
@@ -30,23 +34,8 @@ OLLAMA_URL="http://localhost:11434"
 PARALLEL="${PARALLEL:-4}"
 OS="$(uname -s)"
 
-# Some corporate VPN/security agents break outgoing IPv4 loopback connections
-# on macOS ("Can't assign requested address", errno 49) while [::1] still
-# works. Detect it and talk to Ollama over IPv6 loopback instead.
+# Native Ollama reaches its runner over 127.0.0.1; see ipv4_loopback_broken.
 IPV6_LOOPBACK=0
-ipv4_loopback_broken() {
-  [ "$OS" = "Darwin" ] && has python3 || return 1
-  python3 - <<'PY' 2>/dev/null
-import errno, socket, sys
-s = socket.socket()
-s.settimeout(1)
-try:
-    s.connect(("127.0.0.1", 1))
-except OSError as e:
-    sys.exit(0 if e.errno == errno.EADDRNOTAVAIL else 1)
-sys.exit(1)
-PY
-}
 if ipv4_loopback_broken; then
   IPV6_LOOPBACK=1
   export OLLAMA_HOST="[::1]"

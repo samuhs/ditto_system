@@ -24,6 +24,7 @@ docker info >/dev/null 2>&1 || fail "o Docker não está respondendo. Abra o Doc
 if [ "$(uname -s)" = Darwin ]; then
   warn "no macOS o container não usa a GPU (Metal): a geração roda na CPU, mais devagar que o Ollama nativo"
 fi
+[ "$(env_file_get LLM_SERVER)" = docker ] || reset_llm_server
 env_set LLM_SERVER docker
 env_set COMPOSE_PROFILES ollama-docker
 env_set OLLAMA_BASE_URL http://ollama:11434/v1

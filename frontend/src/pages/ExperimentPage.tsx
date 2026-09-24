@@ -225,7 +225,7 @@ export function ExperimentPage() {
           <div className="ditto-sec-head">
             <h2 className="ditto-h2">Modelo</h2>
             <p className="ditto-read">
-              O LLM que escreve as respostas. Modelos locais vêm do seu servidor Ollama.
+              O LLM que escreve as respostas. Os modelos locais vêm do servidor de LLM da sua máquina (MLX ou Ollama).
             </p>
           </div>
           <div className="ditto-sec-body">

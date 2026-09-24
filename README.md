@@ -89,51 +89,45 @@ Most config comes from `.env` (there's a `.env.example` to copy):
 
 You can also set the **Gemini key** and add **named Ollama models** straight from the **Configurações** screen in the app, no restart needed. Those runtime settings land in `backend/config/app_settings.json`. It's git-ignored and stored in plaintext, so keep it on your own machine.
 
-### Going local with Ollama
+### Going local: MLX or Ollama
 
-Ollama runs on your host, not in Docker, so it can use your GPU (Metal on Apple Silicon, CUDA/ROCm on Linux). One command sets it up:
+The LLM server runs on your host, not in Docker, so it can use your GPU. `make llm-setup` picks the fastest option for your machine and sets it up end to end (install, start, download a model, test prompt, check that the API container reaches it):
+
+| Server | Where | GPU | Pick it with |
+|---|---|---|---|
+| **MLX** (`mlx_lm.server`) | Apple Silicon Macs (the default there) | Metal | `make llm-setup` or `LLM_SERVER=mlx` |
+| **Ollama** (native) | Linux, Intel Macs (the default there) | CUDA / ROCm / Metal | `LLM_SERVER=host` |
+| **Ollama in Docker** | anywhere, including behind VPNs that break `127.0.0.1` | none on macOS | `LLM_SERVER=docker` |
 
 ```bash
-make llm-setup                              # default model: qwen2.5:3b-instruct
-make llm-setup MODEL=llama3.1:8b            # or pick another one
-YES=1 make llm-setup                        # answer yes to every prompt
+make llm-setup                                   # best server for this machine + its default model
+make llm-setup MODEL=Qwen2.5-7B-Instruct-4bit    # MLX: another model (short name = mlx-community/<name>)
+make llm-setup LLM_SERVER=host MODEL=llama3.1:8b # native Ollama instead
+YES=1 make llm-setup                             # answer yes to every prompt
 ```
 
-It walks through these steps and tells you what it found at each one:
+The choice is saved in `.env` (`LLM_SERVER`), so later runs, `make up` (which also starts the server) and the model commands all follow it. Switching servers cleans up after the previous one. `make llm-up`, `make llm-down` and `make llm-status` start, stop and check it by hand.
 
-1. Detects your GPU. With no GPU it warns you and carries on in CPU mode, which is slow.
-2. Installs Ollama if it's missing, after asking first. On macOS it uses `brew install ollama`. On Linux it runs the official `install.sh`.
-3. Starts the server. On Linux it makes sure Ollama listens beyond `localhost` (`OLLAMA_HOST=0.0.0.0`) so the containers can reach it. That also exposes port 11434 on your network, so firewall it on shared machines.
-4. Pulls the model, sends it a test prompt and checks that it loaded 100% on the GPU.
-5. The app asks the Ollama server for its models, so every pulled model shows up by its real name in experiments and chat, with no restart needed.
-6. If the stack is up, checks that the API container can reach Ollama.
+**MLX** is Apple's framework for Apple Silicon: one process with an OpenAI-compatible API and batched decoding. It lives in `.tools/mlx`, listens on `localhost:11436` (`MLX_PORT`), and serves `PARALLEL` requests at once (default 4). Models come from Hugging Face, ready-made MLX conversions live at [huggingface.co/mlx-community](https://huggingface.co/mlx-community), and they're cached in `~/.cache/huggingface`.
 
-Run it again whenever you like. Steps that are already done get skipped. To start and stop the server by hand, use `make ollama-up` and `make ollama-down`.
+**Native Ollama:** on Linux `llm-setup` makes it listen beyond `localhost` (`OLLAMA_HOST=0.0.0.0`) so the containers can reach it, which also exposes port 11434 on your network, so firewall it on shared machines. It sets `OLLAMA_NUM_PARALLEL` (default 4); on macOS that goes through `launchctl setenv`, which doesn't survive a reboot.
 
-`llm-setup` also sets `OLLAMA_NUM_PARALLEL` (default 4, change it with `PARALLEL=...`) so that Ollama answers several requests at once. On macOS that goes through `launchctl setenv`, which doesn't survive a reboot, so run `make llm-setup` again after restarting.
+**Behind a corporate VPN (Ollama in Docker):** some VPN/security agents on macOS break outgoing connections to `127.0.0.1` ("can't assign requested address"). Native Ollama talks to its own runner over a fixed `127.0.0.1` port, and the API container reaches host servers through the host's loopback, so neither MLX nor native Ollama works there. `make llm-setup` detects this and offers Ollama in Docker: the container's loopback lives inside the Docker VM, out of the agent's reach. It's slower on a Mac because Docker has no Metal GPU, so prefer small models. If the container can't download models on your network, run `ollama pull <model>` on the host and repeat the command: it mounts `~/.ollama/models`. The container also answers on the host at `localhost:11435`.
 
-**Behind a corporate VPN (Ollama in Docker):** some VPN/security agents on macOS break outgoing connections to `127.0.0.1` ("can't assign requested address"). Native Ollama talks to its own llama.cpp runner over a fixed `127.0.0.1` port, so generation fails there whatever you set in `OLLAMA_HOST`. `make llm-setup` detects this and offers the alternative, or you can pick it yourself:
+**Managing models** works the same on every server; the app lists them live, no restart needed:
 
 ```bash
-make llm-setup LLM_SERVER=docker   # Ollama in a container: VPN-proof, CPU only on macOS
-make llm-setup LLM_SERVER=host     # back to the native Ollama (GPU)
-```
-
-Docker mode writes `LLM_SERVER`, `COMPOSE_PROFILES` and `OLLAMA_BASE_URL` to `.env`, so `make up`/`down` bring the `ollama` service along and the API talks to it at `http://ollama:11434/v1`. The container's loopback lives inside the Docker VM, out of the VPN agent's reach. It's slower on a Mac because Docker has no Metal GPU, so prefer small models there. If the container can't download models on your network, run `ollama pull <model>` on the host and repeat the command: it mounts `~/.ollama/models`. `make model-*` commands follow whichever server is active, and the container also answers on the host at `localhost:11435`.
-
-**Managing models:**
-
-```bash
-make model-add qwen3:1.7b     # pull into Ollama (it shows up in the app)
-make model-rm qwen3:1.7b      # delete it from Ollama (it leaves the app)
-make model-list               # what's on the Ollama server
+make model-add Qwen2.5-7B-Instruct-4bit   # MLX (= mlx-community/Qwen2.5-7B-Instruct-4bit, or any org/repo)
+make model-add qwen3:1.7b                 # Ollama
+make model-rm <model>                     # delete it (it leaves the app)
+make model-list                           # what the active server has
 ```
 
 **Running experiments faster:** the **Gerar teste** screen has a **Perguntas em paralelo** field (1 to 32). Above 1, Ditto answers that many questions of each combination at the same time. That only speeds things up if the server can serve requests concurrently (`OLLAMA_NUM_PARALLEL`, `llama-server -np`, vLLM). Keep in mind that the per-question latency then also counts the time a request spent waiting in the server's queue.
 
-**Measuring your machine:** `make bench-llm MODEL=qwen2.5:3b-instruct` sends RAG-shaped prompts at 1, 2, 4 and 8 concurrent requests and prints wall time, tokens/s and p50/p95 latency. It takes `LEVELS=1,2,4 N=16 BASE_URL=...` and works against any OpenAI-compatible server. Use it to pick a sensible parallelism. For a comparison of inference servers for small models, see [docs/research/2026-09-23-inferencia-small-llms.md](docs/research/2026-09-23-inferencia-small-llms.md).
+**Measuring your machine:** `make bench-llm MODEL=<model>` sends RAG-shaped prompts at 1, 2, 4 and 8 concurrent requests and prints wall time, tokens/s and p50/p95 latency. It takes `LEVELS=1,2,4 N=16 BASE_URL=...` and works against any OpenAI-compatible server (the active one by default). Use it to pick a sensible parallelism. For a comparison of inference servers for small models, see [docs/research/2026-09-23-inferencia-small-llms.md](docs/research/2026-09-23-inferencia-small-llms.md).
 
-Want to skip Google entirely? The Docker image already bundles the local embedders (`e5`, `paraphrase`). Pick one of those plus a local Ollama model and nothing leaves your machine. The embedder pulls its weights the first time you use it and caches them in the `hf_cache` volume, so it only happens once. That does make the image chunky (PyTorch comes along for the ride). If you only ever use Gemini embeddings, drop the `[local]` extra from `backend/Dockerfile` and the image slims right back down.
+Want to skip Google entirely? The Docker image already bundles the local embedders (`e5`, `paraphrase`). Pick one of those plus a local model (MLX or Ollama) and nothing leaves your machine. The embedder pulls its weights the first time you use it and caches them in the `hf_cache` volume, so it only happens once. That does make the image chunky (PyTorch comes along for the ride). If you only ever use Gemini embeddings, drop the `[local]` extra from `backend/Dockerfile` and the image slims right back down.
 
 ---
 
