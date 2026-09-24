@@ -1,6 +1,6 @@
 # Gestão de memória com modelos locais (Macs de 8 GB)
 
-**Status:** proposta, não implementada
+**Status:** Fases 0, 1, 2 e 3.1–3.3 implementadas (plano `docs/superpowers/plans/2026-09-24-gestao-de-memoria-parte-1.md`); 3.4 e 4 ficam para a parte 2
 **Contexto:** no M4 Pro de 8 GB a RAM acaba quando o sistema usa LLM e embeddings locais. Este documento mapeia onde a memória vai e propõe mudanças em fases, das mais baratas às estruturais.
 
 ## 1. Orçamento de memória num Mac de 8 GB
@@ -53,7 +53,7 @@ No `make up-local`, o SentenceTransformer escolhe `mps` sozinho. O pool de cache
 ### Fase 0: medir antes de mudar (pequena)
 - `GET /system/memory`: RSS do processo da API (`psutil`), memória MPS (`torch.mps.current_allocated_memory()`, se o torch estiver carregado), modelos carregados pelo `ModelManager` (Fase 2) e os modelos do servidor de LLM (Ollama `/api/ps`).
 - Log de RSS no início e no fim de cada combinação do orquestrador.
-- `make mem-profile`: roda um experimento pequeno e fixo (2 embeddings × 2 LLMs × 5 perguntas) e amostra `vm_stat`/`memory_pressure` e o RSS da API e do `mlx_lm.server`. Serve de linha de base antes e depois de cada fase.
+- `make mem-watch`: monitor que imprime a cada 2 s a memória livre, o swap, o RSS da API e do `mlx_lm.server` e os modelos carregados, enquanto você roda algo no app. Serve de linha de base antes e depois de cada fase.
 
 ### Fase 1: ganhos rápidos de configuração (sem mexer no domínio)
 Um perfil `MEMORY_PROFILE=low|standard` no `.env`. O `make setup` detecta via `sysctl hw.memsize` e escolhe `low` quando a RAM é ≤ 8 GB. No perfil `low`:

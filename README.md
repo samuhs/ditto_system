@@ -141,6 +141,30 @@ make model-list                           # what the active server has
 
 Want to skip Google entirely? The Docker image already bundles the local embedders (`e5`, `paraphrase`). Pick one of those plus a local model (MLX or Ollama) and nothing leaves your machine. The embedder pulls its weights the first time you use it and caches them in the `hf_cache` volume, so it only happens once. That does make the image chunky (PyTorch comes along for the ride). If you only ever use Gemini embeddings, drop the `[local]` extra from `backend/Dockerfile` and the image slims right back down.
 
+### Memory profiles (8 GB machines)
+
+Running an LLM and embedders locally on an 8 GB Mac is tight. Ditto has two memory profiles, stored as `MEMORY_PROFILE` in `.env`. Machines with 8 GB or less start on `low`; everything else starts on `standard`.
+
+| | `low` | `standard` |
+|---|---|---|
+| Local embedders kept in memory | 1 (switching unloads the previous one) | 3 |
+| Where embedders run | CPU | GPU, only when no local LLM can be using it; CPU otherwise |
+| MLX parallelism / prompt cache | 2 / 2 entries, 512 MB | 4 / 10 entries, no cap |
+| Ollama | `NUM_PARALLEL=2`, `MAX_LOADED_MODELS=1`, q8_0 KV cache | `NUM_PARALLEL=4`, Ollama defaults |
+| Questions in parallel per experiment | up to 2 | up to 32 |
+| Docker container memory limits | yes | no |
+| Trade-off | slower experiments | may swap if RAM runs out |
+
+In both profiles an embedder never shares the GPU with a local LLM, experiments run one at a time (the rest wait as "Na fila"), and combinations run LLM by LLM so each model loads once.
+
+```bash
+make memory-profile                    # active profile and what it changes
+make memory-profile PROFILE=standard   # switch (restarts the LLM server); then make up or make up-local
+make mem-watch                         # free memory, swap, API/MLX RSS and loaded models every 2 s
+```
+
+On `low`, `make up` recommends `make up-local`: without the API in the Docker VM, more RAM is left for the LLM. Values set explicitly in `.env` (`MLX_PARALLEL`, `MAX_LOCAL_MODELS`, `MAX_EXPERIMENT_CONCURRENCY`, `EMBEDDING_DEVICE=cpu`) win over the profile. The **Configurações** screen shows the active profile, what is loaded, and the command to switch.
+
 ---
 
 ## Running from source

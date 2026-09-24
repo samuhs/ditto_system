@@ -18,9 +18,12 @@ make up-local | down-local | status-local  # alternativa ao make up: API e front
 make doctor                                # testa cada conexão de rede e recomenda make up ou make up-local
 make model-add <modelo> | model-rm <modelo> | model-list   # MLX: Qwen2.5-7B-Instruct-4bit (mlx-community) ou org/repo; Ollama: qwen3:1.7b
 make bench-llm MODEL=...   # throughput do servidor de LLM por nível de paralelismo
+make memory-profile                        # perfil de memória ativo (low ≤ 8 GB, standard) e o que ele muda
+make memory-profile PROFILE=low|standard   # troca o perfil (reinicia o servidor de LLM; depois make up/up-local)
+make mem-watch                             # memória livre, swap, RSS da API/MLX e modelos carregados, a cada 2s
 ```
 - Frontend: http://localhost:3000 · API: http://localhost:8000 (`/health`, `/options`, `/ingest`, `/experiments`)
-- Precisa de `GEMINI_API_KEY` no `.env` (já configurado, gitignored). No Docker use embedding `gemini` (a imagem não traz os embedders locais).
+- Precisa de `GEMINI_API_KEY` no `.env` (já configurado, gitignored). A imagem Docker já traz os embedders locais (`e5`, `paraphrase`, torch CPU).
 
 ## Ambiente de desenvolvimento
 ```bash
@@ -38,6 +41,7 @@ Dev backend usa o venv `backend/.venv` (Python 3.13). Frontend usa Node 22.
 
 ## Estrutura
 - `backend/app/` — FastAPI monólito modular (`core/`, `ingestion/`, `experiments/`, `api/`)
+- `backend/app/core/memory/` — perfis de memória, `ModelManager` (todo embedder passa por ele: cache com limite de modelos locais) e política de device (embedder nunca divide a GPU com LLM local)
 - `frontend/` — React + Vite + TS + Mantine (nginx faz proxy `/api/` → api)
 - `docs/superpowers/{specs,plans}/` — specs e planos de implementação
 - `database/` — documento de teste (FAQ de guia de viagem)
