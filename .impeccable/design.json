@@ -1,0 +1,546 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T02:06:42+00:00",
+  "title": "Design System: Ditto",
+  "extensions": {
+    "colorMeta": {
+      "hue-violet": {
+        "role": "primary",
+        "displayName": "Divider Violet",
+        "canonical": "oklch(51.5% 0.18 291.8)",
+        "tonalRamp": [
+          "oklch(15% 0.101 291.8)",
+          "oklch(26% 0.125 291.8)",
+          "oklch(37% 0.149 291.8)",
+          "oklch(48% 0.172 291.8)",
+          "oklch(60% 0.162 291.8)",
+          "oklch(71% 0.138 291.8)",
+          "oklch(83% 0.112 291.8)",
+          "oklch(95% 0.040 291.8)"
+        ]
+      },
+      "hue-yellow": {
+        "role": "primary",
+        "displayName": "Chrome Yellow",
+        "canonical": "oklch(80.8% 0.161 83.2)",
+        "tonalRamp": [
+          "oklch(15% 0.034 83.2)",
+          "oklch(26% 0.055 83.2)",
+          "oklch(37% 0.076 83.2)",
+          "oklch(48% 0.098 83.2)",
+          "oklch(60% 0.121 83.2)",
+          "oklch(71% 0.142 83.2)",
+          "oklch(83% 0.157 83.2)",
+          "oklch(95% 0.040 83.2)"
+        ]
+      },
+      "hue-orange": {
+        "role": "primary",
+        "displayName": "Oxide Orange",
+        "canonical": "oklch(65.7% 0.179 40.9)",
+        "tonalRamp": [
+          "oklch(15% 0.070 40.9)",
+          "oklch(26% 0.094 40.9)",
+          "oklch(37% 0.117 40.9)",
+          "oklch(48% 0.141 40.9)",
+          "oklch(60% 0.167 40.9)",
+          "oklch(71% 0.168 40.9)",
+          "oklch(83% 0.142 40.9)",
+          "oklch(95% 0.040 40.9)"
+        ]
+      },
+      "hue-grass": {
+        "role": "primary",
+        "displayName": "Grass",
+        "canonical": "oklch(61.7% 0.142 141.6)",
+        "tonalRamp": [
+          "oklch(15% 0.062 141.6)",
+          "oklch(26% 0.081 141.6)",
+          "oklch(37% 0.100 141.6)",
+          "oklch(48% 0.119 141.6)",
+          "oklch(60% 0.139 141.6)",
+          "oklch(71% 0.126 141.6)",
+          "oklch(83% 0.106 141.6)",
+          "oklch(95% 0.040 141.6)"
+        ]
+      },
+      "hue-teal": {
+        "role": "primary",
+        "displayName": "Teal",
+        "canonical": "oklch(59.3% 0.098 193.1)",
+        "tonalRamp": [
+          "oklch(15% 0.046 193.1)",
+          "oklch(26% 0.059 193.1)",
+          "oklch(37% 0.072 193.1)",
+          "oklch(48% 0.085 193.1)",
+          "oklch(60% 0.097 193.1)",
+          "oklch(71% 0.084 193.1)",
+          "oklch(83% 0.070 193.1)",
+          "oklch(95% 0.040 193.1)"
+        ]
+      },
+      "hue-ultramarine": {
+        "role": "primary",
+        "displayName": "Ultramarine",
+        "canonical": "oklch(46.6% 0.166 266.6)",
+        "tonalRamp": [
+          "oklch(15% 0.103 266.6)",
+          "oklch(26% 0.125 266.6)",
+          "oklch(37% 0.147 266.6)",
+          "oklch(48% 0.163 266.6)",
+          "oklch(60% 0.139 266.6)",
+          "oklch(71% 0.117 266.6)",
+          "oklch(83% 0.093 266.6)",
+          "oklch(95% 0.040 266.6)"
+        ]
+      },
+      "errata": {
+        "role": "secondary",
+        "displayName": "Errata Vermilion",
+        "canonical": "oklch(57.8% 0.205 30.7)",
+        "tonalRamp": [
+          "oklch(15% 0.100 30.7)",
+          "oklch(26% 0.127 30.7)",
+          "oklch(37% 0.154 30.7)",
+          "oklch(48% 0.181 30.7)",
+          "oklch(60% 0.200 30.7)",
+          "oklch(71% 0.173 30.7)",
+          "oklch(83% 0.143 30.7)",
+          "oklch(95% 0.040 30.7)"
+        ]
+      },
+      "errata-ink": {
+        "role": "secondary",
+        "displayName": "Errata Ink",
+        "canonical": "oklch(50.1% 0.179 29.7)",
+        "tonalRamp": [
+          "oklch(15% 0.104 29.7)",
+          "oklch(26% 0.127 29.7)",
+          "oklch(37% 0.151 29.7)",
+          "oklch(48% 0.174 29.7)",
+          "oklch(60% 0.158 29.7)",
+          "oklch(71% 0.134 29.7)",
+          "oklch(83% 0.108 29.7)",
+          "oklch(95% 0.040 29.7)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(20.3% 0.008 297.1)",
+        "tonalRamp": [
+          "oklch(15% 0.007 297.1)",
+          "oklch(26% 0.007 297.1)",
+          "oklch(37% 0.006 297.1)",
+          "oklch(48% 0.005 297.1)",
+          "oklch(60% 0.004 297.1)",
+          "oklch(71% 0.003 297.1)",
+          "oklch(83% 0.002 297.1)",
+          "oklch(95% 0.001 297.1)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "oklch(45.1% 0.013 297.3)",
+        "tonalRamp": [
+          "oklch(15% 0.008 297.3)",
+          "oklch(26% 0.010 297.3)",
+          "oklch(37% 0.012 297.3)",
+          "oklch(48% 0.013 297.3)",
+          "oklch(60% 0.011 297.3)",
+          "oklch(71% 0.009 297.3)",
+          "oklch(83% 0.007 297.3)",
+          "oklch(95% 0.005 297.3)"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "oklch(53.6% 0.013 297.4)",
+        "tonalRamp": [
+          "oklch(15% 0.007 297.4)",
+          "oklch(26% 0.009 297.4)",
+          "oklch(37% 0.010 297.4)",
+          "oklch(48% 0.012 297.4)",
+          "oklch(60% 0.012 297.4)",
+          "oklch(71% 0.010 297.4)",
+          "oklch(83% 0.008 297.4)",
+          "oklch(95% 0.007 297.4)"
+        ]
+      },
+      "ink-inverse": {
+        "role": "neutral",
+        "displayName": "Ink Inverse",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": [
+          "oklch(15% 0.000 0)",
+          "oklch(26% 0.000 0)",
+          "oklch(37% 0.000 0)",
+          "oklch(48% 0.000 0)",
+          "oklch(60% 0.000 0)",
+          "oklch(71% 0.000 0)",
+          "oklch(83% 0.000 0)",
+          "oklch(95% 0.000 0)"
+        ]
+      },
+      "binder": {
+        "role": "neutral",
+        "displayName": "Binder",
+        "canonical": "oklch(91.6% 0.01 87.5)",
+        "tonalRamp": [
+          "oklch(15% 0.001 87.5)",
+          "oklch(26% 0.002 87.5)",
+          "oklch(37% 0.003 87.5)",
+          "oklch(48% 0.005 87.5)",
+          "oklch(60% 0.006 87.5)",
+          "oklch(71% 0.008 87.5)",
+          "oklch(83% 0.009 87.5)",
+          "oklch(95% 0.010 87.5)"
+        ]
+      },
+      "binder-2": {
+        "role": "neutral",
+        "displayName": "Binder 2",
+        "canonical": "oklch(94.6% 0.008 91.5)",
+        "tonalRamp": [
+          "oklch(15% 0.000 91.5)",
+          "oklch(26% 0.001 91.5)",
+          "oklch(37% 0.002 91.5)",
+          "oklch(48% 0.004 91.5)",
+          "oklch(60% 0.005 91.5)",
+          "oklch(71% 0.006 91.5)",
+          "oklch(83% 0.007 91.5)",
+          "oklch(95% 0.008 91.5)"
+        ]
+      },
+      "leaf": {
+        "role": "neutral",
+        "displayName": "Leaf (milk acetate)",
+        "canonical": "oklch(98.8% 0.004 91.4)",
+        "tonalRamp": [
+          "oklch(15% 0.000 91.4)",
+          "oklch(26% 0.001 91.4)",
+          "oklch(37% 0.001 91.4)",
+          "oklch(48% 0.002 91.4)",
+          "oklch(60% 0.002 91.4)",
+          "oklch(71% 0.003 91.4)",
+          "oklch(83% 0.003 91.4)",
+          "oklch(95% 0.004 91.4)"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": [
+          "oklch(15% 0.000 0)",
+          "oklch(26% 0.000 0)",
+          "oklch(37% 0.000 0)",
+          "oklch(48% 0.000 0)",
+          "oklch(60% 0.000 0)",
+          "oklch(71% 0.000 0)",
+          "oklch(83% 0.000 0)",
+          "oklch(95% 0.000 0)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "canonical": "oklch(88.5% 0.011 89.7)",
+        "tonalRamp": [
+          "oklch(15% 0.001 89.7)",
+          "oklch(26% 0.003 89.7)",
+          "oklch(37% 0.004 89.7)",
+          "oklch(48% 0.006 89.7)",
+          "oklch(60% 0.007 89.7)",
+          "oklch(71% 0.009 89.7)",
+          "oklch(83% 0.010 89.7)",
+          "oklch(95% 0.010 89.7)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Line Strong",
+        "canonical": "oklch(62.4% 0.012 89.8)",
+        "tonalRamp": [
+          "oklch(15% 0.005 89.8)",
+          "oklch(26% 0.007 89.8)",
+          "oklch(37% 0.008 89.8)",
+          "oklch(48% 0.010 89.8)",
+          "oklch(60% 0.012 89.8)",
+          "oklch(71% 0.011 89.8)",
+          "oklch(83% 0.009 89.8)",
+          "oklch(95% 0.007 89.8)"
+        ]
+      },
+      "ok-ink": {
+        "role": "neutral",
+        "displayName": "OK Ink",
+        "canonical": "oklch(47.1% 0.113 144.6)",
+        "tonalRamp": [
+          "oklch(15% 0.069 144.6)",
+          "oklch(26% 0.084 144.6)",
+          "oklch(37% 0.099 144.6)",
+          "oklch(48% 0.112 144.6)",
+          "oklch(60% 0.096 144.6)",
+          "oklch(71% 0.081 144.6)",
+          "oklch(83% 0.064 144.6)",
+          "oklch(95% 0.040 144.6)"
+        ]
+      },
+      "pause-ink": {
+        "role": "neutral",
+        "displayName": "Pause Ink",
+        "canonical": "oklch(50.9% 0.103 70.8)",
+        "tonalRamp": [
+          "oklch(15% 0.059 70.8)",
+          "oklch(26% 0.072 70.8)",
+          "oklch(37% 0.086 70.8)",
+          "oklch(48% 0.099 70.8)",
+          "oklch(60% 0.092 70.8)",
+          "oklch(71% 0.078 70.8)",
+          "oklch(83% 0.063 70.8)",
+          "oklch(95% 0.040 70.8)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page title only, prefixed by the division-number chip."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings in the margin column; TOC links, winner title."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Sub-headings, choice names, record links."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Interface text and table cells; tabular numerals."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "Serif page lede under the title, max 62ch."
+      },
+      "read": {
+        "displayName": "Read",
+        "purpose": "Serif explanatory voice: section explanations, descriptions, notes, assistant replies."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels and button text."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Condensed counts in the test strip, rank numbers, winner badge."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Registry keys, step numbers, prompts, textareas."
+      }
+    },
+    "shadows": [
+      {
+        "name": "leaf-shadow",
+        "value": "0 1px 0 rgba(23, 22, 26, 0.05), 3px 5px 10px -4px rgba(23, 22, 26, 0.22)",
+        "purpose": "The leaf resting on its board; the errata slip resting on the leaf."
+      },
+      {
+        "name": "lift-shadow",
+        "value": "0 1px 0 rgba(23, 22, 26, 0.06), 4px 10px 22px -8px rgba(23, 22, 26, 0.3)",
+        "purpose": "Floating layers: dropdowns, popovers, background task cards."
+      },
+      {
+        "name": "punch-hole",
+        "value": "inset 2px 3px 4px rgba(23, 22, 26, 0.55), 0 1px 0 rgba(255, 255, 255, 0.9)",
+        "purpose": "The leaf's two binding holes showing the board through (desktop only)."
+      },
+      {
+        "name": "punched-choice",
+        "value": "inset 1px 1px 2px rgba(23, 22, 26, 0.45)",
+        "purpose": "A checked choice hole filled with the division hue."
+      }
+    ],
+    "motion": [
+      {
+        "name": "step",
+        "value": "90ms steps(2, end)",
+        "purpose": "Every transition and entrance: tab hinge, button colour, control edges, page hinge, task-card entry, drawer."
+      },
+      {
+        "name": "page-hinge",
+        "value": "from { opacity: .35; transform: perspective(1200px) rotateY(3deg) } to { opacity: 1; transform: none }, origin left center",
+        "purpose": "Route change: the leaf turns in from its bound edge."
+      },
+      {
+        "name": "half-hinge",
+        "value": "rotate(180deg), 900ms steps(2) infinite",
+        "purpose": "Running/pending status glyph; the only looping motion."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "prefers-reduced-motion collapses every animation and transition."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "900px",
+        "purpose": "At or below: 3x2 tab grid above the leaf, sub-nav on the leaf, no punch holes, one-column sections and choices, stacked tables, static test strip."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Filled in the current division hue; the form's primary action, bottom-right, with a trailing arrow.",
+      "html": "<button class=\"ds-btn-primary\">Gerar experimento <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></button>",
+      "css": ".ds-btn-primary{font-family:'Archivo',system-ui,sans-serif;font-weight:650;font-size:14px;letter-spacing:.005em;border:1.5px solid var(--ink, #17161a);border-radius:2px;padding:0 18px;height:36px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background-color 90ms steps(2, end),color 90ms steps(2, end);background:var(--sec, #6d4bc4);color:var(--on-sec, #ffffff);} .ds-btn-primary:hover{background:color-mix(in srgb,var(--sec, #6d4bc4) 84%,var(--ink, #17161a));} .ds-btn-primary:focus-visible{outline:2px solid var(--ink, #17161a);outline-offset:2px;} .ds-btn-primary:disabled{background:var(--binder, #e6e3dc);color:var(--ink-3, #6e6c74);border:1.5px dashed var(--line-strong, #8a877f);cursor:default;}"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Secondary action on field; inverts to ink on hover.",
+      "html": "<button class=\"ds-btn-default\">Exportar CSV</button>",
+      "css": ".ds-btn-default{font-family:'Archivo',system-ui,sans-serif;font-weight:650;font-size:14px;letter-spacing:.005em;border:1.5px solid var(--ink, #17161a);border-radius:2px;padding:0 18px;height:36px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background-color 90ms steps(2, end),color 90ms steps(2, end);background:var(--field, #ffffff);color:var(--ink, #17161a);} .ds-btn-default:hover{background:var(--ink, #17161a);color:#fff;} .ds-btn-default:focus-visible{outline:2px solid var(--ink, #17161a);outline-offset:2px;}"
+    },
+    {
+      "name": "Subtle Button",
+      "kind": "button",
+      "refersTo": "button-subtle",
+      "description": "Borderless underlined text action: Marcar todos, Cancelar.",
+      "html": "<button class=\"ds-btn-subtle\">Marcar todos</button>",
+      "css": ".ds-btn-subtle{font-family:'Archivo',system-ui,sans-serif;font-weight:650;font-size:14px;background:transparent;border:1.5px solid transparent;color:var(--ink, #17161a);text-decoration:underline;text-underline-offset:3px;padding:4px 8px;border-radius:2px;cursor:pointer;transition:background-color 90ms steps(2, end);} .ds-btn-subtle:hover{background:var(--binder-2, #efede7);} .ds-btn-subtle:focus-visible{outline:2px solid var(--ink, #17161a);outline-offset:2px;}"
+    },
+    {
+      "name": "Danger Button (inline confirm)",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Second step of an inline destructive confirmation only.",
+      "html": "<span class=\"ds-confirm\"><span>Remover de vez?</span><button class=\"ds-btn-danger\">Remover</button><button class=\"ds-btn-cancel\">Cancelar</button></span>",
+      "css": ".ds-confirm{display:inline-flex;align-items:center;gap:10px;font-family:'Archivo',system-ui,sans-serif;font-size:14px;color:var(--ink, #17161a);} .ds-btn-danger{font-family:'Archivo',system-ui,sans-serif;font-weight:650;font-size:14px;letter-spacing:.005em;border:1.5px solid var(--ink, #17161a);border-radius:2px;padding:0 18px;height:36px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background-color 90ms steps(2, end),color 90ms steps(2, end);height:30px;padding:0 12px;background:var(--field, #ffffff);color:var(--errata-ink,#b3261a);border-color:var(--errata-ink,#b3261a);} .ds-btn-danger:hover{background:var(--errata,#d8321e);border-color:var(--errata,#d8321e);color:#fff;} .ds-btn-danger:focus-visible,.ds-btn-cancel:focus-visible{outline:2px solid var(--ink, #17161a);outline-offset:2px;} .ds-btn-cancel{font:inherit;font-weight:650;background:transparent;border:0;color:var(--ink, #17161a);text-decoration:underline;text-underline-offset:3px;padding:4px 8px;cursor:pointer;} .ds-btn-cancel:hover{background:var(--binder-2, #efede7);}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Label always present; serif description; ink edge on hover and focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Nome da base</span><span class=\"ds-field-desc\">Aparece nas listas de experimentos.</span><input class=\"ds-input\" placeholder=\"ex.: guia de viagem\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;max-width:360px;font-family:'Archivo',system-ui,sans-serif;} .ds-field-label{font-weight:650;font-size:14px;margin-bottom:5px;color:var(--ink, #17161a);} .ds-field-desc{font-family:'Source Serif 4',Georgia,serif;font-size:13.5px;line-height:1.4;color:var(--ink-2, #56545c);margin-bottom:7px;} .ds-input{height:36px;padding:0 12px;font:inherit;font-size:15px;background:var(--field, #ffffff);color:var(--ink, #17161a);border:1px solid var(--line-strong, #8a877f);border-radius:2px;transition:border-color 90ms steps(2, end);} .ds-input::placeholder{color:var(--ink-3, #6e6c74);} .ds-input:hover{border-color:var(--ink, #17161a);} .ds-input:focus{border-color:var(--ink, #17161a);outline:2px solid var(--ink, #17161a);outline-offset:1px;}"
+    },
+    {
+      "name": "Tab Rail",
+      "kind": "nav",
+      "refersTo": "rail-tab",
+      "description": "One divider per division in its own hue; the active tab extends into the board over 90ms steps(2).",
+      "html": "<ul class=\"ds-rail\"><li class=\"ds-tab\" style=\"--h:#6d4bc4;--o:#fff\"><a href=\"#\"><span class=\"ds-num\"></span>Início</a></li><li class=\"ds-tab\" style=\"--h:#f2b51b;--o:#17161a\"><a href=\"#\"><span class=\"ds-num\">1</span>Preparar</a></li><li class=\"ds-tab\" data-active=\"true\" style=\"--h:#e8622a;--o:#17161a\"><a href=\"#\" aria-current=\"page\"><span class=\"ds-num\">2</span>Experimentar</a></li><li class=\"ds-tab\" style=\"--h:#4e9a45;--o:#17161a\"><a href=\"#\"><span class=\"ds-num\">3</span>Comparar</a></li><li class=\"ds-tab\" style=\"--h:#14908e;--o:#17161a\"><a href=\"#\"><span class=\"ds-num\">4</span>Conversar</a></li><li class=\"ds-tab\" style=\"--h:#2f4fb5;--o:#fff\"><a href=\"#\"><span class=\"ds-num\"></span>Ajustar</a></li></ul>",
+      "css": ".ds-rail{list-style:none;margin:0;padding:16px 0 16px 30px;width:206px;display:flex;flex-direction:column;gap:5px;background:var(--binder, #e6e3dc);} .ds-tab{background:var(--h);color:var(--o);border-radius:7px 0 0 7px;transform:translateX(-14px);transition:transform 90ms steps(2, end);} .ds-tab[data-active=true]{transform:none;} .ds-tab a{display:flex;align-items:baseline;gap:10px;padding:11px 14px 12px;color:inherit;text-decoration:none;font-family:'Archivo',system-ui,sans-serif;font-weight:700;font-stretch:87.5%;font-size:16px;} .ds-tab:not([data-active=true]) a:hover{text-decoration:underline;} .ds-tab a:focus-visible{outline:2px solid var(--ink, #17161a);outline-offset:2px;} .ds-num{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:500;min-width:1ch;opacity:.85;}"
+    },
+    {
+      "name": "Choice Leaf",
+      "kind": "card",
+      "refersTo": "choice-leaf",
+      "description": "Readable option: name, mono key, serif description; checked = hole punched through to the board hue.",
+      "html": "<label class=\"ds-choice\"><input type=\"checkbox\" checked><span class=\"ds-hole\"></span><span class=\"ds-choice-name\">Agêntico <span class=\"ds-key\">agentic</span></span><span class=\"ds-choice-desc\">O modelo decide se precisa buscar de novo antes de responder.</span></label>",
+      "css": ".ds-choice{position:relative;display:grid;grid-template-columns:18px minmax(0,1fr);gap:2px 11px;padding:12px 14px 13px 12px;max-width:260px;background:var(--field, #ffffff);border:1px solid var(--line-strong, #8a877f);border-radius:3px;cursor:pointer;font-family:'Archivo',system-ui,sans-serif;color:var(--ink, #17161a);transition:box-shadow 90ms steps(2, end),border-color 90ms steps(2, end);} .ds-choice:hover{border-color:var(--ink, #17161a);} .ds-choice input{position:absolute;opacity:0;width:1px;height:1px;} .ds-choice:has(input:focus-visible){outline:2px solid var(--ink, #17161a);outline-offset:2px;} .ds-choice:has(input:checked){border-color:var(--ink, #17161a);box-shadow:inset 0 0 0 1px var(--ink, #17161a);} .ds-hole{grid-row:1/span 2;width:18px;height:18px;margin-top:1px;border:1.5px solid var(--ink, #17161a);border-radius:4px;background:var(--field, #ffffff);box-sizing:border-box;} .ds-choice:has(input:checked) .ds-hole{background:var(--sec,#e8622a);box-shadow:inset 1px 1px 2px rgba(23,22,26,.45);} .ds-choice:has(input:checked) .ds-hole::after{content:'';display:block;width:5px;height:9px;margin:1px 0 0 4.5px;border:solid var(--on-sec,#17161a);border-width:0 2px 2px 0;transform:rotate(45deg);} .ds-choice-name{font-weight:650;font-size:15px;line-height:1.3;} .ds-key{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:400;color:var(--ink-3, #6e6c74);} .ds-choice-desc{font-family:'Source Serif 4',Georgia,serif;font-size:14px;line-height:1.45;color:var(--ink-2, #56545c);}"
+    },
+    {
+      "name": "Status Tag",
+      "kind": "chip",
+      "refersTo": "status-tag",
+      "description": "Glyph + word, never colour alone; running glyph half-hinges in steps(2).",
+      "html": "<span class=\"ds-status\" data-tone=\"done\"><i></i>Concluído</span> <span class=\"ds-status\" data-tone=\"running\"><i></i>Em andamento</span> <span class=\"ds-status\" data-tone=\"paused\"><i></i>Pausado</span> <span class=\"ds-status\" data-tone=\"failed\"><i></i>Falhou</span>",
+      "css": ".ds-status{display:inline-flex;align-items:center;gap:7px;margin-right:16px;font-family:'Archivo',system-ui,sans-serif;font-size:13.5px;font-weight:650;white-space:nowrap;} .ds-status i{width:11px;height:11px;border-radius:50%;border:1.5px solid currentColor;box-sizing:border-box;} .ds-status[data-tone=done]{color:var(--ok-ink,#2b6b2f);} .ds-status[data-tone=done] i{background:currentColor;} .ds-status[data-tone=running]{color:var(--ink, #17161a);} .ds-status[data-tone=running] i{background:linear-gradient(90deg,currentColor 50%,transparent 50%);animation:ds-half 900ms steps(2) infinite;} .ds-status[data-tone=paused]{color:var(--pause-ink,#8a5a12);} .ds-status[data-tone=paused] i{border-radius:0;border-width:0 3px;width:10px;} .ds-status[data-tone=failed]{color:var(--errata-ink,#b3261a);} .ds-status[data-tone=failed] i{border-radius:1px;background:currentColor;} @keyframes ds-half{to{transform:rotate(180deg);}}"
+    },
+    {
+      "name": "Errata Slip",
+      "kind": "custom",
+      "refersTo": "errata-slip",
+      "description": "The only surface the error hue fills; says what failed and how to fix it.",
+      "html": "<div class=\"ds-errata\" role=\"alert\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v6M12 16.5v.5\"/></svg><div class=\"ds-errata-title\">Não foi possível gerar o experimento</div><div class=\"ds-errata-body\">A chave do Gemini não está configurada. Adicione-a em Ajustar › Sistema e tente de novo.</div></div>",
+      "css": ".ds-errata{display:grid;grid-template-columns:20px minmax(0,1fr);gap:4px 12px;padding:14px 16px;max-width:560px;background:var(--errata,#d8321e);color:#fff;border-radius:2px;box-shadow:0 1px 0 rgba(23,22,26,.05),3px 5px 10px -4px rgba(23,22,26,.22);font-family:'Archivo',system-ui,sans-serif;} .ds-errata svg{margin-top:1px;} .ds-errata-title{font-weight:700;} .ds-errata-body{grid-column:2;font-size:14.5px;}"
+    },
+    {
+      "name": "Score Cell with Traits",
+      "kind": "custom",
+      "refersTo": "trait",
+      "description": "Booktabs row: rank, trait chips, 0..1 score as value plus short ink bar; best row tinted 12% hue.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>#</th><th>Combinação</th><th class=\"n\">Fidelidade</th></tr></thead><tbody><tr data-best=\"true\"><td class=\"rank\">1</td><td><span class=\"ds-trait\"><span>Corte</span>Tamanho fixo</span> <span class=\"ds-trait\"><span>Busca</span>Similaridade</span></td><td class=\"n\"><span class=\"ds-score\"><b>0.75</b><span class=\"t\"><span style=\"width:75%\"></span></span></span></td></tr><tr><td class=\"rank\">2</td><td><span class=\"ds-trait\"><span>Corte</span>Semântico</span> <span class=\"ds-trait\"><span>Busca</span>Diversidade (MMR)</span></td><td class=\"n\"><span class=\"ds-score\">0.61<span class=\"t\"><span style=\"width:61%\"></span></span></span></td></tr></tbody></table>",
+      "css": ".ds-table{border-collapse:collapse;border-top:1.5px solid var(--ink, #17161a);border-bottom:1.5px solid var(--ink, #17161a);font-family:'Archivo',system-ui,sans-serif;font-size:14px;color:var(--ink, #17161a);font-variant-numeric:tabular-nums;} .ds-table th{text-align:left;padding:10px 12px 8px;font-weight:650;font-size:13px;border-bottom:1px solid var(--ink, #17161a);} .ds-table td{padding:11px 12px;border-bottom:1px solid var(--line,#dcd9d1);vertical-align:top;} .ds-table tr:last-child td{border-bottom:0;} .ds-table .n{text-align:right;} .ds-table tr[data-best=true] td{background:color-mix(in srgb,var(--sec,#4e9a45) 12%,var(--leaf, #fcfbf8));} .ds-table tbody tr:hover td{background:var(--binder-2, #efede7);} .ds-table .rank{font-weight:750;font-stretch:75%;font-size:22px;line-height:1;} .ds-trait{display:inline-flex;gap:5px;padding:1px 7px 2px;font-size:12.5px;font-weight:600;background:var(--binder, #e6e3dc);border-radius:2px;white-space:nowrap;} .ds-trait span{font-weight:500;color:var(--ink-2, #56545c);} .ds-score{display:inline-grid;grid-template-columns:3.3ch 40px;align-items:center;gap:8px;} .ds-score b{font-weight:750;} .ds-score .t{height:6px;background:var(--line,#dcd9d1);border-radius:1px;overflow:hidden;} .ds-score .t span{display:block;height:100%;background:var(--ink, #17161a);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Tabbed Reference Manual",
+    "overview": "**Creative North Star: \"The Tabbed Reference Manual\"**\n\nDitto is a reference manual lying open at a tabbed division. Each task stage is a full-strength coloured divider board. The page you work on is a milk-acetate leaf hinged above that board, with two punch holes on its bound edge where the board shows through. The researcher always knows where they are because the hue of the board, the extended tab in the rail, and the numbered chip before the page title all say the same thing.\n\nThe system is dense but legible. It is built for long sessions reading tables and choosing among techniques, so the manual's devices do real work: booktabs rules frame every table and list, the margin column carries each section's explanation in a serif reading voice, and machine values (registry keys, prompts) are set in mono. Colour is structural. The six division hues identify stages and the current selection. Vermilion is held back for errors. Everything else is ink on paper.\n\nThe world rejects the lavender-gradient SaaS sidebar with glass cards and a mascot hero. The Ditto metaphor (the creature that takes the shape of what it studies) survives only as a light thread in the violet blob mark. It never costs clarity.",
+    "keyCharacteristics": [
+      "Six division hues at full strength; the current one (`--sec`) tints the board, the active tab, the primary button, checked holes, the page-number chip, and the best row.",
+      "Near-white acetate leaf on a warm grey desk (binder), with a hairline and one short soft shadow.",
+      "Archivo variable for everything interactive (condensed widths for headings), Source Serif 4 for explanations, JetBrains Mono for machine values.",
+      "State is shown by physical metaphor: selected = punched hole, disabled = face-down (dashed edge, binder fill), pending = half-hinged glyph, error = vermilion errata slip.",
+      "Motion is a 90ms two-frame step with no easing.",
+      "UI copy is PT-BR and follows the SBB UX-writing rules adopted in PRODUCT.md."
+    ],
+    "rules": [
+      {
+        "name": "The Errata Rule",
+        "body": "Vermilion appears only when something went wrong or would destroy data: the errata slip, field errors, failed status, the confirmed \"Remover\" button. It is never used for decoration, emphasis, or brand.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Division Rule",
+        "body": "Each page uses exactly one hue, the one belonging to its division, taken from `--sec`. Hues from other divisions appear only on their own rail tabs and on their table-of-contents tabs on Início.",
+        "section": "colors"
+      },
+      {
+        "name": "The Structural Hue Rule",
+        "body": "Division hues fill surfaces such as boards, tabs, buttons, holes, chips, and badges. They are never used as text colour on the leaf.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "If the text tells the user what something means or why, it is set in the serif. If the user acts on it or scans it, it is set in the grotesk. Machine identifiers are set in mono and always sit beside a human name, never replace it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Condensed Head Rule",
+        "body": "Condensed widths (`wdth` 75 or 87.5) are for headings, tabs, and figures only. Body and controls stay at normal width.",
+        "section": "typography"
+      },
+      {
+        "name": "The Paper Stack Rule",
+        "body": "Only the leaf, the errata slip, and floating layers cast a shadow. Cards, choice leaves, tables, and buttons on the leaf stay flat and are separated by ink edges and hairlines.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** take every accent from `--sec` / `--on-sec` so a page automatically carries its division's hue. Add a new route to the right division in `sections.ts` rather than choosing a colour.",
+      "**Do** lay forms out as margin-column sections: heading and serif explanation on the left, controls on the right, and a 1.5px ink rule opening the first section.",
+      "**Do** present options users must understand as choice leaves (name, mono key, serif description), not as bare checkboxes or multiselects.",
+      "**Do** show status as glyph plus word through the status tag. Colour is only a third, redundant signal.",
+      "**Do** frame every table and record list with 1.5px ink rules and hairline rows, right-align numbers, and use tabular numerals.",
+      "**Do** use `90ms steps(2, end)` for every transition and animation, and respect reduced motion.",
+      "**Do** show the cost of a run (combinations × questions, estimated time) before the primary action that starts it.",
+      "**Do** confirm destructive actions inline next to the trigger, with a danger button and a \"Cancelar\".",
+      "**Do** keep a 2px ink focus outline visible on every interactive element, including whole choice leaves and sort headers."
+    ],
+    "donts": [
+      "**Don't** use vermilion (`errata`, `errata-ink`) for anything except errors, failures, and confirmed destruction.",
+      "**Don't** use a hue from another division on a page, or use any division hue as text colour on the leaf.",
+      "**Don't** use eased or springy motion (ease-in-out, cubic-bezier, framer-motion springs). Ditto's motion is stepped.",
+      "**Don't** build the lavender-gradient SaaS look: glass cards, blurred backdrops, soft colour gradients, or a mascot hero.",
+      "**Don't** add shadows to cards, choice leaves, tables, or buttons on the leaf. Shadows belong to the leaf, the errata slip, and floating layers.",
+      "**Don't** put uppercase eyebrows or kickers above page or section titles. The division-number chip is the only prefix a title takes.",
+      "**Don't** use placeholders as labels, or title case in UI copy.",
+      "**Don't** show a registry key (`naive`, `mmr`) without its plain-language name beside it.",
+      "**Don't** keep punch holes or the stepped rail offset at 900px and below. The narrow layout is a 3×2 tab grid on a flat leaf."
+    ]
+  }
+}

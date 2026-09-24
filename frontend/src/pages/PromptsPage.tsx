@@ -1,9 +1,11 @@
-import { Alert, Button, Group, Stack, Text, Textarea } from "@mantine/core";
+import { Button, Tabs, Textarea } from "@mantine/core";
 import { useEffect, useState } from "react";
 
 import { getPrompts, savePrompt } from "../api/client";
 import type { PromptsResponse } from "../api/types";
+import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
+import { techniqueName, term } from "../glossary";
 
 export function PromptsPage() {
   const [prompts, setPrompts] = useState<PromptsResponse | null>(null);
@@ -25,7 +27,7 @@ export function PromptsPage() {
         }
         setDrafts(initial);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+      .catch((e) => setError(errorText(e)));
   }, []);
 
   async function handleSave(tech: string, key: string) {
@@ -37,81 +39,96 @@ export function PromptsPage() {
       await savePrompt(tech, key, drafts[id]);
       setSavedKey(id);
     } catch (e) {
-      setSaveError((s) => ({ ...s, [id]: e instanceof Error ? e.message : String(e) }));
+      setSaveError((s) => ({ ...s, [id]: errorText(e) }));
     } finally {
       setSavingKey(null);
     }
   }
 
+  const techniques = prompts ? Object.keys(prompts) : [];
+
   return (
     <div>
       <PageHeader
-        eyebrow="Configuração"
         title="Prompts"
-        subtitle="Edite os templates usados por cada técnica. Alterações valem para os próximos experimentos — experimentos já rodados mantêm o snapshot que usaram."
+        lede="Os textos que cada técnica de RAG envia ao modelo. Mudanças valem para os próximos experimentos; os já rodados guardam o prompt que usaram."
       />
 
       {error && (
-        <Alert color="red" variant="light" title="Erro ao carregar" radius="lg" maw={820}>
-          {error}
-        </Alert>
+        <Errata title="Não foi possível carregar os prompts">{error}. Recarregue a página.</Errata>
       )}
 
-      {prompts &&
-        Object.entries(prompts).map(([tech, keys]) => (
-          <div key={tech} className="ditto-glass" style={{ padding: 24, maxWidth: 820, marginBottom: 20 }}>
-            <Text className="ditto-eyebrow" mb={14}>
-              {tech}
-            </Text>
-            <Stack gap="lg">
-              {Object.entries(keys).map(([key, info]) => {
+      {prompts && techniques.length > 0 && (
+        <Tabs defaultValue={techniques[0]} keepMounted={false}>
+          <Tabs.List mb="lg">
+            {techniques.map((tech) => (
+              <Tabs.Tab key={tech} value={tech}>
+                {techniqueName(tech)}
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
+
+          {techniques.map((tech) => (
+            <Tabs.Panel key={tech} value={tech}>
+              {term("rag", tech).description && (
+                <p className="ditto-read" style={{ margin: "0 0 8px", maxWidth: "62ch" }}>
+                  {term("rag", tech).description}
+                </p>
+              )}
+              {Object.entries(prompts[tech]).map(([key, info]) => {
                 const id = `${tech}/${key}`;
+                const changed = drafts[id] !== info.text && savedKey !== id;
                 return (
-                  <div key={id}>
-                    <Text fw={700} size="sm" mb={6}>
-                      {key}
-                    </Text>
-                    <Textarea
-                      autosize
-                      minRows={4}
-                      value={drafts[id] ?? ""}
-                      onChange={(e) => {
-                        const value = e.currentTarget.value;
-                        setDrafts((d) => ({ ...d, [id]: value }));
-                        if (savedKey === id) setSavedKey(null);
-                      }}
-                      styles={{ input: { fontFamily: "var(--font-mono)", fontSize: "0.82rem" } }}
-                    />
-                    <Text size="xs" c="dimmed" mt={6}>
-                      Placeholders obrigatórios: {info.required_placeholders.map((p) => `{${p}}`).join(", ")}
-                    </Text>
-                    {saveError[id] && (
-                      <Text size="xs" c="red.4" mt={4}>
-                        {saveError[id]}
-                      </Text>
-                    )}
-                    <Group mt={8}>
-                      <Button
-                        size="xs"
-                        variant="light"
-                        color="violet"
-                        loading={savingKey === id}
-                        onClick={() => handleSave(tech, key)}
-                      >
-                        Salvar
-                      </Button>
-                      {savedKey === id && (
-                        <Text size="xs" c="#07f285">
-                          Prompt salvo
-                        </Text>
+                  <section key={id} className="ditto-sec ditto-sec-narrow">
+                    <div className="ditto-sec-head">
+                      <h2 className="ditto-h2">
+                        <span className="ditto-mono">{key}</span>
+                      </h2>
+                      {info.required_placeholders.length > 0 && (
+                        <p className="ditto-read">
+                          Precisa conter{" "}
+                          {info.required_placeholders.map((p, i) => (
+                            <span key={p}>
+                              {i > 0 && ", "}
+                              <code className="ditto-mono">{`{${p}}`}</code>
+                            </span>
+                          ))}
+                          . O Ditto troca cada um pelo valor real.
+                        </p>
                       )}
-                    </Group>
-                  </div>
+                    </div>
+                    <div className="ditto-sec-body">
+                      <Textarea
+                        aria-label={`Prompt ${key} de ${techniqueName(tech)}`}
+                        autosize
+                        minRows={5}
+                        value={drafts[id] ?? ""}
+                        error={saveError[id] ? `${saveError[id]}. Corrija o texto e salve de novo.` : undefined}
+                        onChange={(e) => {
+                          const value = e.currentTarget.value;
+                          setDrafts((d) => ({ ...d, [id]: value }));
+                          if (savedKey === id) setSavedKey(null);
+                        }}
+                      />
+                      <div className="ditto-row-actions">
+                        <Button
+                          variant={changed ? "filled" : "default"}
+                          loading={savingKey === id}
+                          onClick={() => handleSave(tech, key)}
+                        >
+                          Salvar
+                        </Button>
+                        {changed && <span className="ditto-muted" style={{ fontSize: 14 }}>Alterações não salvas</span>}
+                        {savedKey === id && <Saved>Prompt salvo</Saved>}
+                      </div>
+                    </div>
+                  </section>
                 );
               })}
-            </Stack>
-          </div>
-        ))}
+            </Tabs.Panel>
+          ))}
+        </Tabs>
+      )}
     </div>
   );
 }

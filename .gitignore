@@ -13,3 +13,11 @@ vite.config.d.ts
 vite.config.js
 backend/config/app_settings.json
 graphify-out/
+
+# impeccable: local review captures, caches and the downloaded engine binary
+.impeccable/review/
+.impeccable/refs/
+.impeccable/questions/
+.impeccable/*.cache.json
+frontend/.impeccable/
+.claude/skills/impeccable/scripts/bin/

@@ -1,6 +1,7 @@
 import { MantineProvider } from "@mantine/core";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as client from "../api/client";
@@ -10,9 +11,11 @@ vi.mock("../api/client");
 
 function renderPage() {
   return render(
-    <MantineProvider>
-      <ChatConfigsPage />
-    </MantineProvider>,
+    <MemoryRouter initialEntries={["/chat-configs"]}>
+      <MantineProvider>
+        <ChatConfigsPage />
+      </MantineProvider>
+    </MemoryRouter>,
   );
 }
 

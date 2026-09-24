@@ -1,27 +1,18 @@
-import { Alert, Group, Pagination, Text } from "@mantine/core";
+import { Button, Group, Loader, Pagination } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { listExperiments } from "../api/client";
 import type { ExperimentList } from "../api/types";
+import { Errata, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
+import { StatusTag } from "../components/StatusTag";
+import { ArrowIcon } from "../components/icons";
+import { formatDateTime } from "../utils/duration";
 
 const PAGE_SIZE = 20;
 
-function statusColor(status: string): string {
-  if (status === "done") return "#07f285";
-  if (status === "failed") return "#f26dcf";
-  if (status === "paused") return "#f2ec91";
-  return "#05dbf2";
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-BR");
-}
-
 export function ResultsPage() {
-  const navigate = useNavigate();
   const [data, setData] = useState<ExperimentList | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -30,7 +21,7 @@ export function ResultsPage() {
     setError(null);
     listExperiments(page, PAGE_SIZE)
       .then(setData)
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError(errorText(e)));
   }, [page]);
 
   const items = data?.items ?? [];
@@ -39,43 +30,48 @@ export function ResultsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Passo 03 · Ranquear"
         title="Resultados"
-        subtitle="Clique num experimento para abrir sua página com a tabela completa, ordenável por métrica, com filtros e paginação."
+        lede="Todos os experimentos, do mais recente ao mais antigo. Abra um para ver o ranking das combinações e cada resposta."
       />
 
       {error && (
-        <Alert color="red" variant="light" title="Erro" mb="lg" radius="lg" maw={760}>
-          {error}
-        </Alert>
+        <Errata title="Não foi possível carregar os experimentos">
+          {error}. Confira se a API está no ar e recarregue a página.
+        </Errata>
       )}
 
-      <div className="ditto-exp-list" style={{ maxWidth: 900 }}>
-        {items.length === 0 && !error && (
-          <p className="ditto-empty">Nenhum experimento encontrado.</p>
-        )}
-        {items.map((exp) => (
-          <button
-            key={exp.id}
-            className="ditto-exp-row"
-            onClick={() => navigate(`/results/${exp.id}`)}
-          >
-            <Text fw={600} fz="sm">
-              {exp.name}
-            </Text>
-            <Text size="xs" c="dimmed" style={{ marginLeft: "auto", marginRight: 12 }}>
-              {formatDate(exp.created_at)}
-            </Text>
-            <span className="ditto-chip" style={{ color: statusColor(exp.status) }}>
-              {exp.status}
-            </span>
-          </button>
-        ))}
-      </div>
+      {!data && !error && <Loader aria-label="Carregando experimentos" />}
+
+      {data && items.length === 0 && (
+        <div className="ditto-empty">
+          <h2 className="ditto-h2">Nenhum experimento ainda</h2>
+          <p>
+            Um experimento roda as suas perguntas em cada combinação de técnicas e mede a
+            qualidade das respostas. Os resultados aparecem aqui.
+          </p>
+          <Button component={Link} to="/experiment" rightSection={<ArrowIcon />}>
+            Criar experimento
+          </Button>
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <ul className="ditto-records" style={{ maxWidth: 900 }}>
+          {items.map((exp) => (
+            <li key={exp.id} className="ditto-record" data-link="true">
+              <Link to={`/results/${exp.id}`} className="ditto-record-link">
+                {exp.name}
+              </Link>
+              <span className="ditto-record-date">{formatDateTime(exp.created_at)}</span>
+              <StatusTag status={exp.status} />
+            </li>
+          ))}
+        </ul>
+      )}
 
       {data && data.total > data.page_size && (
         <Group justify="center" mt="lg">
-          <Pagination total={pageCount} value={page} onChange={setPage} size="sm" color="violet" />
+          <Pagination total={pageCount} value={page} onChange={setPage} size="sm" />
         </Group>
       )}
     </div>

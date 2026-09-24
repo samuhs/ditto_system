@@ -42,7 +42,7 @@ describe("DialoguePage", () => {
     expect(screen.getByText("Praia X e Y.")).toBeInTheDocument();
     expect(screen.getByText("c1")).toBeInTheDocument();
     expect(screen.getByText(/travel_guide/)).toBeInTheDocument();
-    expect(screen.getByText(/retriever: similarity/)).toBeInTheDocument();
+    expect(screen.getByText("Busca").nextElementSibling).toHaveTextContent("similarity");
   });
 
   it("saves a rating", async () => {

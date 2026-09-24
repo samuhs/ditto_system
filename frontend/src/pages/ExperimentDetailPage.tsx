@@ -1,36 +1,22 @@
-import {
-  Alert,
-  Button,
-  Group,
-  Loader,
-  Modal,
-  MultiSelect,
-  Pagination,
-  Select,
-  Text,
-} from "@mantine/core";
+import { Button, Drawer, Loader, MultiSelect, Pagination, Select, Tabs } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { exportExperimentUrl, getExperiment, pauseExperiment } from "../api/client";
 import type { ExperimentDetail, ExperimentResultRow } from "../api/types";
+import { Errata, Note, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
-import { formatDuration } from "../utils/duration";
+import { type Combination, ScoreCell, Traits } from "../components/Score";
+import { StatusTag } from "../components/StatusTag";
+import { DownloadIcon, PauseIcon, SortIcon } from "../components/icons";
+import { techniqueName, term } from "../glossary";
+import { formatDateTime, formatDuration } from "../utils/duration";
 
 const MEDIA_KEY = "__media__";
 const PAGE_SIZES = ["10", "25", "50", "100"];
 
-function statusColor(status: string): string {
-  if (status === "done") return "#07f285";
-  if (status === "failed") return "#f26dcf";
-  if (status === "paused") return "#f2ec91";
-  return "#05dbf2";
-}
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-BR");
-}
+type Dim = keyof Combination;
+const DIMS: Dim[] = ["chunking", "embedding", "rag", "retriever", "llm"];
 
 function experimentDurationMs(createdAt?: string, finishedAt?: string): number | null {
   if (!createdAt) return null;
@@ -39,32 +25,54 @@ function experimentDurationMs(createdAt?: string, finishedAt?: string): number |
   return end - start;
 }
 
-function scoreColor(value: number): string {
-  if (value >= 0.7) return "#07f285";
-  if (value >= 0.45) return "#05dbf2";
-  if (value >= 0.25) return "#f2ec91";
-  return "#f26dcf";
-}
-
-function rowMedia(row: ExperimentResultRow): number | null {
-  const values = Object.values(row.scores);
+function mean(values: number[]): number | null {
   if (values.length === 0) return null;
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-function ScoreCell({ value }: { value: number | null }) {
-  if (value === null) return <span className="ditto-metric-na">—</span>;
-  return (
-    <span className="ditto-score-pill">
-      <span className="ditto-score-dot" style={{ background: scoreColor(value) }} />
-      {value.toFixed(2)}
-    </span>
-  );
+function rowMedia(row: ExperimentResultRow): number | null {
+  return mean(Object.values(row.scores));
+}
+
+function comboKey(c: Combination): string {
+  return DIMS.map((d) => c[d]).join("|");
+}
+
+function dimName(dim: Dim, key: string): string {
+  return dim === "llm" ? key : term(dim, key).name;
+}
+
+interface RankRow {
+  key: string;
+  combo: Combination;
+  count: number;
+  scores: Record<string, number | null>;
+  media: number | null;
+}
+
+function rankCombinations(results: ExperimentResultRow[], metricKeys: string[]): RankRow[] {
+  const groups = new Map<string, ExperimentResultRow[]>();
+  for (const r of results) {
+    const k = comboKey(r);
+    groups.set(k, [...(groups.get(k) ?? []), r]);
+  }
+  return [...groups.entries()].map(([key, rows]) => {
+    const scores: Record<string, number | null> = {};
+    for (const m of metricKeys) {
+      scores[m] = mean(rows.filter((r) => m in r.scores).map((r) => r.scores[m]));
+    }
+    return {
+      key,
+      combo: rows[0],
+      count: rows.length,
+      scores,
+      media: mean(rows.map(rowMedia).filter((v): v is number => v !== null)),
+    };
+  });
 }
 
 export function ExperimentDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
   const [detail, setDetail] = useState<ExperimentDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,23 +80,15 @@ export function ExperimentDetailPage() {
   const [pausing, setPausing] = useState(false);
   const timer = useRef<number | null>(null);
 
-  // filters (per config dimension)
-  const [fChunkings, setFChunkings] = useState<string[]>([]);
-  const [fEmbeddings, setFEmbeddings] = useState<string[]>([]);
-  const [fRags, setFRags] = useState<string[]>([]);
-  const [fRetrievers, setFRetrievers] = useState<string[]>([]);
-  const [fLlms, setFLlms] = useState<string[]>([]);
-
-  // sorting & pagination
+  const [tab, setTab] = useState<string>("ranking");
+  const [filters, setFilters] = useState<Record<Dim, string[]>>({
+    chunking: [], embedding: [], rag: [], retriever: [], llm: [],
+  });
   const [sortKey, setSortKey] = useState<string>(MEDIA_KEY);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [pageSize, setPageSize] = useState<string>("10");
   const [page, setPage] = useState(1);
-
-  // modal for full pergunta/resposta
-  const [modalRow, setModalRow] = useState<ExperimentResultRow | null>(null);
-
-  // prompt snapshot modal
+  const [openRow, setOpenRow] = useState<ExperimentResultRow | null>(null);
   const [promptTech, setPromptTech] = useState<string | null>(null);
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export function ExperimentDetailPage() {
         })
         .catch((e) => {
           if (!active) return;
-          setError(String(e));
+          setError(errorText(e));
           setLoading(false);
         });
     };
@@ -120,8 +120,7 @@ export function ExperimentDetailPage() {
     };
   }, [id]);
 
-  const isRunning =
-    detail?.status === "running" || detail?.status === "pending";
+  const isRunning = detail?.status === "running" || detail?.status === "pending";
 
   async function handlePause() {
     if (!id) return;
@@ -129,13 +128,12 @@ export function ExperimentDetailPage() {
     try {
       await pauseExperiment(Number(id));
     } catch (e) {
-      setError(String(e));
+      setError(errorText(e));
       setPausing(false);
     }
   }
 
-  const results = detail?.results ?? [];
-
+  const results = useMemo(() => detail?.results ?? [], [detail]);
   const promptTechniques = detail?.prompts ? Object.keys(detail.prompts) : [];
 
   const metricKeys = useMemo(() => {
@@ -144,475 +142,505 @@ export function ExperimentDetailPage() {
     return Array.from(keys).sort();
   }, [results]);
 
-  const distinct = (pick: (r: ExperimentResultRow) => string): string[] =>
-    Array.from(new Set(results.map(pick))).sort();
+  const distinct = (dim: Dim) =>
+    Array.from(new Set(results.map((r) => r[dim])))
+      .sort()
+      .map((v) => ({ value: v, label: dimName(dim, v) }));
 
-  const filtered = useMemo(() => {
-    return results.filter(
-      (r) =>
-        (fChunkings.length === 0 || fChunkings.includes(r.chunking)) &&
-        (fEmbeddings.length === 0 || fEmbeddings.includes(r.embedding)) &&
-        (fRags.length === 0 || fRags.includes(r.rag)) &&
-        (fRetrievers.length === 0 || fRetrievers.includes(r.retriever)) &&
-        (fLlms.length === 0 || fLlms.includes(r.llm)),
-    );
-  }, [results, fChunkings, fEmbeddings, fRags, fRetrievers, fLlms]);
+  // ---- ranking (one row per combination)
+  const ranking = useMemo(() => rankCombinations(results, metricKeys), [results, metricKeys]);
+  const rankingByMedia = useMemo(
+    () => [...ranking].sort((a, b) => (b.media ?? -1) - (a.media ?? -1)),
+    [ranking],
+  );
+  const winner = rankingByMedia[0];
+
+  const sortedRanking = useMemo(() => {
+    const val = (r: RankRow) => (sortKey === MEDIA_KEY ? r.media : r.scores[sortKey]) ?? -1;
+    return [...ranking].sort((a, b) => (sortDir === "desc" ? val(b) - val(a) : val(a) - val(b)));
+  }, [ranking, sortKey, sortDir]);
+
+  const bestOf = useMemo(() => {
+    const best: Record<string, number> = {};
+    for (const k of [...metricKeys, MEDIA_KEY]) {
+      const values = ranking
+        .map((r) => (k === MEDIA_KEY ? r.media : r.scores[k]))
+        .filter((v): v is number => v !== null);
+      if (values.length > 0) best[k] = Math.max(...values);
+    }
+    return best;
+  }, [ranking, metricKeys]);
+
+  // ---- answers (one row per question × combination)
+  const filtered = useMemo(
+    () => results.filter((r) => DIMS.every((d) => filters[d].length === 0 || filters[d].includes(r[d]))),
+    [results, filters],
+  );
 
   const sorted = useMemo(() => {
     const val = (r: ExperimentResultRow): number =>
       sortKey === MEDIA_KEY ? rowMedia(r) ?? -1 : r.scores[sortKey] ?? -1;
-    return [...filtered].sort((a, b) =>
-      sortDir === "desc" ? val(b) - val(a) : val(a) - val(b),
-    );
+    return [...filtered].sort((a, b) => (sortDir === "desc" ? val(b) - val(a) : val(a) - val(b)));
   }, [filtered, sortKey, sortDir]);
 
-  // reset to first page whenever the visible set changes
   useEffect(() => {
     setPage(1);
-  }, [fChunkings, fEmbeddings, fRags, fRetrievers, fLlms, sortKey, sortDir, pageSize]);
+  }, [filters, sortKey, sortDir, pageSize]);
 
   const size = Number(pageSize);
   const pageCount = Math.max(1, Math.ceil(sorted.length / size));
   const start = (page - 1) * size;
   const pageRows = sorted.slice(start, start + size);
+  const hasFilters = DIMS.some((d) => filters[d].length > 0);
 
   function toggleSort(key: string) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
-    } else {
+    if (sortKey === key) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    else {
       setSortKey(key);
       setSortDir("desc");
     }
   }
 
-  function sortArrow(key: string): string {
-    if (sortKey !== key) return "";
-    return sortDir === "desc" ? " ▼" : " ▲";
+  function showAnswersOf(combo: Combination) {
+    setFilters({
+      chunking: [combo.chunking],
+      embedding: [combo.embedding],
+      rag: [combo.rag],
+      retriever: [combo.retriever],
+      llm: [combo.llm],
+    });
+    setTab("answers");
   }
 
-  const hasFilters =
-    fChunkings.length > 0 ||
-    fEmbeddings.length > 0 ||
-    fRags.length > 0 ||
-    fRetrievers.length > 0 ||
-    fLlms.length > 0;
+  function SortHeader({ k, label, code }: { k: string; label: string; code?: string }) {
+    const active = sortKey === k;
+    return (
+      <th
+        className="ditto-num"
+        aria-sort={active ? (sortDir === "desc" ? "descending" : "ascending") : "none"}
+      >
+        <button
+          type="button"
+          className="ditto-sort"
+          data-active={active}
+          onClick={() => toggleSort(k)}
+          title={`Ordenar por ${label}`}
+        >
+          <span>
+            {label}
+            {code && <span className="ditto-mono">{code}</span>}
+          </span>
+          <SortIcon dir={active ? sortDir : null} />
+        </button>
+      </th>
+    );
+  }
+
+  const metricHeaders = (
+    <>
+      {metricKeys.map((k) => (
+        <SortHeader key={k} k={k} label={term("metric", k).name} code={k} />
+      ))}
+      <SortHeader k={MEDIA_KEY} label="Média" />
+    </>
+  );
+
+  const legend = (
+    <dl className="ditto-legend">
+      {metricKeys.map((k) => {
+        const t = term("metric", k);
+        return (
+          <div key={k}>
+            <dt>{t.name}</dt>
+            <dd>{t.description ?? k}</dd>
+          </div>
+        );
+      })}
+      <div>
+        <dt>Média</dt>
+        <dd>Média simples das métricas. De 0 a 1; maior é melhor.</dd>
+      </div>
+    </dl>
+  );
+
+  const duration = detail?.created_at
+    ? formatDuration(experimentDurationMs(detail.created_at, detail.finished_at) ?? 0)
+    : null;
 
   return (
     <div>
-      <Button
-        variant="subtle"
-        color="gray"
-        size="xs"
-        mb="md"
-        onClick={() => navigate("/results")}
-      >
-        ← Voltar aos experimentos
-      </Button>
-
       <PageHeader
-        eyebrow="Passo 03 · Ranquear"
+        back={{ to: "/results", label: "Voltar aos experimentos" }}
         title={detail?.name ?? "Carregando…"}
-        subtitle="Cada linha é uma pergunta rodada numa combinação. Ordene por qualquer métrica (clique no cabeçalho), filtre pelas configurações e clique numa linha para ler pergunta e resposta."
+        lede="Qual combinação respondeu melhor às suas perguntas, e o que ela respondeu em cada uma."
       />
 
       {detail && (
-        <Group gap="xs" mb="lg" align="center">
-          <span className="ditto-chip" style={{ color: statusColor(detail.status) }}>
-            {detail.status}
-          </span>
+        <div className="ditto-meta">
+          <StatusTag status={detail.status} />
           {isRunning && detail.progress && detail.progress.total > 0 && (
-            <Text size="sm" c="dimmed">
-              {detail.progress.completed}/{detail.progress.total} combinações
-            </Text>
+            <span>
+              {detail.progress.completed} de {detail.progress.total} combinações
+            </span>
           )}
-          <Text size="sm" c="dimmed">
-            {results.length} resultado(s) · {metricKeys.length} métrica(s)
-          </Text>
           {detail.created_at && (
-            <Text size="sm" c="dimmed">
-              Iniciado em {formatDate(detail.created_at)} · Duração{" "}
-              {formatDuration(experimentDurationMs(detail.created_at, detail.finished_at) ?? 0)}
-            </Text>
+            <span>
+              Iniciado em {formatDateTime(detail.created_at)} · Duração {duration}
+            </span>
           )}
-          <Button
-            component="a"
-            href={exportExperimentUrl(detail.id)}
-            download
-            size="xs"
-            variant="light"
-            ml="auto"
-          >
-            Exportar CSV
-          </Button>
-          {isRunning && (
-            <>
-              <Button
-                size="xs"
-                variant="light"
-                color="yellow"
-                loading={pausing}
-                disabled={pausing || (detail?.pause_requested ?? false)}
-                onClick={handlePause}
-              >
-                {pausing || detail?.pause_requested ? "Pausando…" : "Pausar"}
-              </Button>
-              {detail?.pause_requested && (
-                <Text size="xs" c="dimmed">
-                  aguardando a combinação atual terminar…
-                </Text>
-              )}
-            </>
-          )}
-        </Group>
-      )}
-
-      {loading && (
-        <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
-          <Loader size="md" color="#05dbf2" />
+          <span>
+            {results.length} {results.length === 1 ? "resposta" : "respostas"} · {metricKeys.length}{" "}
+            {metricKeys.length === 1 ? "métrica" : "métricas"}
+          </span>
+          <span className="ditto-meta-actions">
+            {isRunning && (
+              <>
+                {detail.pause_requested && <span>aguardando a combinação atual terminar…</span>}
+                <Button
+                  size="sm"
+                  variant="default"
+                  leftSection={<PauseIcon />}
+                  loading={pausing && !detail.pause_requested}
+                  disabled={pausing || (detail.pause_requested ?? false)}
+                  onClick={handlePause}
+                >
+                  {pausing || detail.pause_requested ? "Pausando…" : "Pausar"}
+                </Button>
+              </>
+            )}
+            <Button
+              component="a"
+              href={exportExperimentUrl(detail.id)}
+              download
+              size="sm"
+              variant="default"
+              leftSection={<DownloadIcon />}
+            >
+              Exportar CSV
+            </Button>
+          </span>
         </div>
       )}
 
+      {loading && <Loader aria-label="Carregando experimento" />}
+
       {error && (
-        <Alert color="red" variant="light" title="Erro ao carregar" radius="lg" maw={760}>
-          {error}
-        </Alert>
+        <Errata title="Não foi possível carregar este experimento">
+          {error}. Volte à lista e tente abrir de novo.
+        </Errata>
       )}
 
-      {detail && !loading && results.length === 0 && (
-        <Alert
-          color={detail.status === "failed" ? "red" : "gray"}
-          variant="light"
-          title={
-            detail.status === "failed"
-              ? "Experimento falhou"
-              : detail.status === "paused"
-              ? "Experimento pausado"
-              : "Sem resultados"
-          }
-          radius="lg"
-          maw={760}
-        >
-          {detail.status === "failed"
-            ? detail.error ?? "Falhou sem registrar resultados."
-            : detail.status === "done"
-            ? "Nenhum resultado para este experimento."
-            : detail.status === "paused"
-            ? "Pausado antes de gerar resultados."
-            : "Experimento em andamento…"}
-        </Alert>
-      )}
+      {detail && !loading && results.length === 0 &&
+        (detail.status === "failed" ? (
+          <Errata title="O experimento falhou">
+            {detail.error ?? "Ele parou sem registrar resultados."} Corrija a causa e crie um novo
+            experimento.
+          </Errata>
+        ) : (
+          <Note
+            title={
+              detail.status === "paused"
+                ? "Experimento pausado"
+                : detail.status === "done"
+                  ? "Sem resultados"
+                  : "Experimento em andamento"
+            }
+          >
+            {detail.status === "paused"
+              ? "Ele foi pausado antes de gerar resultados."
+              : detail.status === "done"
+                ? "Nenhum resultado foi registrado para este experimento."
+                : "As primeiras respostas aparecem aqui assim que ficarem prontas. A página se atualiza sozinha."}
+          </Note>
+        ))}
 
       {detail && !loading && results.length > 0 && (
         <>
-          {/* Prompt snapshot buttons */}
-          {detail.prompts && promptTechniques.length > 0 ? (
-            <div className="ditto-prompt-bar">
-              <span className="ditto-eyebrow">Prompts</span>
-              {promptTechniques.map((tech) => (
-                <Button
-                  key={tech}
-                  size="xs"
-                  variant="light"
-                  color="violet"
-                  onClick={() => setPromptTech(tech)}
-                >
-                  Prompts: {tech}
-                </Button>
-              ))}
-            </div>
-          ) : (
-            <Text size="xs" c="dimmed" mb="sm">
-              Prompts não registrados para este experimento.
-            </Text>
+          {winner && (
+            <section className="ditto-winner" aria-label="Melhor combinação">
+              <span className="ditto-winner-badge" aria-hidden>
+                1
+              </span>
+              <div>
+                <h2 className="ditto-winner-title">
+                  Melhor combinação{isRunning ? " até agora" : ""}
+                </h2>
+                <Traits combo={winner.combo} />
+                <div className="ditto-winner-metrics">
+                  <span>
+                    Média <b>{winner.media?.toFixed(2) ?? "—"}</b>
+                  </span>
+                  {metricKeys.map((k) => (
+                    <span key={k}>
+                      {term("metric", k).name} <b>{winner.scores[k]?.toFixed(2) ?? "—"}</b>
+                    </span>
+                  ))}
+                  <span className="ditto-muted">
+                    sobre {winner.count} {winner.count === 1 ? "pergunta" : "perguntas"}, entre{" "}
+                    {ranking.length} {ranking.length === 1 ? "combinação" : "combinações"}
+                  </span>
+                </div>
+              </div>
+            </section>
           )}
 
-          {/* Filters */}
-          <div className="ditto-filter-bar">
-            <MultiSelect
-              label="Cortes"
-              placeholder="Todos"
-              data={distinct((r) => r.chunking)}
-              value={fChunkings}
-              onChange={setFChunkings}
-              clearable
-              size="xs"
-            />
-            <MultiSelect
-              label="Embeddings"
-              placeholder="Todos"
-              data={distinct((r) => r.embedding)}
-              value={fEmbeddings}
-              onChange={setFEmbeddings}
-              clearable
-              size="xs"
-            />
-            <MultiSelect
-              label="RAGs"
-              placeholder="Todos"
-              data={distinct((r) => r.rag)}
-              value={fRags}
-              onChange={setFRags}
-              clearable
-              size="xs"
-            />
-            <MultiSelect
-              label="Retrievers"
-              placeholder="Todos"
-              data={distinct((r) => r.retriever)}
-              value={fRetrievers}
-              onChange={setFRetrievers}
-              clearable
-              size="xs"
-            />
-            <MultiSelect
-              label="LLMs"
-              placeholder="Todos"
-              data={distinct((r) => r.llm)}
-              value={fLlms}
-              onChange={setFLlms}
-              clearable
-              size="xs"
-            />
-            {hasFilters && (
-              <Button
-                variant="subtle"
-                color="gray"
-                size="xs"
-                className="ditto-filter-clear"
-                onClick={() => {
-                  setFChunkings([]);
-                  setFEmbeddings([]);
-                  setFRags([]);
-                  setFRetrievers([]);
-                  setFLlms([]);
-                }}
-              >
-                Limpar filtros
-              </Button>
-            )}
-          </div>
+          <Tabs value={tab} onChange={(v) => setTab(v ?? "ranking")} keepMounted={false}>
+            <Tabs.List mb="md">
+              <Tabs.Tab value="ranking">Ranking das combinações</Tabs.Tab>
+              <Tabs.Tab value="answers">Respostas por pergunta</Tabs.Tab>
+              <Tabs.Tab value="prompts">Prompts usados</Tabs.Tab>
+            </Tabs.List>
 
-          <Text size="xs" c="dimmed" mb={8}>
-            Mostrando {sorted.length === 0 ? 0 : start + 1}–
-            {Math.min(start + size, sorted.length)} de {sorted.length}
-          </Text>
-
-          <div className="ditto-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th className="ditto-th-combo">Combinação</th>
-                  <th className="ditto-th-text">Pergunta</th>
-                  <th className="ditto-th-text">Resposta</th>
-                  {metricKeys.map((key) => (
-                    <th
-                      key={key}
-                      className="ditto-th-sortable ditto-th-metric"
-                      data-active={sortKey === key}
-                      onClick={() => toggleSort(key)}
-                      title={`Ordenar por ${key}`}
-                    >
-                      {key}
-                      {sortArrow(key)}
-                    </th>
-                  ))}
-                  <th
-                    className="ditto-th-sortable ditto-th-metric"
-                    data-active={sortKey === MEDIA_KEY}
-                    onClick={() => toggleSort(MEDIA_KEY)}
-                    title="Ordenar pela média"
-                  >
-                    Média{sortArrow(MEDIA_KEY)}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.length === 0 && (
-                  <tr>
-                    <td colSpan={4 + metricKeys.length} className="ditto-empty">
-                      Nenhum resultado com os filtros atuais.
-                    </td>
-                  </tr>
-                )}
-                {pageRows.map((row, index) => {
-                  const media = rowMedia(row);
-                  return (
-                    <tr
-                      key={start + index}
-                      className="ditto-row"
-                      onClick={() => setModalRow(row)}
-                    >
-                      <td>
-                        <div className="ditto-combo">
-                          <span>{row.chunking}</span>
-                          <span>{row.embedding}</span>
-                          <span>{row.rag}</span>
-                          <span>{row.retriever}</span>
-                          <span>{row.llm}</span>
-                        </div>
-                      </td>
-                      <td className="ditto-cell-clip">
-                        <div className="ditto-clip-box" title={row.question}>
-                          {row.question}
-                        </div>
-                      </td>
-                      <td className="ditto-cell-clip">
-                        <div className="ditto-clip-box" title={row.answer}>
-                          {row.answer}
-                        </div>
-                      </td>
-                      {metricKeys.map((mk) => (
-                        <td key={mk} className="ditto-td-metric">
-                          <ScoreCell value={mk in row.scores ? row.scores[mk] : null} />
-                        </td>
-                      ))}
-                      <td className="ditto-td-metric ditto-media-cell">
-                        <ScoreCell value={media} />
-                      </td>
+            <Tabs.Panel value="ranking">
+              <p className="ditto-caption">
+                <strong>Tabela 1.</strong> Média de cada métrica por combinação, sobre todas as
+                perguntas. Clique numa linha para ver as respostas dela.
+              </p>
+              <div className="ditto-table-wrap">
+                <table className="ditto-table" data-stack="true">
+                  <thead>
+                    <tr>
+                      <th className="ditto-num">#</th>
+                      <th>Combinação</th>
+                      <th className="ditto-num">Perguntas</th>
+                      {metricHeaders}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {sortedRanking.map((r) => {
+                      const place = rankingByMedia.indexOf(r) + 1;
+                      return (
+                        <tr
+                          key={r.key}
+                          data-clickable="true"
+                          data-best={place === 1 || undefined}
+                          onClick={() => showAnswersOf(r.combo)}
+                        >
+                          <td className="ditto-num ditto-cell-rank">
+                            <span className="ditto-rank">{place}</span>
+                          </td>
+                          <td className="ditto-cell-combo">
+                            <button
+                              type="button"
+                              className="ditto-sort"
+                              style={{ textAlign: "left" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                showAnswersOf(r.combo);
+                              }}
+                              aria-label={`Ver respostas da combinação ${place}`}
+                            >
+                              <Traits combo={r.combo} />
+                            </button>
+                          </td>
+                          <td className="ditto-num ditto-cell-count" data-label="Perguntas">{r.count}</td>
+                          {metricKeys.map((k) => (
+                            <td key={k} className="ditto-num" data-label={term("metric", k).name}>
+                              <ScoreCell value={r.scores[k]} best={r.scores[k] === bestOf[k]} />
+                            </td>
+                          ))}
+                          <td className="ditto-num ditto-cell-media" data-label="Média">
+                            <ScoreCell value={r.media} best={r.media === bestOf[MEDIA_KEY]} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {legend}
+            </Tabs.Panel>
 
-          <div className="ditto-table-foot">
-            <Group gap="xs" align="center">
-              <Text size="xs" c="dimmed">
-                Por página
-              </Text>
-              <Select
-                data={PAGE_SIZES}
-                value={pageSize}
-                onChange={(v) => setPageSize(v ?? "10")}
-                size="xs"
-                w={80}
-                allowDeselect={false}
-              />
-            </Group>
-            <Pagination
-              total={pageCount}
-              value={page}
-              onChange={setPage}
-              size="sm"
-              color="violet"
-            />
-          </div>
+            <Tabs.Panel value="answers">
+              <div className="ditto-filters">
+                <MultiSelect label="Corte" placeholder="Todos" data={distinct("chunking")} value={filters.chunking} onChange={(v) => setFilters((f) => ({ ...f, chunking: v }))} clearable size="sm" />
+                <MultiSelect label="Embedding" placeholder="Todos" data={distinct("embedding")} value={filters.embedding} onChange={(v) => setFilters((f) => ({ ...f, embedding: v }))} clearable size="sm" />
+                <MultiSelect label="Técnica de RAG" placeholder="Todas" data={distinct("rag")} value={filters.rag} onChange={(v) => setFilters((f) => ({ ...f, rag: v }))} clearable size="sm" />
+                <MultiSelect label="Busca (retrievers)" placeholder="Todas" data={distinct("retriever")} value={filters.retriever} onChange={(v) => setFilters((f) => ({ ...f, retriever: v }))} clearable size="sm" />
+                <MultiSelect label="Modelo (LLMs)" placeholder="Todos" data={distinct("llm")} value={filters.llm} onChange={(v) => setFilters((f) => ({ ...f, llm: v }))} clearable size="sm" />
+                {hasFilters && (
+                  <Button
+                    variant="subtle"
+                    size="sm"
+                    onClick={() => setFilters({ chunking: [], embedding: [], rag: [], retriever: [], llm: [] })}
+                  >
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
+
+              <p className="ditto-caption">
+                Mostrando {sorted.length === 0 ? 0 : start + 1}–{Math.min(start + size, sorted.length)} de{" "}
+                {sorted.length}. Clique numa linha para ler a pergunta e a resposta completas.
+              </p>
+
+              <div className="ditto-table-wrap">
+                <table className="ditto-table" data-stack="true">
+                  <thead>
+                    <tr>
+                      <th>Combinação</th>
+                      <th>Pergunta</th>
+                      <th>Resposta</th>
+                      {metricHeaders}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageRows.length === 0 && (
+                      <tr>
+                        <td colSpan={4 + metricKeys.length} className="ditto-muted">
+                          Nenhuma resposta com esses filtros.
+                        </td>
+                      </tr>
+                    )}
+                    {pageRows.map((row, index) => (
+                      <tr key={start + index} data-clickable="true" onClick={() => setOpenRow(row)}>
+                        <td className="ditto-cell-combo">
+                          <Traits combo={row} />
+                        </td>
+                        <td className="ditto-cell-text" data-label="Pergunta">
+                          <button
+                            type="button"
+                            className="ditto-sort ditto-clip"
+                            style={{ textAlign: "left" }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenRow(row);
+                            }}
+                          >
+                            {row.question}
+                          </button>
+                        </td>
+                        <td className="ditto-cell-text" data-label="Resposta">
+                          <span className="ditto-clip ditto-muted">{row.answer}</span>
+                        </td>
+                        {metricKeys.map((k) => (
+                          <td key={k} className="ditto-num" data-label={term("metric", k).name}>
+                            <ScoreCell value={k in row.scores ? row.scores[k] : null} />
+                          </td>
+                        ))}
+                        <td className="ditto-num ditto-cell-media" data-label="Média">
+                          <ScoreCell value={rowMedia(row)} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="ditto-table-foot">
+                <Select
+                  label="Por página"
+                  data={PAGE_SIZES}
+                  value={pageSize}
+                  onChange={(v) => setPageSize(v ?? "10")}
+                  size="sm"
+                  w={110}
+                  allowDeselect={false}
+                />
+                <Pagination total={pageCount} value={page} onChange={setPage} size="sm" />
+              </div>
+              {legend}
+            </Tabs.Panel>
+
+            <Tabs.Panel value="prompts">
+              {promptTechniques.length > 0 ? (
+                <>
+                  <p className="ditto-caption">
+                    O texto exato dos prompts no momento em que este experimento rodou. Editar os
+                    prompts depois não altera este registro.
+                  </p>
+                  <div className="ditto-row-actions">
+                    {promptTechniques.map((tech) => (
+                      <Button key={tech} variant="default" size="sm" onClick={() => setPromptTech(tech)}>
+                        Prompts: {tech}
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <Note title="Prompts não registrados para este experimento">
+                  Experimentos antigos rodaram antes do registro de prompts existir.
+                </Note>
+              )}
+            </Tabs.Panel>
+          </Tabs>
         </>
       )}
 
-      <Modal
+      <Drawer
         opened={promptTech !== null}
         onClose={() => setPromptTech(null)}
-        title="Prompts usados neste experimento"
-        size="lg"
-        centered
-        overlayProps={{ backgroundOpacity: 0.6, blur: 3 }}
+        title={promptTech ? `Prompts de ${techniqueName(promptTech)}` : "Prompts"}
       >
-        {promptTech && detail?.prompts?.[promptTech] && (
-          <div>
-            <Text className="ditto-eyebrow" mb={10}>
-              {promptTech}
-            </Text>
-            {Object.entries(detail.prompts[promptTech]).map(([key, text]) => (
-              <div key={key} style={{ marginBottom: 18 }}>
-                <Text fw={700} size="sm" mb={4}>
-                  {key}
-                </Text>
-                <pre className="ditto-prompt-pre">{text}</pre>
-              </div>
-            ))}
+        {promptTech &&
+          detail?.prompts?.[promptTech] &&
+          Object.entries(detail.prompts[promptTech]).map(([key, text]) => (
+            <div key={key} style={{ marginBottom: 20 }}>
+              <h3 className="ditto-h3" style={{ marginBottom: 6 }}>
+                <span className="ditto-mono">{key}</span>
+              </h3>
+              <pre className="ditto-prompt-pre">{text}</pre>
+            </div>
+          ))}
+      </Drawer>
+
+      <Drawer opened={openRow !== null} onClose={() => setOpenRow(null)} title="Detalhe do resultado">
+        {openRow && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+            <Traits combo={openRow} />
+            <div>
+              <h3 className="ditto-h3">Pergunta</h3>
+              <p className="ditto-read" style={{ color: "var(--ink)", margin: "6px 0 0" }}>
+                {openRow.question}
+              </p>
+            </div>
+            <div>
+              <h3 className="ditto-h3">Resposta</h3>
+              <p className="ditto-read" style={{ color: "var(--ink)", margin: "6px 0 0", whiteSpace: "pre-wrap" }}>
+                {openRow.answer}
+              </p>
+            </div>
+            <div>
+              <h3 className="ditto-h3" style={{ marginBottom: 8 }}>
+                Métricas
+              </h3>
+              <table className="ditto-table">
+                <tbody>
+                  {metricKeys
+                    .filter((k) => k in openRow.scores)
+                    .map((k) => (
+                      <tr key={k}>
+                        <td>
+                          {term("metric", k).name}
+                          <div className="ditto-muted" style={{ fontSize: 13 }}>
+                            {term("metric", k).description}
+                          </div>
+                        </td>
+                        <td className="ditto-num">
+                          <ScoreCell value={openRow.scores[k]} />
+                        </td>
+                      </tr>
+                    ))}
+                  <tr>
+                    <td>
+                      <b>Média</b>
+                    </td>
+                    <td className="ditto-num">
+                      <ScoreCell value={rowMedia(openRow)} best />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <dl className="ditto-kv">
+              <dt>Tempo de resposta</dt>
+              <dd>{openRow.latency_ms} ms</dd>
+              <dt>Tokens</dt>
+              <dd>{openRow.tokens}</dd>
+            </dl>
           </div>
         )}
-      </Modal>
-
-      <Modal
-        opened={modalRow !== null}
-        onClose={() => setModalRow(null)}
-        title="Detalhe do resultado"
-        size="lg"
-        centered
-        overlayProps={{ backgroundOpacity: 0.6, blur: 3 }}
-      >
-        {modalRow && (
-          <div>
-            <div className="ditto-combo" style={{ marginBottom: 18 }}>
-              <span>{modalRow.chunking}</span>
-              <span>{modalRow.embedding}</span>
-              <span>{modalRow.rag}</span>
-              <span>{modalRow.retriever}</span>
-              <span>{modalRow.llm}</span>
-            </div>
-
-            <Text className="ditto-eyebrow" mb={6}>
-              Pergunta
-            </Text>
-            <Text mb="lg" style={{ lineHeight: 1.6 }}>
-              {modalRow.question}
-            </Text>
-
-            <Text className="ditto-eyebrow" mb={6}>
-              Resposta
-            </Text>
-            <Text mb="lg" style={{ lineHeight: 1.6 }}>
-              {modalRow.answer}
-            </Text>
-
-            <Text className="ditto-eyebrow" mb={8}>
-              Métricas
-            </Text>
-            {metricKeys.map((mk) =>
-              mk in modalRow.scores ? (
-                <div key={mk} className="ditto-score-bar-row">
-                  <span className="ditto-score-bar-label">{mk}</span>
-                  <span className="ditto-score-bar-track">
-                    <span
-                      className="ditto-score-bar-fill"
-                      style={{
-                        width: `${Math.max(0, Math.min(1, modalRow.scores[mk])) * 100}%`,
-                        background: scoreColor(modalRow.scores[mk]),
-                        boxShadow: `0 0 12px ${scoreColor(modalRow.scores[mk])}`,
-                      }}
-                    />
-                  </span>
-                  <span className="ditto-score-bar-val">
-                    {modalRow.scores[mk].toFixed(2)}
-                  </span>
-                </div>
-              ) : null,
-            )}
-            {rowMedia(modalRow) !== null && (
-              <div className="ditto-score-bar-row" style={{ marginTop: 10 }}>
-                <span className="ditto-score-bar-label" style={{ fontWeight: 700 }}>
-                  Média
-                </span>
-                <span className="ditto-score-bar-track">
-                  <span
-                    className="ditto-score-bar-fill"
-                    style={{
-                      width: `${Math.max(0, Math.min(1, rowMedia(modalRow) ?? 0)) * 100}%`,
-                      background: scoreColor(rowMedia(modalRow) ?? 0),
-                      boxShadow: `0 0 12px ${scoreColor(rowMedia(modalRow) ?? 0)}`,
-                    }}
-                  />
-                </span>
-                <span className="ditto-score-bar-val" style={{ fontWeight: 700 }}>
-                  {(rowMedia(modalRow) ?? 0).toFixed(2)}
-                </span>
-              </div>
-            )}
-
-            <div className="ditto-meta-chips">
-              <span className="ditto-chip" style={{ color: "#05dbf2" }}>
-                {modalRow.latency_ms} ms
-              </span>
-              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
-                {modalRow.tokens} tokens
-              </span>
-            </div>
-          </div>
-        )}
-      </Modal>
+      </Drawer>
     </div>
   );
 }

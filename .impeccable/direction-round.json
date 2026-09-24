@@ -1,0 +1,103 @@
+{
+  "title": "Escolha o mundo visual do Ditto",
+  "question": "O sorteio definiu 'Índice de formas'. Fique com ele, escolha uma alternativa ou sorteie de novo.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Índice de formas",
+      "kicker": "THE ROLL",
+      "lineage": "Ficha de espécime de guia de campo, fundida à metáfora do Ditto",
+      "thesis": "Cada combinação é uma forma que o Ditto assume, catalogada numa ficha com número, traços e barras de atributo.",
+      "palette": ["#FFFFFF", "#F2F1F4", "#1C1A22", "#5E5A68", "#A8327A", "#1F7A5A", "#B4441F"],
+      "materials": ["ficha de espécime numerada", "barras de atributo com valor escrito", "etiquetas de traço (corte, embedding, RAG, busca, LLM)"],
+      "viewport": "Resultados: a forma dominante no topo como ficha grande (nº, 5 traços, 6 barras de métrica), abaixo o índice de todas as formas em tabela ordenável.",
+      "risk": "Se a ficha virar enfeite, vira cosplay de jogo; ela só vale enquanto for a forma mais rápida de ler uma configuração.",
+      "raised": [
+        {"from": "Mergulho técnico", "raise": "Um eixo único rege tudo: o trilho do pipeline (documento → corte → embedding → busca → geração → nota) aparece igual no formulário e no detalhe."},
+        {"from": "Sala escura", "raise": "Tira de teste antes de revelar: o formulário mostra ao vivo quantas formas × perguntas vão rodar e o tempo estimado antes do botão Gerar."},
+        {"from": "Metro", "raise": "Sem cromo decorativo (sem vidro, gradiente, blob); um único acento magenta é dono de todo estado ativo, selecionado e da forma vencedora."},
+        {"from": "Gramática industrial", "raise": "Cada rótulo nomeia o óbvio literalmente, no português do pesquisador (UX writing do SBB)."},
+        {"from": "Cena ASCII", "raise": "Um grid estrito de 4px e algarismos tabulares em todo número, para as tabelas alinharem como instrumento."}
+      ]
+    },
+    {
+      "id": "challenger-acetate",
+      "label": "Manual com abas",
+      "verdict": "competitive",
+      "lineage": "Manual de referência de software em caixa, aberto numa aba colorida",
+      "thesis": "O sistema é um manual: cada etapa (Preparar, Experimentar, Comparar, Conversar) é uma divisória de cor própria no trilho lateral.",
+      "palette": ["#F4F2EC", "#1A1A1A", "#E8A317", "#D9622B", "#3F8F4E", "#1E8C8C", "#2F4FB5"],
+      "materials": ["acetato leitoso sobre divisória colorida", "trilho de abas proporcional", "voz de máquina em mono"],
+      "viewport": "Trilho de abas coloridas à esquerda; a aba atual se estende e tinge a página; formulário em folha clara por cima.",
+      "case": "Funde bem: etapas viram abas de cor e a orientação fica óbvia; perde em identificação, pesquisador não reconhece o Ditto nele.",
+      "risk": "Muitas cores de seção competem com as cores de status e de métrica nas tabelas.",
+      "hero": "https://impeccable.style/worlds/cards/rw-manual-acetate-tab-board-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/rw-manual-acetate-tab-board.webp"
+    },
+    {
+      "id": "model-pick",
+      "label": "Tabela de artigo",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Tabelas de resultados de artigos científicos (booktabs, ACL/NeurIPS)",
+      "thesis": "O Ditto fala a língua do paper: resultados em tabela com fios finos, melhor valor em negrito, legenda que explica cada coluna.",
+      "palette": ["#FFFFFF", "#111111", "#6B6B6B", "#1D4ED8", "#B91C1C"],
+      "materials": ["fios horizontais finos", "negrito no melhor valor", "legenda numerada tipo Tabela 1"],
+      "viewport": "Resultados como Tabela 1 com legenda; formulários em layout de seção de método (Método, Dados, Métricas).",
+      "risk": "É onde a maioria das ferramentas de pesquisa chega; pode ficar frio e perder a personalidade do Ditto."
+    },
+    {
+      "id": "challenger-darkroom",
+      "label": "Sala escura",
+      "verdict": "declined",
+      "lineage": "Laboratório de revelação sob luz âmbar",
+      "thesis": "Estações fixas em ordem, com tira de teste antes de cada etapa irreversível.",
+      "palette": ["#3A1A08", "#E89A3C", "#C9C9C9", "#111111"],
+      "materials": ["luz de segurança âmbar", "tiras de teste"],
+      "viewport": "Estações lineares: compor, expor, revelar.",
+      "case": "Âmbar sobre escuro cansa em sessões longas de tabela; ninguém se identifica.",
+      "risk": "Ilegível para leitura densa.",
+      "kept": "Tira de teste: prévia de custo antes de gerar.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-darkroom-safelight-bay-hero.webp"
+    },
+    {
+      "id": "challenger-metro",
+      "label": "Metro",
+      "verdict": "declined",
+      "lineage": "Linguagem Metro: blocos planos e tipografia gigante",
+      "thesis": "Tipo é a interface, sem cromo.",
+      "palette": ["#000000", "#FFFFFF", "#00ABA9"],
+      "materials": ["blocos planos", "títulos cortados"],
+      "viewport": "Panorama de blocos.",
+      "case": "Títulos gigantes e panorama brigam com densidade de tabela.",
+      "risk": "Pouca informação por tela.",
+      "kept": "Um acento dono de todo estado vivo; zero cromo.",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-metro-typographic-tiles-hero.webp"
+    },
+    {
+      "id": "challenger-deepdive",
+      "label": "Mergulho técnico",
+      "verdict": "declined",
+      "lineage": "Perfil de mergulho em parede vulcânica",
+      "thesis": "Um eixo vertical de profundidade rege tudo.",
+      "palette": ["#06203A", "#3FD0E0", "#F2F2F2"],
+      "materials": ["azul abissal", "dígitos de computador de mergulho"],
+      "viewport": "Perfil vertical de descida.",
+      "case": "Metáfora distante do trabalho de pesquisa.",
+      "risk": "Fundo escuro e partículas atrapalham leitura.",
+      "kept": "Um eixo único (o pipeline) rege cada linha.",
+      "hero": "https://impeccable.style/worlds/cards/rivers-tides-ocean-depths-mesophotic-deep-dive-hero.webp"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "code", "toggle": false},
+  "canon": true,
+  "canonCard": {
+    "label": "Painel padrão da categoria",
+    "thesis": "O que ferramentas de ML/avaliação entregam (estilo Linear, W&B, Vercel), executado com capricho.",
+    "palette": ["#FFFFFF", "#0A0A0A", "#737373", "#2563EB"],
+    "materials": ["cinzas neutros", "cartões com borda fina", "tabela densa"],
+    "viewport": "Barra lateral cinza, cabeçalho com ações, conteúdo em cartões e tabelas.",
+    "risk": "Indistinguível de qualquer outra ferramenta, por definição."
+  },
+  "steer": true
+}

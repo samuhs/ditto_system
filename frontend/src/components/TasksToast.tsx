@@ -1,47 +1,47 @@
-import { Loader } from "@mantine/core";
+import { Link } from "react-router-dom";
 
 import { type Task, useTasks } from "../context/TasksContext";
+import { CloseIcon } from "./icons";
+import { StatusTag } from "./StatusTag";
 
-function StatusIcon({ task }: { task: Task }) {
-  if (task.status === "running") return <Loader size={14} color="#05dbf2" />;
-  if (task.status === "done") return <span style={{ color: "#07f285", fontSize: "1rem" }}>✓</span>;
-  if (task.status === "paused") return <span style={{ color: "#f2ec91", fontSize: "1rem" }}>⏸</span>;
-  return <span style={{ color: "#f26d6d", fontSize: "1rem" }}>✕</span>;
-}
+const KIND_LABEL: Record<Task["kind"], string> = {
+  ingest: "Preparação de documentos",
+  experiment: "Experimento",
+};
 
+/** Background jobs keep running while the user moves around; each one reports here. */
 export function TasksToast() {
   const { tasks, dismissTask } = useTasks();
   if (tasks.length === 0) return null;
 
   return (
-    <div className="ditto-tasks-tray">
+    <section className="ditto-tasks" aria-label="Tarefas em segundo plano" aria-live="polite">
       {tasks.map((task) => (
-        <div key={task.id} className="ditto-task-card" data-status={task.status}>
-          <div className="ditto-task-icon">
-            <StatusIcon task={task} />
-          </div>
-          <div className="ditto-task-body">
-            <span className="ditto-task-kind">
-              {task.kind === "ingest" ? "Inserção" : "Experimento"}
-            </span>
-            <span className="ditto-task-label" title={task.label}>
-              {task.label}
-            </span>
-            {task.message && (
-              <span className="ditto-task-message">{task.message}</span>
+        <div key={task.id} className="ditto-task" data-status={task.status}>
+          <span className="ditto-task-kind">{KIND_LABEL[task.kind]}</span>
+          <span className="ditto-task-label" title={task.label}>
+            {task.label}
+          </span>
+          <StatusTag status={task.status} />
+          {task.message && <span className="ditto-task-message">{task.message}</span>}
+          <span className="ditto-task-side">
+            {task.status !== "running" && (
+              <button
+                className="ditto-task-close"
+                onClick={() => dismissTask(task.id)}
+                aria-label="Fechar aviso"
+              >
+                <CloseIcon />
+              </button>
             )}
-          </div>
-          {task.status !== "running" && (
-            <button
-              className="ditto-task-dismiss"
-              onClick={() => dismissTask(task.id)}
-              aria-label="Fechar notificação"
-            >
-              ✕
-            </button>
-          )}
+            {task.kind === "experiment" && (
+              <Link className="ditto-task-open" to={`/results/${task.experimentId}`}>
+                Abrir
+              </Link>
+            )}
+          </span>
         </div>
       ))}
-    </div>
+    </section>
   );
 }

@@ -1,19 +1,25 @@
-import { Alert, Button, Group, Loader, NumberInput, Text } from "@mantine/core";
+import { Button, Loader, NumberInput } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { getDialogue, saveDialogueRating } from "../api/client";
 import type { DialogueDetail } from "../api/types";
+import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
+import { formatDateTime } from "../utils/duration";
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-BR");
-}
+const SNAPSHOT_FIELDS: [string, string][] = [
+  ["persona", "Persona"],
+  ["base", "Base"],
+  ["chunking", "Corte"],
+  ["embedding", "Embedding"],
+  ["retriever", "Busca"],
+  ["rag", "RAG"],
+  ["llm", "Modelo"],
+];
 
 export function DialoguePage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [detail, setDetail] = useState<DialogueDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +37,7 @@ export function DialoguePage() {
         setLoading(false);
       })
       .catch((e) => {
-        setError(String(e));
+        setError(errorText(e));
         setLoading(false);
       });
   }, [id]);
@@ -44,7 +50,7 @@ export function DialoguePage() {
       await saveDialogueRating(Number(id), Number(rating));
       setSaved(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setSaving(false);
     }
@@ -54,97 +60,70 @@ export function DialoguePage() {
 
   return (
     <div>
-      <Button
-        variant="subtle"
-        color="gray"
-        size="xs"
-        mb="md"
-        onClick={() => navigate("/dialogues")}
-      >
-        ← Voltar aos diálogos
-      </Button>
-
       <PageHeader
-        eyebrow="Passo 05 · Avaliar"
-        title="Diálogo"
-        subtitle="Leia a conversa e atribua uma nota de 0 a 10."
+        back={{ to: "/dialogues", label: "Voltar aos diálogos" }}
+        title={snap.name ?? "Diálogo"}
+        lede={detail ? `Salvo em ${formatDateTime(detail.created_at)}. Leia a conversa e dê uma nota de 0 a 10.` : undefined}
       />
 
-      {loading && (
-        <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
-          <Loader size="md" color="#05dbf2" />
+      {loading && <Loader aria-label="Carregando diálogo" />}
+
+      {error && (
+        <div style={{ marginBottom: 20 }}>
+          <Errata title="Algo não funcionou">{error}. Tente de novo.</Errata>
         </div>
       )}
 
-      {error && (
-        <Alert color="red" variant="light" title="Erro" radius="lg" maw={760}>
-          {error}
-        </Alert>
-      )}
-
       {detail && !loading && (
-        <>
-          <div style={{ marginBottom: "1.5rem" }}>
-            <Group gap="xs" mb="xs" align="center">
-              <Text fw={600} fz="lg">
-                {snap.name ?? "Configuração sem nome"}
-              </Text>
-              <Text size="sm" c="dimmed">
-                {formatDate(detail.created_at)}
-              </Text>
-            </Group>
-            <Group gap="xs">
-              <span className="ditto-chip" style={{ color: "#05dbf2" }}>
-                persona: {snap.persona ?? "—"}
-              </span>
-              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
-                base: {snap.base ?? "—"}
-              </span>
-              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
-                corte: {snap.chunking ?? "—"}
-              </span>
-              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
-                embedding: {snap.embedding ?? "—"}
-              </span>
-              <span className="ditto-chip" style={{ color: "#f2ec91" }}>
-                retriever: {snap.retriever ?? "—"}
-              </span>
-              <span className="ditto-chip" style={{ color: "#07f285" }}>
-                rag: {snap.rag ?? "—"}
-              </span>
-              <span className="ditto-chip" style={{ color: "#07f285" }}>
-                llm: {snap.llm ?? "—"}
-              </span>
-            </Group>
-          </div>
-
-          <div className="ditto-glass ditto-chat-window">
+        <div className="ditto-flow" style={{ gridTemplateColumns: "minmax(0, 1fr) 280px" }}>
+          <div className="ditto-chat" data-static="true">
             {detail.messages.map((m, i) => (
-              <div key={i} className="ditto-chat-msg" data-role={m.role}>
-                <span className="ditto-chat-bubble">{m.content}</span>
+              <div key={i} className="ditto-msg" data-role={m.role}>
+                <span className="ditto-msg-who">{m.role === "user" ? "Pessoa" : "Ditto"}</span>
+                <span className="ditto-msg-text">{m.content}</span>
               </div>
             ))}
           </div>
 
-          <Group mt="lg" align="flex-end" gap="sm">
-            <NumberInput
-              label="Nota (0–10)"
-              min={0}
-              max={10}
-              value={rating}
-              onChange={(v) => setRating(typeof v === "number" ? v : "")}
-              w={140}
-            />
-            <Button color="violet" loading={saving} disabled={rating === ""} onClick={save}>
-              Salvar nota
-            </Button>
-            {saved && (
-              <Text size="sm" c="#07f285">
-                Nota salva
-              </Text>
-            )}
-          </Group>
-        </>
+          <aside style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div>
+              <h2 className="ditto-h2" style={{ marginBottom: 10 }}>
+                Nota
+              </h2>
+              <NumberInput
+                label="Nota (0–10)"
+                min={0}
+                max={10}
+                clampBehavior="strict"
+                value={rating}
+                onChange={(v) => {
+                  setRating(typeof v === "number" ? v : "");
+                  setSaved(false);
+                }}
+                w={140}
+              />
+              <div className="ditto-row-actions" style={{ marginTop: 12 }}>
+                <Button loading={saving} disabled={rating === ""} onClick={save}>
+                  Salvar nota
+                </Button>
+                {saved && <Saved>Nota salva</Saved>}
+              </div>
+            </div>
+            <div>
+              <h2 className="ditto-h2" style={{ marginBottom: 10 }}>
+                Configuração usada
+              </h2>
+              <dl className="ditto-kv">
+                {SNAPSHOT_FIELDS.map(([key, label]) => (
+                  <div key={key} style={{ display: "contents" }}>
+                    <dt>{label}</dt>
+                    <dd>{snap[key] ?? "—"}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </aside>
+        </div>
       )}
     </div>
   );

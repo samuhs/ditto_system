@@ -1,18 +1,21 @@
-import { Alert, Button, Group, Loader, Select, Text, TextInput } from "@mantine/core";
+import { Button, Loader, Select, Textarea } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { listChatConfigs, saveDialogue, sendChat } from "../api/client";
 import type { ChatConfig, ChatMessage } from "../api/types";
+import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
+import { ArrowIcon } from "../components/icons";
 
 export function ChatPage() {
-  const [configs, setConfigs] = useState<ChatConfig[]>([]);
+  const [configs, setConfigs] = useState<ChatConfig[] | null>(null);
   const [configId, setConfigId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ title: string; text: string } | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -21,14 +24,14 @@ export function ChatPage() {
         setConfigs(cs);
         if (cs.length > 0) setConfigId(String(cs[0].id));
       })
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError({ title: "Não foi possível carregar as configurações", text: `${errorText(e)}. Recarregue a página.` }));
   }, []);
 
   useEffect(() => {
     if (endRef.current && typeof endRef.current.scrollIntoView === "function") {
-      endRef.current.scrollIntoView({ behavior: "smooth" });
+      endRef.current.scrollIntoView({ block: "end" });
     }
-  }, [messages]);
+  }, [messages, sending]);
 
   function newConversation() {
     setMessages([]);
@@ -48,7 +51,7 @@ export function ChatPage() {
       const turn = await sendChat(Number(configId), next);
       setMessages([...next, { role: "assistant", content: turn.reply }]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError({ title: "A mensagem não foi respondida", text: `${errorText(e)}. Tente enviar de novo.` });
     } finally {
       setSending(false);
     }
@@ -60,76 +63,118 @@ export function ChatPage() {
       await saveDialogue(Number(configId), messages);
       setSaved(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError({ title: "O diálogo não foi salvo", text: `${errorText(e)}. Tente salvar de novo.` });
     }
   }
+
+  const current = configs?.find((c) => String(c.id) === configId);
 
   return (
     <div>
       <PageHeader
-        eyebrow="Passo 04 · Conversar"
         title="Conversa"
-        subtitle="Escolha uma configuração e converse com o agente. Ao final, você pode salvar o diálogo para avaliação."
+        lede="Converse com os seus documentos usando uma configuração salva. Ao final, salve o diálogo para dar uma nota a ele."
       />
 
-      <Group mb="md" align="flex-end" gap="sm">
-        <Select
-          label="Configuração"
-          data={configs.map((c) => ({ value: String(c.id), label: c.name }))}
-          value={configId}
-          onChange={setConfigId}
-          w={280}
-        />
-        <Button variant="subtle" color="gray" size="sm" onClick={newConversation}>
-          Nova conversa
-        </Button>
-        <Button
-          variant="light"
-          color="violet"
-          size="sm"
-          disabled={messages.length === 0}
-          onClick={save}
-        >
-          Salvar diálogo
-        </Button>
-        {saved && <Text size="sm" c="#07f285">Diálogo salvo</Text>}
-      </Group>
+      {configs !== null && configs.length === 0 && (
+        <div className="ditto-empty">
+          <h2 className="ditto-h2">Nenhuma configuração de chat</h2>
+          <p>
+            Para conversar, escolha antes qual base, técnica e modelo o agente vai usar. Isso fica
+            salvo numa configuração.
+          </p>
+          <Button component={Link} to="/chat-configs" rightSection={<ArrowIcon />}>
+            Criar configuração
+          </Button>
+        </div>
+      )}
 
-      <div className="ditto-glass ditto-chat-window">
-        {messages.length === 0 && (
-          <p className="ditto-empty">Sem mensagens ainda. Diga um "oi" para começar.</p>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className="ditto-chat-msg" data-role={m.role}>
-            <span className="ditto-chat-bubble">{m.content}</span>
+      {configs !== null && configs.length > 0 && (
+        <>
+          <div className="ditto-toolbar">
+            <Select
+              label="Configuração"
+              data={configs.map((c) => ({ value: String(c.id), label: c.name }))}
+              value={configId}
+              onChange={(v) => {
+                setConfigId(v);
+                newConversation();
+              }}
+              allowDeselect={false}
+              w={300}
+              description={current ? `${current.base} · ${current.rag} · ${current.llm}` : undefined}
+            />
+            <Button variant="default" onClick={newConversation} disabled={messages.length === 0}>
+              Nova conversa
+            </Button>
+            <Button variant="default" disabled={messages.length === 0 || sending} onClick={save}>
+              Salvar diálogo
+            </Button>
+            {saved && (
+              <Saved>
+                Diálogo salvo. <Link to="/dialogues">Dar nota</Link>
+              </Saved>
+            )}
           </div>
-        ))}
-        {sending && (
-          <div className="ditto-chat-msg" data-role="assistant">
-            <span className="ditto-chat-bubble"><Loader size="xs" color="#05dbf2" /></span>
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
 
-      <Group mt="md" gap="sm">
-        <TextInput
-          placeholder="Sua mensagem…"
-          value={input}
-          onChange={(e) => setInput(e.currentTarget.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") send(); }}
-          style={{ flex: 1 }}
-          disabled={!configId}
-        />
-        <Button onClick={send} loading={sending} disabled={!configId}>
-          Enviar
-        </Button>
-      </Group>
+          <div className="ditto-chat" aria-live="polite">
+            {messages.length === 0 && (
+              <p className="ditto-chat-empty">
+                Faça uma pergunta sobre os documentos da base “{current?.base ?? ""}”.
+              </p>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className="ditto-msg" data-role={m.role}>
+                <span className="ditto-msg-who">{m.role === "user" ? "Você" : "Ditto"}</span>
+                <span className="ditto-msg-text">{m.content}</span>
+              </div>
+            ))}
+            {sending && (
+              <div className="ditto-msg" data-role="assistant">
+                <span className="ditto-msg-who">Ditto</span>
+                <span className="ditto-msg-text">
+                  <Loader size="sm" aria-label="Escrevendo resposta" />
+                </span>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          <form
+            className="ditto-composer"
+            onSubmit={(e) => {
+              e.preventDefault();
+              send();
+            }}
+          >
+            <Textarea
+              label="Mensagem"
+              placeholder="Sua mensagem… (Enter envia, Shift+Enter quebra a linha)"
+              value={input}
+              onChange={(e) => setInput(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              autosize
+              minRows={1}
+              maxRows={6}
+              disabled={!configId}
+              styles={{ input: { fontFamily: "var(--font-ui)", fontSize: 15 } }}
+            />
+            <Button type="submit" loading={sending} disabled={!configId || input.trim() === ""} rightSection={<ArrowIcon />}>
+              Enviar
+            </Button>
+          </form>
+        </>
+      )}
 
       {error && (
-        <Alert color="red" variant="light" title="Erro" mt="md" radius="lg">
-          {error}
-        </Alert>
+        <div style={{ marginTop: 16 }}>
+          <Errata title={error.title}>{error.text}</Errata>
+        </div>
       )}
     </div>
   );

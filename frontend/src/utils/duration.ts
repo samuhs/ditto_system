@@ -10,3 +10,9 @@ export function formatDuration(ms: number): string {
   parts.push(`${s}s`);
   return parts.join(" ");
 }
+
+/** "23/09/2026, 21:46" in pt-BR; "—" when missing. */
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}

@@ -56,32 +56,55 @@ beforeEach(() => {
   });
 });
 
+async function openAnswers(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("tab", { name: /respostas por pergunta/i }));
+}
+
 describe("ExperimentDetailPage", () => {
+  it("ranks combinations by their mean score and names the best one", async () => {
+    renderPage();
+    const winner = await screen.findByRole("region", { name: /melhor combinação/i });
+    // token/agentic/mmr/ollama averages 0.85 vs 0.30 for the other combination
+    expect(winner).toHaveTextContent("Por tokens");
+    expect(winner).toHaveTextContent("Diversidade (MMR)");
+    const rows = screen.getAllByRole("row").map((r) => r.textContent ?? "");
+    const idxToken = rows.findIndex((t) => t.includes("Por tokens"));
+    const idxRecursive = rows.findIndex((t) => t.includes("Recursivo"));
+    expect(idxToken).toBeGreaterThan(0);
+    expect(idxToken).toBeLessThan(idxRecursive);
+  });
+
   it("renders metric columns and a Média column, sorted by média desc by default", async () => {
     renderPage();
-    // header cells for metrics + média
+    const user = userEvent.setup();
+    await openAnswers(user);
     expect(await screen.findByRole("columnheader", { name: /answer_relevancy/i })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /faithfulness/i })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /média/i })).toBeInTheDocument();
 
     // default sort média desc → row B (avg 0.85) before row A (avg 0.30)
-    const rows = screen.getAllByRole("row");
-    // rows[0] is the header; find the data rows containing questions
-    const bodyText = rows.map((r) => r.textContent ?? "");
+    const bodyText = screen.getAllByRole("row").map((r) => r.textContent ?? "");
     const idxA = bodyText.findIndex((t) => t.includes("Pergunta A"));
     const idxB = bodyText.findIndex((t) => t.includes("Pergunta B"));
+    expect(idxB).toBeGreaterThan(0);
     expect(idxB).toBeLessThan(idxA);
+  });
+
+  it("clicking a ranked combination shows only its answers", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /ver respostas da combinação 2/i }));
+    expect(await screen.findByText("Pergunta A")).toBeInTheDocument();
+    expect(screen.queryByText("Pergunta B")).not.toBeInTheDocument();
   });
 
   it("filters rows by retriever (mmr)", async () => {
     renderPage();
     const user = userEvent.setup();
+    await openAnswers(user);
     await screen.findByText("Pergunta A");
-    // open the Retrievers filter and pick mmr from the listbox
     await user.click(screen.getAllByLabelText(/retrievers/i)[0]);
-    const option = await screen.findByRole("option", { name: "mmr" });
-    await user.click(option);
-    // Only Pergunta B uses mmr
+    await user.click(await screen.findByRole("option", { name: "Diversidade (MMR)" }));
     expect(screen.queryByText("Pergunta A")).not.toBeInTheDocument();
     expect(screen.getByText("Pergunta B")).toBeInTheDocument();
   });
@@ -89,19 +112,21 @@ describe("ExperimentDetailPage", () => {
   it("filters rows by llm (ollama)", async () => {
     renderPage();
     const user = userEvent.setup();
-    await screen.findAllByText(/recursive/);
+    await openAnswers(user);
+    await screen.findByText("Pergunta A");
     await user.click(screen.getAllByLabelText(/llms/i)[0]);
     await user.click(await screen.findByRole("option", { name: "ollama" }));
     await waitFor(() => expect(screen.queryByText("Pergunta A")).not.toBeInTheDocument());
     expect(screen.getByText("Pergunta B")).toBeInTheDocument();
   });
 
-  it("opens a modal with full pergunta and resposta when a row is clicked", async () => {
+  it("opens a drawer with full pergunta and resposta when a row is clicked", async () => {
     renderPage();
     const user = userEvent.setup();
+    await openAnswers(user);
     await user.click(await screen.findByText(/Pergunta A/));
     expect(await screen.findByText("Detalhe do resultado")).toBeInTheDocument();
-    // latency chip only renders inside the modal
+    // latency only renders inside the drawer
     expect(await screen.findByText(/100 ms/)).toBeInTheDocument();
   });
 
@@ -124,7 +149,7 @@ describe("ExperimentDetailPage", () => {
   it("goes back to the list", async () => {
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("button", { name: /voltar aos experimentos/i }));
+    await user.click(await screen.findByRole("link", { name: /voltar aos experimentos/i }));
     expect(await screen.findByText("LISTA")).toBeInTheDocument();
   });
 
@@ -146,6 +171,7 @@ describe("ExperimentDetailPage", () => {
     });
     renderPage();
     const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: /prompts usados/i }));
     const btn = await screen.findByRole("button", { name: /prompts: naive/i });
     await user.click(btn);
     expect(await screen.findByText(/Answer using/)).toBeInTheDocument();
@@ -174,6 +200,8 @@ describe("ExperimentDetailPage", () => {
       ],
     });
     renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: /prompts usados/i }));
     expect(await screen.findByText(/Prompts não registrados/i)).toBeInTheDocument();
   });
 

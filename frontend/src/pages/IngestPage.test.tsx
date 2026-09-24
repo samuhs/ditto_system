@@ -59,11 +59,28 @@ describe("IngestPage", () => {
     renderPage();
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText(/nome da base/i), "viagem");
+    await user.upload(
+      document.querySelector('input[type="file"]') as HTMLInputElement,
+      new File(["texto"], "faq.md", { type: "text/markdown" }),
+    );
     await user.click(await screen.findByRole("button", { name: /preencher tudo/i }));
-    await user.click(screen.getByRole("button", { name: /inserir/i }));
+    await user.click(screen.getByRole("button", { name: /inserir documentos/i }));
     await waitFor(() =>
       expect(client.ingest).toHaveBeenCalledWith(expect.any(FormData)),
     );
+  });
+
+  it("keeps Inserir disabled and says what is missing until the form is complete", async () => {
+    renderPage();
+    await screen.findByRole("button", { name: /preencher tudo/i });
+    expect(screen.getByRole("button", { name: /inserir documentos/i })).toBeDisabled();
+    expect(screen.getByText(/ainda falta: o nome da base, os arquivos/i)).toBeInTheDocument();
+  });
+
+  it("explains each chunking technique next to its choice", async () => {
+    renderPage();
+    expect(await screen.findByText("Recursivo")).toBeInTheDocument();
+    expect(screen.getByText(/corta por parágrafo/i)).toBeInTheDocument();
   });
 
   it("prefills the base name from ?base=", async () => {

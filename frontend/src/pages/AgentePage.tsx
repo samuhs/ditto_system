@@ -1,37 +1,19 @@
-import { Alert, Button, Group, Select, Stack, Tabs, Text, Textarea } from "@mantine/core";
-import {
-  Background,
-  Controls,
-  ReactFlow,
-  type Edge,
-  type Node,
-} from "@xyflow/react";
+import { Button, Select, Tabs, Textarea } from "@mantine/core";
+import { Background, Controls, ReactFlow, type Edge, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  getFlow,
-  getPersona,
-  getPersonas,
-  saveFlowPrompt,
-  savePersona,
-} from "../api/client";
+import { getFlow, getPersona, getPersonas, saveFlowPrompt, savePersona } from "../api/client";
 import type { FlowNode, FlowSpec } from "../api/types";
+import { Errata, Note, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 
-function toReactFlow(spec: FlowSpec): { nodes: Node[]; edges: Edge[] } {
+function toReactFlow(spec: FlowSpec, selectedId: string | null): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = spec.nodes.map((n, i) => ({
     id: n.id,
     position: { x: (i % 2) * 240, y: i * 110 },
-    data: { label: `${n.label}` },
-    style: {
-      border: "1px solid var(--stroke-strong)",
-      background: "var(--surface-strong)",
-      color: "var(--text-hi)",
-      borderRadius: 12,
-      padding: 8,
-      fontSize: 12,
-    },
+    data: { label: n.label },
+    selected: n.id === selectedId,
   }));
   const edges: Edge[] = spec.edges.map((e, i) => ({
     id: `e${i}`,
@@ -40,6 +22,18 @@ function toReactFlow(spec: FlowSpec): { nodes: Node[]; edges: Edge[] } {
     label: e.label || undefined,
   }));
   return { nodes, edges };
+}
+
+function Placeholders({ names }: { names: string[] }) {
+  if (names.length === 0) return null;
+  return (
+    <div className="ditto-placeholders">
+      Precisa conter:
+      {names.map((p) => (
+        <code key={p}>{`{${p}}`}</code>
+      ))}
+    </div>
+  );
 }
 
 export function AgentePage() {
@@ -55,21 +49,26 @@ export function AgentePage() {
   const [personaSaved, setPersonaSaved] = useState(false);
 
   useEffect(() => {
-    getFlow().then(setSpec).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+    getFlow().then(setSpec).catch((e) => setError(errorText(e)));
     getPersonas()
       .then((p) => {
         setPersonas(p.personas);
         if (p.personas.length > 0) setPersonaName(p.personas[0]);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+      .catch((e) => setError(errorText(e)));
   }, []);
 
   useEffect(() => {
     if (!personaName) return;
-    getPersona(personaName).then((p) => setPersonaText(p.text)).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+    getPersona(personaName)
+      .then((p) => setPersonaText(p.text))
+      .catch((e) => setError(errorText(e)));
   }, [personaName]);
 
-  const graph = useMemo(() => (spec ? toReactFlow(spec) : { nodes: [], edges: [] }), [spec]);
+  const graph = useMemo(
+    () => (spec ? toReactFlow(spec, selected?.id ?? null) : { nodes: [], edges: [] }),
+    [spec, selected],
+  );
 
   function pickNode(id: string) {
     const node = spec?.nodes.find((n) => n.id === id) ?? null;
@@ -86,7 +85,7 @@ export function AgentePage() {
       setSaved(true);
       setSpec((s) => s && { ...s, nodes: s.nodes.map((n) => (n.id === selected.id ? { ...n, prompt: promptDraft } : n)) });
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     }
   }
 
@@ -97,99 +96,120 @@ export function AgentePage() {
       await savePersona(personaName, personaText);
       setPersonaSaved(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     }
   }
 
   return (
     <div>
       <PageHeader
-        eyebrow="Passo 04 · Conversar"
-        title="Agente"
-        subtitle="Visualize o fluxo do agente conversacional e edite o prompt de cada etapa, ou ajuste as personas."
+        title="Agente e personas"
+        lede="O caminho que cada mensagem percorre no agente de conversa. Clique numa etapa para ler e editar o prompt dela."
       />
 
       {error && (
-        <Alert color="red" variant="light" title="Erro" mb="md" radius="lg" maw={860}>
-          {error}
-        </Alert>
+        <div style={{ marginBottom: 20 }}>
+          <Errata title="Algo não funcionou">{error}. Tente de novo.</Errata>
+        </div>
       )}
 
-      <Tabs defaultValue="flow">
-        <Tabs.List>
+      <Tabs defaultValue="flow" keepMounted={false}>
+        <Tabs.List mb="lg">
           <Tabs.Tab value="flow">Fluxo do agente</Tabs.Tab>
           <Tabs.Tab value="personas">Personas</Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value="flow" pt="md">
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <div style={{ flex: "1 1 480px", height: 460 }} className="ditto-glass">
+        <Tabs.Panel value="flow">
+          <div className="ditto-flow">
+            <div className="ditto-flow-canvas">
               <ReactFlow
                 nodes={graph.nodes}
                 edges={graph.edges}
                 onNodeClick={(_e, node) => pickNode(node.id)}
+                nodesDraggable={false}
                 fitView
+                proOptions={{ hideAttribution: true }}
               >
-                <Background />
-                <Controls />
+                <Background gap={24} color="var(--line)" />
+                <Controls showInteractive={false} />
               </ReactFlow>
             </div>
-            <div style={{ flex: "1 1 320px" }}>
-              {!selected && <Text c="dimmed" size="sm">Clique num nó para ver/editar o prompt.</Text>}
+            <div>
+              {!selected && (
+                <Note title="Nenhuma etapa escolhida">
+                  Clique numa etapa do fluxo para ver o que ela faz e o prompt que ela usa.
+                </Note>
+              )}
               {selected && selected.type === "rag" && (
-                <Alert color="violet" variant="light" radius="lg" title={selected.label}>
-                  {selected.description} O prompt depende da técnica escolhida na config — edite em Prompts.
-                </Alert>
+                <Note title={selected.label}>
+                  {selected.description} O prompt desta etapa depende da técnica de RAG da
+                  configuração de chat; edite em Prompts.
+                </Note>
               )}
               {selected && selected.type === "prompt" && (
-                <Stack gap="sm">
-                  <Text fw={700}>{selected.label}</Text>
-                  <Text size="xs" c="dimmed">{selected.description}</Text>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <h2 className="ditto-h2">{selected.label}</h2>
+                  <p className="ditto-read" style={{ margin: 0 }}>
+                    {selected.description}
+                  </p>
                   <Textarea
+                    label="Prompt"
                     autosize
-                    minRows={6}
+                    minRows={8}
                     value={promptDraft}
-                    onChange={(e) => setPromptDraft(e.currentTarget.value)}
-                    styles={{ input: { fontFamily: "var(--font-mono)", fontSize: "0.82rem" } }}
+                    onChange={(e) => {
+                      setPromptDraft(e.currentTarget.value);
+                      setSaved(false);
+                    }}
                   />
-                  <Text size="xs" c="dimmed">
-                    Placeholders obrigatórios: {(selected.required_placeholders ?? []).map((p) => `{${p}}`).join(", ")}
-                  </Text>
-                  <Group>
-                    <Button size="xs" variant="light" color="violet" onClick={savePrompt}>Salvar prompt</Button>
-                    {saved && <Text size="xs" c="#07f285">Prompt salvo</Text>}
-                  </Group>
-                </Stack>
+                  <Placeholders names={selected.required_placeholders ?? []} />
+                  <div className="ditto-row-actions">
+                    <Button onClick={savePrompt}>Salvar prompt</Button>
+                    {saved && <Saved>Prompt salvo</Saved>}
+                  </div>
+                </div>
               )}
             </div>
           </div>
         </Tabs.Panel>
 
-        <Tabs.Panel value="personas" pt="md">
-          <Stack gap="sm" maw={760}>
+        <Tabs.Panel value="personas">
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 780 }}>
+            <p className="ditto-read" style={{ margin: 0 }}>
+              A persona define o tom e o papel do agente, como “guia de viagem”. Ela entra no
+              prompt de todas as respostas.
+            </p>
             <Select
               label="Persona"
               data={personas}
               value={personaName}
-              onChange={(v) => { setPersonaName(v); setPersonaSaved(false); }}
-              placeholder="Selecione uma persona"
+              onChange={(v) => {
+                setPersonaName(v);
+                setPersonaSaved(false);
+              }}
+              placeholder="Escolha uma persona"
+              maw={320}
+              allowDeselect={false}
             />
             {personaName && (
               <>
                 <Textarea
+                  label="Texto da persona"
                   autosize
-                  minRows={8}
+                  minRows={10}
                   value={personaText}
-                  onChange={(e) => { setPersonaText(e.currentTarget.value); setPersonaSaved(false); }}
-                  styles={{ input: { fontFamily: "var(--font-mono)", fontSize: "0.82rem" } }}
+                  onChange={(e) => {
+                    setPersonaText(e.currentTarget.value);
+                    setPersonaSaved(false);
+                  }}
                 />
-                <Group>
-                  <Button size="xs" variant="light" color="violet" onClick={doSavePersona}>Salvar persona</Button>
-                  {personaSaved && <Text size="xs" c="#07f285">Persona salva</Text>}
-                </Group>
+                <div className="ditto-row-actions">
+                  <Button onClick={doSavePersona}>Salvar persona</Button>
+                  {personaSaved && <Saved>Persona salva</Saved>}
+                </div>
               </>
             )}
-          </Stack>
+          </div>
         </Tabs.Panel>
       </Tabs>
     </div>

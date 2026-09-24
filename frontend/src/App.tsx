@@ -1,136 +1,59 @@
-import { AnimatePresence } from "framer-motion";
 import { Route, Routes, useLocation } from "react-router-dom";
 
+import { Sidebar, SubNav } from "./components/Sidebar";
 import { TasksToast } from "./components/TasksToast";
-import { PageTransition } from "./components/PageTransition";
-import { Sidebar } from "./components/Sidebar";
 import { TasksProvider } from "./context/TasksContext";
+import { AgentePage } from "./pages/AgentePage";
+import { ChatConfigsPage } from "./pages/ChatConfigsPage";
+import { ChatPage } from "./pages/ChatPage";
+import { DialoguePage } from "./pages/DialoguePage";
+import { DialoguesPage } from "./pages/DialoguesPage";
 import { ExperimentDetailPage } from "./pages/ExperimentDetailPage";
 import { ExperimentPage } from "./pages/ExperimentPage";
 import { HomePage } from "./pages/HomePage";
 import { IngestPage } from "./pages/IngestPage";
-import { ChatConfigsPage } from "./pages/ChatConfigsPage";
-import { AgentePage } from "./pages/AgentePage";
-import { ChatPage } from "./pages/ChatPage";
-import { DialoguePage } from "./pages/DialoguePage";
-import { DialoguesPage } from "./pages/DialoguesPage";
 import { PromptsPage } from "./pages/PromptsPage";
 import { ResultsPage } from "./pages/ResultsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { SectionContext, sectionForPath } from "./sections";
 
 export function App() {
   const location = useLocation();
+  const section = sectionForPath(location.pathname);
 
   return (
     <TasksProvider>
-      <div className="ditto-shell">
-        <Sidebar />
-        <main className="ditto-main">
-          <div className="ditto-main-inner">
-            <AnimatePresence mode="wait">
-              <Routes location={location} key={location.pathname}>
-                <Route
-                  path="/"
-                  element={
-                    <PageTransition>
-                      <HomePage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/ingest"
-                  element={
-                    <PageTransition>
-                      <IngestPage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/experiment"
-                  element={
-                    <PageTransition>
-                      <ExperimentPage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/results"
-                  element={
-                    <PageTransition>
-                      <ResultsPage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/results/:id"
-                  element={
-                    <PageTransition>
-                      <ExperimentDetailPage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/prompts"
-                  element={
-                    <PageTransition>
-                      <PromptsPage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/chat-configs"
-                  element={
-                    <PageTransition>
-                      <ChatConfigsPage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/chat"
-                  element={
-                    <PageTransition>
-                      <ChatPage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/dialogues"
-                  element={
-                    <PageTransition>
-                      <DialoguesPage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/dialogues/:id"
-                  element={
-                    <PageTransition>
-                      <DialoguePage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/agente"
-                  element={
-                    <PageTransition>
-                      <AgentePage />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/configuracoes"
-                  element={
-                    <PageTransition>
-                      <SettingsPage />
-                    </PageTransition>
-                  }
-                />
-              </Routes>
-            </AnimatePresence>
+      <SectionContext.Provider value={section}>
+        <a className="ditto-skip" href="#conteudo">
+          Pular para o conteúdo
+        </a>
+        <div className="ditto-shell" data-section={section.id}>
+          <Sidebar />
+          <div className="ditto-board">
+            <main id="conteudo" className="ditto-leaf" tabIndex={-1}>
+              <SubNav />
+              {/* keyed by path so each page turn replays the hinge */}
+              <div className="ditto-page" key={location.pathname}>
+                <Routes location={location}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/ingest" element={<IngestPage />} />
+                  <Route path="/experiment" element={<ExperimentPage />} />
+                  <Route path="/results" element={<ResultsPage />} />
+                  <Route path="/results/:id" element={<ExperimentDetailPage />} />
+                  <Route path="/prompts" element={<PromptsPage />} />
+                  <Route path="/chat-configs" element={<ChatConfigsPage />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/dialogues" element={<DialoguesPage />} />
+                  <Route path="/dialogues/:id" element={<DialoguePage />} />
+                  <Route path="/agente" element={<AgentePage />} />
+                  <Route path="/configuracoes" element={<SettingsPage />} />
+                </Routes>
+              </div>
+            </main>
           </div>
-        </main>
-        <TasksToast />
-      </div>
+          <TasksToast />
+        </div>
+      </SectionContext.Provider>
     </TasksProvider>
   );
 }

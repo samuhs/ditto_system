@@ -1,10 +1,13 @@
-import { Alert, Loader, Pagination, Select, Text, TextInput } from "@mantine/core";
+import { Button, Loader, Pagination, Select, TextInput } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { listDialogues } from "../api/client";
 import type { DialogueList, DialogueListParams } from "../api/types";
+import { Errata, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
+import { ArrowIcon } from "../components/icons";
+import { formatDateTime } from "../utils/duration";
 
 const PAGE_SIZE = 20;
 
@@ -16,14 +19,9 @@ const RATED_OPTIONS = [
 const SORT_OPTIONS = [
   { value: "recent", label: "Mais recentes" },
   { value: "oldest", label: "Mais antigos" },
-  { value: "rating_desc", label: "Nota ↓" },
-  { value: "rating_asc", label: "Nota ↑" },
+  { value: "rating_desc", label: "Maior nota" },
+  { value: "rating_asc", label: "Menor nota" },
 ];
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-BR");
-}
 
 export function DialoguesPage() {
   const navigate = useNavigate();
@@ -52,23 +50,23 @@ export function DialoguesPage() {
         setLoading(false);
       })
       .catch((e) => {
-        setError(String(e));
+        setError(errorText(e));
         setLoading(false);
       });
   }, [date, rated, sort, page]);
 
   const items = data?.items ?? [];
   const pageCount = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
+  const filtering = date !== "" || rated !== "all";
 
   return (
     <div>
       <PageHeader
-        eyebrow="Passo 05 · Avaliar"
-        title="Avaliação de diálogos"
-        subtitle="Leia os diálogos salvos e dê uma nota de 0 a 10. Filtre por data, por avaliadas/não avaliadas e ordene pela nota."
+        title="Diálogos salvos"
+        lede="Leia cada conversa salva e dê uma nota de 0 a 10. As notas ajudam a comparar configurações na prática."
       />
 
-      <div className="ditto-filter-bar">
+      <div className="ditto-filters" style={{ maxWidth: 640 }}>
         <TextInput
           label="Data"
           type="date"
@@ -77,7 +75,6 @@ export function DialoguesPage() {
             setDate(e.currentTarget.value);
             setPage(1);
           }}
-          size="xs"
         />
         <Select
           label="Avaliação"
@@ -87,71 +84,77 @@ export function DialoguesPage() {
             setRated(v ?? "all");
             setPage(1);
           }}
-          size="xs"
           allowDeselect={false}
         />
         <Select
-          label="Ordenar"
+          label="Ordenar por"
           data={SORT_OPTIONS}
           value={sort}
           onChange={(v) => {
             setSort(v ?? "recent");
             setPage(1);
           }}
-          size="xs"
           allowDeselect={false}
         />
       </div>
 
       {error && (
-        <Alert color="red" variant="light" title="Erro" mb="lg" radius="lg" maw={760}>
-          {error}
-        </Alert>
+        <Errata title="Não foi possível carregar os diálogos">
+          {error}. Recarregue a página.
+        </Errata>
       )}
 
-      {loading && (
-        <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
-          <Loader size="md" color="#05dbf2" />
-        </div>
-      )}
+      {loading && <Loader aria-label="Carregando diálogos" />}
 
       {!loading && items.length === 0 && !error && (
-        <p className="ditto-empty">Nenhum diálogo encontrado.</p>
+        <div className="ditto-empty">
+          <h2 className="ditto-h2">{filtering ? "Nenhum diálogo com esses filtros" : "Nenhum diálogo salvo ainda"}</h2>
+          <p>
+            {filtering
+              ? "Mude a data ou a avaliação para ver outros diálogos."
+              : "Na Conversa, use “Salvar diálogo” ao final de uma conversa. Ela aparece aqui para você avaliar."}
+          </p>
+          {!filtering && (
+            <Button component={Link} to="/chat" rightSection={<ArrowIcon />}>
+              Ir para a conversa
+            </Button>
+          )}
+        </div>
       )}
 
       {!loading && items.length > 0 && (
         <>
           <div className="ditto-table-wrap">
-            <table>
+            <table className="ditto-table">
               <thead>
                 <tr>
                   <th>Data</th>
-                  <th>Config</th>
+                  <th>Configuração</th>
                   <th>Persona</th>
-                  <th>Nº msgs</th>
-                  <th>Nota</th>
+                  <th>Início da conversa</th>
+                  <th className="ditto-num">Mensagens</th>
+                  <th className="ditto-num">Nota</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((it) => (
-                  <tr
-                    key={it.id}
-                    className="ditto-row"
-                    onClick={() => navigate(`/dialogues/${it.id}`)}
-                  >
-                    <td>{formatDate(it.created_at)}</td>
+                  <tr key={it.id} data-clickable="true" onClick={() => navigate(`/dialogues/${it.id}`)}>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <Link to={`/dialogues/${it.id}`} onClick={(e) => e.stopPropagation()}>
+                        {formatDateTime(it.created_at)}
+                      </Link>
+                    </td>
                     <td>{it.name ?? "—"}</td>
                     <td>{it.persona ?? "—"}</td>
-                    <td>{it.message_count}</td>
                     <td>
+                      <span className="ditto-clip ditto-muted">{it.preview ?? "—"}</span>
+                    </td>
+                    <td className="ditto-num">{it.message_count}</td>
+                    <td className="ditto-num">
                       {it.rating === null ? (
-                        <span className="ditto-chip" style={{ color: "#8892b0" }}>
-                          não avaliado
-                        </span>
+                        <span className="ditto-muted">não avaliado</span>
                       ) : (
-                        <span className="ditto-chip" style={{ color: "#07f285" }}>
-                          {it.rating}
-                        </span>
+                        <b>{it.rating}</b>
                       )}
                     </td>
                   </tr>
@@ -161,16 +164,10 @@ export function DialoguesPage() {
           </div>
 
           <div className="ditto-table-foot">
-            <Text size="xs" c="dimmed">
-              {data?.total ?? 0} diálogo(s)
-            </Text>
-            <Pagination
-              total={pageCount}
-              value={page}
-              onChange={setPage}
-              size="sm"
-              color="violet"
-            />
+            <span className="ditto-muted" style={{ fontSize: 14 }}>
+              {data?.total ?? 0} {data?.total === 1 ? "diálogo" : "diálogos"}
+            </span>
+            <Pagination total={pageCount} value={page} onChange={setPage} size="sm" />
           </div>
         </>
       )}
