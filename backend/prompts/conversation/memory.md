@@ -1,4 +1,4 @@
-Resuma em poucas frases o histórico de conversa abaixo, mantendo o que importa para continuar o diálogo. Se estiver vazio, responda com vazio.
+Resuma em poucas frases o histórico de conversa abaixo, mantendo o que importa para continuar o diálogo.
 
 Histórico:
 {history}

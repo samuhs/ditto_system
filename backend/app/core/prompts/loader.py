@@ -28,9 +28,9 @@ PROMPT_SPECS: dict[str, dict[str, set[str]]] = {
 DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
     "naive": {
         "answer": (
-            "Use the context below to answer the question. If the context is not "
-            "enough, say what you can.\n\nContext:\n{context}\n\n"
-            "Question: {question}\n\nAnswer:"
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
         ),
     },
     "agentic": {
@@ -42,8 +42,9 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
             "Question: {question}\n\nContext so far:\n{context}"
         ),
         "answer": (
-            "Answer the question using the context.\n\nContext:\n{context}\n\n"
-            "Question: {question}\n\nAnswer:"
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
         ),
     },
     "multi_query": {

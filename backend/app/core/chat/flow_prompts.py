@@ -26,7 +26,7 @@ DEFAULT_FLOW_PROMPTS: dict[str, str] = {
     ),
     "memory": (
         "Resuma em poucas frases o histórico de conversa abaixo, mantendo o que "
-        "importa para continuar o diálogo. Se estiver vazio, responda com vazio.\n\n"
+        "importa para continuar o diálogo.\n\n"
         "Histórico:\n{history}"
     ),
     "persona_compose": (

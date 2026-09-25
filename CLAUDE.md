@@ -2,9 +2,6 @@
 
 Sistema de doutorado: ingere documentos, roda experimentos de RAG (chunking × embedding × rag × retriever) sobre perguntas e rankeia por métricas de qualidade.
 
-## ⚠️ Ao iniciar a sessão
-**Leia o `HANDOFF.md` na raiz** — ele resume o estado, as decisões e as pendências da última sessão.
-
 ## Como iniciar o sistema (Docker)
 ```bash
 make setup       # 1ª vez: checa Docker, cria .env, pede chave Gemini

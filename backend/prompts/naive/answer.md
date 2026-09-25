@@ -1,8 +1,8 @@
-Use the context below to answer the question. If the context is not enough, say what you can.
+Use o contexto abaixo para responder a pergunta. Se o contexto nao for suficiente, diga o que for possivel.
 
-Context:
+Contexto:
 {context}
 
-Question: {question}
+Pergunta: {question}
 
-Answer:
+Resposta:
