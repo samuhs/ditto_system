@@ -32,7 +32,8 @@ class ExperimentConfig(BaseModel):
     # (which may include pairs that were never indexed).
     indexes: list[IndexPair] | None = None
     llms: list[str] = ["gemini"]
-    eval_embedding: str = "gemini"
+    # None: the API fills in the default saved under Ajustar > Avaliação.
+    eval_embedding: str | None = None
     # Questions processed in parallel within each combination. >1 only pays off
     # when the LLM server serves concurrent requests (e.g. OLLAMA_NUM_PARALLEL);
     # per-question latency then includes time queued on the server.

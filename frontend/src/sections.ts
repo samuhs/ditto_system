@@ -70,10 +70,11 @@ export const SECTIONS: Section[] = [
   {
     id: "ajustar",
     label: "Ajustar",
-    purpose: "Prompts, agente, personas e chaves do sistema.",
+    purpose: "Prompts, agente, personas, avaliação e chaves do sistema.",
     pages: [
       { to: "/prompts", label: "Prompts" },
       { to: "/agente", label: "Agente e personas" },
+      { to: "/avaliacao", label: "Avaliação" },
       { to: "/configuracoes", label: "Sistema" },
     ],
   },

@@ -293,6 +293,7 @@ export function ExperimentDetailPage() {
             {results.length} {results.length === 1 ? "resposta" : "respostas"} · {metricKeys.length}{" "}
             {metricKeys.length === 1 ? "métrica" : "métricas"}
           </span>
+          {detail.eval_embedding && <span>Avaliado com {term("embedding", detail.eval_embedding).name}</span>}
           <span className="ditto-meta-actions">
             {isRunning && (
               <>

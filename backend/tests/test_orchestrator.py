@@ -574,6 +574,7 @@ def test_runs_are_llm_major_and_each_llm_is_built_once(session_factory):
 
 def test_embedders_load_once_per_experiment(session_factory):
     store, experiment_id, config = _setup_two_llm_experiment(session_factory)
+    config.eval_embedding = "gemini"
     loads = []
 
     def embedder_factory(name, **kwargs):

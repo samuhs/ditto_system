@@ -9,6 +9,7 @@ from fastapi.responses import Response
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
+from app.core.config.runtime import get_eval_embedding
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
 from app.core.memory.manager import get_model_manager
@@ -123,6 +124,8 @@ async def create_experiment(
         _check_indexes_exist(parsed, deps.store)
     if not parsed.name:
         parsed.name = generate_experiment_name()
+    if parsed.eval_embedding is None:
+        parsed.eval_embedding = get_eval_embedding()
     raw = await questions.read()
     try:
         csv_text = raw.decode("utf-8")
@@ -235,6 +238,7 @@ def get_experiment(
             "finished_at": _iso_utc(experiment.finished_at),
             "pause_requested": _pause_requested(experiment_id),
             "error": cfg.get("error") or None,
+            "eval_embedding": cfg.get("eval_embedding"),
             "progress": {
                 "completed": completed_combos,
                 "total": total_combos,

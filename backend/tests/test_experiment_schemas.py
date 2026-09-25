@@ -53,7 +53,7 @@ def test_experiment_config_defaults():
     )
     assert config.name is None
     assert config.llms == ["gemini"]
-    assert config.eval_embedding == "gemini"
+    assert config.eval_embedding is None  # the API fills in the saved default
 
 
 def test_experiment_config_llms_defaults_to_gemini():

@@ -8,6 +8,9 @@ from app.core.config.settings import get_settings
 
 _ID_RE = re.compile(r"^[\w-]+$")
 
+# Local and API-free, so scoring never spends Gemini quota unless the user picks it.
+DEFAULT_EVAL_EMBEDDING = "paraphrase"
+
 
 def config_dir() -> Path:
     """Directory holding the runtime settings file (env APP_CONFIG_DIR overrides)."""
@@ -83,4 +86,16 @@ def set_ollama_models(models: list[dict], reserved: set[str] | None = None) -> N
     validate_ollama_models(models, reserved or set())
     data = load_config()
     data["ollama_models"] = [{"id": m["id"], "model": m["model"]} for m in models]
+    save_config(data)
+
+
+def get_eval_embedding() -> str:
+    """The embedder that scores experiment answers when a run does not name one."""
+    return load_config().get("eval_embedding") or DEFAULT_EVAL_EMBEDDING
+
+
+def set_eval_embedding(name: str) -> None:
+    """Persist the default evaluation embedder."""
+    data = load_config()
+    data["eval_embedding"] = name
     save_config(data)

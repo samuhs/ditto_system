@@ -291,3 +291,21 @@ def test_detail_reports_the_evaluation_phase(client):
     session.close()
     progress = client.get(f"/experiments/{experiment_id}").json()["progress"]
     assert progress["phase"] == "evaluating"
+
+
+def test_create_experiment_uses_the_saved_eval_embedding(client, tmp_path, monkeypatch):
+    monkeypatch.setenv("APP_CONFIG_DIR", str(tmp_path))
+    from app.core.config.runtime import set_eval_embedding
+
+    set_eval_embedding("e5")
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    assert client.get(f"/experiments/{exp_id}").json()["eval_embedding"] == "e5"
+
+
+def test_create_experiment_keeps_an_explicit_eval_embedding(client, tmp_path, monkeypatch):
+    monkeypatch.setenv("APP_CONFIG_DIR", str(tmp_path))
+    payload = json.loads(_config_payload()) | {"eval_embedding": "gemini"}
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": json.dumps(payload)}, files=files).json()["id"]
+    assert client.get(f"/experiments/{exp_id}").json()["eval_embedding"] == "gemini"

@@ -1243,7 +1243,9 @@ a { color: inherit; text-underline-offset: 3px; }
   .ditto-table[data-stack] .ditto-cell-count { order: 3; }
   .ditto-table[data-stack] tr[data-best="true"] { background: color-mix(in srgb, var(--sec) 12%, var(--leaf)); }
   .ditto-table[data-stack] tr td { background: none !important; }
+  .ditto-table[data-stack] .ditto-cell-title { order: -2; }
   .ditto-table[data-stack] .ditto-cell-combo,
+  .ditto-table[data-stack] .ditto-cell-title,
   .ditto-table[data-stack] .ditto-cell-text { grid-column: 1 / -1; display: block; }
   .ditto-table[data-stack] .ditto-cell-text::before { display: block; margin-bottom: 2px; }
   .ditto-table[data-stack] .ditto-clip { max-width: none; }

@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from app.core.db.models import Experiment, ExperimentRun, RunResult
 from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
-from app.core.config.runtime import get_ollama_models
+from app.core.config.runtime import get_eval_embedding, get_ollama_models
 from app.core.evaluation.runner import evaluate_sample, metrics_need_embedder
 from app.core.llm import ollama
 from app.core.llm.factory import is_local_llm, resolve_llm
@@ -172,6 +172,8 @@ def run_experiment(
     deps: ExperimentDeps,
 ) -> None:
     """Run the experiment once the single experiment slot is free."""
+    if config.eval_embedding is None:
+        config = config.model_copy(update={"eval_embedding": get_eval_embedding()})
     with _run_slot:
         _run_experiment(experiment_id, config, questions, deps)
 

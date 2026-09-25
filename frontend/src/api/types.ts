@@ -76,6 +76,8 @@ export interface ExperimentDetail {
   finished_at?: string;
   pause_requested?: boolean;
   error?: string | null;
+  /** Embedder that scored this experiment's answers (absent on old runs). */
+  eval_embedding?: string | null;
   progress?: ExperimentProgress;
   results: ExperimentResultRow[];
   prompts?: Record<string, Record<string, string>>;
@@ -187,4 +189,11 @@ export interface MemoryStatus {
 export interface AppSettings {
   gemini_api_key_set: boolean;
   ollama_models: OllamaModel[];
+}
+
+export interface EvaluationSettings {
+  /** Embedder that scores experiments that do not name one. */
+  eval_embedding: string;
+  embeddings: { name: string; local: boolean }[];
+  metrics: { name: string; uses_embedding: boolean; requires_reference: boolean }[];
 }

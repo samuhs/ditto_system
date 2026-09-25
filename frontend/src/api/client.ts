@@ -1,5 +1,6 @@
 import type {
   AppSettings,
+  EvaluationSettings,
   MemoryStatus,
   ChatConfig,
   ChatConfigInput,
@@ -190,5 +191,17 @@ export async function saveOllamaModels(
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ models }),
+  }));
+}
+
+export async function getEvaluationSettings(): Promise<EvaluationSettings> {
+  return asJson<EvaluationSettings>(await fetch(`${BASE}/settings/evaluation`));
+}
+
+export async function saveEvalEmbedding(name: string): Promise<{ eval_embedding: string }> {
+  return asJson(await fetch(`${BASE}/settings/eval-embedding`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
   }));
 }

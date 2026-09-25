@@ -3,12 +3,18 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.core.config.runtime import (
+    get_eval_embedding,
     get_gemini_key,
     get_ollama_models,
+    set_eval_embedding,
     set_gemini_key,
     set_ollama_models,
 )
+from app.core.embedding.base import embedding_registry
+from app.core.evaluation.base import evaluation_registry
+from app.core.evaluation.runner import metrics_need_embedder
 from app.core.llm.base import llm_registry
+from app.core.memory.manager import is_local_embedding
 
 router = APIRouter()
 
@@ -24,6 +30,10 @@ class OllamaModelBody(BaseModel):
 
 class OllamaModelsBody(BaseModel):
     models: list[OllamaModelBody]
+
+
+class EvalEmbeddingBody(BaseModel):
+    name: str
 
 
 @router.get("/settings")
@@ -51,3 +61,31 @@ def update_ollama_models(body: OllamaModelsBody) -> dict:
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"ollama_models": get_ollama_models()}
+
+
+@router.get("/settings/evaluation")
+def get_evaluation_settings() -> dict:
+    """The default evaluation embedder, the candidates, and what each metric depends on."""
+    return {
+        "eval_embedding": get_eval_embedding(),
+        "embeddings": [
+            {"name": name, "local": is_local_embedding(name)} for name in embedding_registry.names()
+        ],
+        "metrics": [
+            {
+                "name": name,
+                "uses_embedding": metrics_need_embedder([name]),
+                "requires_reference": evaluation_registry.get(name).requires_reference,
+            }
+            for name in evaluation_registry.names()
+        ],
+    }
+
+
+@router.put("/settings/eval-embedding")
+def update_eval_embedding(body: EvalEmbeddingBody) -> dict:
+    """Set the embedder that scores experiments that do not name one."""
+    if body.name not in embedding_registry.names():
+        raise HTTPException(status_code=422, detail=f"unknown embedding: {body.name!r}")
+    set_eval_embedding(body.name)
+    return {"eval_embedding": get_eval_embedding()}

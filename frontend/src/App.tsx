@@ -4,6 +4,7 @@ import { Sidebar, SubNav } from "./components/Sidebar";
 import { TasksToast } from "./components/TasksToast";
 import { TasksProvider } from "./context/TasksContext";
 import { AgentePage } from "./pages/AgentePage";
+import { AvaliacaoPage } from "./pages/AvaliacaoPage";
 import { ChatConfigsPage } from "./pages/ChatConfigsPage";
 import { ChatPage } from "./pages/ChatPage";
 import { DialoguePage } from "./pages/DialoguePage";
@@ -46,6 +47,7 @@ export function App() {
                   <Route path="/dialogues" element={<DialoguesPage />} />
                   <Route path="/dialogues/:id" element={<DialoguePage />} />
                   <Route path="/agente" element={<AgentePage />} />
+                  <Route path="/avaliacao" element={<AvaliacaoPage />} />
                   <Route path="/configuracoes" element={<SettingsPage />} />
                 </Routes>
               </div>
