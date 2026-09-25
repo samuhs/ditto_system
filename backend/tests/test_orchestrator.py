@@ -736,6 +736,18 @@ def test_staged_hyde_loads_the_embedder_only_for_generated_text(session_factory)
     assert "rouge_l" in row.scores  # rouge_l needs no embedder: stage C loaded nothing
 
 
+def test_staged_scores_gold_metrics_from_stored_evidence(session_factory):
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "staged-gold")
+    run_experiment(experiment_id, _staged_config(metrics=["context_hit", "context_mrr"]),
+                   [QuestionItem(text="Where?", evidence=["Para two here."])],
+                   _staged_deps(store, session_factory, events))
+    _, [row], _ = _results(session_factory, experiment_id)
+    assert row.reference_contexts == ["Para two here."]
+    assert row.scores["context_hit"] == 1.0 and row.scores["context_mrr"] > 0
+
+
 def test_staged_skips_failed_questions_when_scoring(session_factory, monkeypatch):
     from app.experiments import orchestrator
 

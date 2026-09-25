@@ -244,8 +244,11 @@ export function ExperimentPage() {
             <h2 className="ditto-h2">Perguntas e métricas</h2>
             <p className="ditto-read">
               Um CSV com as colunas <span className="ditto-mono">pergunta</span> e{" "}
-              <span className="ditto-mono">resposta_referencia</span>. Cada métrica vai de 0 a 1;
-              quanto maior, melhor.
+              <span className="ditto-mono">resposta_referencia</span>. A coluna opcional{" "}
+              <span className="ditto-mono">evidencia_referencia</span> traz trechos do documento
+              que respondem à pergunta, separados por <span className="ditto-mono">|</span>; as
+              métricas da busca só são calculadas com ela. Cada métrica vai de 0 a 1; quanto maior,
+              melhor.
             </p>
           </div>
           <div className="ditto-sec-body">

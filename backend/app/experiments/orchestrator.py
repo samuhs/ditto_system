@@ -102,6 +102,7 @@ def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder)
         answer=answer.answer,
         contexts=context_texts,
         reference_answer=question.reference,
+        reference_contexts=question.evidence,
     )
     scores = evaluate_sample(sample, metrics, embedder=eval_embedder)
     return answer.answer, answer.contexts, scores, latency_ms, len(answer.answer.split())
@@ -254,6 +255,7 @@ def _score_results(
                 answer=row.generated_answer,
                 contexts=[c.get("text", "") for c in row.retrieved_context],
                 reference_answer=row.reference_answer,
+                reference_contexts=row.reference_contexts,
             )
             row.scores = _score_with_retry(sample, config.metrics, eval_embedder)
         session.commit()
@@ -355,6 +357,7 @@ def _run_experiment(
                                 run_id=run.id,
                                 question=question.text,
                                 reference_answer=question.reference,
+                                reference_contexts=question.evidence,
                                 generated_answer=f"{ERROR_PREFIX}{error}]",
                                 retrieved_context=[],
                                 scores={},
@@ -368,6 +371,7 @@ def _run_experiment(
                                 run_id=run.id,
                                 question=question.text,
                                 reference_answer=question.reference,
+                                reference_contexts=question.evidence,
                                 generated_answer=answer_text,
                                 retrieved_context=contexts,
                                 scores=scores,

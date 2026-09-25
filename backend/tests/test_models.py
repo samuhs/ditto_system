@@ -30,3 +30,16 @@ def test_experiment_run_result_relationship(db_session):
     stored = db_session.query(Experiment).filter_by(name="brave-otter-42").one()
     assert stored.runs[0].results[0].generated_answer == "Brasilia"
     assert stored.runs[0].results[0].scores["faithfulness"] == 0.9
+
+
+def test_add_missing_columns_upgrades_an_old_run_result_table():
+    from sqlalchemy import create_engine, inspect, text
+
+    from app.core.db.base import add_missing_columns
+
+    engine = create_engine("sqlite:///:memory:")
+    with engine.begin() as conn:
+        conn.execute(text("CREATE TABLE run_result (id INTEGER PRIMARY KEY, question VARCHAR)"))
+    add_missing_columns(engine, {"run_result": {"reference_contexts": "JSON"}})
+    add_missing_columns(engine, {"run_result": {"reference_contexts": "JSON"}})  # idempotent
+    assert "reference_contexts" in {c["name"] for c in inspect(engine).get_columns("run_result")}

@@ -112,6 +112,26 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
       name: "ROUGE-L",
       description: "Quanto do texto coincide com a resposta de referência.",
     },
+    token_f1: {
+      name: "F1 de palavras",
+      description: "Quantas palavras a resposta divide com a resposta de referência.",
+    },
+    chrf: {
+      name: "chrF",
+      description: "Coincidência de pedaços de palavras com a referência; aceita plural e flexão.",
+    },
+    context_hit: {
+      name: "Acerto da busca",
+      description: "Algum trecho recuperado contém a evidência anotada?",
+    },
+    context_mrr: {
+      name: "Posição da evidência (MRR)",
+      description: "Quão no topo veio o primeiro trecho com a evidência (1 = primeiro).",
+    },
+    context_recall_gold: {
+      name: "Evidência recuperada",
+      description: "Quanto da evidência anotada os trechos recuperados trazem.",
+    },
   },
 };
 

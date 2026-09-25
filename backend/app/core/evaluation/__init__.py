@@ -12,7 +12,8 @@ from app.core.evaluation.embedding_metrics import (
     ContextRecall,
     Faithfulness,
 )
-from app.core.evaluation.overlap_metrics import RougeL
+from app.core.evaluation.gold_metrics import ContextHit, ContextMRR, ContextRecallGold
+from app.core.evaluation.overlap_metrics import ChrF, RougeL, TokenF1
 from app.core.evaluation.runner import evaluate_sample
 
 __all__ = [
@@ -26,5 +27,10 @@ __all__ = [
     "ContextRecall",
     "AnswerCorrectness",
     "RougeL",
+    "TokenF1",
+    "ChrF",
+    "ContextHit",
+    "ContextMRR",
+    "ContextRecallGold",
     "evaluate_sample",
 ]

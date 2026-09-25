@@ -7,18 +7,24 @@ from app.core.registry import Registry
 
 
 class EvalSample(BaseModel):
-    """One evaluation unit: a question, an answer, its contexts, and an optional reference."""
+    """One evaluation unit: a question, an answer, its contexts, and optional references.
+
+    reference_contexts holds annotated evidence passages (literal text from the
+    source document) that a good retrieval should bring back.
+    """
 
     question: str
     answer: str
     contexts: list[str]
     reference_answer: str | None = None
+    reference_contexts: list[str] | None = None
 
 
 class Evaluator(ABC):
     """Minimal interface every evaluation metric implements."""
 
     requires_reference: bool = False
+    requires_reference_contexts: bool = False
 
     @abstractmethod
     def score(self, sample: EvalSample) -> float:

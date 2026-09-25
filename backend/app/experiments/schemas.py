@@ -5,10 +5,11 @@ from pydantic import BaseModel, Field
 
 
 class QuestionItem(BaseModel):
-    """A question to ask, with an optional reference answer."""
+    """A question to ask, with an optional reference answer and reference evidence."""
 
     text: str
     reference: str | None = None
+    evidence: list[str] | None = None
 
 
 class IndexPair(BaseModel):

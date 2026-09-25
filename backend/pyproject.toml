@@ -23,6 +23,8 @@ dependencies = [
     "tiktoken>=0.7",
     "langgraph>=0.2,<2.0",
     "psutil>=5.9",
+    "sacrebleu>=2.4",
+    "rapidfuzz>=3.0",
 ]
 
 [project.optional-dependencies]

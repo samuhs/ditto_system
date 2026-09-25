@@ -53,6 +53,7 @@ class RunResult(Base):
     run_id: Mapped[int] = mapped_column(ForeignKey("experiment_run.id"))
     question: Mapped[str] = mapped_column(String)
     reference_answer: Mapped[str | None] = mapped_column(String, nullable=True)
+    reference_contexts: Mapped[list | None] = mapped_column(JSON, nullable=True)
     generated_answer: Mapped[str] = mapped_column(String)
     retrieved_context: Mapped[list] = mapped_column(JSON, default=list)
     scores: Mapped[dict] = mapped_column(JSON, default=dict)

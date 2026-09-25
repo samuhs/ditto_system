@@ -36,12 +36,14 @@ def evaluate_sample(
     metric_names: list[str],
     embedder: Embedder | None = None,
 ) -> dict[str, float]:
-    """Score a sample with the named metrics, skipping reference-only ones if absent."""
+    """Score a sample with the named metrics, skipping those whose references are absent."""
     memo = _MemoEmbedder(embedder) if embedder is not None else None
     scores: dict[str, float] = {}
     for name in metric_names:
         metric_class = evaluation_registry.get(name)
         if metric_class.requires_reference and sample.reference_answer is None:
+            continue
+        if metric_class.requires_reference_contexts and not sample.reference_contexts:
             continue
         if _needs_embedder(metric_class):
             if memo is None:

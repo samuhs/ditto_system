@@ -36,6 +36,17 @@ def test_parse_questions_csv_with_and_without_reference():
     assert items[1] == QuestionItem(text="Tem wifi?", reference=None)
 
 
+def test_parse_questions_csv_splits_reference_evidence_on_pipes():
+    content = (
+        "pergunta,resposta_referencia,evidencia_referencia\n"
+        "Onde fica o centro?,Na praca,Trecho um | Trecho dois |\n"
+        "Tem wifi?,,\n"
+    )
+    items = parse_questions_csv(content)
+    assert items[0].evidence == ["Trecho um", "Trecho dois"]
+    assert items[1].evidence is None
+
+
 def test_parse_questions_csv_skips_blank_rows():
     content = "pergunta,resposta_referencia\n,ignored\nValid question?,\n"
     items = parse_questions_csv(content)

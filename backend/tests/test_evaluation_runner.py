@@ -68,3 +68,14 @@ def test_metrics_need_embedder():
 
     assert metrics_need_embedder(["rouge_l", "faithfulness"]) is True
     assert metrics_need_embedder(["rouge_l"]) is False
+
+
+def test_runner_skips_gold_metrics_without_reference_contexts():
+    sample = EvalSample(question="q", answer="a", contexts=["c"], reference_answer="r")
+    assert set(evaluate_sample(sample, ["context_hit", "token_f1"])) == {"token_f1"}
+
+
+def test_runner_scores_gold_metrics_with_reference_contexts():
+    sample = EvalSample(question="q", answer="a", contexts=["texto com a evidência aqui"],
+                        reference_contexts=["texto com a evidência aqui"])
+    assert evaluate_sample(sample, ["context_hit"]) == {"context_hit": 1.0}
