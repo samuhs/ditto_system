@@ -24,6 +24,10 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
       name: "Por tokens",
       description: "Blocos medidos em tokens do modelo, não em caracteres.",
     },
+    markdown: {
+      name: "Por seção (Markdown)",
+      description: "Um bloco por cabeçalho do Markdown, com os títulos acima dele. Nunca mistura duas seções.",
+    },
     semantic: {
       name: "Semântico",
       description: "Junta frases vizinhas enquanto o assunto é o mesmo e corta quando ele muda.",

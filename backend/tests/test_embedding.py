@@ -62,8 +62,9 @@ class _FakeSentenceTransformer:
 
 def test_e5_embeds_with_injected_model():
     emb = E5Embedder(model=_FakeSentenceTransformer())
-    assert emb.embed_documents(["abc"]) == [[3.0, 0.0, 0.0, 1.0]]
-    assert emb.embed_query("ab") == [2.0, 0.0, 0.0, 1.0]
+    # The fake's first coordinate is the text length, e5 prefix included.
+    assert emb.embed_documents(["abc"]) == [[float(len("passage: abc")), 0.0, 0.0, 1.0]]
+    assert emb.embed_query("ab") == [float(len("query: ab")), 0.0, 0.0, 1.0]
     assert emb.dimension == 4
 
 
@@ -138,3 +139,37 @@ def test_huggingface_batches_and_returns_plain_floats():
     assert out == [[1.0, 1.0]] * 3 and type(out[0][0]) is float
     assert calls[-1] == (["a", "b", "c"], 32)
     assert emb.embed_query("q") == [0.5, 1.0]
+
+
+class _RecordingSentenceTransformer(_FakeSentenceTransformer):
+    """Records the exact texts the model was asked to encode."""
+
+    def __init__(self) -> None:
+        self.seen: list[str] = []
+
+    def encode(self, text, **kwargs):
+        self.seen.extend(text if isinstance(text, list) else [text])
+        return super().encode(text, **kwargs)
+
+
+def test_e5_prefixes_passages_and_queries():
+    # The e5 model card: every input starts with "query: " or "passage: ".
+    model = _RecordingSentenceTransformer()
+    emb = E5Embedder(model=model)
+    emb.embed_documents(["centro da cidade"])
+    emb.embed_query("onde fica o centro?")
+    emb.embed_queries(["onde comer?"])
+    assert model.seen == [
+        "passage: centro da cidade",
+        "query: onde fica o centro?",
+        "query: onde comer?",
+    ]
+
+
+def test_paraphrase_embeds_text_unprefixed():
+    model = _RecordingSentenceTransformer()
+    emb = ParaphraseEmbedder(model=model)
+    emb.embed_documents(["a"])
+    emb.embed_query("b")
+    emb.embed_queries(["c"])
+    assert model.seen == ["a", "b", "c"]
