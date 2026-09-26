@@ -114,7 +114,7 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
 
   return (
     <>
-      <div className="ditto-filters">
+      <div className="ditto-toolbar">
         <Select
           label="Métrica"
           data={data.metrics.map((m) => ({ value: m, label: term("metric", m).name }))}
@@ -124,9 +124,7 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
           size="sm"
           w={240}
         />
-        <div>
-          <DifficultyGuide />
-        </div>
+        <DifficultyGuide />
       </div>
       {irt && !irt.reliable && (
         <Note title="TRI só indicativa">

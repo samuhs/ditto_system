@@ -32,6 +32,13 @@ export const theme = createTheme({
         transitionProps: { duration: 90, timingFunction: "steps(2)" },
       },
     },
+    Modal: {
+      defaultProps: {
+        radius: 3,
+        overlayProps: { backgroundOpacity: 0.35 },
+        transitionProps: { duration: 90, timingFunction: "steps(2)" },
+      },
+    },
     Loader: { defaultProps: { type: "dots", color: "ink" } },
   },
 });

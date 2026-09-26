@@ -675,6 +675,16 @@ a { color: inherit; text-underline-offset: 3px; }
 .mantine-Drawer-title { font-weight: 750; font-stretch: 75%; font-size: 26px; line-height: 1.1; }
 .mantine-Drawer-body { padding-top: 20px; }
 
+/* A modal is a leaf lifted off the page: same header as the drawer, lift shadow. */
+.mantine-Modal-content {
+  background: var(--leaf);
+  border: 1.5px solid var(--ink);
+  box-shadow: 0 1px 0 rgba(23, 22, 26, .06), 4px 10px 22px -8px rgba(23, 22, 26, .3);
+}
+.mantine-Modal-header { background: var(--leaf); border-bottom: 1.5px solid var(--ink); }
+.mantine-Modal-title { font-weight: 750; font-stretch: 75%; font-size: 26px; line-height: 1.1; }
+.mantine-Modal-body { padding-top: 20px; }
+
 /* ============================================================
    Notices: errata slip for errors, plain note otherwise
    ============================================================ */
@@ -860,6 +870,10 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-guide p, .ditto-guide ul { margin: 0; }
 .ditto-guide li + li { margin-top: 4px; }
 .ditto-guide .ditto-table { font-family: var(--font-ui); }
+/* Column names are scanned (grotesk); what they mean is read (serif). */
+.ditto-guide .ditto-kv { font-size: 15px; gap: 6px 20px; }
+.ditto-guide .ditto-kv dt { font-family: var(--font-ui); font-weight: 650; color: var(--ink); }
+.ditto-guide .ditto-kv dd { font-weight: 400; color: var(--ink-2); }
 .ditto-legend {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

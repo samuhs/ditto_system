@@ -24,32 +24,34 @@ export function DifficultyGuide() {
           </p>
 
           <h3 className="ditto-h3">Qual métrica escolher</h3>
-          <table className="ditto-table">
-            <thead>
-              <tr>
-                <th>Grupo</th>
-                <th>Métricas</th>
-                <th>A dificuldade quer dizer</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>A resposta está certa?</td>
-                <td><b>chrF</b>, F1 de palavras, ROUGE-L, Correção</td>
-                <td>O sistema erra a resposta desta pergunta. <b>É a leitura principal.</b></td>
-              </tr>
-              <tr>
-                <td>A resposta é adequada?</td>
-                <td>Relevância, Fidelidade</td>
-                <td>A resposta foge do assunto ou inventa o que não está nos trechos.</td>
-              </tr>
-              <tr>
-                <td>A busca achou o trecho?</td>
-                <td>Acerto da busca, MRR, Evidência recuperada, Precisão e Cobertura do contexto</td>
-                <td>A busca não acha o trecho desta pergunta. Não diz nada sobre o modelo.</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="ditto-table-wrap">
+            <table className="ditto-table" data-stack="true">
+              <thead>
+                <tr>
+                  <th>Grupo</th>
+                  <th>Métricas</th>
+                  <th>A dificuldade quer dizer</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="ditto-cell-title">A resposta está certa?</td>
+                  <td className="ditto-cell-text" data-label="Métricas"><b>chrF</b>, F1 de palavras, ROUGE-L, Correção</td>
+                  <td className="ditto-cell-text" data-label="A dificuldade quer dizer">O sistema erra a resposta desta pergunta. <b>É a leitura principal.</b></td>
+                </tr>
+                <tr>
+                  <td className="ditto-cell-title">A resposta é adequada?</td>
+                  <td className="ditto-cell-text" data-label="Métricas">Relevância, Fidelidade</td>
+                  <td className="ditto-cell-text" data-label="A dificuldade quer dizer">A resposta foge do assunto ou inventa o que não está nos trechos.</td>
+                </tr>
+                <tr>
+                  <td className="ditto-cell-title">A busca achou o trecho?</td>
+                  <td className="ditto-cell-text" data-label="Métricas">Acerto da busca, MRR, Evidência recuperada, Precisão e Cobertura do contexto</td>
+                  <td className="ditto-cell-text" data-label="A dificuldade quer dizer">A busca não acha o trecho desta pergunta. Não diz nada sobre o modelo.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <p>
             Use o <b>chrF</b> (o padrão): compara a resposta com a de referência e aceita variações
             como “restaurante” e “restaurantes”. Com as métricas de busca, as colunas “Sem busca” e
