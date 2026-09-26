@@ -10,6 +10,7 @@ import type {
   DialogueList,
   DialogueListParams,
   ExperimentDetail,
+  ExperimentDifficulty,
   ExperimentList,
   ExperimentRef,
   FlowSpec,
@@ -54,6 +55,10 @@ export async function createExperiment(form: FormData): Promise<ExperimentRef> {
 
 export async function getExperiment(id: number): Promise<ExperimentDetail> {
   return asJson<ExperimentDetail>(await fetch(`${BASE}/experiments/${id}`));
+}
+
+export async function getExperimentDifficulty(id: number): Promise<ExperimentDifficulty> {
+  return asJson<ExperimentDifficulty>(await fetch(`${BASE}/experiments/${id}/difficulty`));
 }
 
 export function exportExperimentUrl(id: number): string {

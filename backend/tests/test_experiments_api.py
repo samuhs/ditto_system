@@ -309,3 +309,33 @@ def test_create_experiment_keeps_an_explicit_eval_embedding(client, tmp_path, mo
     files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
     exp_id = client.post("/experiments", data={"config": json.dumps(payload)}, files=files).json()["id"]
     assert client.get(f"/experiments/{exp_id}").json()["eval_embedding"] == "gemini"
+
+
+def test_export_adds_difficulty_signal_columns(client):
+    import csv
+
+    from app.core.db.models import Experiment, QuestionProfile, RunResult
+
+    exp_id = _seed_experiment(client, name="sinais")
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = session.get(Experiment, exp_id)
+    experiment.question_profiles = [QuestionProfile(question="Onde fica?", signals={"negation": 0.0})]
+    result = session.query(RunResult).filter_by(question="Onde fica?").one()
+    result.retrieval_signals = {"top_score": 0.9}
+    session.commit()
+    session.close()
+
+    text = client.get(f"/experiments/{exp_id}/export.csv").content.decode("utf-8")
+    rows = list(csv.reader(io.StringIO(text.lstrip("﻿"))))
+    assert rows[0][-2:] == ["pergunta_negation", "busca_top_score"]
+    assert rows[1][-2:] == ["0.0", "0.9"]
+    assert rows[2][-2:] == ["", ""]
+
+
+def test_difficulty_endpoint(client):
+    exp_id = _seed_experiment(client, name="dificuldade")
+    body = client.get(f"/experiments/{exp_id}/difficulty").json()
+    assert body["llms"] == ["gemini"]
+    assert {q["question"] for q in body["questions"]} == {"Onde fica?", "Quando?"}
+    assert client.get("/experiments/99999/difficulty").status_code == 404

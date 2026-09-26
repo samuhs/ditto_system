@@ -25,6 +25,22 @@ beforeEach(() => {
 });
 
 describe("ChatPage", () => {
+  it("shows the difficulty signals of a reply", async () => {
+    vi.mocked(client.sendChat).mockResolvedValue({
+      reply: "Fica na praça.",
+      contexts: [],
+      difficulty: { question: { negation: 1 }, retrieval: { top_score: 0.83 } },
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await screen.findByText(/c1/);
+    await user.type(screen.getByPlaceholderText(/mensagem/i), "Não tem centro?");
+    await user.click(screen.getByRole("button", { name: /enviar/i }));
+    await user.click(await screen.findByText("Sinais de dificuldade"));
+    expect(screen.getByText("Tem negação")).toBeInTheDocument();
+    expect(screen.getByText("0.83")).toBeInTheDocument();
+  });
+
   it("sends a message and shows the reply", async () => {
     renderPage();
     const user = userEvent.setup();

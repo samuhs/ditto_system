@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { listChatConfigs, saveDialogue, sendChat } from "../api/client";
-import type { ChatConfig, ChatMessage } from "../api/types";
+import type { ChatConfig, ChatMessage, TurnDifficulty } from "../api/types";
+import { SIGNAL_LABELS, formatSignal } from "../components/DifficultyPanel";
 import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon } from "../components/icons";
@@ -12,6 +13,8 @@ export function ChatPage() {
   const [configs, setConfigs] = useState<ChatConfig[] | null>(null);
   const [configId, setConfigId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Difficulty signals of each assistant reply, by message index (not sent back to the API).
+  const [signals, setSignals] = useState<Record<number, TurnDifficulty>>({});
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -35,6 +38,7 @@ export function ChatPage() {
 
   function newConversation() {
     setMessages([]);
+    setSignals({});
     setSaved(false);
     setError(null);
   }
@@ -50,6 +54,8 @@ export function ChatPage() {
     try {
       const turn = await sendChat(Number(configId), next);
       setMessages([...next, { role: "assistant", content: turn.reply }]);
+      const difficulty = turn.difficulty;
+      if (difficulty) setSignals((s) => ({ ...s, [next.length]: difficulty }));
     } catch (e) {
       setError({ title: "A mensagem não foi respondida", text: `${errorText(e)}. Tente enviar de novo.` });
     } finally {
@@ -127,6 +133,7 @@ export function ChatPage() {
               <div key={i} className="ditto-msg" data-role={m.role}>
                 <span className="ditto-msg-who">{m.role === "user" ? "Você" : "Ditto"}</span>
                 <span className="ditto-msg-text">{m.content}</span>
+                {signals[i] && <TurnSignals difficulty={signals[i]} />}
               </div>
             ))}
             {sending && (
@@ -177,5 +184,24 @@ export function ChatPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Collapsed list of the difficulty signals measured for one reply. */
+function TurnSignals({ difficulty }: { difficulty: TurnDifficulty }) {
+  const entries = [...Object.entries(difficulty.question), ...Object.entries(difficulty.retrieval)];
+  if (entries.length === 0) return null;
+  return (
+    <details className="ditto-msg-signals">
+      <summary>Sinais de dificuldade</summary>
+      <dl className="ditto-kv">
+        {entries.map(([name, value]) => (
+          <div key={name} style={{ display: "contents" }}>
+            <dt>{SIGNAL_LABELS[name] ?? name}</dt>
+            <dd>{formatSignal(name, value)}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
   );
 }

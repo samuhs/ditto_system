@@ -22,6 +22,20 @@ class Experiment(Base):
     runs: Mapped[list["ExperimentRun"]] = relationship(
         back_populates="experiment", cascade="all, delete-orphan"
     )
+    question_profiles: Mapped[list["QuestionProfile"]] = relationship(
+        cascade="all, delete-orphan"
+    )
+
+
+class QuestionProfile(Base):
+    """Difficulty signals of one question, known before retrieval (once per experiment)."""
+
+    __tablename__ = "question_profile"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    experiment_id: Mapped[int] = mapped_column(ForeignKey("experiment.id"))
+    question: Mapped[str] = mapped_column(String)
+    signals: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
 class ExperimentRun(Base):
@@ -57,6 +71,8 @@ class RunResult(Base):
     generated_answer: Mapped[str] = mapped_column(String)
     retrieved_context: Mapped[list] = mapped_column(JSON, default=list)
     scores: Mapped[dict] = mapped_column(JSON, default=dict)
+    # Difficulty signals from the retrieved chunks' scores ({} when none were retrieved).
+    retrieval_signals: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     latency_ms: Mapped[int] = mapped_column(Integer, default=0)
     tokens: Mapped[int] = mapped_column(Integer, default=0)
 

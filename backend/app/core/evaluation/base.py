@@ -25,6 +25,8 @@ class Evaluator(ABC):
 
     requires_reference: bool = False
     requires_reference_contexts: bool = False
+    # Scores the retrieved contexts: skipped when nothing was retrieved (closed book).
+    requires_contexts: bool = False
 
     @abstractmethod
     def score(self, sample: EvalSample) -> float:

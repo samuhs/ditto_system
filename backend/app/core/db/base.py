@@ -36,7 +36,7 @@ def get_session() -> Iterator[Session]:
 
 # Columns added after their table first shipped. create_all never alters an
 # existing table, so these are added on startup: {table: {column: SQL type}}.
-ADDED_COLUMNS = {"run_result": {"reference_contexts": "JSON"}}
+ADDED_COLUMNS = {"run_result": {"reference_contexts": "JSON", "retrieval_signals": "JSON"}}
 
 
 def add_missing_columns(bind: Engine, columns: dict[str, dict[str, str]]) -> None:

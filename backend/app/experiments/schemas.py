@@ -49,3 +49,29 @@ def index_pairs(config: ExperimentConfig) -> list[tuple[str, str]]:
     if config.indexes is not None:
         return [(i.chunking, i.embedding) for i in config.indexes]
     return list(itertools.product(config.chunkings, config.embeddings))
+
+
+def _uses_retrieval(rag: str) -> bool:
+    from app.core.rag.base import rag_registry
+
+    return rag not in rag_registry.names() or rag_registry.get(rag).uses_retrieval
+
+
+def combinations(config: ExperimentConfig):
+    """Every run as (llm, (chunking, embedding), rag, retriever), in LLM-major order.
+
+    A technique that never retrieves runs once per LLM, attached to the first
+    index and retriever (which it ignores).
+    """
+    pairs = index_pairs(config)
+    first = (pairs[0], config.retrievers[0]) if pairs and config.retrievers else None
+    for llm, pair, rag, retriever in itertools.product(
+        config.llms, pairs, config.rags, config.retrievers
+    ):
+        if _uses_retrieval(rag) or (pair, retriever) == first:
+            yield llm, pair, rag, retriever
+
+
+def combination_count(config: ExperimentConfig) -> int:
+    """How many runs an experiment has."""
+    return sum(1 for _ in combinations(config))

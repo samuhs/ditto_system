@@ -45,6 +45,8 @@ def evaluate_sample(
             continue
         if metric_class.requires_reference_contexts and not sample.reference_contexts:
             continue
+        if metric_class.requires_contexts and not sample.contexts:
+            continue
         if _needs_embedder(metric_class):
             if memo is None:
                 raise ValueError(f"metric '{name}' requires an embedder")

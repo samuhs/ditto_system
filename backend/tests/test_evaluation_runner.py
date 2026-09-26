@@ -79,3 +79,14 @@ def test_runner_scores_gold_metrics_with_reference_contexts():
     sample = EvalSample(question="q", answer="a", contexts=["texto com a evidência aqui"],
                         reference_contexts=["texto com a evidência aqui"])
     assert evaluate_sample(sample, ["context_hit"]) == {"context_hit": 1.0}
+
+
+def test_runner_skips_context_metrics_when_nothing_was_retrieved():
+    sample = EvalSample(question="q", answer="a", contexts=[], reference_answer="a",
+                        reference_contexts=["x"])
+    scores = evaluate_sample(
+        sample, ["faithfulness", "context_precision", "context_recall", "context_hit",
+                 "answer_correctness", "token_f1"],
+        embedder=_FakeEmbedder(),
+    )
+    assert set(scores) == {"answer_correctness", "token_f1"}

@@ -46,6 +46,7 @@ class ContextHit(Evaluator):
     """1 if any retrieved chunk holds reference evidence, else 0 (hit rate at k)."""
 
     requires_reference_contexts = True
+    requires_contexts = True
 
     def score(self, sample: EvalSample) -> float:
         """Return 1.0 on a hit among the retrieved chunks."""
@@ -56,6 +57,7 @@ class ContextMRR(Evaluator):
     """Reciprocal rank of the first retrieved chunk that holds reference evidence."""
 
     requires_reference_contexts = True
+    requires_contexts = True
 
     def score(self, sample: EvalSample) -> float:
         """Return 1/rank of the first relevant chunk, 0 when none is retrieved."""
@@ -67,6 +69,7 @@ class ContextRecallGold(Evaluator):
     """Share of the reference evidence passages found in some retrieved chunk."""
 
     requires_reference_contexts = True
+    requires_contexts = True
 
     def score(self, sample: EvalSample) -> float:
         """Return found passages / annotated passages."""

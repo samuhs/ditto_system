@@ -24,11 +24,13 @@ export interface Combination {
 
 /** The five traits of a combination, each labelled with its dimension. */
 export function Traits({ combo }: { combo: Combination }) {
+  // "Sem busca" runs attached to an index and retriever it never uses.
+  const unused = combo.rag === "closed_book" ? "—" : null;
   const items: [string, string][] = [
-    [DIMENSION_LABEL.chunking, term("chunking", combo.chunking).name],
-    [DIMENSION_LABEL.embedding, term("embedding", combo.embedding).name],
+    [DIMENSION_LABEL.chunking, unused ?? term("chunking", combo.chunking).name],
+    [DIMENSION_LABEL.embedding, unused ?? term("embedding", combo.embedding).name],
     [DIMENSION_LABEL.rag, term("rag", combo.rag).name],
-    [DIMENSION_LABEL.retriever, term("retriever", combo.retriever).name],
+    [DIMENSION_LABEL.retriever, unused ?? term("retriever", combo.retriever).name],
     ["LLM", combo.llm],
   ];
   return (

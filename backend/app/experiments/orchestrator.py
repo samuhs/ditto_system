@@ -1,5 +1,4 @@
 """Experiment orchestrator: run the cartesian product and persist results."""
-import itertools
 import logging
 import threading
 import time
@@ -11,7 +10,8 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from app.core.db.models import Experiment, ExperimentRun, RunResult
+from app.core.db.models import Experiment, ExperimentRun, QuestionProfile, RunResult
+from app.core.difficulty import corpus_stats_for_base, question_profile, retrieval_profile
 from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
 from app.core.config.runtime import get_eval_embedding, get_ollama_models
@@ -27,7 +27,7 @@ from app.core.prompts import PROMPT_SPECS
 from app.core.rag.base import build_rag
 from app.core.retrieval.base import build_retriever
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
-from app.experiments.schemas import ExperimentConfig, QuestionItem, index_pairs
+from app.experiments.schemas import ExperimentConfig, QuestionItem, combinations, index_pairs
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,32 @@ class ExperimentDeps:
 
 def _combinations(config: ExperimentConfig):
     """Every run in LLM-major order, so each LLM loads once per experiment."""
-    return itertools.product(config.llms, index_pairs(config), config.rags, config.retrievers)
+    return combinations(config)
+
+
+def _store_question_profiles(
+    session: Session, experiment_id: int, base: str, questions: list[QuestionItem], store
+) -> None:
+    """Record each question's pre-retrieval difficulty signals once (resumes skip them)."""
+    known = {
+        p.question
+        for p in session.query(QuestionProfile).filter_by(experiment_id=experiment_id)
+    }
+    missing = [t for t in dict.fromkeys(q.text for q in questions) if t not in known]
+    if not missing:
+        return
+    try:
+        corpus = corpus_stats_for_base(store, base)
+    except Exception as exc:  # noqa: BLE001  signals are optional; the run goes on
+        logger.warning("corpus stats unavailable for %s: %s", base, exc)
+        corpus = None
+    for text in missing:
+        session.add(
+            QuestionProfile(
+                experiment_id=experiment_id, question=text, signals=question_profile(text, corpus)
+            )
+        )
+    session.commit()
 
 
 def _build_retriever(deps: ExperimentDeps, name: str, collection: str, embedder, llm, prompts=None):
@@ -277,6 +302,7 @@ def _run_experiment(
         experiment = session.get(Experiment, experiment_id)
         experiment.status = "running"
         session.commit()
+        _store_question_profiles(session, experiment_id, config.base, questions, deps.store)
 
         prompt_snapshot = (experiment.config or {}).get("prompts", {})
         profile = active_profile()
@@ -374,6 +400,7 @@ def _run_experiment(
                                 reference_contexts=question.evidence,
                                 generated_answer=answer_text,
                                 retrieved_context=contexts,
+                                retrieval_signals=retrieval_profile(contexts),
                                 scores=scores,
                                 latency_ms=latency_ms,
                                 tokens=tokens,

@@ -112,6 +112,43 @@ export interface ChatMessage {
 export interface ChatTurn {
   reply: string;
   contexts: string[];
+  /** Signals of how hard the question looks: before retrieval and from the chunk scores. */
+  difficulty?: TurnDifficulty;
+}
+
+export interface TurnDifficulty {
+  question: Record<string, number>;
+  retrieval: Record<string, number>;
+}
+
+export interface MetricSummary {
+  mean: number;
+  std: number;
+  n: number;
+}
+
+export interface DifficultyCell {
+  /** Each metric over the configurations that retrieve. */
+  retrieval: Record<string, MetricSummary>;
+  /** Each metric's mean without retrieval (closed book); empty if it did not run. */
+  closed_book: Record<string, number>;
+  /** Share of retrievals that brought the annotated evidence back; null without evidence. */
+  hit_rate: number | null;
+  with_evidence: Record<string, number>;
+  without_evidence: Record<string, number>;
+}
+
+export interface QuestionDifficulty {
+  question: string;
+  signals: Record<string, number>;
+  retrieval_signals: Record<string, number>;
+  by_llm: Record<string, DifficultyCell>;
+}
+
+export interface ExperimentDifficulty {
+  llms: string[];
+  metrics: string[];
+  questions: QuestionDifficulty[];
 }
 
 export interface FlowNode {

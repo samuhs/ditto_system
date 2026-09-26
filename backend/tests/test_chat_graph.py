@@ -27,7 +27,7 @@ class _FakeRAG:
 
     def answer(self, query: str) -> RAGResult:
         self.called = True
-        return RAGResult(answer="rascunho do rag", contexts=[{"text": "ctx do doc"}])
+        return RAGResult(answer="rascunho do rag", contexts=[{"text": "ctx do doc", "score": 0.8}])
 
 
 def _graph(rag):
@@ -113,3 +113,15 @@ def test_chat_waits_briefly_for_a_model_slot():
     deps.models = _SpyModels()
     run_flow(_CFG, [ChatMessage(role="user", content="onde fica o centro?")], deps)
     assert seen["wait"] == CHAT_WAIT_S <= 5
+
+
+def test_run_flow_reports_question_and_retrieval_signals():
+    out = run_flow(_CFG, [ChatMessage(role="user", content="onde fica o centro?")], _flow_deps([]))
+    assert out.difficulty["question"]["question_length"] == 3.0
+    assert "mean_idf" not in out.difficulty["question"]  # no store: no corpus stats
+    assert out.difficulty["retrieval"]["top_score"] == 0.8
+
+
+def test_direct_turn_has_no_retrieval_signals():
+    out = run_flow(_CFG, [ChatMessage(role="user", content="oi, tudo bem?")], _flow_deps([]))
+    assert out.difficulty["retrieval"] == {} and out.difficulty["question"]

@@ -5,6 +5,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.core.chat.flow_prompts import load_flow_prompts
 from app.core.chat.schemas import ChatConfigView, ChatMessage, ChatTurnResult
+from app.core.difficulty import corpus_stats_for_base, question_profile, retrieval_profile
 from app.core.memory.device import resolve_embedding_device
 from app.core.memory.profile import active_profile
 from app.core.personas import load_persona
@@ -20,6 +21,7 @@ class FlowState(TypedDict, total=False):
     summary: str
     draft: str
     contexts: list[str]
+    retrieval_signals: dict
     answer: str
 
 
@@ -44,7 +46,11 @@ def build_graph(llm, rag, persona_text: str, prompts: dict[str, str]):
         except Exception:  # noqa: BLE001  a retrieval failure must not crash the turn
             return {"draft": "", "contexts": []}
         contexts = [c.get("text", "") for c in result.contexts]
-        return {"draft": result.answer, "contexts": contexts}
+        return {
+            "draft": result.answer,
+            "contexts": contexts,
+            "retrieval_signals": retrieval_profile(result.contexts),
+        }
 
     def memory(state: FlowState) -> dict:
         history = _format_history(state.get("history", []))
@@ -98,6 +104,15 @@ def build_graph(llm, rag, persona_text: str, prompts: dict[str, str]):
 CHAT_WAIT_S = 5.0
 
 
+def _question_signals(store, base: str, question: str) -> dict:
+    """Pre-retrieval signals; the corpus-based ones only when the base can be read."""
+    try:
+        corpus = corpus_stats_for_base(store, base) if store is not None else None
+    except Exception:  # noqa: BLE001  signals must not fail the turn
+        corpus = None
+    return question_profile(question, corpus)
+
+
 def run_flow(cfg: ChatConfigView, messages: list[ChatMessage], deps) -> ChatTurnResult:
     """Build the graph from a config snapshot and run one conversational turn."""
     llm = deps.llm_factory(cfg.llm)
@@ -114,4 +129,10 @@ def run_flow(cfg: ChatConfigView, messages: list[ChatMessage], deps) -> ChatTurn
         question = messages[-1].content if messages else ""
         history = messages[:-1]
         result = graph.invoke({"question": question, "history": history})
-    return ChatTurnResult(answer=result.get("answer", ""), contexts=result.get("contexts", []))
+    difficulty = {
+        "question": _question_signals(deps.store, cfg.base, question),
+        "retrieval": result.get("retrieval_signals", {}),
+    }
+    return ChatTurnResult(
+        answer=result.get("answer", ""), contexts=result.get("contexts", []), difficulty=difficulty
+    )

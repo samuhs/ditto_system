@@ -29,6 +29,8 @@ class AnswerRelevancy(_EmbeddingMetric):
 class Faithfulness(_EmbeddingMetric):
     """How grounded the answer is in the retrieved context."""
 
+    requires_contexts = True
+
     def score(self, sample: EvalSample) -> float:
         """Cosine similarity between the answer and the joined contexts."""
         if not sample.contexts:
@@ -40,6 +42,8 @@ class Faithfulness(_EmbeddingMetric):
 
 class ContextPrecision(_EmbeddingMetric):
     """How relevant the retrieved contexts are to the question."""
+
+    requires_contexts = True
 
     def score(self, sample: EvalSample) -> float:
         """Mean cosine similarity between the question and each context."""
@@ -57,6 +61,7 @@ class ContextRecall(_EmbeddingMetric):
     """Whether the retrieved context covers the reference answer."""
 
     requires_reference = True
+    requires_contexts = True
 
     def score(self, sample: EvalSample) -> float:
         """Cosine similarity between the reference answer and the joined contexts."""

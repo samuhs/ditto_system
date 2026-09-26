@@ -84,7 +84,12 @@ export function ExperimentPage() {
     }
   }
 
-  const forms = indexKeys.length * rags.length * retrievers.length * llms.length;
+  // "Sem busca" ignores the index and retriever, so it runs once per model.
+  const retrievingRags = rags.filter((r) => r !== "closed_book").length;
+  const forms =
+    (indexKeys.length * retrievingRags * retrievers.length +
+      (rags.includes("closed_book") && indexKeys.length > 0 && retrievers.length > 0 ? 1 : 0)) *
+    llms.length;
   const missing = [
     base === "" && "a base",
     base !== "" && indexKeys.length === 0 && "um índice",

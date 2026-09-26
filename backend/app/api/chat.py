@@ -183,7 +183,7 @@ def chat(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
         result = deps.agent_runner(view, body.messages, deps)
     except KeyError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"reply": result.answer, "contexts": result.contexts}
+    return {"reply": result.answer, "contexts": result.contexts, "difficulty": result.difficulty}
 
 
 @router.post("/dialogues")

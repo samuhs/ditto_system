@@ -17,6 +17,8 @@ class ChatTurnResult:
 
     answer: str
     contexts: list[str] = field(default_factory=list)
+    # {"question": pre-retrieval signals, "retrieval": signals from the chunk scores}
+    difficulty: dict = field(default_factory=dict)
 
 
 @dataclass

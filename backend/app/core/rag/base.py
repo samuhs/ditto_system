@@ -21,6 +21,10 @@ def format_context(contexts: list[dict]) -> str:
 class RAG(ABC):
     """Minimal interface every RAG technique implements."""
 
+    # False for techniques that never retrieve (closed book): an experiment runs
+    # them once per LLM instead of once per index x retriever.
+    uses_retrieval: bool = True
+
     @abstractmethod
     def answer(self, query: str) -> RAGResult:
         """Answer a question, returning the answer and its contexts."""

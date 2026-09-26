@@ -801,3 +801,34 @@ def test_unstaged_run_holds_the_retrieval_embedder_across_runs(session_factory):
         [QuestionItem(text="Where?")], _staged_deps(store, session_factory, events),
     )
     assert events.count("load:e5") == 1  # not reloaded for the second retriever
+
+
+def test_closed_book_runs_once_per_llm_across_indexes_and_retrievers(session_factory):
+    from app.experiments.schemas import combinations, combination_count
+
+    config = _staged_config(rags=["naive", "closed_book"], retrievers=["similarity", "mmr"],
+                            llms=["qwen3:1.7b", "gemini"], metrics=["rouge_l"])
+    runs = list(combinations(config))
+    closed = [r for r in runs if r[2] == "closed_book"]
+    assert [r[0] for r in closed] == ["qwen3:1.7b", "gemini"]
+    assert combination_count(config) == len(runs) == 2 * (2 + 1)
+
+
+def test_run_stores_question_profiles_and_retrieval_signals(session_factory):
+    from app.core.db.models import QuestionProfile, RunResult
+
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "difficulty")
+    run_experiment(experiment_id, _staged_config(rags=["naive", "closed_book"], metrics=["rouge_l"]),
+                   [QuestionItem(text="Where is para two?", reference="Aqui.")],
+                   _staged_deps(store, session_factory, events))
+    check = session_factory()
+    results = {r.run.rag_technique: r for r in check.query(RunResult).all()}
+    assert set(results["naive"].retrieval_signals) == {"top_score", "score_gap", "score_spread"}
+    assert results["closed_book"].retrieval_signals == {}
+    assert results["closed_book"].retrieved_context == []
+    [profile] = check.query(QuestionProfile).filter_by(experiment_id=experiment_id).all()
+    assert profile.question == "Where is para two?"
+    assert {"question_length", "mean_idf", "out_of_corpus"} <= set(profile.signals)
+    check.close()

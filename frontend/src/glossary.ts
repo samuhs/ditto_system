@@ -44,6 +44,10 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
     },
   },
   rag: {
+    closed_book: {
+      name: "Sem busca",
+      description: "O modelo responde só com o que já sabe, sem os documentos. Roda uma vez por modelo.",
+    },
     naive: {
       name: "Simples",
       description: "Busca os trechos uma vez e responde com eles.",

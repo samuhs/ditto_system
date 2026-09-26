@@ -7,6 +7,7 @@ import type { ExperimentDetail, ExperimentResultRow } from "../api/types";
 import { Errata, Note, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { type Combination, ScoreCell, Traits } from "../components/Score";
+import { DifficultyPanel } from "../components/DifficultyPanel";
 import { StatusTag } from "../components/StatusTag";
 import { DownloadIcon, PauseIcon, SortIcon } from "../components/icons";
 import { techniqueName, term } from "../glossary";
@@ -390,6 +391,7 @@ export function ExperimentDetailPage() {
             <Tabs.List mb="md">
               <Tabs.Tab value="ranking">Ranking das combinações</Tabs.Tab>
               <Tabs.Tab value="answers">Respostas por pergunta</Tabs.Tab>
+              <Tabs.Tab value="difficulty">Dificuldade por pergunta</Tabs.Tab>
               <Tabs.Tab value="prompts">Prompts usados</Tabs.Tab>
             </Tabs.List>
 
@@ -542,6 +544,10 @@ export function ExperimentDetailPage() {
                 <Pagination total={pageCount} value={page} onChange={setPage} size="sm" />
               </div>
               {legend}
+            </Tabs.Panel>
+
+            <Tabs.Panel value="difficulty">
+              <DifficultyPanel experimentId={detail.id} />
             </Tabs.Panel>
 
             <Tabs.Panel value="prompts">

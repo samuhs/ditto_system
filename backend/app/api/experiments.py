@@ -17,10 +17,11 @@ from app.core.memory.profile import active_profile
 from app.core.prompts import PROMPT_SPECS, load_technique
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
+from app.experiments.difficulty import question_difficulty
 from app.experiments.naming import generate_experiment_name
 from app.experiments.orchestrator import ExperimentDeps, _pause_requested, request_pause, run_experiment
 from app.experiments.preflight import memory_warnings
-from app.experiments.schemas import ExperimentConfig, index_pairs
+from app.experiments.schemas import ExperimentConfig, combination_count, index_pairs
 
 router = APIRouter()
 
@@ -32,6 +33,7 @@ def _iso_utc(dt):
 
 def _result_rows(experiment: Experiment) -> list[dict]:
     """Flatten an experiment's runs into one row per (combination, question)."""
+    profiles = {p.question: p.signals for p in experiment.question_profiles}
     rows = []
     for run in experiment.runs:
         for result in run.results:
@@ -48,9 +50,23 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                     "scores": result.scores,
                     "latency_ms": result.latency_ms,
                     "tokens": result.tokens,
+                    "question_signals": profiles.get(result.question, {}),
+                    "retrieval_signals": result.retrieval_signals or {},
                 }
             )
     return rows
+
+
+def _total_combinations(cfg: dict) -> int:
+    """Runs the stored config expands to (a closed-book run counts once per LLM)."""
+    try:
+        return combination_count(ExperimentConfig(**cfg))
+    except ValidationError:
+        n_llms = len(cfg.get("llms", [])) or 1
+        return (
+            len(cfg.get("chunkings", [])) * len(cfg.get("embeddings", []))
+            * len(cfg.get("rags", [])) * len(cfg.get("retrievers", [])) * n_llms
+        )
 
 
 def _safe_filename(name: str) -> str:
@@ -62,12 +78,15 @@ def _safe_filename(name: str) -> str:
 def _results_csv(rows: list[dict]) -> str:
     """Render result rows as CSV with one column per metric plus the row mean."""
     metric_keys = sorted({k for row in rows for k in row["scores"]})
+    question_keys = sorted({k for row in rows for k in row["question_signals"]})
+    retrieval_keys = sorted({k for row in rows for k in row["retrieval_signals"]})
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(
         ["chunking", "embedding", "rag", "retriever", "llm",
          "pergunta", "resposta_referencia", "resposta",
-         *metric_keys, "media", "latency_ms", "tokens"]
+         *metric_keys, "media", "latency_ms", "tokens",
+         *(f"pergunta_{k}" for k in question_keys), *(f"busca_{k}" for k in retrieval_keys)]
     )
     for row in rows:
         scores = row["scores"]
@@ -75,7 +94,9 @@ def _results_csv(rows: list[dict]) -> str:
         writer.writerow(
             [row["chunking"], row["embedding"], row["rag"], row["retriever"], row["llm"],
              row["question"], row["reference"] or "", row["answer"],
-             *(scores.get(k, "") for k in metric_keys), mean, row["latency_ms"], row["tokens"]]
+             *(scores.get(k, "") for k in metric_keys), mean, row["latency_ms"], row["tokens"],
+             *(row["question_signals"].get(k, "") for k in question_keys),
+             *(row["retrieval_signals"].get(k, "") for k in retrieval_keys)]
         )
     return buffer.getvalue()
 
@@ -221,14 +242,7 @@ def get_experiment(
             raise HTTPException(status_code=404, detail="experiment not found")
         results = _result_rows(experiment)
         cfg = experiment.config or {}
-        n_llms = len(cfg.get("llms", [])) or 1
-        total_combos = (
-            len(cfg.get("chunkings", []))
-            * len(cfg.get("embeddings", []))
-            * len(cfg.get("rags", []))
-            * len(cfg.get("retrievers", []))
-            * n_llms
-        )
+        total_combos = _total_combinations(cfg)
         completed_combos = sum(1 for run in experiment.runs if run.status == "done")
         return {
             "id": experiment.id,
@@ -248,6 +262,22 @@ def get_experiment(
             "prompts": cfg.get("prompts"),
             "results": results,
         }
+    finally:
+        session.close()
+
+
+@router.get("/experiments/{experiment_id}/difficulty")
+def get_experiment_difficulty(
+    experiment_id: int,
+    deps: ExperimentDeps = Depends(get_experiment_deps),
+) -> dict:
+    """Per-question difficulty signals and observed difficulty per LLM."""
+    session = deps.session_factory()
+    try:
+        experiment = session.get(Experiment, experiment_id)
+        if experiment is None:
+            raise HTTPException(status_code=404, detail="experiment not found")
+        return question_difficulty(experiment)
     finally:
         session.close()
 
