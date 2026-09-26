@@ -111,6 +111,14 @@ up() {
       fi
     done
     (
+      # Read the root .env before leaving it: after `cd backend`, env_get would
+      # read backend/.env and silently drop every setting kept at the root.
+      gemini_key="$(env_get GEMINI_API_KEY)"
+      profile="$(memory_profile)"
+      max_local_models="$(env_get MAX_LOCAL_MODELS)"
+      embedding_device="$(env_get EMBEDDING_DEVICE)"
+      max_concurrency="$(env_get MAX_EXPERIMENT_CONCURRENCY)"
+      allow_swap="$(env_get PERPLEXITY_ALLOW_SWAP)"
       cd backend || exit 1
       # Explicit [::1] everywhere: "localhost" may try 127.0.0.1 first.
       env ${CA_ENV[@]+"${CA_ENV[@]}"} \
@@ -118,11 +126,12 @@ up() {
       DATABASE_URL="postgresql://ditto:ditto@[::1]:$PG_PORT/ditto" \
       QDRANT_URL="http://[::1]:$QD_PORT" \
       OLLAMA_BASE_URL="$LLM_URL" \
-      GEMINI_API_KEY="$(env_get GEMINI_API_KEY)" \
-      MEMORY_PROFILE="$(memory_profile)" \
-      MAX_LOCAL_MODELS="$(env_get MAX_LOCAL_MODELS)" \
-      EMBEDDING_DEVICE="$(env_get EMBEDDING_DEVICE)" \
-      MAX_EXPERIMENT_CONCURRENCY="$(env_get MAX_EXPERIMENT_CONCURRENCY)" \
+      GEMINI_API_KEY="$gemini_key" \
+      MEMORY_PROFILE="$profile" \
+      MAX_LOCAL_MODELS="$max_local_models" \
+      EMBEDDING_DEVICE="$embedding_device" \
+      MAX_EXPERIMENT_CONCURRENCY="$max_concurrency" \
+      PERPLEXITY_ALLOW_SWAP="$allow_swap" \
       APP_CONFIG_DIR="$PWD/config" \
       PROMPTS_DIR="$PWD/prompts" \
       nohup ./.venv/bin/uvicorn app.main:app --host ::1 --port "$API_PORT" \
