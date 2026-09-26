@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Collect open data about a Brazilian municipality into raw, auditable files.
 
-Implements the "camada 1" of ../../../buscador.md with free, open sources only:
+Implements the "camada 1" (ready-made open data) of the city search plan with free, open sources only:
 IBGE (localidades), Wikidata (SPARQL), Wikipedia and Wikivoyage (pt), the
 OpenStreetMap Overpass API and the CNES open-data API (health facilities).
 
@@ -9,8 +9,8 @@ Every source is saved as fetched (JSON or plain text) plus a manifest with URL,
 licence and retrieval time, so a knowledge base written from these files can
 cite each fact. Standard library only: runs with any Python 3.10+.
 
-    python3 tools/buscador/coletar_cidade.py "Santo Antônio da Alegria" SP
-    python3 tools/buscador/coletar_cidade.py "Cajuru" SP --out /tmp/cajuru --only wikipedia osm
+    python3 <skill>/scripts/coletar_cidade.py "Santo Antônio da Alegria" SP
+    python3 <skill>/scripts/coletar_cidade.py "Cajuru" SP --out /tmp/cajuru --only wikipedia osm
 """
 from __future__ import annotations
 
@@ -66,7 +66,8 @@ def _get(url: str, params: dict | None = None, data: dict | None = None, accept:
         except urllib.error.HTTPError as exc:
             if exc.code not in (429, 500, 502, 503, 504) or attempt == 3:
                 raise
-        except urllib.error.URLError:
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            # Slow servers (IBGE, Overpass) time out now and then: retry like a 5xx.
             if attempt == 3:
                 raise
         time.sleep(5 * (attempt + 1))
@@ -206,7 +207,7 @@ class Collector:
                 continue
             try:
                 getattr(self, step)()
-            except Exception as exc:  # keep errors visible, never silent (buscador.md, lição 5)
+            except Exception as exc:  # keep errors visible, never silent (visible errors)
                 print(f"  ERRO {step}: {exc}", file=sys.stderr)
                 self.manifest.append({"fonte": step, "erro": str(exc)})
         (self.out / "manifesto.json").write_text(
@@ -223,7 +224,9 @@ def main() -> None:
     parser.add_argument("--out", type=Path, help="pasta de saída (padrão: database/fontes_brutas/<cidade>)")
     parser.add_argument("--only", nargs="*", default=[], help="wikidata wikipedia wikivoyage osm cnes")
     args = parser.parse_args()
-    out = args.out or Path(__file__).resolve().parents[2] / "database" / "fontes_brutas" / _slug(args.cidade)
+    # Default: <cwd>/database/fontes_brutas/<cidade> in a project with a database/ folder, else <cwd>/fontes_brutas/<cidade>.
+    root = Path.cwd() / "database" if (Path.cwd() / "database").is_dir() else Path.cwd()
+    out = args.out or root / "fontes_brutas" / _slug(args.cidade)
     print(f"coletando {args.cidade}/{args.uf} em {out}", file=sys.stderr)
     Collector(args.cidade, args.uf, out).run(args.only)
 

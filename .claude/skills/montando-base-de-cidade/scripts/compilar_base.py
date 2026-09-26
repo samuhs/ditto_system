@@ -29,7 +29,7 @@ Source aliases (extend SOURCES for other cities or sites):
     web:<url>      any other page (use for secondary sources)
     manus          database/faq_manus_completa.md (LLM-generated, unverified)
 
-    python3 tools/buscador/compilar_base.py MASTER.md --saida BASE.md \\
+    python3 <skill>/scripts/compilar_base.py MASTER.md --saida BASE.md \\
         --brutos database/fontes_brutas/<cidade> --prefeitura https://<site>/
 """
 from __future__ import annotations

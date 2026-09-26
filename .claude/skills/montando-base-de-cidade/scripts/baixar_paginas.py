@@ -2,18 +2,17 @@
 """Download web pages as Markdown for a knowledge base, keeping source and date.
 
 Two modes. `jina` (default) uses the free Jina Reader (https://r.jina.ai/<url>),
-which renders JavaScript and returns Markdown ready for an LLM (buscador.md,
-section 5), but allows only ~20 requests/minute. `direto` downloads the HTML and
+which renders JavaScript and returns Markdown ready for an LLM, but allows only ~20 requests/minute. `direto` downloads the HTML and
 keeps the text of the main content, with the standard library only: much
 faster, and enough for server-rendered sites (most prefeituras). Each page becomes
 <out>/<slug>.md with a header (URL, retrieval time) and is listed in
 <out>/paginas.json, so every fact in a base built from it can be traced back.
 
 Respect robots.txt and the site's terms. Never scrape Google Maps, TripAdvisor
-or other sources whose terms forbid storing their data (buscador.md, sections 3 and 6).
+or other sources whose terms forbid storing their data (see SKILL.md, collection rules).
 
-    python3 tools/buscador/baixar_paginas.py database/fontes_brutas/santo_antonio_da_alegria/web URL [URL ...]
-    python3 tools/buscador/baixar_paginas.py OUT --from-file urls.txt --modo direto
+    python3 <skill>/scripts/baixar_paginas.py database/fontes_brutas/santo_antonio_da_alegria/web URL [URL ...]
+    python3 <skill>/scripts/baixar_paginas.py OUT --from-file urls.txt --modo direto
 """
 from __future__ import annotations
 
@@ -57,7 +56,7 @@ _TAGS = re.compile(r"<[^>]+>")
 def html_to_text(page: str, min_chars: int = 30) -> str:
     """Readable text of an HTML page: drops scripts, menus and short link lines.
 
-    A crude stand-in for Trafilatura (buscador.md, section 5) that needs no
+    A crude stand-in for Trafilatura (Trafilatura-like extraction) that needs no
     install. Headings are kept as Markdown so the page structure survives.
     """
     page = _DROP_BLOCKS.sub("", page)

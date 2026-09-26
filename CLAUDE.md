@@ -42,7 +42,7 @@ Dev backend usa o venv `backend/.venv` (Python 3.13). Frontend usa Node 22.
 - `frontend/` — React + Vite + TS + Mantine (nginx faz proxy `/api/` → api)
 - `docs/superpowers/{specs,plans}/` — specs e planos de implementação
 - `database/` — documento de teste (FAQ de guia de viagem): `faq_manus_completa.md` (bruto) e `faq_manus_normalizado.md`. `guia_santo_antonio_da_alegria.md` (base enriquecida, com `.fontes.json`). Toda base nova segue `database/DIRETRIZES.md` (original preservado + versão `_normalizado`)
-- `tools/buscador/` — coleta de dados abertos (IBGE, Wikidata, Wikipedia, OSM, CNES, páginas web) e compilação de bases anotadas; só stdlib, fora do backend
+- `.claude/skills/montando-base-de-cidade/` — skill + scripts (só stdlib) para coletar dados abertos de um município (IBGE, Wikidata, Wikipedia, OSM, CNES, site da prefeitura) e compilar bases anotadas
 
 ## Convenções
 - Toda técnica plugável vive atrás de **interface + registry**; adicionar = criar classe + registrar.

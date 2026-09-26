@@ -127,10 +127,10 @@ Ainda pendentes, como técnicas plugáveis (interface + registry):
 
 ## 12. Bases montadas a partir de várias fontes
 
-Quando a base é escrita a partir de fontes coletadas (e não normalizada de um arquivo pronto), vale o fluxo de `tools/buscador/README.md`:
+Quando a base é escrita a partir de fontes coletadas (e não normalizada de um arquivo pronto), vale o fluxo da skill `montando-base-de-cidade` (`.claude/skills/montando-base-de-cidade/SKILL.md`):
 
 - **Fonte bruta primeiro**: tudo o que foi coletado fica em `database/fontes_brutas/<cidade>/`, com URL, licença e data. A base só afirma o que alguma fonte bruta sustenta.
-- **Arquivo-mestre anotado**: `fontes_brutas/<cidade>/guia.anotado.md` é a versão editável. Cada bloco `###` tem um comentário `<!-- fontes: ... | confianca: ... | nota: ... -->`. Conflitos entre fontes e lacunas vão em comentários `<!-- conflito: ... -->` e `<!-- lacuna: ... -->`. Os comentários nunca entram na base ingerida: `tools/buscador/compilar_base.py` os tira, gera `database/<base>.fontes.json` e confere as regras deste documento.
+- **Arquivo-mestre anotado**: `fontes_brutas/<cidade>/guia.anotado.md` é a versão editável. Cada bloco `###` tem um comentário `<!-- fontes: ... | confianca: ... | nota: ... -->`. Conflitos entre fontes e lacunas vão em comentários `<!-- conflito: ... -->` e `<!-- lacuna: ... -->`. Os comentários nunca entram na base ingerida: `.claude/skills/montando-base-de-cidade/scripts/compilar_base.py` os tira, gera `database/<base>.fontes.json` e confere as regras deste documento.
 - **Conflito entre fontes**: a base segue a fonte mais confiável (`oficial` > `aberto` > `secundario` > `nao_verificado`) e registra o conflito. Quando nenhuma fonte resolve, registra as duas versões no texto ("segundo a Prefeitura…; segundo a Wikipedia…").
 - **Afirmações sem fonte** (como as do FAQ gerado por LLM) podem ficar, marcadas `nao_verificado`, mas nunca por cima de uma fonte oficial.
 
