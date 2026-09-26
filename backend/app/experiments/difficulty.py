@@ -7,9 +7,13 @@ and, when reference evidence was annotated, the metrics split by whether
 retrieval brought the evidence back (context_hit). That split separates
 "retrieval missed it" from "the evidence was in the context and this LLM still
 answered badly". An IRT fit on one metric gives each question a difficulty,
-overall and per LLM.
+overall and per LLM, and the signals known before any answer (question text,
+corpus, evidence, retrieval scores, perplexity) are correlated with it: which
+of them predict difficulty, for which model.
 """
 import statistics
+
+import numpy as np
 
 from app.core.db.models import Experiment
 from app.core.rag.base import rag_registry
@@ -70,9 +74,71 @@ def _irt(responses: dict[tuple[str, str, str], float], llms: list[str], metric: 
     }
 
 
+def _ranks(values: list[float]) -> np.ndarray:
+    """Ranks with ties averaged (as Spearman's rho needs)."""
+    array = np.asarray(values, dtype=float)
+    order = array.argsort(kind="stable")
+    ranks = np.empty(len(array))
+    ranks[order] = np.arange(len(array), dtype=float)
+    for value in np.unique(array):
+        tied = array == value
+        ranks[tied] = ranks[tied].mean()
+    return ranks
+
+
+def spearman(xs: list[float], ys: list[float]) -> float | None:
+    """Spearman's rank correlation; None under 3 pairs or when either side is constant."""
+    if len(xs) < 3:
+        return None
+    rx, ry = _ranks(xs), _ranks(ys)
+    if rx.std() == 0 or ry.std() == 0:
+        return None
+    return float(np.corrcoef(rx, ry)[0, 1])
+
+
+def _correlate(signal: dict[str, float], difficulty: dict[str, float]) -> float | None:
+    common = [q for q in signal if q in difficulty]
+    return spearman([signal[q] for q in common], [difficulty[q] for q in common])
+
+
+def _signal_correlations(questions: list[dict], irt: dict) -> dict:
+    """Spearman's rho of each answer-free signal with the IRT difficulty (positive = harder)."""
+    by_signal: dict[tuple[str, str], dict[str, float]] = {}
+    for q in questions:
+        for name, value in q["signals"].items():
+            by_signal.setdefault(("question", name), {})[q["question"]] = value
+        for name, value in q["retrieval_signals"].items():
+            by_signal.setdefault(("retrieval", name), {})[q["question"]] = value
+    rows = [
+        {
+            "signal": name,
+            "kind": kind,
+            "overall": _correlate(values, irt["difficulty"]),
+            "by_llm": {
+                llm: _correlate(values, per_llm) for llm, per_llm in irt["difficulty_by_llm"].items()
+            },
+        }
+        for (kind, name), values in sorted(by_signal.items())
+    ]
+    # Model signals exist per LLM, so each is compared with that LLM's difficulty only.
+    model_names = sorted({n for q in questions for s in q["model_signals"].values() for n in s})
+    for name in model_names:
+        by_llm = {}
+        for llm, per_llm in irt["difficulty_by_llm"].items():
+            values = {
+                q["question"]: q["model_signals"][llm][name]
+                for q in questions
+                if name in q["model_signals"].get(llm, {})
+            }
+            by_llm[llm] = _correlate(values, per_llm) if values else None
+        rows.append({"signal": name, "kind": "model", "overall": None, "by_llm": by_llm})
+    return {"n_questions": irt["n_questions"], "reliable": irt["reliable"], "rows": rows}
+
+
 def question_difficulty(experiment: Experiment, metric: str | None = None) -> dict:
     """Per-question signals and observed difficulty, per LLM, plus an IRT fit on one metric."""
     profiles = {p.question: p.signals for p in experiment.question_profiles}
+    model_signals = {p.question: p.model_signals or {} for p in experiment.question_profiles}
     llms: list[str] = []
     metrics: set[str] = set()
     grouped: dict[str, dict[str, dict[str, list]]] = {}
@@ -117,6 +183,7 @@ def question_difficulty(experiment: Experiment, metric: str | None = None) -> di
         questions.append({
             "question": question,
             "signals": profiles.get(question, {}),
+            "model_signals": model_signals.get(question, {}),
             "retrieval_signals": _means(signals.get(question, [])),
             "by_llm": by_llm,
         })
@@ -127,10 +194,13 @@ def question_difficulty(experiment: Experiment, metric: str | None = None) -> di
         for config, llm, question, scores in rows
         if metric in scores
     }
+    irt = _irt(responses, llms, metric) if metric else None
     return {
         "llms": llms,
         "metrics": sorted(metrics),
         "metric": metric,
         "questions": questions,
-        "irt": _irt(responses, llms, metric) if metric else None,
+        "irt": irt,
+        "correlations": _signal_correlations(questions, irt) if irt else None,
+        "perplexity_skipped": (experiment.config or {}).get("perplexity_skipped", {}),
     }

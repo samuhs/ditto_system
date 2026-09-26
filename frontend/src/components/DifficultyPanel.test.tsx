@@ -33,9 +33,19 @@ beforeEach(() => {
       difficulty_by_llm: { "qwen3:1.7b": { "Fácil?": -1.0, "Difícil?": 1.0 } },
       ability: {},
     },
+    perplexity_skipped: { "qwen3:1.7b": { free_mb: 1107, needed_mb: 2178 } },
+    correlations: {
+      n_questions: 2,
+      reliable: false,
+      rows: [
+        { signal: "negation", kind: "question", overall: 0.8, by_llm: { "qwen3:1.7b": 0.9 } },
+        { signal: "perplexity", kind: "model", overall: null, by_llm: { "qwen3:1.7b": 0.5 } },
+        { signal: "yes_no", kind: "question", overall: null, by_llm: { "qwen3:1.7b": null } },
+      ],
+    },
     questions: [
-      { question: "Fácil?", signals: { negation: 0 }, retrieval_signals: {}, by_llm: { "qwen3:1.7b": cell(0.8) } },
-      { question: "Difícil?", signals: { negation: 1, out_of_corpus: 0.25 }, retrieval_signals: { top_score: 0.71 }, by_llm: { "qwen3:1.7b": cell(0.1) } },
+      { question: "Fácil?", signals: { negation: 0 }, retrieval_signals: {}, model_signals: {}, by_llm: { "qwen3:1.7b": cell(0.8) } },
+      { question: "Difícil?", signals: { negation: 1, out_of_corpus: 0.25 }, retrieval_signals: { top_score: 0.71 }, model_signals: { "qwen3:1.7b": { perplexity: 42.5 } }, by_llm: { "qwen3:1.7b": cell(0.1) } },
     ],
   });
 });
@@ -84,14 +94,29 @@ describe("DifficultyPanel", () => {
     expect(screen.getByText(/piso → seu sistema → teto/)).toBeInTheDocument();
   });
 
+  it("shows which answer-free signals predict difficulty", async () => {
+    renderPanel();
+    const table = (await screen.findByText("Quais sinais preveem a dificuldade")).closest("section")!;
+    const rows = within(table).getAllByRole("row");
+    expect(rows).toHaveLength(3); // header + two signals; the all-empty one is hidden
+    expect(rows[1]).toHaveTextContent("Tem negação");
+    expect(rows[1]).toHaveTextContent("+0.80");
+    expect(rows[2]).toHaveTextContent("Perplexidade da pergunta no modelo");
+    expect(screen.getByText("Perplexidade não calculada para qwen3:1.7b")).toBeInTheDocument();
+    expect(screen.getByText(/Havia 1107 MB/)).toBeInTheDocument();
+  });
+
   it("opens the question's signals", async () => {
     renderPanel();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Difícil?" }));
-    expect(await screen.findByText("Tem negação")).toBeInTheDocument();
-    expect(screen.getByText("sim")).toBeInTheDocument();
-    expect(screen.getByText("25%")).toBeInTheDocument();
-    expect(screen.getByText("Nota do melhor trecho")).toBeInTheDocument();
-    expect(screen.getByText(/Dificuldade estimada/)).toBeInTheDocument();
+    const drawer = within(await screen.findByRole("dialog"));
+    expect(drawer.getByText("Tem negação")).toBeInTheDocument();
+    expect(drawer.getByText("sim")).toBeInTheDocument();
+    expect(drawer.getByText("25%")).toBeInTheDocument();
+    expect(drawer.getByText("Nota do melhor trecho")).toBeInTheDocument();
+    expect(drawer.getByText(/Dificuldade estimada/)).toBeInTheDocument();
+    expect(drawer.getByText("Perplexidade da pergunta no modelo")).toBeInTheDocument();
+    expect(drawer.getByText("42.5")).toBeInTheDocument();
   });
 });

@@ -36,6 +36,8 @@ class QuestionProfile(Base):
     experiment_id: Mapped[int] = mapped_column(ForeignKey("experiment.id"))
     question: Mapped[str] = mapped_column(String)
     signals: Mapped[dict] = mapped_column(JSON, default=dict)
+    # Signals that depend on the LLM but not on its answer: {llm: {"perplexity": x}}.
+    model_signals: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class ExperimentRun(Base):

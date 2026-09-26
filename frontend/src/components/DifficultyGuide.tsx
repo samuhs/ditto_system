@@ -106,6 +106,16 @@ export function DifficultyGuide() {
             não muda nada.
           </p>
 
+          <h3 className="ditto-h3">Sinais que não dependem da resposta</h3>
+          <p>
+            A Tabela 3, abaixo da principal, mostra quais sinais medidos <b>sem olhar as respostas</b>{" "}
+            andam junto com a dificuldade: características da pergunta (tamanho, negação, horário,
+            termos raros), da evidência, da busca e a <b>perplexidade</b> (o quanto o texto da
+            pergunta surpreende cada modelo; só modelos MLX). Um valor perto de +1 quer dizer que o
+            sinal prevê bem a dificuldade. Validados no experimento grande, esses sinais permitem
+            prever se uma pergunta nova será difícil para o modelo pequeno antes de rodá-la.
+          </p>
+
           <h3 className="ditto-h3">Dois cuidados</h3>
           <ul>
             <li>

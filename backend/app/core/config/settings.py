@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     max_local_models: int | None = None
     embedding_device: str | None = None
     max_experiment_concurrency: int | None = None
+    # The perplexity signal loads a second copy of an MLX model beside the server.
+    # Without free memory for it, it is skipped unless swapping is allowed.
+    perplexity_allow_swap: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -29,6 +32,12 @@ class Settings(BaseSettings):
     def _empty_is_unset(cls, value):
         """Compose passes unset .env keys through as empty strings."""
         return None if value == "" else value
+
+    @field_validator("perplexity_allow_swap", mode="before")
+    @classmethod
+    def _empty_is_false(cls, value):
+        """An unset .env key arrives as an empty string: keep the default."""
+        return False if value == "" else value
 
 
 @lru_cache

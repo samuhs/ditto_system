@@ -864,6 +864,8 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-score[data-best="true"] { font-weight: 750; }
 .ditto-score-na { color: var(--ink-3); }
 
+.ditto-signal-corr { margin-top: 36px; }
+.ditto-signal-corr .ditto-h3 { margin: 0 0 6px; }
 .ditto-guide { display: flex; flex-direction: column; gap: 10px; font-family: var(--font-read); color: var(--ink); line-height: 1.55; }
 .ditto-guide h3 { margin: 14px 0 0; font-family: var(--font-ui); }
 .ditto-guide h3:first-child { margin-top: 0; }

@@ -873,3 +873,54 @@ def test_profiles_get_evidence_signals_and_distance(session_factory):
     assert "evidence_count" not in profiles["When?"]
     assert "evidence_distance" not in profiles["When?"]
     assert "load:e5" in events[events.index("gen"):]  # distance uses the eval embedder after generation
+
+
+def test_perplexity_is_scored_once_per_llm_not_per_combination(session_factory):
+    from app.core.db.models import QuestionProfile
+    from app.core.difficulty import perplexity
+
+    perplexity._cache.clear()
+    calls = []
+
+    class _Scorer:
+        def score(self, model, questions):
+            calls.append((model, list(questions)))
+            return {q: 10.0 + len(q) for q in questions}
+
+    events = []
+    store = _indexed_store("e5")
+    deps = _staged_deps(store, session_factory, events)
+    deps.perplexity_scorer_factory = lambda model: _Scorer() if "/" in model else None
+    experiment_id = _new_experiment(session_factory, "perplexity")
+    run_experiment(
+        experiment_id,
+        _staged_config(rags=["naive", "closed_book"], retrievers=["similarity", "mmr"],
+                       llms=["org/small-4bit", "qwen3:1.7b", "gemini"], metrics=["rouge_l"]),
+        [QuestionItem(text="Where?"), QuestionItem(text="When?"), QuestionItem(text="Where?")],
+        deps,
+    )
+    assert calls == [("org/small-4bit", ["Where?", "When?"])]
+    check = session_factory()
+    profiles = {p.question: p.model_signals for p in check.query(QuestionProfile).all()}
+    check.close()
+    assert profiles["Where?"] == {"org/small-4bit": {"perplexity": 16.0}}
+
+
+def test_skipped_perplexity_is_recorded_for_the_ui(session_factory):
+    from app.core.difficulty import perplexity
+
+    perplexity._cache.clear()
+
+    class _NoMemory:
+        def score(self, model, questions):
+            raise perplexity.PerplexitySkipped(1107, 2178)
+
+    store = _indexed_store("e5")
+    deps = _staged_deps(store, session_factory, [])
+    deps.perplexity_scorer_factory = lambda model: _NoMemory()
+    experiment_id = _new_experiment(session_factory, "perplexity-skipped")
+    run_experiment(experiment_id, _staged_config(llms=["org/small-4bit"], metrics=["rouge_l"]),
+                   [QuestionItem(text="Where?")], deps)
+    status, _, config = _results(session_factory, experiment_id)
+    assert status == "done"
+    assert config["perplexity_skipped"] == {"org/small-4bit": {"free_mb": 1107, "needed_mb": 2178}}

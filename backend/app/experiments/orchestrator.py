@@ -17,6 +17,11 @@ from app.core.difficulty import (
     question_profile,
     retrieval_profile,
 )
+from app.core.difficulty.perplexity import (
+    PerplexitySkipped,
+    cached_perplexities,
+    perplexity_scorer_for,
+)
 from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
 from app.core.config.runtime import get_eval_embedding, get_ollama_models
@@ -73,6 +78,8 @@ class ExperimentDeps:
     rag_factory: Callable = build_rag
     # Shared embedder cache; None builds a private one around embedder_factory.
     models: ModelManager | None = None
+    # Model name -> PerplexityScorer, or None when the model cannot be scored.
+    perplexity_scorer_factory: Callable = perplexity_scorer_for
 
     def __post_init__(self) -> None:
         if self.models is None:
@@ -272,6 +279,56 @@ def _store_evidence_distances(
     except Exception as exc:  # noqa: BLE001
         session.rollback()
         logger.warning("evidence distance skipped: %s", exc)
+
+
+def _store_perplexities(
+    session: Session,
+    experiment_id: int,
+    config: ExperimentConfig,
+    deps: ExperimentDeps,
+    questions: list[QuestionItem],
+) -> None:
+    """Score each distinct question once per local LLM that supports it (perplexity).
+
+    The question is the same across every combination, so it is scored once per
+    model, not per run; scores already known to this process are reused.
+    Optional: a failure is logged and the experiment still finishes.
+    """
+    texts = list(dict.fromkeys(q.text for q in questions))
+    skipped: dict[str, dict] = {}
+    profiles = {
+        p.question: p
+        for p in session.query(QuestionProfile).filter_by(experiment_id=experiment_id)
+    }
+    for llm_name in dict.fromkeys(config.llms):
+        if not is_local_llm(llm_name):
+            continue
+        model = _llm_server_model(llm_name)
+        scorer = deps.perplexity_scorer_factory(model)
+        if scorer is None:
+            continue
+        try:
+            scores = cached_perplexities(scorer, model, texts)
+        except PerplexitySkipped as exc:
+            logger.warning("perplexity skipped for %s: %s", model, exc)
+            skipped[llm_name] = {"free_mb": exc.free_mb, "needed_mb": exc.needed_mb}
+            continue
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("perplexity failed for %s: %s", model, exc)
+            skipped[llm_name] = {"error": str(exc)[:300]}
+            continue
+        for text, value in scores.items():
+            profile = profiles.get(text)
+            if profile is not None:
+                signals = dict(profile.model_signals or {})
+                signals[llm_name] = {**signals.get(llm_name, {}), "perplexity": value}
+                profile.model_signals = signals
+        session.commit()
+    if skipped:
+        # Shown on the difficulty tab, so a missing signal is explained.
+        experiment = session.get(Experiment, experiment_id)
+        experiment.config = {**(experiment.config or {}), "perplexity_skipped": skipped}
+        session.commit()
 
 
 def _llm_server_model(name: str) -> str:
@@ -475,6 +532,7 @@ def _run_experiment(
             session, experiment_id, config, deps, questions,
             resolve_embedding_device(active_profile()) if staged else device,
         )
+        _store_perplexities(session, experiment_id, config, deps, questions)
         experiment.status = "paused" if paused else "done"
         experiment.finished_at = datetime.now(UTC)
         _set_phase(session, experiment, None)

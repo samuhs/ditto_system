@@ -80,3 +80,40 @@ def test_irt_ranks_questions_on_the_chosen_metric(db_session):
 
     flipped = question_difficulty(experiment, "rouge_l")["irt"]
     assert flipped["difficulty"]["Fácil"] > flipped["difficulty"]["Difícil"]
+
+
+def test_spearman_handles_ties_and_constants():
+    from app.experiments.difficulty import spearman
+
+    assert spearman([1, 2, 3, 4], [10, 20, 30, 40]) == pytest.approx(1.0)
+    assert spearman([1, 2, 3, 4], [4, 3, 2, 1]) == pytest.approx(-1.0)
+    assert spearman([1, 1, 1], [1, 2, 3]) is None
+    assert spearman([1, 2], [1, 2]) is None
+
+
+def test_signals_are_correlated_with_irt_difficulty(db_session):
+    experiment = Experiment(name="corr", status="done", config={})
+    scores = {"Q1": 0.9, "Q2": 0.6, "Q3": 0.3, "Q4": 0.1}
+    experiment.question_profiles = [
+        QuestionProfile(question=q, signals={"question_length": float(i), "negation": 0.0},
+                        model_signals={"org/small": {"perplexity": 5.0 + i}})
+        for i, q in enumerate(scores)
+    ]
+    experiment.runs = [
+        _run(rag, llm, [(q, "a", {"chrf": s + shift}, {"top_score": 1 - s}) for q, s in scores.items()])
+        for rag, shift in [("naive", 0.0), ("rerank", -0.05)]
+        for llm in ["org/small", "gemini"]
+    ]
+    db_session.add(experiment)
+    db_session.commit()
+
+    corr = question_difficulty(experiment)["correlations"]
+    rows = {(r["kind"], r["signal"]): r for r in corr["rows"]}
+    assert rows[("question", "question_length")]["overall"] == pytest.approx(1.0)
+    assert rows[("question", "negation")]["overall"] is None  # constant signal
+    assert rows[("retrieval", "top_score")]["by_llm"]["gemini"] == pytest.approx(1.0)
+    perplexity = rows[("model", "perplexity")]
+    assert perplexity["overall"] is None
+    assert perplexity["by_llm"]["org/small"] == pytest.approx(1.0)
+    assert perplexity["by_llm"]["gemini"] is None
+    assert corr["n_questions"] == 4 and corr["reliable"] is False

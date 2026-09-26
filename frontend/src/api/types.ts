@@ -144,6 +144,8 @@ export interface QuestionDifficulty {
   question: string;
   signals: Record<string, number>;
   retrieval_signals: Record<string, number>;
+  /** Signals that depend on the model but not on its answer, per LLM (perplexity). */
+  model_signals: Record<string, Record<string, number>>;
   by_llm: Record<string, DifficultyCell>;
 }
 
@@ -160,6 +162,21 @@ export interface IrtFit {
   ability: Record<string, number>;
 }
 
+export interface SignalCorrelation {
+  signal: string;
+  /** question: text, corpus or evidence; retrieval: chunk scores; model: per LLM (perplexity). */
+  kind: "question" | "retrieval" | "model";
+  /** Spearman's rho with the IRT difficulty; null when it cannot be computed. */
+  overall: number | null;
+  by_llm: Record<string, number | null>;
+}
+
+export interface SignalCorrelations {
+  n_questions: number;
+  reliable: boolean;
+  rows: SignalCorrelation[];
+}
+
 export interface ExperimentDifficulty {
   llms: string[];
   metrics: string[];
@@ -167,6 +184,9 @@ export interface ExperimentDifficulty {
   metric: string | null;
   questions: QuestionDifficulty[];
   irt: IrtFit | null;
+  correlations: SignalCorrelations | null;
+  /** LLMs whose perplexity was not computed, and why (too little memory, or an error). */
+  perplexity_skipped?: Record<string, { free_mb?: number; needed_mb?: number; error?: string }>;
 }
 
 export interface FlowNode {

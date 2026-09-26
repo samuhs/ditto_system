@@ -36,6 +36,12 @@ def _no_llm_probe(monkeypatch):
     monkeypatch.setattr(ollama, "unload_local_llm", lambda *a, **k: False)
 
 
+@pytest.fixture(autouse=True)
+def _no_mlx_perplexity(monkeypatch, tmp_path):
+    """Tests never start the MLX perplexity process: its Python is not found."""
+    monkeypatch.setenv("DITTO_HOME", str(tmp_path / "no-ditto-home"))
+
+
 @pytest.fixture
 def client():
     """Test client for the FastAPI application."""

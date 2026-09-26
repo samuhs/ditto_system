@@ -2,7 +2,7 @@ import { Drawer, Loader, Select } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 
 import { getExperimentDifficulty } from "../api/client";
-import type { ExperimentDifficulty, QuestionDifficulty } from "../api/types";
+import type { ExperimentDifficulty, QuestionDifficulty, SignalCorrelations } from "../api/types";
 import { term } from "../glossary";
 import { DifficultyGuide } from "./DifficultyGuide";
 import { Errata, Note, errorText } from "./Notice";
@@ -25,6 +25,7 @@ export const SIGNAL_LABELS: Record<string, string> = {
   top_score: "Nota do melhor trecho",
   score_gap: "Distância do 1º para o 2º trecho",
   score_spread: "Dispersão das notas dos trechos",
+  perplexity: "Perplexidade da pergunta no modelo",
 };
 
 const FLAG_SIGNALS = new Set(["temporal", "numeric", "negation", "aggregation", "yes_no"]);
@@ -32,6 +33,7 @@ const FLAG_SIGNALS = new Set(["temporal", "numeric", "negation", "aggregation", 
 export function formatSignal(name: string, value: number): string {
   if (FLAG_SIGNALS.has(name)) return value >= 1 ? "sim" : "não";
   if (name === "out_of_corpus" || name === "evidence_overlap") return `${Math.round(value * 100)}%`;
+  if (name === "perplexity") return value.toFixed(1);
   if (name === "question_length" || name === "sub_questions" || name === "evidence_count") {
     return String(value);
   }
@@ -56,6 +58,67 @@ function SignalList({ signals }: { signals: Record<string, number> }) {
 function signed(value: number | undefined): string {
   if (value === undefined) return "—";
   return `${value > 0 ? "+" : ""}${value.toFixed(2)}`;
+}
+
+const KIND_LABEL = { question: "Pergunta", retrieval: "Busca", model: "Modelo" } as const;
+
+/** Which answer-free signals move with the IRT difficulty, overall and per model. */
+function SignalCorrelationTable({ data, llms }: { data: SignalCorrelations; llms: string[] }) {
+  const rows = data.rows.filter(
+    (r) => r.overall !== null || Object.values(r.by_llm).some((v) => v !== null),
+  );
+  return (
+    <section className="ditto-signal-corr" aria-labelledby="signal-corr-title">
+      <h3 id="signal-corr-title" className="ditto-h3">
+        Quais sinais preveem a dificuldade
+      </h3>
+      <p className="ditto-caption">
+        <strong>Tabela 3.</strong> Correlação (Spearman) entre cada sinal medido sem olhar as
+        respostas e a dificuldade estimada pela TRI. Perto de +1: quanto maior o sinal, mais difícil
+        a pergunta. Perto de −1: o contrário. Perto de 0: o sinal não prevê a dificuldade. Compare
+        as colunas dos modelos para ver o que pesa mais para o modelo pequeno.
+        {!data.reliable && ` Com ${data.n_questions} perguntas estes números são só indicativos.`}
+      </p>
+      {rows.length === 0 ? (
+        <Note title="Correlação indisponível">
+          São precisas pelo menos 3 perguntas com sinais que variem entre elas.
+        </Note>
+      ) : (
+        <div className="ditto-table-wrap">
+          <table className="ditto-table" data-stack="true">
+            <thead>
+              <tr>
+                <th>Sinal</th>
+                <th>Origem</th>
+                <th className="ditto-num">Todas as combinações</th>
+                {llms.map((llm) => (
+                  <th key={llm} className="ditto-num">
+                    {llm}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={`${r.kind}-${r.signal}`}>
+                  <td className="ditto-cell-title">{SIGNAL_LABELS[r.signal] ?? r.signal}</td>
+                  <td data-label="Origem">{KIND_LABEL[r.kind]}</td>
+                  <td className="ditto-num" data-label="Todas as combinações">
+                    {signed(r.overall ?? undefined)}
+                  </td>
+                  {llms.map((llm) => (
+                    <td key={llm} className="ditto-num" data-label={llm}>
+                      {signed(r.by_llm[llm] ?? undefined)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
 }
 
 function meanOver(q: QuestionDifficulty, metric: string): number | null {
@@ -227,6 +290,21 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
         </table>
       </div>
 
+      {Object.entries(data.perplexity_skipped ?? {}).map(([llm, why]) => (
+        <div key={llm} style={{ marginTop: 28 }}>
+          <Note title={`Perplexidade não calculada para ${llm}`}>
+            {why.error
+              ? `O cálculo falhou: ${why.error}.`
+              : `Havia ${why.free_mb} MB de memória livre e ela precisa de cerca de ${why.needed_mb} MB, porque carrega uma segunda cópia do modelo ao lado do servidor MLX.`}{" "}
+            Para calcular no próximo experimento, feche outros programas ou ponha{" "}
+            <span className="ditto-mono">PERPLEXITY_ALLOW_SWAP=true</span> no .env e rode{" "}
+            <span className="ditto-mono">make down-local && make up-local</span> (o macOS usa a memória
+            de troca por alguns segundos).
+          </Note>
+        </div>
+      ))}
+      {data.correlations && <SignalCorrelationTable data={data.correlations} llms={data.llms} />}
+
       <Drawer opened={open !== null} onClose={() => setOpen(null)} title="Dificuldade da pergunta">
         {open && (
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -262,6 +340,21 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
               </h3>
               <SignalList signals={open.retrieval_signals} />
             </div>
+            {Object.keys(open.model_signals ?? {}).length > 0 && (
+              <div>
+                <h3 className="ditto-h3" style={{ marginBottom: 8 }}>
+                  Sinais do modelo (sem olhar a resposta)
+                </h3>
+                {Object.entries(open.model_signals).map(([llm, signals]) => (
+                  <div key={llm} style={{ marginBottom: 10 }}>
+                    <p className="ditto-muted" style={{ margin: "0 0 4px", fontSize: 13, overflowWrap: "anywhere" }}>
+                      {llm}
+                    </p>
+                    <SignalList signals={signals} />
+                  </div>
+                ))}
+              </div>
+            )}
             {hasEvidence && (
               <div>
                 <h3 className="ditto-h3" style={{ marginBottom: 8 }}>
