@@ -11,7 +11,12 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.core.db.models import Experiment, ExperimentRun, QuestionProfile, RunResult
-from app.core.difficulty import corpus_stats_for_base, question_profile, retrieval_profile
+from app.core.difficulty import (
+    corpus_stats_for_base,
+    evidence_distance,
+    question_profile,
+    retrieval_profile,
+)
 from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
 from app.core.config.runtime import get_eval_embedding, get_ollama_models
@@ -87,7 +92,10 @@ def _store_question_profiles(
         p.question
         for p in session.query(QuestionProfile).filter_by(experiment_id=experiment_id)
     }
-    missing = [t for t in dict.fromkeys(q.text for q in questions) if t not in known]
+    evidence = {}
+    for q in questions:
+        evidence.setdefault(q.text, q.evidence)
+    missing = [t for t in evidence if t not in known]
     if not missing:
         return
     try:
@@ -98,7 +106,9 @@ def _store_question_profiles(
     for text in missing:
         session.add(
             QuestionProfile(
-                experiment_id=experiment_id, question=text, signals=question_profile(text, corpus)
+                experiment_id=experiment_id,
+                question=text,
+                signals=question_profile(text, corpus, evidence[text]),
             )
         )
     session.commit()
@@ -119,7 +129,10 @@ def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder)
     Returns (answer, contexts, scores, latency_ms, tokens).
     """
     start = time.perf_counter()
-    answer = rag.answer(question.text)
+    if getattr(rag, "uses_evidence", False):
+        answer = rag.answer(question.text, evidence=question.evidence)
+    else:
+        answer = rag.answer(question.text)
     latency_ms = int((time.perf_counter() - start) * 1000)
     context_texts = [c.get("text", "") for c in answer.contexts]
     sample = EvalSample(
@@ -227,6 +240,38 @@ def _question_vectors(
             vectors[embedding] = dict(zip(texts, embedded))
     deps.models.evict_idle()  # the LLM gets the memory from here on
     return vectors
+
+
+def _store_evidence_distances(
+    session: Session,
+    experiment_id: int,
+    config: ExperimentConfig,
+    deps: ExperimentDeps,
+    questions: list[QuestionItem],
+    device: str,
+) -> None:
+    """Add GRADE's question-evidence distance to the profiles, with the eval embedder.
+
+    Runs after generation, when the LLM no longer holds the memory. Optional:
+    a failure is logged and the experiment still finishes.
+    """
+    evidence = {q.text: q.evidence for q in questions if q.evidence}
+    profiles = [
+        p
+        for p in session.query(QuestionProfile).filter_by(experiment_id=experiment_id)
+        if p.question in evidence and "evidence_distance" not in (p.signals or {})
+    ]
+    if not profiles:
+        return
+    try:
+        with deps.models.acquire(config.eval_embedding, device) as embedder:
+            for profile in profiles:
+                distance = evidence_distance(embedder, profile.question, evidence[profile.question])
+                profile.signals = {**profile.signals, "evidence_distance": distance}
+        session.commit()
+    except Exception as exc:  # noqa: BLE001
+        session.rollback()
+        logger.warning("evidence distance skipped: %s", exc)
 
 
 def _llm_server_model(name: str) -> str:
@@ -367,9 +412,15 @@ def _run_experiment(
                     rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
                 rag = deps.rag_factory(rag_name, **rag_kwargs)
 
+                # The oracle answers from the reference evidence: only questions with one.
+                run_questions = (
+                    [q for q in questions if q.evidence]
+                    if getattr(rag, "uses_evidence", False)
+                    else questions
+                )
                 # DB writes stay on this thread: the Session is not thread-safe.
                 for question, outcome in _run_questions(
-                    rag, questions, inline_metrics, eval_embedder, concurrency, experiment_id,
+                    rag, run_questions, inline_metrics, eval_embedder, concurrency, experiment_id,
                 ):
                     # Checkpoint: questions not started before a pause are skipped.
                     if outcome is None:
@@ -420,6 +471,10 @@ def _run_experiment(
             # Scores what was generated, paused or not.
             _set_phase(session, experiment, "evaluating")
             _score_results(session, experiment_id, config, deps)
+        _store_evidence_distances(
+            session, experiment_id, config, deps, questions,
+            resolve_embedding_device(active_profile()) if staged else device,
+        )
         experiment.status = "paused" if paused else "done"
         experiment.finished_at = datetime.now(UTC)
         _set_phase(session, experiment, None)

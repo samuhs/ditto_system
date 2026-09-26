@@ -45,7 +45,8 @@ export function ChatConfigsPage() {
         if (opts.chunkings.length > 0) setChunking((c) => c || opts.chunkings[0]);
         if (opts.embeddings.length > 0) setEmbedding((e) => e || opts.embeddings[0]);
         if (opts.retrievers.length > 0) setRetriever(opts.retrievers[0]);
-        if (opts.rags.length > 0) setRag(opts.rags[0]);
+        const chatRags = opts.rags.filter((r) => r !== "oracle");
+        if (chatRags.length > 0) setRag(chatRags[0]);
         if (opts.llms.length > 0) setLlm(opts.llms[0]);
       })
       .catch((e) => setError(errorText(e)));
@@ -147,7 +148,7 @@ export function ChatConfigsPage() {
                   <Select label="Embedding" data={named("embedding", options?.embeddings)} value={embedding || null} onChange={(v) => setEmbedding(v ?? "")} allowDeselect={false} />
                 </>
               )}
-              <Select label="Técnica de RAG" data={named("rag", options?.rags)} value={rag || null} onChange={(v) => setRag(v ?? "")} allowDeselect={false} />
+              <Select label="Técnica de RAG" data={named("rag", options?.rags.filter((r) => r !== "oracle"))} value={rag || null} onChange={(v) => setRag(v ?? "")} allowDeselect={false} />
               <Select label="Busca" data={named("retriever", options?.retrievers)} value={retriever || null} onChange={(v) => setRetriever(v ?? "")} allowDeselect={false} />
               <Select label="Modelo (LLM)" data={llmSelectData(options)} value={llm || null} onChange={(v) => setLlm(v ?? "gemini")} searchable allowDeselect={false} />
               <Select label="Persona" data={personas} value={persona || null} onChange={(v) => setPersona(v ?? "")} allowDeselect={false} />

@@ -71,3 +71,21 @@ def test_corpus_stats_for_base_reads_the_first_collection():
               [{"text": "ilha do ar"}, {"text": "praça da matriz"}])
     stats = corpus_stats_for_base(store, "viagem")
     assert stats.n_docs == 2 and stats.doc_freq["ilha"] == 1
+
+
+def test_evidence_signals_only_with_evidence():
+    assert "evidence_count" not in question_profile("Onde fica o centro?")
+    profile = question_profile("Onde fica o centro?", evidence=["O centro fica na praça.", "Perto da igreja."])
+    assert profile["evidence_count"] == 2.0
+    assert profile["evidence_overlap"] == pytest.approx(2 / 3)  # fica, centro; not onde
+
+
+def test_evidence_distance_is_one_minus_the_lowest_cosine():
+    from app.core.difficulty import evidence_distance
+
+    class _E:
+        def embed_query(self, text):
+            return {"q": [1.0, 0.0], "near": [1.0, 0.0], "far": [0.0, 1.0]}[text]
+
+    assert evidence_distance(_E(), "q", ["near"]) == pytest.approx(0.0)
+    assert evidence_distance(_E(), "q", ["near", "far"]) == pytest.approx(1.0)

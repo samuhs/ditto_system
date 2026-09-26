@@ -7,9 +7,6 @@ import { term } from "../glossary";
 import { Errata, Note, errorText } from "./Notice";
 import { ScoreCell } from "./Score";
 
-/** Answer-quality metrics tried, in order, as the default for the table. */
-const PREFERRED_METRICS = ["chrf", "token_f1", "answer_correctness", "rouge_l"];
-
 export const SIGNAL_LABELS: Record<string, string> = {
   question_length: "Palavras na pergunta",
   sub_questions: "Perguntas numa só",
@@ -21,6 +18,9 @@ export const SIGNAL_LABELS: Record<string, string> = {
   mean_idf: "Raridade média dos termos (IDF)",
   max_idf: "Termo mais raro (IDF)",
   out_of_corpus: "Termos fora dos documentos",
+  evidence_count: "Trechos de evidência",
+  evidence_overlap: "Palavras da pergunta na evidência",
+  evidence_distance: "Distância pergunta–evidência (GRADE)",
   top_score: "Nota do melhor trecho",
   score_gap: "Distância do 1º para o 2º trecho",
   score_spread: "Dispersão das notas dos trechos",
@@ -30,8 +30,10 @@ const FLAG_SIGNALS = new Set(["temporal", "numeric", "negation", "aggregation", 
 
 export function formatSignal(name: string, value: number): string {
   if (FLAG_SIGNALS.has(name)) return value >= 1 ? "sim" : "não";
-  if (name === "out_of_corpus") return `${Math.round(value * 100)}%`;
-  if (name === "question_length" || name === "sub_questions") return String(value);
+  if (name === "out_of_corpus" || name === "evidence_overlap") return `${Math.round(value * 100)}%`;
+  if (name === "question_length" || name === "sub_questions" || name === "evidence_count") {
+    return String(value);
+  }
   return value.toFixed(2);
 }
 
@@ -50,6 +52,11 @@ function SignalList({ signals }: { signals: Record<string, number> }) {
   );
 }
 
+function signed(value: number | undefined): string {
+  if (value === undefined) return "—";
+  return `${value > 0 ? "+" : ""}${value.toFixed(2)}`;
+}
+
 function meanOver(q: QuestionDifficulty, metric: string): number | null {
   const values = Object.values(q.by_llm)
     .map((cell) => cell.retrieval[metric]?.mean)
@@ -63,25 +70,29 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
   const [metric, setMetric] = useState<string | null>(null);
   const [open, setOpen] = useState<QuestionDifficulty | null>(null);
 
+  // The IRT fit is per metric, so choosing another metric refetches.
   useEffect(() => {
     let active = true;
-    getExperimentDifficulty(experimentId)
+    getExperimentDifficulty(experimentId, metric ?? undefined)
       .then((d) => {
         if (!active) return;
         setData(d);
-        setMetric(PREFERRED_METRICS.find((m) => d.metrics.includes(m)) ?? d.metrics[0] ?? null);
+        if (d.metric && d.metric !== metric) setMetric(d.metric);
       })
       .catch((e) => active && setError(errorText(e)));
     return () => {
       active = false;
     };
-  }, [experimentId]);
+  }, [experimentId, metric]);
 
+  const irt = data?.irt ?? null;
   const questions = useMemo(() => {
     if (!data || !metric) return [];
-    // Hardest first: lowest mean of the chosen metric over the models.
-    return [...data.questions].sort((a, b) => (meanOver(a, metric) ?? 2) - (meanOver(b, metric) ?? 2));
-  }, [data, metric]);
+    // Hardest first: highest IRT difficulty, else lowest mean of the metric.
+    const hardness = (q: QuestionDifficulty) =>
+      irt?.difficulty[q.question] ?? -(meanOver(q, metric) ?? 2);
+    return [...data.questions].sort((a, b) => hardness(b) - hardness(a));
+  }, [data, metric, irt]);
 
   if (error) return <Errata title="Não foi possível carregar a dificuldade">{error}.</Errata>;
   if (!data) return <Loader aria-label="Carregando dificuldade" />;
@@ -92,10 +103,13 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
   const hasClosedBook = data.questions.some((q) =>
     Object.values(q.by_llm).some((c) => metric in c.closed_book),
   );
+  const hasOracle = data.questions.some((q) =>
+    Object.values(q.by_llm).some((c) => metric in (c.oracle ?? {})),
+  );
   const hasEvidence = data.questions.some((q) =>
     Object.values(q.by_llm).some((c) => c.hit_rate !== null),
   );
-  const perLlm = 1 + (hasClosedBook ? 1 : 0) + (hasEvidence ? 1 : 0);
+  const perLlm = 1 + (hasClosedBook ? 1 : 0) + (hasOracle ? 1 : 0) + (hasEvidence ? 1 : 0);
 
   return (
     <>
@@ -110,10 +124,19 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
           w={240}
         />
       </div>
+      {irt && !irt.reliable && (
+        <Note title="TRI só indicativa">
+          Com {irt.n_questions} {irt.n_questions === 1 ? "pergunta" : "perguntas"} a dificuldade
+          estimada pela TRI serve para testar o fluxo, não para tirar conclusões. Use pelo menos{" "}
+          {irt.min_questions} perguntas no experimento final.
+        </Note>
+      )}
       <p className="ditto-caption">
         <strong>Tabela 2.</strong> Nota média de cada pergunta por modelo, sobre as combinações com
         busca (± desvio entre elas). As mais difíceis vêm primeiro.
+        {irt && " “TRI” é a dificuldade estimada sobre todas as combinações: acima de 0, mais difícil que a média."}
         {hasClosedBook && " “Sem busca” é o mesmo modelo respondendo sem os documentos."}
+        {hasOracle && " “Oráculo” é o modelo com o trecho correto no contexto: o melhor que ele consegue."}
         {hasEvidence && " “Evidência” é a parte das buscas que trouxe o trecho anotado."} Clique numa
         pergunta para ver os sinais dela.
       </p>
@@ -122,6 +145,11 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
           <thead>
             <tr>
               <th rowSpan={2}>Pergunta</th>
+              {irt && (
+                <th rowSpan={2} className="ditto-num">
+                  TRI
+                </th>
+              )}
               {data.llms.map((llm) => (
                 <th key={llm} colSpan={perLlm} className="ditto-num">
                   {llm}
@@ -132,6 +160,7 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
               {data.llms.map((llm) => [
                 <th key={`${llm}-r`} className="ditto-num">Com busca</th>,
                 hasClosedBook && <th key={`${llm}-c`} className="ditto-num">Sem busca</th>,
+                hasOracle && <th key={`${llm}-o`} className="ditto-num">Oráculo</th>,
                 hasEvidence && <th key={`${llm}-e`} className="ditto-num">Evidência</th>,
               ])}
             </tr>
@@ -152,6 +181,11 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
                     {q.question}
                   </button>
                 </td>
+                {irt && (
+                  <td className="ditto-num" data-label="TRI">
+                    {signed(irt.difficulty[q.question])}
+                  </td>
+                )}
                 {data.llms.map((llm) => {
                   const cell = q.by_llm[llm];
                   const summary = cell?.retrieval[metric];
@@ -167,6 +201,11 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
                     hasClosedBook && (
                       <td key={`${llm}-c`} className="ditto-num" data-label={`${llm} · sem busca`}>
                         <ScoreCell value={cell?.closed_book[metric] ?? null} />
+                      </td>
+                    ),
+                    hasOracle && (
+                      <td key={`${llm}-o`} className="ditto-num" data-label={`${llm} · oráculo`}>
+                        <ScoreCell value={cell?.oracle?.[metric] ?? null} />
                       </td>
                     ),
                     hasEvidence && (
@@ -192,6 +231,23 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
             <p className="ditto-read" style={{ color: "var(--ink)", margin: 0 }}>
               {open.question}
             </p>
+            {irt && (
+              <div>
+                <h3 className="ditto-h3" style={{ marginBottom: 8 }}>
+                  Dificuldade estimada (TRI, {term("metric", irt.metric).name})
+                </h3>
+                <dl className="ditto-kv">
+                  <dt>Todas as combinações</dt>
+                  <dd>{signed(irt.difficulty[open.question])}</dd>
+                  {data.llms.map((llm) => (
+                    <div key={llm} style={{ display: "contents" }}>
+                      <dt>{llm}</dt>
+                      <dd>{signed(irt.difficulty_by_llm[llm]?.[open.question])}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
             <div>
               <h3 className="ditto-h3" style={{ marginBottom: 8 }}>
                 Sinais antes da busca

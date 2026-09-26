@@ -25,6 +25,7 @@ dependencies = [
     "psutil>=5.9",
     "sacrebleu>=2.4",
     "rapidfuzz>=3.0",
+    "numpy>=1.24",
 ]
 
 [project.optional-dependencies]

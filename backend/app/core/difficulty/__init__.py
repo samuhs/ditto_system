@@ -1,8 +1,11 @@
 """Question-difficulty signals. Importing it registers the built-in signals."""
 from app.core.difficulty import signals  # noqa: F401  registers the built-ins
 from app.core.difficulty.base import (
+    EvidenceSignal,
     QuestionSignal,
     RetrievalSignal,
+    evidence_distance,
+    evidence_signal_registry,
     question_profile,
     question_signal_registry,
     retrieval_profile,
@@ -11,6 +14,9 @@ from app.core.difficulty.base import (
 from app.core.difficulty.corpus import CorpusStats, corpus_stats_for_base
 
 __all__ = [
+    "EvidenceSignal",
+    "evidence_distance",
+    "evidence_signal_registry",
     "QuestionSignal",
     "RetrievalSignal",
     "question_profile",

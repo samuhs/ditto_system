@@ -132,6 +132,8 @@ export interface DifficultyCell {
   retrieval: Record<string, MetricSummary>;
   /** Each metric's mean without retrieval (closed book); empty if it did not run. */
   closed_book: Record<string, number>;
+  /** Each metric's mean with the annotated evidence as context (oracle); empty if it did not run. */
+  oracle: Record<string, number>;
   /** Share of retrievals that brought the annotated evidence back; null without evidence. */
   hit_rate: number | null;
   with_evidence: Record<string, number>;
@@ -145,10 +147,26 @@ export interface QuestionDifficulty {
   by_llm: Record<string, DifficultyCell>;
 }
 
+export interface IrtFit {
+  metric: string;
+  n_questions: number;
+  n_configurations: number;
+  /** False below min_questions: the estimates are only indicative. */
+  reliable: boolean;
+  min_questions: number;
+  /** Rasch difficulty per question, centred at 0 (positive = harder than average). */
+  difficulty: Record<string, number>;
+  difficulty_by_llm: Record<string, Record<string, number>>;
+  ability: Record<string, number>;
+}
+
 export interface ExperimentDifficulty {
   llms: string[];
   metrics: string[];
+  /** Metric the IRT fit used. */
+  metric: string | null;
   questions: QuestionDifficulty[];
+  irt: IrtFit | null;
 }
 
 export interface FlowNode {

@@ -832,3 +832,44 @@ def test_run_stores_question_profiles_and_retrieval_signals(session_factory):
     assert profile.question == "Where is para two?"
     assert {"question_length", "mean_idf", "out_of_corpus"} <= set(profile.signals)
     check.close()
+
+
+def test_oracle_runs_once_per_llm_on_questions_with_evidence(session_factory):
+    from app.core.db.models import RunResult
+
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "oracle")
+    run_experiment(
+        experiment_id,
+        _staged_config(rags=["oracle"], retrievers=["similarity", "mmr"], metrics=["rouge_l"]),
+        [QuestionItem(text="Com evidência?", reference="Aqui.", evidence=["Para two here."]),
+         QuestionItem(text="Sem evidência?", reference="Aqui.")],
+        _staged_deps(store, session_factory, events),
+    )
+    check = session_factory()
+    [row] = check.query(RunResult).all()
+    assert row.question == "Com evidência?"
+    assert row.retrieved_context == [{"text": "Para two here.", "source": "oracle"}]
+    assert row.retrieval_signals == {}
+    check.close()
+
+
+def test_profiles_get_evidence_signals_and_distance(session_factory):
+    from app.core.db.models import QuestionProfile
+
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "evidence-signals")
+    run_experiment(experiment_id, _staged_config(metrics=["rouge_l"]),
+                   [QuestionItem(text="Where?", reference="Aqui.", evidence=["Para two here."]),
+                    QuestionItem(text="When?", reference="Agora.")],
+                   _staged_deps(store, session_factory, events))
+    check = session_factory()
+    profiles = {p.question: p.signals for p in check.query(QuestionProfile).all()}
+    check.close()
+    assert profiles["Where?"]["evidence_count"] == 1.0
+    assert 0.0 <= profiles["Where?"]["evidence_distance"] <= 2.0
+    assert "evidence_count" not in profiles["When?"]
+    assert "evidence_distance" not in profiles["When?"]
+    assert "load:e5" in events[events.index("gen"):]  # distance uses the eval embedder after generation

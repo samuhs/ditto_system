@@ -57,8 +57,9 @@ export async function getExperiment(id: number): Promise<ExperimentDetail> {
   return asJson<ExperimentDetail>(await fetch(`${BASE}/experiments/${id}`));
 }
 
-export async function getExperimentDifficulty(id: number): Promise<ExperimentDifficulty> {
-  return asJson<ExperimentDifficulty>(await fetch(`${BASE}/experiments/${id}/difficulty`));
+export async function getExperimentDifficulty(id: number, metric?: string): Promise<ExperimentDifficulty> {
+  const query = metric ? `?metric=${encodeURIComponent(metric)}` : "";
+  return asJson<ExperimentDifficulty>(await fetch(`${BASE}/experiments/${id}/difficulty${query}`));
 }
 
 export function exportExperimentUrl(id: number): string {

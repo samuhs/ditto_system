@@ -14,6 +14,8 @@ import { term } from "../glossary";
 import { formatDuration } from "../utils/duration";
 import { joinPt } from "../utils/text";
 
+
+const NO_RETRIEVAL_RAGS = ["closed_book", "oracle"];
 export function ExperimentPage() {
   const { addExperimentTask } = useTasks();
   const [options, setOptions] = useState<Options | null>(null);
@@ -84,11 +86,11 @@ export function ExperimentPage() {
     }
   }
 
-  // "Sem busca" ignores the index and retriever, so it runs once per model.
-  const retrievingRags = rags.filter((r) => r !== "closed_book").length;
+  // "Sem busca" and "Oráculo" ignore the index and retriever: they run once per model.
+  const baselines = rags.filter((r) => NO_RETRIEVAL_RAGS.includes(r)).length;
   const forms =
-    (indexKeys.length * retrievingRags * retrievers.length +
-      (rags.includes("closed_book") && indexKeys.length > 0 && retrievers.length > 0 ? 1 : 0)) *
+    (indexKeys.length * (rags.length - baselines) * retrievers.length +
+      (indexKeys.length > 0 && retrievers.length > 0 ? baselines : 0)) *
     llms.length;
   const missing = [
     base === "" && "a base",

@@ -48,6 +48,10 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
       name: "Sem busca",
       description: "O modelo responde só com o que já sabe, sem os documentos. Roda uma vez por modelo.",
     },
+    oracle: {
+      name: "Oráculo",
+      description: "O modelo recebe o trecho correto anotado no lugar da busca: o melhor caso de cada modelo. Precisa da coluna evidencia_referencia.",
+    },
     naive: {
       name: "Simples",
       description: "Busca os trechos uma vez e responde com eles.",

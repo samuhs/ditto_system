@@ -7,6 +7,7 @@ from pathlib import Path
 PROMPT_SPECS: dict[str, dict[str, set[str]]] = {
     "naive": {"answer": {"context", "question"}},
     "closed_book": {"answer": {"question"}},
+    "oracle": {"answer": {"context", "question"}},
     "agentic": {
         "decide": {"question", "context"},
         "answer": {"context", "question"},
@@ -38,6 +39,13 @@ DEFAULT_PROMPTS: dict[str, dict[str, str]] = {
         "answer": (
             "Responda a pergunta com o que voce sabe. Se nao souber, diga que nao "
             "sabe.\n\nPergunta: {question}\n\nResposta:"
+        ),
+    },
+    "oracle": {
+        "answer": (
+            "Use o contexto abaixo para responder a pergunta. Se o contexto nao for "
+            "suficiente, diga o que for possivel.\n\nContexto:\n{context}\n\n"
+            "Pergunta: {question}\n\nResposta:"
         ),
     },
     "agentic": {

@@ -2,22 +2,33 @@
 
 Read-time aggregation over stored results (nothing new is persisted): for each
 question and LLM, the mean and spread of every metric over the retrieval
-configurations, the closed-book baseline, and, when reference evidence was
-annotated, the metrics split by whether retrieval brought the evidence back
-(context_hit). That split separates "retrieval missed it" from "the evidence
-was in the context and this LLM still answered badly".
+configurations, the closed-book baseline, the oracle (evidence as context)
+and, when reference evidence was annotated, the metrics split by whether
+retrieval brought the evidence back (context_hit). That split separates
+"retrieval missed it" from "the evidence was in the context and this LLM still
+answered badly". An IRT fit on one metric gives each question a difficulty,
+overall and per LLM.
 """
 import statistics
 
 from app.core.db.models import Experiment
 from app.core.rag.base import rag_registry
+from app.experiments.irt import MIN_RELIABLE_QUESTIONS, fit_rasch
 
 HIT_METRIC = "context_hit"
+# Answer-quality metrics tried, in order, when no metric is asked for.
+PREFERRED_METRICS = ["chrf", "token_f1", "answer_correctness", "rouge_l"]
 _ERROR_PREFIX = "[ERRO: "
 
 
-def _uses_retrieval(rag: str) -> bool:
-    return rag not in rag_registry.names() or rag_registry.get(rag).uses_retrieval
+def _kind(rag: str) -> str:
+    """'retrieval', or the baseline a non-retrieving technique stands for."""
+    if rag not in rag_registry.names():
+        return "retrieval"
+    technique = rag_registry.get(rag)
+    if technique.uses_evidence:
+        return "oracle"
+    return "retrieval" if technique.uses_retrieval else "closed_book"
 
 
 def _summary(values: list[float]) -> dict:
@@ -40,16 +51,39 @@ def _means(score_dicts: list[dict]) -> dict[str, float]:
     return {m: s["mean"] for m, s in _metric_summaries(score_dicts).items()}
 
 
-def question_difficulty(experiment: Experiment) -> dict:
-    """Per-question signals and observed difficulty, per LLM."""
+def _irt(responses: dict[tuple[str, str, str], float], llms: list[str], metric: str) -> dict:
+    """Rasch fit over every retrieval configuration, and one per LLM."""
+    overall, ability = fit_rasch({(c, q): s for (c, _, q), s in responses.items()})
+    by_llm = {
+        llm: fit_rasch({(c, q): s for (c, l, q), s in responses.items() if l == llm})[0]
+        for llm in llms
+    }
+    return {
+        "metric": metric,
+        "n_questions": len(overall),
+        "n_configurations": len(ability),
+        "reliable": len(overall) >= MIN_RELIABLE_QUESTIONS,
+        "min_questions": MIN_RELIABLE_QUESTIONS,
+        "difficulty": overall,
+        "difficulty_by_llm": by_llm,
+        "ability": ability,
+    }
+
+
+def question_difficulty(experiment: Experiment, metric: str | None = None) -> dict:
+    """Per-question signals and observed difficulty, per LLM, plus an IRT fit on one metric."""
     profiles = {p.question: p.signals for p in experiment.question_profiles}
     llms: list[str] = []
     metrics: set[str] = set()
     grouped: dict[str, dict[str, dict[str, list]]] = {}
     signals: dict[str, list[dict]] = {}
+    rows: list[tuple[str, str, str, dict]] = []  # (configuration, llm, question, scores)
     for run in experiment.runs:
         llm = run.llm or "gemini"
-        kind = "retrieval" if _uses_retrieval(run.rag_technique) else "closed_book"
+        kind = _kind(run.rag_technique)
+        config_key = "|".join(
+            [run.chunking, run.embedding, run.rag_technique, run.retriever, llm]
+        )
         for result in run.results:
             if not result.scores or result.generated_answer.startswith(_ERROR_PREFIX):
                 continue
@@ -57,9 +91,11 @@ def question_difficulty(experiment: Experiment) -> dict:
                 llms.append(llm)
             metrics.update(result.scores)
             slot = grouped.setdefault(result.question, {}).setdefault(
-                llm, {"retrieval": [], "closed_book": []}
+                llm, {"retrieval": [], "closed_book": [], "oracle": []}
             )
             slot[kind].append(result.scores)
+            if kind == "retrieval":
+                rows.append((config_key, llm, result.question, result.scores))
             if result.retrieval_signals:
                 signals.setdefault(result.question, []).append(result.retrieval_signals)
 
@@ -73,6 +109,7 @@ def question_difficulty(experiment: Experiment) -> dict:
             by_llm[llm] = {
                 "retrieval": _metric_summaries(retrieval),
                 "closed_book": _means(slot["closed_book"]),
+                "oracle": _means(slot["oracle"]),
                 "hit_rate": len(hits) / (len(hits) + len(misses)) if hits or misses else None,
                 "with_evidence": _means(hits),
                 "without_evidence": _means(misses),
@@ -83,4 +120,17 @@ def question_difficulty(experiment: Experiment) -> dict:
             "retrieval_signals": _means(signals.get(question, [])),
             "by_llm": by_llm,
         })
-    return {"llms": llms, "metrics": sorted(metrics), "questions": questions}
+    if metric not in metrics:
+        metric = next((m for m in PREFERRED_METRICS if m in metrics), min(metrics, default=None))
+    responses = {
+        (config, llm, question): scores[metric]
+        for config, llm, question, scores in rows
+        if metric in scores
+    }
+    return {
+        "llms": llms,
+        "metrics": sorted(metrics),
+        "metric": metric,
+        "questions": questions,
+        "irt": _irt(responses, llms, metric) if metric else None,
+    }

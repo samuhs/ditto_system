@@ -6,6 +6,7 @@ from app.core.rag.compression import CompressionRAG
 from app.core.rag.crag import CragRAG
 from app.core.rag.hyde import HydeRAG
 from app.core.rag.naive import NaiveRAG
+from app.core.rag.oracle import OracleRAG
 from app.core.rag.rerank import RerankRAG
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "format_context",
     "rag_registry",
     "NaiveRAG",
+    "OracleRAG",
     "AgenticRAG",
     "ClosedBookRAG",
     "CompressionRAG",

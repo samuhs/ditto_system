@@ -3,8 +3,10 @@ import re
 import statistics
 
 from app.core.difficulty.base import (
+    EvidenceSignal,
     QuestionSignal,
     RetrievalSignal,
+    evidence_signal_registry,
     question_signal_registry,
     retrieval_signal_registry,
 )
@@ -98,6 +100,24 @@ class OutOfCorpus(_CorpusSignal):
         return sum(t not in corpus.doc_freq for t in tokens) / len(tokens)
 
 
+class EvidenceCount(EvidenceSignal):
+    """Number of evidence passages the answer needs (more = more to gather)."""
+
+    def compute(self, question: str, evidence: list[str]) -> float:
+        return float(len(evidence))
+
+
+class EvidenceOverlap(EvidenceSignal):
+    """Share of the question's tokens found in its evidence (low = paraphrased, harder to match)."""
+
+    def compute(self, question: str, evidence: list[str]) -> float:
+        tokens = normalize_pt_tokens(question)
+        if not tokens:
+            return 0.0
+        evidence_tokens = set(normalize_pt_tokens(" ".join(evidence)))
+        return sum(t in evidence_tokens for t in tokens) / len(tokens)
+
+
 class TopScore(RetrievalSignal):
     """Similarity score of the best retrieved chunk."""
 
@@ -129,6 +149,8 @@ question_signal_registry.register("yes_no", YesNo)
 question_signal_registry.register("mean_idf", MeanIdf)
 question_signal_registry.register("max_idf", MaxIdf)
 question_signal_registry.register("out_of_corpus", OutOfCorpus)
+evidence_signal_registry.register("evidence_count", EvidenceCount)
+evidence_signal_registry.register("evidence_overlap", EvidenceOverlap)
 retrieval_signal_registry.register("top_score", TopScore)
 retrieval_signal_registry.register("score_gap", ScoreGap)
 retrieval_signal_registry.register("score_spread", ScoreSpread)

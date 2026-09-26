@@ -269,15 +269,16 @@ def get_experiment(
 @router.get("/experiments/{experiment_id}/difficulty")
 def get_experiment_difficulty(
     experiment_id: int,
+    metric: str | None = Query(None),
     deps: ExperimentDeps = Depends(get_experiment_deps),
 ) -> dict:
-    """Per-question difficulty signals and observed difficulty per LLM."""
+    """Per-question difficulty signals, observed difficulty per LLM and an IRT fit on a metric."""
     session = deps.session_factory()
     try:
         experiment = session.get(Experiment, experiment_id)
         if experiment is None:
             raise HTTPException(status_code=404, detail="experiment not found")
-        return question_difficulty(experiment)
+        return question_difficulty(experiment, metric)
     finally:
         session.close()
 

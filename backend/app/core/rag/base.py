@@ -24,6 +24,9 @@ class RAG(ABC):
     # False for techniques that never retrieve (closed book): an experiment runs
     # them once per LLM instead of once per index x retriever.
     uses_retrieval: bool = True
+    # True for techniques that answer from the question's reference evidence
+    # (oracle): they are called as answer(query, evidence=[...]).
+    uses_evidence: bool = False
 
     @abstractmethod
     def answer(self, query: str) -> RAGResult:
