@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getExperimentDifficulty } from "../api/client";
 import type { ExperimentDifficulty, QuestionDifficulty } from "../api/types";
 import { term } from "../glossary";
+import { DifficultyGuide } from "./DifficultyGuide";
 import { Errata, Note, errorText } from "./Notice";
 import { ScoreCell } from "./Score";
 
@@ -123,6 +124,9 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
           size="sm"
           w={240}
         />
+        <div>
+          <DifficultyGuide />
+        </div>
       </div>
       {irt && !irt.reliable && (
         <Note title="TRI só indicativa">

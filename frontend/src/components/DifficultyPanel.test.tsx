@@ -76,6 +76,14 @@ describe("DifficultyPanel", () => {
     expect(client.getExperimentDifficulty).toHaveBeenLastCalledWith(7, "context_hit");
   });
 
+  it("explains how to read the table in a pop-up", async () => {
+    renderPanel();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /como ler esta tabela/i }));
+    expect(await screen.findByText("Como ler a dificuldade por pergunta")).toBeInTheDocument();
+    expect(screen.getByText(/piso → seu sistema → teto/)).toBeInTheDocument();
+  });
+
   it("opens the question's signals", async () => {
     renderPanel();
     const user = userEvent.setup();

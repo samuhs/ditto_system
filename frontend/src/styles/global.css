@@ -854,6 +854,12 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-score[data-best="true"] { font-weight: 750; }
 .ditto-score-na { color: var(--ink-3); }
 
+.ditto-guide { display: flex; flex-direction: column; gap: 10px; font-family: var(--font-read); color: var(--ink); line-height: 1.55; }
+.ditto-guide h3 { margin: 14px 0 0; font-family: var(--font-ui); }
+.ditto-guide h3:first-child { margin-top: 0; }
+.ditto-guide p, .ditto-guide ul { margin: 0; }
+.ditto-guide li + li { margin-top: 4px; }
+.ditto-guide .ditto-table { font-family: var(--font-ui); }
 .ditto-legend {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
