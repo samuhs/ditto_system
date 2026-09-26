@@ -114,6 +114,8 @@ export interface ChatTurn {
   contexts: string[];
   /** Signals of how hard the question looks: before retrieval and from the chunk scores. */
   difficulty?: TurnDifficulty;
+  /** The standalone question the documents were searched with; null when there was no search. */
+  query?: string | null;
 }
 
 export interface TurnDifficulty {

@@ -30,12 +30,14 @@ describe("ChatPage", () => {
       reply: "Fica na praça.",
       contexts: [],
       difficulty: { question: { negation: 1 }, retrieval: { top_score: 0.83 } },
+      query: "Não tem centro em Santo Antônio?",
     });
     renderPage();
     const user = userEvent.setup();
     await screen.findByText(/c1/);
     await user.type(screen.getByPlaceholderText(/mensagem/i), "Não tem centro?");
     await user.click(screen.getByRole("button", { name: /enviar/i }));
+    expect(await screen.findByText("Não tem centro em Santo Antônio?")).toBeInTheDocument();
     await user.click(await screen.findByText("Sinais de dificuldade"));
     expect(screen.getByText("Tem negação")).toBeInTheDocument();
     expect(screen.getByText("0.83")).toBeInTheDocument();

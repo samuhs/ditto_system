@@ -18,6 +18,8 @@ class FlowState(TypedDict, total=False):
     question: str
     history: list[ChatMessage]
     route: str
+    # The standalone question triage wrote for retrieval ("" when it gave none).
+    query: str
     summary: str
     draft: str
     contexts: list[str]
@@ -29,20 +31,46 @@ def _format_history(history: list[ChatMessage]) -> str:
     return "\n".join(f"{m.role}: {m.content}" for m in history)
 
 
+def parse_triage(out: str) -> dict:
+    """Route and standalone question from the triage's first line.
+
+    'DIRECT' answers without searching. 'RAG: <question>' searches that
+    question, and 'RAG' alone the original message. Small models often drop
+    the prefix and write just the rewritten question, so any other line that
+    is a question is searched as written; anything else searches the original
+    message. A misread therefore costs at most one extra search, never a
+    question answered without the documents.
+    """
+    first = out.strip().splitlines()[0] if out.strip() else ""
+    # Small models often wrap the line in quotes or backticks.
+    first = first.strip().strip("\"'`“”").strip()
+    if first.upper().startswith("DIRECT"):
+        return {"route": "direct", "query": ""}
+    if first.upper().startswith("RAG"):
+        _, _, rest = first.partition(":")
+        return {"route": "rag", "query": rest.strip().strip("\"'`“”").strip()}
+    return {"route": "rag", "query": first if first.endswith("?") else ""}
+
+
 def build_graph(llm, rag, persona_text: str, prompts: dict[str, str]):
     """Compile the conversation StateGraph bound to a given llm/rag/persona/prompts."""
 
     def guardrail(state: FlowState) -> dict:
         out = llm.generate(prompts["guardrail"].format(question=state["question"])).strip()
-        return {"route": "blocked"} if out.upper().startswith("BLOCK") else {}
+        # Small models often wrap the line in quotes.
+        blocked = out.strip("\"'`“” ").upper().startswith("BLOCK")
+        return {"route": "blocked"} if blocked else {}
 
     def triage(state: FlowState) -> dict:
-        out = llm.generate(prompts["triage"].format(question=state["question"])).strip()
-        return {"route": "rag" if out.upper().startswith("RAG") else "direct"}
+        history = _format_history(state.get("history", [])) or "(início da conversa)"
+        out = llm.generate(
+            prompts["triage"].format(question=state["question"], history=history)
+        ).strip()
+        return parse_triage(out)
 
     def rag_node(state: FlowState) -> dict:
         try:
-            result = rag.answer(state["question"])
+            result = rag.answer(state.get("query") or state["question"])
         except Exception:  # noqa: BLE001  a retrieval failure must not crash the turn
             return {"draft": "", "contexts": []}
         contexts = [c.get("text", "") for c in result.contexts]
@@ -129,10 +157,14 @@ def run_flow(cfg: ChatConfigView, messages: list[ChatMessage], deps) -> ChatTurn
         question = messages[-1].content if messages else ""
         history = messages[:-1]
         result = graph.invoke({"question": question, "history": history})
+    searched = result.get("query") or question if result.get("route") == "rag" else ""
     difficulty = {
-        "question": _question_signals(deps.store, cfg.base, question),
+        "question": _question_signals(deps.store, cfg.base, searched or question),
         "retrieval": result.get("retrieval_signals", {}),
     }
     return ChatTurnResult(
-        answer=result.get("answer", ""), contexts=result.get("contexts", []), difficulty=difficulty
+        answer=result.get("answer", ""),
+        contexts=result.get("contexts", []),
+        difficulty=difficulty,
+        query=searched,
     )

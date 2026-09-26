@@ -23,7 +23,7 @@ router = APIRouter()
 # Static description of the conversation graph (structure is fixed in code).
 _FLOW_NODES = [
     ("guardrail", "Guardrail", "prompt", "Verifica se a mensagem é segura e no escopo."),
-    ("triage", "Triagem", "prompt", "Decide se a resposta precisa de busca (RAG) ou é direta."),
+    ("triage", "Triagem", "prompt", "Decide se a resposta precisa de busca (RAG) ou é direta e, se precisar, reescreve a pergunta com o histórico para ela se entender sozinha."),
     ("rag", "RAG", "rag", "Executa a técnica de RAG escolhida na config."),
     ("memory", "Memória", "prompt", "Resume o histórico para manter a memória curta."),
     ("persona_compose", "Persona", "prompt", "Compõe a resposta final na voz da persona."),
@@ -183,7 +183,12 @@ def chat(body: ChatTurnBody, deps: ChatDeps = Depends(get_chat_deps)) -> dict:
         result = deps.agent_runner(view, body.messages, deps)
     except KeyError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"reply": result.answer, "contexts": result.contexts, "difficulty": result.difficulty}
+    return {
+        "reply": result.answer,
+        "contexts": result.contexts,
+        "difficulty": result.difficulty,
+        "query": result.query or None,
+    }
 
 
 @router.post("/dialogues")

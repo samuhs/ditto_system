@@ -1071,6 +1071,8 @@ a { color: inherit; text-underline-offset: 3px; }
   border: 1px solid var(--line);
   background: var(--leaf);
 }
+.ditto-msg-query { margin-top: 6px; font-size: 13px; color: var(--ink-2); }
+.ditto-msg-query q { font-family: var(--font-read); color: var(--ink); }
 .ditto-msg-signals { margin-top: 6px; font-size: 13px; color: var(--ink-2); }
 .ditto-msg-signals summary { cursor: pointer; }
 .ditto-msg-signals .ditto-kv { margin-top: 6px; font-size: 13px; }

@@ -13,8 +13,9 @@ export function ChatPage() {
   const [configs, setConfigs] = useState<ChatConfig[] | null>(null);
   const [configId, setConfigId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  // Difficulty signals of each assistant reply, by message index (not sent back to the API).
-  const [signals, setSignals] = useState<Record<number, TurnDifficulty>>({});
+  // Per assistant reply, by message index (not sent back to the API): what was
+  // searched and the difficulty signals.
+  const [turns, setTurns] = useState<Record<number, { query?: string | null; difficulty?: TurnDifficulty }>>({});
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -38,7 +39,7 @@ export function ChatPage() {
 
   function newConversation() {
     setMessages([]);
-    setSignals({});
+    setTurns({});
     setSaved(false);
     setError(null);
   }
@@ -54,8 +55,7 @@ export function ChatPage() {
     try {
       const turn = await sendChat(Number(configId), next);
       setMessages([...next, { role: "assistant", content: turn.reply }]);
-      const difficulty = turn.difficulty;
-      if (difficulty) setSignals((s) => ({ ...s, [next.length]: difficulty }));
+      setTurns((t) => ({ ...t, [next.length]: { query: turn.query, difficulty: turn.difficulty } }));
     } catch (e) {
       setError({ title: "A mensagem não foi respondida", text: `${errorText(e)}. Tente enviar de novo.` });
     } finally {
@@ -133,7 +133,12 @@ export function ChatPage() {
               <div key={i} className="ditto-msg" data-role={m.role}>
                 <span className="ditto-msg-who">{m.role === "user" ? "Você" : "Ditto"}</span>
                 <span className="ditto-msg-text">{m.content}</span>
-                {signals[i] && <TurnSignals difficulty={signals[i]} />}
+                {turns[i]?.query && (
+                  <span className="ditto-msg-query">
+                    Buscou nos documentos: <q>{turns[i].query}</q>
+                  </span>
+                )}
+                {turns[i]?.difficulty && <TurnSignals difficulty={turns[i].difficulty!} />}
               </div>
             ))}
             {sending && (
