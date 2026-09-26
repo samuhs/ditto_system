@@ -339,3 +339,19 @@ def test_difficulty_endpoint(client):
     assert body["llms"] == ["gemini"]
     assert {q["question"] for q in body["questions"]} == {"Onde fica?", "Quando?"}
     assert client.get("/experiments/99999/difficulty").status_code == 404
+
+
+def test_oracle_without_any_evidence_is_rejected(client):
+    import json
+
+    payload = json.loads(_config_payload())
+    payload["rags"] = ["naive", "oracle"]
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    response = client.post("/experiments", data={"config": json.dumps(payload)}, files=files)
+    assert response.status_code == 422
+    assert "evidencia_referencia" in response.json()["detail"]
+
+    files = {"questions": ("q.csv", io.BytesIO(
+        b"pergunta,resposta_referencia,evidencia_referencia\nWhere?,,Aqui.\n"), "text/csv")}
+    response = client.post("/experiments", data={"config": json.dumps(payload)}, files=files)
+    assert response.status_code == 200

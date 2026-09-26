@@ -15,6 +15,7 @@ from app.core.db.models import Experiment
 from app.core.memory.manager import get_model_manager
 from app.core.memory.profile import active_profile
 from app.core.prompts import PROMPT_SPECS, load_technique
+from app.core.rag.base import rag_registry
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.difficulty import question_difficulty
@@ -129,6 +130,25 @@ def _check_indexes_exist(config: ExperimentConfig, store: QdrantStore) -> None:
         )
 
 
+def _check_evidence_for(config: ExperimentConfig, items: list) -> None:
+    """Reject techniques that answer from the reference evidence when no question has any (422).
+
+    Otherwise the oracle would run silently without a single answer.
+    """
+    needs = [
+        r for r in config.rags
+        if r in rag_registry.names() and rag_registry.get(r).uses_evidence
+    ]
+    if needs and not any(item.evidence for item in items):
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"{', '.join(needs)} needs reference evidence: add an evidencia_referencia "
+                "column to the questions CSV or remove it from the RAG techniques"
+            ),
+        )
+
+
 @router.post("/experiments")
 async def create_experiment(
     background_tasks: BackgroundTasks,
@@ -156,6 +176,7 @@ async def create_experiment(
         items = parse_questions_csv(csv_text)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    _check_evidence_for(parsed, items)
 
     session = deps.session_factory()
     try:
