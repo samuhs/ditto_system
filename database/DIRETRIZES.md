@@ -1,6 +1,6 @@
 # Diretrizes para documentos de entrada
 
-Regras para preparar qualquer base (FAQ, manual, artigo, catálogo, tabela) antes de ingeri-la no Ditto. Valem para o pipeline de hoje: chunkers `markdown`, `recursive`, `token`, `fixed` e `semantic`, e payload só com o texto do chunk. A fundamentação, com fontes e nível de evidência, está em [docs/research/2026-09-26-formatacao-de-dados-para-rag.md](../docs/research/2026-09-26-formatacao-de-dados-para-rag.md). O exemplo aplicado é `faq_manus_normalizado.md`, a versão normalizada de `faq_manus_completa.md`.
+Regras para preparar qualquer base (FAQ, manual, artigo, catálogo, tabela) antes de ingeri-la no Ditto. Valem para o pipeline de hoje: chunkers `markdown`, `recursive`, `token`, `fixed` e `semantic`, e payload só com o texto do chunk. A fundamentação, com fontes e nível de evidência, está em [docs/research/2026-09-26-formatacao-de-dados-para-rag.md](../docs/research/2026-09-26-formatacao-de-dados-para-rag.md). Há dois exemplos aplicados: `faq_manus_normalizado.md`, a versão normalizada de `faq_manus_completa.md`, e `guia_santo_antonio_da_alegria.md`, uma base enriquecida com dados abertos e oficiais (seção 12).
 
 Nível de evidência entre colchetes: **[forte]** resultado publicado e controlado; **[misto]** resultado publicado, mas de outro domínio ou língua; **[fornecedor]** guia de ferramenta sem experimento; **[conjectura]** raciocínio sem fonte direta.
 
@@ -124,3 +124,19 @@ Ainda pendentes, como técnicas plugáveis (interface + registry):
 - guardar o cabeçalho e a data no payload do Qdrant;
 - contextualização automática de chunks, paráfrases (doc2query) e extração de entidades;
 - um normalizador automático que aplique estas diretrizes a bases novas, para que o nível "normalizado" seja reprodutível e não dependa de edição manual.
+
+## 12. Bases montadas a partir de várias fontes
+
+Quando a base é escrita a partir de fontes coletadas (e não normalizada de um arquivo pronto), vale o fluxo de `tools/buscador/README.md`:
+
+- **Fonte bruta primeiro**: tudo o que foi coletado fica em `database/fontes_brutas/<cidade>/`, com URL, licença e data. A base só afirma o que alguma fonte bruta sustenta.
+- **Arquivo-mestre anotado**: `fontes_brutas/<cidade>/guia.anotado.md` é a versão editável. Cada bloco `###` tem um comentário `<!-- fontes: ... | confianca: ... | nota: ... -->`. Conflitos entre fontes e lacunas vão em comentários `<!-- conflito: ... -->` e `<!-- lacuna: ... -->`. Os comentários nunca entram na base ingerida: `tools/buscador/compilar_base.py` os tira, gera `database/<base>.fontes.json` e confere as regras deste documento.
+- **Conflito entre fontes**: a base segue a fonte mais confiável (`oficial` > `aberto` > `secundario` > `nao_verificado`) e registra o conflito. Quando nenhuma fonte resolve, registra as duas versões no texto ("segundo a Prefeitura…; segundo a Wikipedia…").
+- **Afirmações sem fonte** (como as do FAQ gerado por LLM) podem ficar, marcadas `nao_verificado`, mas nunca por cima de uma fonte oficial.
+
+**Qual formato: FAQ ou registros?** A literatura mostra que, em FAQ, casar a pergunta do usuário com a pergunta escrita é o sinal de recuperação mais forte [forte, em inglês]. Unidades pequenas e autocontidas ajudam em perguntas factuais [forte para proposições; misto para tamanho de chunk]. Não há estudo que compare FAQ com registros por entidade na mesma base [lacuna]. Por isso, a base de referência combina os dois, sempre com blocos autocontidos:
+- **tema explicativo** (história, geografia, como é uma festa): cabeçalho em forma de pergunta natural, que não copia as perguntas do conjunto de teste;
+- **entidade ou diretório** (um estabelecimento, uma atração, uma lista de telefones): cabeçalho descritivo com nome, tipo e cidade ("### Cachoeira do Beto Teixeira em Santo Antônio da Alegria"), texto em frases completas ou lista curta de itens `nome: dados`. Agrupe entidades pequenas do mesmo tipo num bloco de até ~800 caracteres, em vez de um bloco de uma linha por entidade;
+- **perguntas frequentes** já existentes: continuam como FAQ, numa seção própria.
+
+Se o formato em si for objeto de estudo, a comparação FAQ × registros é mais um nível do eixo de formato (seção 1).

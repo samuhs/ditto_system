@@ -1,0 +1,688 @@
+[
+  {
+    "osm": "node/5366438651",
+    "lat": -21.0811365,
+    "lon": -47.1796704,
+    "tags": {
+      "ele": "970",
+      "name": "Morro da Santa Cruz",
+      "natural": "peak",
+      "source": "IBGE"
+    }
+  },
+  {
+    "osm": "node/5366438653",
+    "lat": -21.1403084,
+    "lon": -47.1493292,
+    "tags": {
+      "ele": "1167",
+      "name": "Três Montes",
+      "natural": "peak"
+    }
+  },
+  {
+    "osm": "node/5366438665",
+    "lat": -21.1587597,
+    "lon": -47.2029305,
+    "tags": {
+      "ele": "1090",
+      "name": "Morro do Paredão",
+      "natural": "peak"
+    }
+  },
+  {
+    "osm": "node/5366438668",
+    "lat": -21.1294206,
+    "lon": -47.223959,
+    "tags": {
+      "ele": "1073",
+      "name": "Morro da Cascavel",
+      "natural": "peak"
+    }
+  },
+  {
+    "osm": "node/13684245030",
+    "lat": -21.0891917,
+    "lon": -47.1530729,
+    "tags": {
+      "amenity": "police",
+      "name": "Delegacia de Polícia de Santo Antônio da Alegria",
+      "operator": "Polícia Civil do Estado de São Paulo",
+      "operator:wikidata": "Q10350993",
+      "short_name": "Delegacia de Polícia"
+    }
+  },
+  {
+    "osm": "node/13684279002",
+    "lat": -21.0893493,
+    "lon": -47.1533116,
+    "tags": {
+      "amenity": "bus_station",
+      "building": "transportation",
+      "bus": "yes",
+      "name": "Terminal Rodoviário",
+      "public_transport": "station",
+      "tourist_bus": "yes"
+    }
+  },
+  {
+    "osm": "node/13684282510",
+    "lat": -21.0937932,
+    "lon": -47.1486831,
+    "tags": {
+      "amenity": "police",
+      "name": "Guarda Civil Municipal"
+    }
+  },
+  {
+    "osm": "node/13684293067",
+    "lat": -21.0937244,
+    "lon": -47.1487548,
+    "tags": {
+      "amenity": "police",
+      "landuse": "military",
+      "military": "police",
+      "name": "Polícia Militar - 3ª Cia. do 3º BPM/I - 2º Gp.",
+      "operator": "Polícia Militar do Estado de São Paulo",
+      "operator:short": "PMESP",
+      "operator:wikidata": "Q10351025"
+    }
+  },
+  {
+    "osm": "node/13691829582",
+    "lat": -21.0257269,
+    "lon": -47.1670518,
+    "tags": {
+      "addr:city": "Santo Antônio da Alegria",
+      "addr:street": "Rodovia Altino Arantes",
+      "alt_name": "Monumento Rota Biker 23",
+      "artist_name": "Moisés Rodrigues Ribas;Adriana Furtado",
+      "artwork_type": "sculpture",
+      "description": "Monumento da Rota Biker n.23, localizado junto do Bar do Hélio, em Santo Antônio da Alegria/SP.",
+      "instagram": "@rota_biker",
+      "name": "Monumento Biker 23",
+      "tourism": "artwork"
+    }
+  },
+  {
+    "osm": "way/242721604",
+    "lat": -21.0862233,
+    "lon": -47.1484042,
+    "tags": {
+      "name": "Rio do Pinheirinho",
+      "natural": "water",
+      "water": "river"
+    }
+  },
+  {
+    "osm": "way/242722460",
+    "lat": -21.0831815,
+    "lon": -47.1557176,
+    "tags": {
+      "name": "Rio do Pinheirinho",
+      "natural": "water",
+      "water": "river"
+    }
+  },
+  {
+    "osm": "way/242724460",
+    "lat": -21.0871414,
+    "lon": -47.1595564,
+    "tags": {
+      "name": "Rio do Pinheirinho",
+      "natural": "water",
+      "water": "river"
+    }
+  },
+  {
+    "osm": "way/242725285",
+    "lat": -21.0918802,
+    "lon": -47.1770015,
+    "tags": {
+      "name": "Rio do Pinheirinho",
+      "natural": "water",
+      "water": "river"
+    }
+  },
+  {
+    "osm": "way/242726284",
+    "lat": -21.0887723,
+    "lon": -47.1404494,
+    "tags": {
+      "name": "Rio do Pinheirinho",
+      "natural": "water",
+      "water": "river"
+    }
+  },
+  {
+    "osm": "way/242726998",
+    "lat": -21.0938482,
+    "lon": -47.1316131,
+    "tags": {
+      "name": "Rio do Pinheirinho",
+      "natural": "water",
+      "water": "river"
+    }
+  },
+  {
+    "osm": "way/353903445",
+    "lat": -21.0619173,
+    "lon": -47.1744165,
+    "tags": {
+      "name": "Rio do Pinheirinho",
+      "waterway": "river"
+    }
+  },
+  {
+    "osm": "way/452300226",
+    "lat": -21.0256074,
+    "lon": -47.1669832,
+    "tags": {
+      "addr:city": "Santo Antônio da Alegria",
+      "addr:street": "Rodovia Altino Arantes",
+      "amenity": "pub",
+      "building": "yes",
+      "name": "Bar do Hélio"
+    }
+  },
+  {
+    "osm": "way/456269514",
+    "lat": -21.0088851,
+    "lon": -47.2255842,
+    "tags": {
+      "name": "Rio Sapucaí-Mirim",
+      "name:en": "Sapucaí River",
+      "waterway": "river",
+      "wikidata": "Q10362538",
+      "wikipedia": "pt:Rio Sapucaí"
+    }
+  },
+  {
+    "osm": "way/527690655",
+    "lat": -21.1372819,
+    "lon": -47.1543554,
+    "tags": {
+      "description": "Serra da Laginha",
+      "ele": "1100",
+      "name": "Serra da Laginha - Ilha do Ar",
+      "natural": "wood"
+    }
+  },
+  {
+    "osm": "way/554103863",
+    "lat": -21.1098675,
+    "lon": -47.2721691,
+    "tags": {
+      "name": "Córrego da Vargem dos Cabritos",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/554171506",
+    "lat": -21.1370225,
+    "lon": -47.2290811,
+    "tags": {
+      "name": "Ribeirão Lajeado",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/556313573",
+    "lat": -21.1355844,
+    "lon": -47.1566248,
+    "tags": {
+      "alt_name": "Serra dos Três Montes",
+      "name": "Serra da Lajinha",
+      "natural": "ridge",
+      "source": "IBGE"
+    }
+  },
+  {
+    "osm": "way/556313574",
+    "lat": -21.1964357,
+    "lon": -47.2063852,
+    "tags": {
+      "name": "Serrote da Bocaininha",
+      "natural": "ridge",
+      "source": "IBGE"
+    }
+  },
+  {
+    "osm": "way/556313575",
+    "lat": -21.1894535,
+    "lon": -47.2149254,
+    "tags": {
+      "name": "Serrote da Bocaina",
+      "natural": "ridge",
+      "source": "IBGE"
+    }
+  },
+  {
+    "osm": "way/556313576",
+    "lat": -21.1634422,
+    "lon": -47.2078014,
+    "tags": {
+      "name": "Morro do Paredão",
+      "natural": "ridge",
+      "source": "IBGE"
+    }
+  },
+  {
+    "osm": "way/557923469",
+    "lat": -21.090856,
+    "lon": -47.2478524,
+    "tags": {
+      "name": "Córrego do Souza",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/558213068",
+    "lat": -21.1236782,
+    "lon": -47.2331027,
+    "tags": {
+      "name": "Córrego da Matinha",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/558316430",
+    "lat": -21.1789212,
+    "lon": -47.2272286,
+    "tags": {
+      "name": "Córrego do Monte Alegre",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175908",
+    "lat": -21.1479527,
+    "lon": -47.1865502,
+    "tags": {
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175909",
+    "lat": -21.1068767,
+    "lon": -47.1808084,
+    "tags": {
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175910",
+    "lat": -21.1121539,
+    "lon": -47.1794541,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175911",
+    "lat": -21.1132407,
+    "lon": -47.180122,
+    "tags": {
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175912",
+    "lat": -21.1143711,
+    "lon": -47.1804779,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175913",
+    "lat": -21.1943972,
+    "lon": -47.1901292,
+    "tags": {
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175914",
+    "lat": -21.1815442,
+    "lon": -47.1827254,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175915",
+    "lat": -21.0987509,
+    "lon": -47.1821135,
+    "tags": {
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997175916",
+    "lat": -21.1015078,
+    "lon": -47.1818231,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego da Pimenta",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223443",
+    "lat": -21.0962168,
+    "lon": -47.2060604,
+    "tags": {
+      "name": "Córrego Vazante",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223444",
+    "lat": -21.0900042,
+    "lon": -47.1934387,
+    "tags": {
+      "name": "Córrego Vazante",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223445",
+    "lat": -21.0916572,
+    "lon": -47.1952771,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego Vazante",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223446",
+    "lat": -21.1023844,
+    "lon": -47.2181363,
+    "tags": {
+      "name": "Córrego Vazante",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223447",
+    "lat": -21.1007856,
+    "lon": -47.216847,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego Vazante",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223464",
+    "lat": -21.0228549,
+    "lon": -47.1991565,
+    "tags": {
+      "name": "Rio Sapucaí-Mirim",
+      "waterway": "river",
+      "wikidata": "Q10362538",
+      "wikipedia": "pt:Rio Sapucaí"
+    }
+  },
+  {
+    "osm": "way/997223465",
+    "lat": -21.0255698,
+    "lon": -47.1777359,
+    "tags": {
+      "name": "Rio Sapucaí-Mirim",
+      "source": "IBGE",
+      "waterway": "river",
+      "wikidata": "Q10362538",
+      "wikipedia": "pt:Rio Sapucaí"
+    }
+  },
+  {
+    "osm": "way/997223468",
+    "lat": -21.0202875,
+    "lon": -47.1497807,
+    "tags": {
+      "name": "Córrego Rocinha",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223471",
+    "lat": -21.0234623,
+    "lon": -47.1601669,
+    "tags": {
+      "name": "Córrego Rocinha",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223472",
+    "lat": -21.0240199,
+    "lon": -47.1564336,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego Rocinha",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223473",
+    "lat": -21.0237676,
+    "lon": -47.1653031,
+    "tags": {
+      "name": "Córrego Rocinha",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223474",
+    "lat": -21.0242153,
+    "lon": -47.1639336,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego Rocinha",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223476",
+    "lat": -21.0384552,
+    "lon": -47.080297,
+    "tags": {
+      "layer": "0",
+      "name": "Ribeirão Tomba-Perna",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223479",
+    "lat": -21.0313686,
+    "lon": -47.172261,
+    "tags": {
+      "name": "Ribeirão Tomba-Perna",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223480",
+    "lat": -21.0350419,
+    "lon": -47.1673948,
+    "tags": {
+      "layer": "0",
+      "name": "Ribeirão Tomba-Perna",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223481",
+    "lat": -21.0256891,
+    "lon": -47.1756757,
+    "tags": {
+      "name": "Ribeirão Tomba-Perna",
+      "source": "IBGE",
+      "waterway": "river"
+    }
+  },
+  {
+    "osm": "way/997223482",
+    "lat": -21.0268035,
+    "lon": -47.1753636,
+    "tags": {
+      "layer": "-1",
+      "name": "Ribeirão Tomba-Perna",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "river"
+    }
+  },
+  {
+    "osm": "way/997223483",
+    "lat": -21.0569987,
+    "lon": -47.1715885,
+    "tags": {
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223484",
+    "lat": -21.067781,
+    "lon": -47.1505722,
+    "tags": {
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223485",
+    "lat": -21.06734,
+    "lon": -47.1534125,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223486",
+    "lat": -21.0672358,
+    "lon": -47.1571978,
+    "tags": {
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223487",
+    "lat": -21.0669024,
+    "lon": -47.1609866,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223488",
+    "lat": -21.0662136,
+    "lon": -47.1641594,
+    "tags": {
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223489",
+    "lat": -21.0650359,
+    "lon": -47.1673144,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223490",
+    "lat": -21.0422888,
+    "lon": -47.1755624,
+    "tags": {
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/997223491",
+    "lat": -21.0489597,
+    "lon": -47.1758361,
+    "tags": {
+      "layer": "-1",
+      "name": "Córrego Capão",
+      "source": "IBGE",
+      "tunnel": "culvert",
+      "waterway": "stream"
+    }
+  },
+  {
+    "osm": "way/1415899484",
+    "lat": -21.091943,
+    "lon": -47.1569333,
+    "tags": {
+      "amenity": "hospital",
+      "healthcare": "hospital",
+      "name": "Hospital Municipal de Santo Antonio da Alegria"
+    }
+  }
+]

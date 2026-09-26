@@ -1,0 +1,398 @@
+<!-- fonte: https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8 | coletado_em: 2026-09-26T20:12:59+00:00 -->
+Title: Prefeitura Municipal de Santo Antônio da Alegria - SP
+
+URL Source: https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8
+
+Markdown Content:
+![Image 1: Spinner: White decorative](https://cdn.userway.org/widgetapp/images/spin_wh.svg)
+
+![Image 2](https://cdn.userway.org/widgetapp/images/body_wh.svg)
+
+![Image 3: Spinner: White decorative](https://cdn.userway.org/widgetapp/images/spin_wh.svg)
+
+[![Image 4](https://santoantoniodaalegria.sp.gov.br/imagens/logoPequena.png)](https://santoantoniodaalegria.sp.gov.br/)
+
+#### Opções de acessibilidade
+
+[Aumentar fonte](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+[Reduzir fonte](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+[Alto contraste](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+[Desfazer opções](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#)
+
+[Ir para o conteúdo: Alt+1](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#conteudo)
+
+[Ir para o menu: Alt+2](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#menu)
+
+[Ir para o topo: Alt+3](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#topo)
+
+[Ir para o rodapé: Alt+4](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#rodape)
+
+*   [](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8# "Acessibilidade")
+*   [](https://ouvidoria.etransparencia.com.br/santoantoniodaalegria.sp/wpstartpagenew.aspx? "Ouvidoria")
+*   [](https://santoantoniodaalegria.sp.gov.br/faq/ "Perguntas Frequentes")
+*   [](http://esic2.portyx.com.br/esic/?codeDB=246 "Acesso à Informação")
+*   [](https://transparencia.santoantoniodaalegria.sp.gov.br/TDAPortalClient.aspx?417 "Portal da Tranparência")
+
+*   [A cidade](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+    *   [Página Principal](https://pmsantoantoniodaalegria.portyx.com.br/site/)
+    *   [Dados do Município](https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria)
+    *   [Turismo](https://santoantoniodaalegria.sp.gov.br/turismo)
+    *   [Meio Ambiente](https://santoantoniodaalegria.sp.gov.br/pagina/37_Meio-Ambiente.html)
+    *   [Agenda/Eventos](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+        *   [Agenda/Eventos.1](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#)
+
+    *   [História do Município](https://santoantoniodaalegria.sp.gov.br/pagina/1_historia-do-municipio.html)
+    *   [Símbolos](https://santoantoniodaalegria.sp.gov.br/pagina/2_simbolos.html)
+
+*   [Prefeitura](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+    *   [Serviços](https://santoantoniodaalegria.sp.gov.br/servicos/)
+    *   [Atos de Nomeação](https://santoantoniodaalegria.sp.gov.br/pagina/14_atos-de-nomeacao.html)
+    *   [Documentos Diversos](https://santoantoniodaalegria.sp.gov.br/pagina/17_documentos-diversos.html)
+    *   [Prefeito](https://santoantoniodaalegria.sp.gov.br/gabinete/)
+    *   [Vice-Prefeito](https://santoantoniodaalegria.sp.gov.br/pagina/5_Vice-Prefeito.html)
+    *   [Consulta Holerites](https://novoportal.conam.com.br/rhalegria/login.php)
+
+*   [Educação](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+    *   [Oferta de Vagas](https://santoantoniodaalegria.sp.gov.br/pagina/33_oferta-de-vagas.html)
+    *   [Adesão ao Currículo Paulista](https://santoantoniodaalegria.sp.gov.br/pagina/29_adesao-ao-curriculo-paulista.html)
+    *   [Planos, Leis e Resoluções](https://santoantoniodaalegria.sp.gov.br/pagina/28_planos-leis-e-resolucoes.html)
+    *   [Conselho FUNDEB](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+        *   [Conselho FUNDEB.1](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#)
+
+    *   [Conselho Escolar de Educação](https://santoantoniodaalegria.sp.gov.br/pagina/31_conselho-escolar-de-educacao.html)
+    *   [Conselho Municipal de Educação](https://santoantoniodaalegria.sp.gov.br/pagina/21_conselho-municipal-de-educacao.html)
+    *   [Conselho Cae](https://santoantoniodaalegria.sp.gov.br/pagina/23_conselho-cae.html)
+
+*   [Legislação](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+    *   [Lei Complementar Municipal](https://santoantoniodaalegria.sp.gov.br/legislacao)
+    *   [Legislação](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+        *   [Constituição Estadual](https://www.al.sp.gov.br/repositorio/legislacao/constituicao/1989/compilacao-constituicao-0-05.10.1989.html)
+
+    *   [Constituição Federal](http://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm)
+    *   [Decretos Municipais](https://santoantoniodaalegria.sp.gov.br/legislacao)
+    *   [Lei Orgânica do Município](https://santoantoniodaalegria.sp.gov.br/pagina/7_lei-organica-do-municipio.html)
+
+*   [Atos Municipais](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+    *   [Atos Municipais.7](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#)
+    *   [Portal Cidadão](https://portal.cidadao.conam.com.br/stoantonioalegria/)
+    *   [Diário Oficial Eletrônico](https://plenussistemas.dioenet.com.br/list/santo-antonio-da-alegria)
+    *   [Chamamento Público](https://santoantoniodaalegria.sp.gov.br/publicacoes)
+    *   [Audiências Públicas](https://santoantoniodaalegria.sp.gov.br/pagina/24_audiencias-publicas.html)
+    *   [Licitações](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+        *   [Portal da Transparência-Compras e Licitações](https://transparencia.santoantoniodaalegria.sp.gov.br/tdaportalclient.aspx?418)
+        *   [Lei Federal 14.133/2021-Lei de Licitações](https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/L14133.htm)
+        *   [Publicações de Atos em Jornal de Grande Circulação](https://publicidadelegal.gazetasp.com.br/empresas/prefeitura-de-santo-antonio-da-alegria)
+        *   [Licitações em andamento e encerradas](https://santoantoniodaalegria.sp.gov.br/licitacao/)
+        *   [PLATAFORMA ELETRÔNICA DE LICITAÇÕES -LICITAR DIGITAL](https://licitar.digital/)
+
+    *   [Processo Seletivo](https://santoantoniodaalegria.sp.gov.br/concursos)
+
+*   [VTN - 2026](https://santoantoniodaalegria.sp.gov.br/pagina/36_vtn-2026.html)
+*   [Horários Médicos](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+    *   [Horários Médicos](https://santoantoniodaalegria.sp.gov.br/pagina/8_horarios-medicos.html)
+    *   [Plantões](https://santoantoniodaalegria.sp.gov.br/pagina/9_plantoes.html)
+
+*   [NFS-e](https://nfe.etransparencia.com.br/sp.santoantoniodaalegria)
+*   [Expediente](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+    *   [Expediente da Prefeitura](https://www.google.com/search?q=prefeitura%20santo%20antonio%20da%20alegria%20sp&ei=75RaY7nHE6Ty1sQPqYye-Ac&ved=2ahUKEwjasa61z4D7AhX4sJUCHYv8Dw4QvS56BAgQEAE&uact=5&oq=prefeitura+santo+antonio+da+alegria+sp&gs_lcp=Cgdnd3Mtd2l6EANKBAhNGAFKBAhBGABKBAhGG)
+    *   [Fale Conosco](https://santoantoniodaalegria.sp.gov.br/contato)
+    *   [Telefones Úteis](https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html)
+
+ Acessibilidade 
+
+[A+](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)[A-](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+ Contraste
+
+[Retornar acessibilidade](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+
+ Controle de Zoom Ctrl +/-
+
+[Ir para o conteúdo: Alt+1](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#conteudo)
+
+[Ir para o menu: Alt+2](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#menu)
+
+[Ir para o topo: Alt+3](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#topo)
+
+[Ir para o rodapé: Alt+4](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#rodape)
+
+*   [2ª à 6º das 8h às 17h](javascript:void(0) "Horário de Atendimento")
+
+*   [Mapa do Site](https://santoantoniodaalegria.sp.gov.br/mapa-do-site "Mapa do Site")
+*   [Ouvidoria](https://ouvidoria.etransparencia.com.br/santoantoniodaalegria.sp/wpstartpagenew.aspx? "Ouvidoria")
+*   [FAQ](https://santoantoniodaalegria.sp.gov.br/faq "Acesso a Informação")
+*   [Acesso à Informação](http://esic2.portyx.com.br/esic/?codeDB=246 "Acesso a Informação")
+*   [Portal da Transparência](https://transparencia.santoantoniodaalegria.sp.gov.br/TDAPortalClient.aspx?417 "Portal da Tranparência")
+
+[![Image 5](https://santoantoniodaalegria.sp.gov.br/uploads/siteDescricao/logoPrincipal.png)](https://santoantoniodaalegria.sp.gov.br/ "Santo Antônio da Alegria - SP")
+
+[![Image 6](https://santoantoniodaalegria.sp.gov.br/imagens/logoPequenaFloat.png)](https://santoantoniodaalegria.sp.gov.br/ "Santo Antônio da Alegria - SP")
+
+*   [A cidade](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+    *   [Página Principal](https://pmsantoantoniodaalegria.portyx.com.br/site/)
+    *   [Dados do Município](https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria)
+    *   [Turismo](https://santoantoniodaalegria.sp.gov.br/turismo)
+    *   [Meio Ambiente](https://santoantoniodaalegria.sp.gov.br/pagina/37_Meio-Ambiente.html)
+    *   [Agenda/Eventos](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+        *   [Agenda/Eventos.1](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#)
+
+    *   [História do Município](https://santoantoniodaalegria.sp.gov.br/pagina/1_historia-do-municipio.html)
+    *   [Símbolos](https://santoantoniodaalegria.sp.gov.br/pagina/2_simbolos.html)
+
+*   [Prefeitura](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+    *   [Serviços](https://santoantoniodaalegria.sp.gov.br/servicos/)
+    *   [Atos de Nomeação](https://santoantoniodaalegria.sp.gov.br/pagina/14_atos-de-nomeacao.html)
+    *   [Documentos Diversos](https://santoantoniodaalegria.sp.gov.br/pagina/17_documentos-diversos.html)
+    *   [Prefeito](https://santoantoniodaalegria.sp.gov.br/gabinete/)
+    *   [Vice-Prefeito](https://santoantoniodaalegria.sp.gov.br/pagina/5_Vice-Prefeito.html)
+    *   [Consulta Holerites](https://novoportal.conam.com.br/rhalegria/login.php)
+
+*   [Educação](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+    *   [Oferta de Vagas](https://santoantoniodaalegria.sp.gov.br/pagina/33_oferta-de-vagas.html)
+    *   [Adesão ao Currículo Paulista](https://santoantoniodaalegria.sp.gov.br/pagina/29_adesao-ao-curriculo-paulista.html)
+    *   [Planos, Leis e Resoluções](https://santoantoniodaalegria.sp.gov.br/pagina/28_planos-leis-e-resolucoes.html)
+    *   [Conselho FUNDEB](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+        *   [Conselho FUNDEB.1](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#)
+
+    *   [Conselho Escolar de Educação](https://santoantoniodaalegria.sp.gov.br/pagina/31_conselho-escolar-de-educacao.html)
+    *   [Conselho Municipal de Educação](https://santoantoniodaalegria.sp.gov.br/pagina/21_conselho-municipal-de-educacao.html)
+    *   [Conselho Cae](https://santoantoniodaalegria.sp.gov.br/pagina/23_conselho-cae.html)
+
+*   [Legislação](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+    *   [Lei Complementar Municipal](https://santoantoniodaalegria.sp.gov.br/legislacao)
+    *   [Legislação](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+        *   [Constituição Estadual](https://www.al.sp.gov.br/repositorio/legislacao/constituicao/1989/compilacao-constituicao-0-05.10.1989.html)
+
+    *   [Constituição Federal](http://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm)
+    *   [Decretos Municipais](https://santoantoniodaalegria.sp.gov.br/legislacao)
+    *   [Lei Orgânica do Município](https://santoantoniodaalegria.sp.gov.br/pagina/7_lei-organica-do-municipio.html)
+
+*   [Atos Municipais](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+    *   [Atos Municipais.7](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#)
+    *   [Portal Cidadão](https://portal.cidadao.conam.com.br/stoantonioalegria/)
+    *   [Diário Oficial Eletrônico](https://plenussistemas.dioenet.com.br/list/santo-antonio-da-alegria)
+    *   [Chamamento Público](https://santoantoniodaalegria.sp.gov.br/publicacoes)
+    *   [Audiências Públicas](https://santoantoniodaalegria.sp.gov.br/pagina/24_audiencias-publicas.html)
+    *   [Licitações](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+        *   [Portal da Transparência-Compras e Licitações](https://transparencia.santoantoniodaalegria.sp.gov.br/tdaportalclient.aspx?418)
+        *   [Lei Federal 14.133/2021-Lei de Licitações](https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/L14133.htm)
+        *   [Publicações de Atos em Jornal de Grande Circulação](https://publicidadelegal.gazetasp.com.br/empresas/prefeitura-de-santo-antonio-da-alegria)
+        *   [Licitações em andamento e encerradas](https://santoantoniodaalegria.sp.gov.br/licitacao/)
+        *   [PLATAFORMA ELETRÔNICA DE LICITAÇÕES -LICITAR DIGITAL](https://licitar.digital/)
+
+    *   [Processo Seletivo](https://santoantoniodaalegria.sp.gov.br/concursos)
+
+*   [VTN - 2026](https://santoantoniodaalegria.sp.gov.br/pagina/36_vtn-2026.html)
+*   [Horários Médicos](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+    *   [Horários Médicos](https://santoantoniodaalegria.sp.gov.br/pagina/8_horarios-medicos.html)
+    *   [Plantões](https://santoantoniodaalegria.sp.gov.br/pagina/9_plantoes.html)
+
+*   [NFS-e](https://nfe.etransparencia.com.br/sp.santoantoniodaalegria)
+*   [Expediente](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8)
+    *   [Expediente da Prefeitura](https://www.google.com/search?q=prefeitura%20santo%20antonio%20da%20alegria%20sp&ei=75RaY7nHE6Ty1sQPqYye-Ac&ved=2ahUKEwjasa61z4D7AhX4sJUCHYv8Dw4QvS56BAgQEAE&uact=5&oq=prefeitura+santo+antonio+da+alegria+sp&gs_lcp=Cgdnd3Mtd2l6EANKBAhNGAFKBAhBGABKBAhGG)
+    *   [Fale Conosco](https://santoantoniodaalegria.sp.gov.br/contato)
+    *   [Telefones Úteis](https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html)
+
+*   [](https://www.facebook.com/share/19kQL5PaTA/ "Facebook")
+*   [](https://www.youtube.com/channel/UCfImBQKZ9nztoaJtZ3thq5Q "Youtube")
+*   [](https://www.instagram.com/prefeiturasaa/ "Instagram")
+
+# Turismo
+
+1.   [Início](https://santoantoniodaalegria.sp.gov.br/)
+2.   Turismo
+
+### Navegação
+
+[Todos](https://santoantoniodaalegria.sp.gov.br/turismo/ "Todos")[GASTRONOMIA](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8 " GASTRONOMIA ")[HISTÓRICO DO MUNICÍPIO](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=16 " HISTÓRICO DO MUNICÍPIO ")[HOSPEDAGEM](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=4 " HOSPEDAGEM ")[POSTOS DE GASOLINA](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=11 " POSTOS DE GASOLINA")[SISTEMA BANCÁRIO](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=13 " SISTEMA BANCÁRIO")[SISTEMA DE SAÚDE](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=10 " SISTEMA DE SAÚDE ")[SISTEMA DE SEGURANÇA](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=14 " SISTEMA DE SEGURANÇA ")[AGÊNCIAS DE TURISMO](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=5 "AGÊNCIAS DE TURISMO")[DEPARTAMENTO DE TURISMO](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=15 "DEPARTAMENTO DE TURISMO ")[EVENTOS DE SANTO ANTÔNIO DA ALEGRIA](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=6 "EVENTOS DE SANTO ANTÔNIO DA ALEGRIA ")[FARMÁCIAS](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=12 "FARMÁCIAS")[LANCHONETES E RESTAURANTES](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=18 "LANCHONETES E RESTAURANTES")[PONTOS TURISTICOS](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=1 "PONTOS TURISTICOS ")[SISTEMA DE TRANSPORTE](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=9 "SISTEMA DE TRANSPORTE")[SUPERMERCADOS - AÇOUGUES - PADARIAS - SORVETERIAS](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=3 "SUPERMERCADOS - AÇOUGUES - PADARIAS - SORVETERIAS ")
+
+### Busca
+
+[![Image 7: Foto de ALEXANDRE QUEIJOS ARTESANAIS](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_alexandre-queijos-artesanais-04.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/alexandre-queijos-artesanais "ALEXANDRE QUEIJOS ARTESANAIS")
+
+### ALEXANDRE QUEIJOS ARTESANAIS
+
+FABRICA E LOJAS DE QUEIJOS / DIURNO
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/alexandre-queijos-artesanais "Leita mais sobre: ALEXANDRE QUEIJOS ARTESANAIS")
+
+[![Image 8: Foto de ARMAZÉM DO QUEIJO](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_armazem.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/armazem-do-queijo "ARMAZÉM DO QUEIJO")
+
+### ARMAZÉM DO QUEIJO
+
+TEL : (16) 3668 - 1918 Instagram @queijoarmazemdo
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/armazem-do-queijo "Leita mais sobre: ARMAZÉM DO QUEIJO")
+
+[![Image 9: Foto de BOLACHA CASEIRAS DA VOVÓ OLGA](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_5-bolachas-da-vovo-olga.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/bolacha-caseiras-da-vovo-olga "BOLACHA CASEIRAS DA VOVÓ OLGA")
+
+### BOLACHA CASEIRAS DA VOVÓ OLGA
+
+CONTATO TEL : (16) 99965 - 4561
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/bolacha-caseiras-da-vovo-olga "Leita mais sobre: BOLACHA CASEIRAS DA VOVÓ OLGA")
+
+[![Image 10: Foto de CANUDINHOS DO FEU](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_1-canudinhos-do-feu.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/canudinhos-do-feu "CANUDINHOS DO FEU")
+
+### CANUDINHOS DO FEU
+
+CONTATO TEL : (16) 3668 - 1863
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/canudinhos-do-feu "Leita mais sobre: CANUDINHOS DO FEU")
+
+[![Image 11: Foto de DELÍCIAS DE SAA](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_delicias-de-saa.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/delicias-de-saa "DELÍCIAS DE SAA")
+
+### DELÍCIAS DE SAA
+
+FABRICA E LOJA DE DOCES / DIURNO
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/delicias-de-saa "Leita mais sobre: DELÍCIAS DE SAA")
+
+[![Image 12: Foto de DOCE DE JARACATIÁ](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_dautinho.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/doce-de-jaracatia "DOCE DE JARACATIÁ")
+
+### DOCE DE JARACATIÁ
+
+FABRICA E VENDA DE DOCES / DIURNO
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/doce-de-jaracatia "Leita mais sobre: DOCE DE JARACATIÁ")
+
+[![Image 13: Foto de DOCES CASEIROS PAULINHO](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_doces-paulinho.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/doces-caseiros-paulinho "DOCES CASEIROS PAULINHO")
+
+### DOCES CASEIROS PAULINHO
+
+CONTATO TEL (16) - 3668 - 1668
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/doces-caseiros-paulinho "Leita mais sobre: DOCES CASEIROS PAULINHO")
+
+[![Image 14: Foto de GELEIAS E DOCES DO CIDOCA ](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_geleia-do-cidoca.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/geleias-e-doces-do-cidoca "GELEIAS E DOCES DO CIDOCA ")
+
+### GELEIAS E DOCES DO CIDOCA
+
+TEL : (16) - 3668 - 1310 / (16) 99909 - 1300 INSTAGRAM @docescaseiros_cidoca_
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/geleias-e-doces-do-cidoca "Leita mais sobre: GELEIAS E DOCES DO CIDOCA ")
+
+[![Image 15: Foto de LATICÍNIO ELDORADO](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_atamar-queijos.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/laticinio-eldorado "LATICÍNIO ELDORADO")
+
+### LATICÍNIO ELDORADO
+
+CONTATO TEL : (16) 99965 - 2530 / (16) 98151 - 2008
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/laticinio-eldorado "Leita mais sobre: LATICÍNIO ELDORADO")
+
+[![Image 16: Foto de MASSA CUSCUZEIRO](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_massas-cuscuzeiro.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/massa-cuscuzeiro "MASSA CUSCUZEIRO")
+
+### MASSA CUSCUZEIRO
+
+chefrobinsondepaula@hotmail.com TEL CONTATO: (16) - 3668 - 2099 / (16) 981636006
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/massa-cuscuzeiro "Leita mais sobre: MASSA CUSCUZEIRO")
+
+[![Image 17: Foto de QUEIJOS & CIA](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_cia-queijo.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/queijos-and-cia "QUEIJOS & CIA")
+
+### QUEIJOS & CIA
+
+CONTATO TEL: (16) - 98197 - 3178 / (16) 98111 - 8509 Instagram : @fa_queijosecia
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/queijos-and-cia "Leita mais sobre: QUEIJOS & CIA")
+
+[![Image 18: Foto de QUEIJOS SANTO ANTÔNIO](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_indisponivel.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/queijos-santo-antonio "QUEIJOS SANTO ANTÔNIO")
+
+### QUEIJOS SANTO ANTÔNIO
+
+CONTATO TEL : (16) 98142 - 9269
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/queijos-santo-antonio "Leita mais sobre: QUEIJOS SANTO ANTÔNIO")
+
+[![Image 19: Foto de QUERO MAIS BOLACHAS CASEIRAS](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_quero-mais.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/quero-mais-bolachas-caseiras "QUERO MAIS BOLACHAS CASEIRAS")
+
+### QUERO MAIS BOLACHAS CASEIRAS
+
+CONTATO TEL: TEL : (16) 3668 - 1680
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/quero-mais-bolachas-caseiras "Leita mais sobre: QUERO MAIS BOLACHAS CASEIRAS")
+
+[![Image 20: Foto de SALGADOS TIA MUIA](https://santoantoniodaalegria.sp.gov.br/uploads/turismo/thumbs/thumb_507x340_dona-muia-chancliche-01.jpg)](https://santoantoniodaalegria.sp.gov.br/turismo/salgados-tia-muia "SALGADOS TIA MUIA")
+
+### SALGADOS TIA MUIA
+
+CONTATO TEL : (16) 3668 - 1477 / (16) 98102 - 9169
+
+[Leia mais](https://santoantoniodaalegria.sp.gov.br/turismo/salgados-tia-muia "Leita mais sobre: SALGADOS TIA MUIA")
+
+#### A cidade
+
+*   [Página Principal](https://santoantoniodaalegria.sp.gov.br/)
+*   [Dados do Município](https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria)
+*   [História do Município](https://santoantoniodaalegria.sp.gov.br/pagina/1_historia-do-municipio.html)
+*   [Símbolos](https://santoantoniodaalegria.sp.gov.br/pagina/2_simbolos.html)
+
+#### Prefeitura
+
+*   [Dados Abertos](https://santoantoniodaalegria.sp.gov.br/pagina/3_dados-abertos.html)
+*   [Prefeito](https://santoantoniodaalegria.sp.gov.br/pagina/4_prefeito.html)
+*   [Vice Prefeito](https://santoantoniodaalegria.sp.gov.br/pagina/5_vice-prefeito.html)
+
+#### Legislação
+
+*   [Constituição Estadual](https://santoantoniodaalegria.sp.gov.br/pagina/6_constituicao-estadual.html)
+*   [Constituição Federal](http://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm)
+*   [Decretos Municipais](https://santoantoniodaalegria.sp.gov.br/legislacao)
+*   [Lei Orgânica do Município](https://santoantoniodaalegria.sp.gov.br/pagina/7_Lei-Organica-do-Municipio.html)
+
+#### Atos Municipais
+
+*   [Protocolo](https://protocolo.cidadao.conam.com.br/santoantonioalegria/)
+*   [Diário Oficial Eletrônico](https://plenussistemas.dioenet.com.br/list/santo-antonio-da-alegria)
+*   [Chamamento Público](https://santoantoniodaalegria.sp.gov.br/publicacoes)
+*   [Licitações](https://santoantoniodaalegria.sp.gov.br/licitacao)
+*   [Processo Seletivo](https://santoantoniodaalegria.sp.gov.br/concursos)
+
+#### Publicação de Convênios
+
+#### Horários
+
+*   [Horários Médicos](https://santoantoniodaalegria.sp.gov.br/pagina/8_horarios-medicos.html)
+*   [Plantões](https://santoantoniodaalegria.sp.gov.br/pagina/9_Plantoes.html)
+
+#### Expediente
+
+*   [Fale Conosco](https://santoantoniodaalegria.sp.gov.br/contato/)
+*   [Telefones Úteis](https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html)
+
+[![Image 21](https://santoantoniodaalegria.sp.gov.br/imagens/logoRodape.png)](https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8#)
+*   [](https://www.facebook.com/share/19kQL5PaTA/ "Facebbok")
+*   [](https://www.instagram.com/prefeiturasaa/ "Instagram")
+*   [](https://www.youtube.com/channel/UCfImBQKZ9nztoaJtZ3thq5Q "Youtube")
+*   [](https://webmail.santoantoniodaalegria.sp.gov.br/ "WebMail")
+
+[Contato](https://santoantoniodaalegria.sp.gov.br/contato/ "Contato")[Localização](https://santoantoniodaalegria.sp.gov.br/localizacao/ "Localização")[Perguntas Frequentes](https://santoantoniodaalegria.sp.gov.br/faq/ "Perguntas Frequentes")
+
+#### Localização
+
+ Avenida Francisco Antônio Mafra,, 1004 - Centro   
+ Santo Antônio da Alegria-SP   
+ Cep: 14390-000   
+
+(16) 3668-1233   
+ouvidoria@santoantoniodaalegria.com.br   
+
+ 2026 © Santo Antônio da Alegria - SP | Desenvolvido por: [![Image 22](https://santoantoniodaalegria.sp.gov.br/imagens/plenus.png)](https://www.plenusgestaopublica.com.br/ "Plenus Gestão Pública")
+
+ Utilizamos cookies essenciais e tecnologias semelhantes de acordo com a nossa [Política de Privacidade](https://santoantoniodaalegria.sp.gov.br/pagina/326_LGPD-Politica-de-Privacidade.html) e, ao continuar navegando, você concorda com estas condições. 
+
+Concordo

@@ -1,0 +1,40 @@
+{
+  "id": 3547908,
+  "nome": "Santo Antônio da Alegria",
+  "microrregiao": {
+    "id": 35015,
+    "nome": "Batatais",
+    "mesorregiao": {
+      "id": 3502,
+      "nome": "Ribeirão Preto",
+      "UF": {
+        "id": 35,
+        "sigla": "SP",
+        "nome": "São Paulo",
+        "regiao": {
+          "id": 3,
+          "sigla": "SE",
+          "nome": "Sudeste"
+        }
+      }
+    }
+  },
+  "regiao-imediata": {
+    "id": 350031,
+    "nome": "Ribeirão Preto",
+    "regiao-intermediaria": {
+      "id": 3508,
+      "nome": "Ribeirão Preto",
+      "UF": {
+        "id": 35,
+        "sigla": "SP",
+        "nome": "São Paulo",
+        "regiao": {
+          "id": 3,
+          "sigla": "SE",
+          "nome": "Sudeste"
+        }
+      }
+    }
+  }
+}

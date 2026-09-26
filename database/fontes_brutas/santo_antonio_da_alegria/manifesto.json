@@ -1,0 +1,42 @@
+{
+  "cidade": "Santo Antônio da Alegria",
+  "uf": "SP",
+  "ibge": "3547908",
+  "arquivos": [
+    {
+      "arquivo": "ibge_municipio.json",
+      "fonte": "ibge",
+      "url": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios",
+      "licenca": "Dado público (IBGE)",
+      "coletado_em": "2026-09-26T20:09:17+00:00"
+    },
+    {
+      "arquivo": "wikidata.json",
+      "fonte": "wikidata",
+      "url": "https://query.wikidata.org/sparql",
+      "licenca": "CC0 (Wikidata)",
+      "coletado_em": "2026-09-26T20:09:19+00:00"
+    },
+    {
+      "arquivo": "wikipedia_pt.txt",
+      "fonte": "wikipedia",
+      "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+      "licenca": "CC BY-SA 4.0 (Wikipedia)",
+      "coletado_em": "2026-09-26T20:09:21+00:00"
+    },
+    {
+      "arquivo": "osm_pois.json",
+      "fonte": "osm",
+      "url": "https://overpass-api.de/api/interpreter",
+      "licenca": "ODbL — © OpenStreetMap contributors",
+      "coletado_em": "2026-09-26T20:09:49+00:00"
+    },
+    {
+      "arquivo": "cnes_estabelecimentos.json",
+      "fonte": "cnes",
+      "url": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos?codigo_municipio=354790",
+      "licenca": "Dado público (CNES/DATASUS)",
+      "coletado_em": "2026-09-26T20:09:52+00:00"
+    }
+  ]
+}

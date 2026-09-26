@@ -1,0 +1,2692 @@
+{
+  "gerado_em": "2026-09-26",
+  "blocos": [
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Onde fica Santo Antônio da Alegria (SP)?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        },
+        {
+          "fonte": "wikidata",
+          "url": "https://query.wikidata.org/sparql",
+          "licenca": "CC0 (Wikidata)",
+          "coletado_em": "2026-09-26T20:09:19+00:00"
+        },
+        {
+          "fonte": "ibge",
+          "url": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios",
+          "licenca": "Dado público (IBGE)",
+          "coletado_em": "2026-09-26T20:09:17+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 549
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Quantos habitantes e qual a área de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "wikidata",
+          "url": "https://query.wikidata.org/sparql",
+          "licenca": "CC0 (Wikidata)",
+          "coletado_em": "2026-09-26T20:09:19+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        },
+        {
+          "fonte": "ibge",
+          "url": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios",
+          "licenca": "Dado público (IBGE)",
+          "coletado_em": "2026-09-26T20:09:17+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "população de 2022 (Censo) e 2025 (estimativa) via Wikidata, que cita o IBGE",
+      "caracteres": 434
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Por que a cidade se chama Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "pref:pagina/1_historia-do-municipio.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/1_historia-do-municipio.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:30+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 318
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Como começou a história de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "pref:pagina/1_historia-do-municipio.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/1_historia-do-municipio.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:30+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 723
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Como a divisa com Minas Gerais afetou Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "pref:pagina/1_historia-do-municipio.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/1_historia-do-municipio.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:30+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 626
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "O que foi o vilarejo de Souza, em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "pref:pagina/1_historia-do-municipio.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/1_historia-do-municipio.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:30+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 573
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Quem habitava a região de Santo Antônio da Alegria antes da colonização?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 625
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Como era a economia antiga de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "pref:pagina/1_historia-do-municipio.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/1_historia-do-municipio.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:30+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 425
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Quem governa Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        },
+        {
+          "fonte": "pref:pagina/10_telefones-uteis.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:38+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "dados da legislatura iniciada em 2025",
+      "caracteres": 506
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Quais religiões e igrejas existem em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        },
+        {
+          "fonte": "pref:pagina/10_telefones-uteis.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:38+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 435
+    },
+    {
+      "secao": "Visão geral de Santo Antônio da Alegria",
+      "cabecalho": "Quais são os morros, serras e rios de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "osm:node/5366438653",
+          "url": "https://www.openstreetmap.org/node/5366438653",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:node/5366438665",
+          "url": "https://www.openstreetmap.org/node/5366438665",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:node/5366438668",
+          "url": "https://www.openstreetmap.org/node/5366438668",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:node/5366438651",
+          "url": "https://www.openstreetmap.org/node/5366438651",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:way/556313573",
+          "url": "https://www.openstreetmap.org/way/556313573",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:way/353903445",
+          "url": "https://www.openstreetmap.org/way/353903445",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:way/456269514",
+          "url": "https://www.openstreetmap.org/way/456269514",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 542
+    },
+    {
+      "secao": "Atrações naturais de Santo Antônio da Alegria",
+      "cabecalho": "Ilha do Ar (Serra da Lajinha): voo livre e mirante em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/serra-da-laginha-ilha-do-ar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/serra-da-laginha-ilha-do-ar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:31+00:00"
+        },
+        {
+          "fonte": "osm:way/527690655",
+          "url": "https://www.openstreetmap.org/way/527690655",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "web:https://www.turismo.sp.gov.br/santo-antonio-da-alegria-valoriza-a-culinaria-regional-com-recursos-do-turismo-de-sp",
+          "url": "https://www.turismo.sp.gov.br/santo-antonio-da-alegria-valoriza-a-culinaria-regional-com-recursos-do-turismo-de-sp",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-09-26T20:11:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 626
+    },
+    {
+      "secao": "Atrações naturais de Santo Antônio da Alegria",
+      "cabecalho": "Cachoeira do Deosdédi (Cachoeira do Dédi) em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/cachoeira-do-deosdedi",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/cachoeira-do-deosdedi",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:25+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 494
+    },
+    {
+      "secao": "Atrações naturais de Santo Antônio da Alegria",
+      "cabecalho": "Cachoeira do Beto Teixeira em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/cachoeira-do-beto-teixeira",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/cachoeira-do-beto-teixeira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:25+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 345
+    },
+    {
+      "secao": "Atrações naturais de Santo Antônio da Alegria",
+      "cabecalho": "Outras cachoeiras de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/cachoeira-da-familia-duarte",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/cachoeira-da-familia-duarte",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:26+00:00"
+        },
+        {
+          "fonte": "pref:turismo/cachoeira-do-jose-justino",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/cachoeira-do-jose-justino",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:30+00:00"
+        },
+        {
+          "fonte": "pref:turismo/cachoeira-do-adilson-rio-pinheirinhos",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/cachoeira-do-adilson-rio-pinheirinhos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:21+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "a Prefeitura lista essas cachoeiras sem descrição",
+      "caracteres": 363
+    },
+    {
+      "secao": "Atrações naturais de Santo Antônio da Alegria",
+      "cabecalho": "Morro da Santa Cruz em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/morro-da-santa-cruz",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/morro-da-santa-cruz",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:29+00:00"
+        },
+        {
+          "fonte": "osm:node/5366438651",
+          "url": "https://www.openstreetmap.org/node/5366438651",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 340
+    },
+    {
+      "secao": "Atrações naturais de Santo Antônio da Alegria",
+      "cabecalho": "Parque Ecológico Municipal José Jorge Felício em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/parque-de-ecologico-municipal-jose-jorge-felicio",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/parque-de-ecologico-municipal-jose-jorge-felicio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:42+00:00"
+        },
+        {
+          "fonte": "pref:turismo/boteco-do-tom",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/boteco-do-tom",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:20+00:00"
+        },
+        {
+          "fonte": "pref:turismo/praemi-chopp",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/praemi-chopp",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:01+00:00"
+        },
+        {
+          "fonte": "web:https://plataforma.turismo.sp.gov.br/conheca-o-municipio-turistico-de-santo-antonio-da-alegria",
+          "url": "https://plataforma.turismo.sp.gov.br/conheca-o-municipio-turistico-de-santo-antonio-da-alegria",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-09-26T20:10:59+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "lagoa e Encontro de Carros Antigos vêm do FAQ do Manus; carnaval, da Secretaria de Turismo do estado via busca",
+      "caracteres": 528
+    },
+    {
+      "secao": "Atrações naturais de Santo Antônio da Alegria",
+      "cabecalho": "Sítio Sossego das Grutas: grutas e ecoturismo em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/gruta-sossego-das-grutas",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/gruta-sossego-das-grutas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:00+00:00"
+        },
+        {
+          "fonte": "pref:turismo/ecoutour-sossego-das-grutas",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/ecoutour-sossego-das-grutas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:40+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 440
+    },
+    {
+      "secao": "Eventos e festas de Santo Antônio da Alegria",
+      "cabecalho": "Festa de Santos Reis e Encontro de Companhias de Reis em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/42-encontro-de-companhias-de-santos-reis-em-santo-antonio-da-alegria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/42-encontro-de-companhias-de-santos-reis-em-santo-antonio-da-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:49+00:00"
+        },
+        {
+          "fonte": "pref:turismo/dia-14-de-janeiro-de-2023-baile-de-santos-reis",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/dia-14-de-janeiro-de-2023-baile-de-santos-reis",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:20+00:00"
+        },
+        {
+          "fonte": "web:https://circuitoaltamogiana.com.br/cidades-turisticas/santo-antonio-da-alegria/",
+          "url": "https://circuitoaltamogiana.com.br/cidades-turisticas/santo-antonio-da-alegria/",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 516
+    },
+    {
+      "secao": "Eventos e festas de Santo Antônio da Alegria",
+      "cabecalho": "Festa do Congo (Congada) em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Santo_Ant%C3%B4nio_da_Alegria",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-09-26T20:09:21+00:00"
+        },
+        {
+          "fonte": "pref:turismo/festa-do-congo-em-santo-antonio-da-alegria-sp-2022",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/festa-do-congo-em-santo-antonio-da-alegria-sp-2022",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:57+00:00"
+        },
+        {
+          "fonte": "pref:turismo/festa-do-congo-em-santo-antonio-da-alegria-2023",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/festa-do-congo-em-santo-antonio-da-alegria-2023",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:54+00:00"
+        },
+        {
+          "fonte": "web:https://circuitoaltamogiana.com.br/cidades-turisticas/santo-antonio-da-alegria/",
+          "url": "https://circuitoaltamogiana.com.br/cidades-turisticas/santo-antonio-da-alegria/",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "descrição da coroação vem de fonte secundária (Circuito Alta Mogiana, via busca)",
+      "caracteres": 550
+    },
+    {
+      "secao": "Eventos e festas de Santo Antônio da Alegria",
+      "cabecalho": "EXPOASA, exposição agropecuária de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/20a-expoasa-2022",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/20a-expoasa-2022",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:40+00:00"
+        },
+        {
+          "fonte": "pref:turismo/baile-da-escolha-rainha-expoasa",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/baile-da-escolha-rainha-expoasa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:10+00:00"
+        },
+        {
+          "fonte": "web:https://circuitoaltamogiana.com.br/cidades-turisticas/santo-antonio-da-alegria/",
+          "url": "https://circuitoaltamogiana.com.br/cidades-turisticas/santo-antonio-da-alegria/",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "expansão da sigla e rodeio vêm de fonte secundária (Circuito Alta Mogiana, via busca)",
+      "caracteres": 438
+    },
+    {
+      "secao": "Eventos e festas de Santo Antônio da Alegria",
+      "cabecalho": "Encontro de Carros Antigos em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/9-encontro-de-carros-antigos-em-santo-antonio-da-alegria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/9-encontro-de-carros-antigos-em-santo-antonio-da-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:46+00:00"
+        },
+        {
+          "fonte": "pref:turismo/encontro-de-carros-antigos-em-santo-antonio-da-alegria-2023",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/encontro-de-carros-antigos-em-santo-antonio-da-alegria-2023",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:45+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 311
+    },
+    {
+      "secao": "Eventos e festas de Santo Antônio da Alegria",
+      "cabecalho": "Eventos esportivos na Ilha do Ar, em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/campeonato-brasileiro-de-parapente-2022",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/campeonato-brasileiro-de-parapente-2022",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:34+00:00"
+        },
+        {
+          "fonte": "pref:turismo/campeonato-paulista-de-parapente-2022",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/campeonato-paulista-de-parapente-2022",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:33+00:00"
+        },
+        {
+          "fonte": "pref:turismo/desafio-ilha-360",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/desafio-ilha-360",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:26+00:00"
+        },
+        {
+          "fonte": "pref:turismo/passeio-ciclistico-da-adetur-alta-mogiana-em-santo-antonio-da-alegria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/passeio-ciclistico-da-adetur-alta-mogiana-em-santo-antonio-da-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:42+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 512
+    },
+    {
+      "secao": "Eventos e festas de Santo Antônio da Alegria",
+      "cabecalho": "Festival Gastronômico e inauguração da Rua da Gastronomia de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/1-festival-gastronomico-de-santo-antonio-da-alegria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/1-festival-gastronomico-de-santo-antonio-da-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:36+00:00"
+        },
+        {
+          "fonte": "pref:turismo/8a-edicao-do-concurso-de-qualidades-de-cafes-cafe-e-turismo",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/8a-edicao-do-concurso-de-qualidades-de-cafes-cafe-e-turismo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "a página do festival não informa o ano",
+      "caracteres": 600
+    },
+    {
+      "secao": "Eventos e festas de Santo Antônio da Alegria",
+      "cabecalho": "Carnaval e festas de fim de ano em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/carnaval-alegria-2023",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/carnaval-alegria-2023",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:40+00:00"
+        },
+        {
+          "fonte": "pref:turismo/carnaval-alegria-2024",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/carnaval-alegria-2024",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:45+00:00"
+        },
+        {
+          "fonte": "pref:turismo/especial-de-natal-arte-e-gastronomia",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/especial-de-natal-arte-e-gastronomia",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:45+00:00"
+        },
+        {
+          "fonte": "web:https://plataforma.turismo.sp.gov.br/conheca-o-municipio-turistico-de-santo-antonio-da-alegria",
+          "url": "https://plataforma.turismo.sp.gov.br/conheca-o-municipio-turistico-de-santo-antonio-da-alegria",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-09-26T20:10:59+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 336
+    },
+    {
+      "secao": "Gastronomia e produtores de Santo Antônio da Alegria",
+      "cabecalho": "Rua da Gastronomia de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "web:https://www.turismo.sp.gov.br/santo-antonio-da-alegria-valoriza-a-culinaria-regional-com-recursos-do-turismo-de-sp",
+          "url": "https://www.turismo.sp.gov.br/santo-antonio-da-alegria-valoriza-a-culinaria-regional-com-recursos-do-turismo-de-sp",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-09-26T20:11:14+00:00"
+        },
+        {
+          "fonte": "pref:turismo/1-festival-gastronomico-de-santo-antonio-da-alegria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/1-festival-gastronomico-de-santo-antonio-da-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:36+00:00"
+        },
+        {
+          "fonte": "pref:turismo/?categoria=8",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:12:59+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "valor e obras vêm da notícia da Secretaria de Turismo do estado, lida pelo resumo da busca",
+      "caracteres": 511
+    },
+    {
+      "secao": "Gastronomia e produtores de Santo Antônio da Alegria",
+      "cabecalho": "Quais doces e queijos típicos se fazem em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "web:https://www.abagrp.org.br/santo-antonio-da-alegria",
+          "url": "https://www.abagrp.org.br/santo-antonio-da-alegria",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/doce-de-jaracatia",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/doce-de-jaracatia",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:27+00:00"
+        },
+        {
+          "fonte": "pref:turismo/?categoria=8",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:12:59+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 466
+    },
+    {
+      "secao": "Gastronomia e produtores de Santo Antônio da Alegria",
+      "cabecalho": "Produtores de doces e geleias em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/geleias-e-doces-do-cidoca",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/geleias-e-doces-do-cidoca",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:02+00:00"
+        },
+        {
+          "fonte": "pref:turismo/doces-caseiros-paulinho",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/doces-caseiros-paulinho",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:26+00:00"
+        },
+        {
+          "fonte": "pref:turismo/canudinhos-do-feu",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/canudinhos-do-feu",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:40+00:00"
+        },
+        {
+          "fonte": "pref:turismo/delicias-de-saa",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/delicias-de-saa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:16+00:00"
+        },
+        {
+          "fonte": "pref:turismo/doce-de-jaracatia",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/doce-de-jaracatia",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:27+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 753
+    },
+    {
+      "secao": "Gastronomia e produtores de Santo Antônio da Alegria",
+      "cabecalho": "Produtores e lojas de queijo em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/armazem-do-queijo",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/armazem-do-queijo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:00+00:00"
+        },
+        {
+          "fonte": "pref:turismo/laticinio-eldorado",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/laticinio-eldorado",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:26+00:00"
+        },
+        {
+          "fonte": "pref:turismo/queijos-santo-antonio",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/queijos-santo-antonio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:09+00:00"
+        },
+        {
+          "fonte": "pref:turismo/queijos-and-cia",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/queijos-and-cia",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:06+00:00"
+        },
+        {
+          "fonte": "pref:turismo/alexandre-queijos-artesanais",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/alexandre-queijos-artesanais",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:53+00:00"
+        },
+        {
+          "fonte": "pref:turismo/damas-queijos",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/damas-queijos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:12+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 794
+    },
+    {
+      "secao": "Gastronomia e produtores de Santo Antônio da Alegria",
+      "cabecalho": "Bolachas, massas e bolos caseiros em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/quero-mais-bolachas-caseiras",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/quero-mais-bolachas-caseiras",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:14+00:00"
+        },
+        {
+          "fonte": "pref:turismo/bolacha-caseiras-da-vovo-olga",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bolacha-caseiras-da-vovo-olga",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:15+00:00"
+        },
+        {
+          "fonte": "pref:turismo/massa-cuscuzeiro",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/massa-cuscuzeiro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:34+00:00"
+        },
+        {
+          "fonte": "pref:turismo/bel-bolos",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bel-bolos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:17+00:00"
+        },
+        {
+          "fonte": "pref:turismo/mara-doces-chama",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/mara-doces-chama",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:29+00:00"
+        },
+        {
+          "fonte": "pref:turismo/salgados-tia-muia",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/salgados-tia-muia",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:28+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 669
+    },
+    {
+      "secao": "Onde comer em Santo Antônio da Alegria",
+      "cabecalho": "Bar do Hélio: bar e restaurante em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/bar-do-helio",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bar-do-helio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:07+00:00"
+        },
+        {
+          "fonte": "osm:way/452300226",
+          "url": "https://www.openstreetmap.org/way/452300226",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:node/13691829582",
+          "url": "https://www.openstreetmap.org/node/13691829582",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 342
+    },
+    {
+      "secao": "Onde comer em Santo Antônio da Alegria",
+      "cabecalho": "Baú do Petisco: bar rural em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/bau-do-petisco",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bau-do-petisco",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:11+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 347
+    },
+    {
+      "secao": "Onde comer em Santo Antônio da Alegria",
+      "cabecalho": "Restaurantes e pesqueiros de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/restaurante-beira-rio",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/restaurante-beira-rio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:27+00:00"
+        },
+        {
+          "fonte": "pref:turismo/restaurante-e-salgadeiria-da-catarina",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/restaurante-e-salgadeiria-da-catarina",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:27+00:00"
+        },
+        {
+          "fonte": "pref:turismo/pesqueiro-kaju",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pesqueiro-kaju",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:54+00:00"
+        },
+        {
+          "fonte": "pref:turismo/pesqueiro-cantinho-das-aguas",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pesqueiro-cantinho-das-aguas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:48+00:00"
+        },
+        {
+          "fonte": "pref:turismo/atelie-do-sabor",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/atelie-do-sabor",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:54+00:00"
+        },
+        {
+          "fonte": "pref:turismo/tempero-e-sabor-marmitaria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/tempero-e-sabor-marmitaria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:38+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 543
+    },
+    {
+      "secao": "Onde comer em Santo Antônio da Alegria",
+      "cabecalho": "Pizzarias e bares noturnos de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/fronteiras-bar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/fronteiras-bar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:04+00:00"
+        },
+        {
+          "fonte": "pref:turismo/pizzaria-e-esfiraria-sabor-e-magia",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pizzaria-e-esfiraria-sabor-e-magia",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:56+00:00"
+        },
+        {
+          "fonte": "pref:turismo/kanekos-bar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/kanekos-bar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:17+00:00"
+        },
+        {
+          "fonte": "pref:turismo/skina-lanchese-pizzas",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/skina-lanchese-pizzas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:32+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 552
+    },
+    {
+      "secao": "Onde comer em Santo Antônio da Alegria",
+      "cabecalho": "Lanchonetes e salgaderias de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/cebolas-burgures-",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/cebolas-burgures-",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:56+00:00"
+        },
+        {
+          "fonte": "pref:turismo/danilo-lanches",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/danilo-lanches",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:10+00:00"
+        },
+        {
+          "fonte": "pref:turismo/pastel-do-erick",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pastel-do-erick",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:44+00:00"
+        },
+        {
+          "fonte": "pref:turismo/lanchonete-felipe-domingues",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/lanchonete-felipe-domingues",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:21+00:00"
+        },
+        {
+          "fonte": "pref:turismo/remulo-salgados",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/remulo-salgados",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:24+00:00"
+        },
+        {
+          "fonte": "pref:turismo/bar-e-salgadeiria-do-jaiminho",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bar-e-salgadeiria-do-jaiminho",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:11+00:00"
+        },
+        {
+          "fonte": "pref:turismo/churros-do-tancredo",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/churros-do-tancredo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:05+00:00"
+        },
+        {
+          "fonte": "pref:turismo/garagem-do-lanche",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/garagem-do-lanche",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 666
+    },
+    {
+      "secao": "Hospedagem em Santo Antônio da Alegria",
+      "cabecalho": "Pousadas no centro de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/pousada-das-margaridas",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pousada-das-margaridas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:56+00:00"
+        },
+        {
+          "fonte": "pref:turismo/pausada-da-9",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pausada-da-9",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:47+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 303
+    },
+    {
+      "secao": "Hospedagem em Santo Antônio da Alegria",
+      "cabecalho": "Pousadas e haras na zona rural de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/pousada-ilha-do-ar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pousada-ilha-do-ar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:59+00:00"
+        },
+        {
+          "fonte": "pref:turismo/pousada-toa-a-toa",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pousada-toa-a-toa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:02+00:00"
+        },
+        {
+          "fonte": "pref:turismo/haras-matinha",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/haras-matinha",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:08+00:00"
+        },
+        {
+          "fonte": "pref:turismo/chacara-recanto-da-cachoeira",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/chacara-recanto-da-cachoeira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:01+00:00"
+        },
+        {
+          "fonte": "pref:turismo/encontro-das-serras",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/encontro-das-serras",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:46+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 542
+    },
+    {
+      "secao": "Hospedagem em Santo Antônio da Alegria",
+      "cabecalho": "Casas e sítios de temporada em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/ecoutour-sossego-das-grutas",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/ecoutour-sossego-das-grutas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:40+00:00"
+        },
+        {
+          "fonte": "pref:turismo/recanto-shammah",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/recanto-shammah",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:23+00:00"
+        },
+        {
+          "fonte": "pref:turismo/estancia-pe-da-serra",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/estancia-pe-da-serra",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:50+00:00"
+        },
+        {
+          "fonte": "pref:turismo/casa-de-campo",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/casa-de-campo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:44+00:00"
+        },
+        {
+          "fonte": "pref:turismo/cantinho-zen",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/cantinho-zen",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:35+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "a página do Ecoutour diz 5 e 15 pessoas; a base usa o valor da linha com Cadastur (15)",
+      "caracteres": 660
+    },
+    {
+      "secao": "Hospedagem em Santo Antônio da Alegria",
+      "cabecalho": "Ranchos e chácaras para alugar em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/rancho-alvorada",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/rancho-alvorada",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:15+00:00"
+        },
+        {
+          "fonte": "pref:turismo/rancho-alvora",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/rancho-alvora",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:09+00:00"
+        },
+        {
+          "fonte": "pref:turismo/chacara-alvorada",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/chacara-alvorada",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:59+00:00"
+        },
+        {
+          "fonte": "pref:turismo/chacara-recanto-sorriso-da-alegria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/chacara-recanto-sorriso-da-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:06+00:00"
+        },
+        {
+          "fonte": "pref:turismo/rancho-do-leu",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/rancho-do-leu",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:14+00:00"
+        },
+        {
+          "fonte": "pref:turismo/rancho-do-macario",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/rancho-do-macario",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:17+00:00"
+        },
+        {
+          "fonte": "pref:turismo/rancho-do-ze-francisco",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/rancho-do-ze-francisco",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:20+00:00"
+        },
+        {
+          "fonte": "pref:turismo/rancho-santa-terezinha",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/rancho-santa-terezinha",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:20+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "Rancho Alvora e Rancho Alvorada usam o mesmo Instagram",
+      "caracteres": 631
+    },
+    {
+      "secao": "Turismo de aventura em Santo Antônio da Alegria",
+      "cabecalho": "Agências e escolas de turismo de aventura em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/cathartes-escola",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/cathartes-escola",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:56+00:00"
+        },
+        {
+          "fonte": "pref:turismo/desrotina-adventure",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/desrotina-adventure",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:21+00:00"
+        },
+        {
+          "fonte": "pref:turismo/donati-expedicoes",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/donati-expedicoes",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:30+00:00"
+        },
+        {
+          "fonte": "pref:turismo/ilha-eco-adventure",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/ilha-eco-adventure",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:13+00:00"
+        },
+        {
+          "fonte": "pref:turismo/pedal-ar-livre",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/pedal-ar-livre",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:48+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 547
+    },
+    {
+      "secao": "Compras em Santo Antônio da Alegria",
+      "cabecalho": "Supermercados e empórios de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/emporio-super-mercado-rede-valor",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/emporio-super-mercado-rede-valor",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:41+00:00"
+        },
+        {
+          "fonte": "pref:turismo/acougue-e-supermercado-do-djalma",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/acougue-e-supermercado-do-djalma",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:50+00:00"
+        },
+        {
+          "fonte": "pref:turismo/dona-xica-emporio",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/dona-xica-emporio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:37+00:00"
+        },
+        {
+          "fonte": "pref:turismo/emporio-sabores-do-interior",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/emporio-sabores-do-interior",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:39+00:00"
+        },
+        {
+          "fonte": "pref:turismo/lugas-ricardo",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/lugas-ricardo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:24+00:00"
+        },
+        {
+          "fonte": "pref:turismo/bebidas-sao-benedito",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bebidas-sao-benedito",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:17+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 602
+    },
+    {
+      "secao": "Compras em Santo Antônio da Alegria",
+      "cabecalho": "Padarias de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/padaria-e-confeitaria-dona-irene-01",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/padaria-e-confeitaria-dona-irene-01",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:32+00:00"
+        },
+        {
+          "fonte": "pref:turismo/padaria-e-confeitaria-dona-irene-2",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/padaria-e-confeitaria-dona-irene-2",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:39+00:00"
+        },
+        {
+          "fonte": "pref:turismo/padaria-nosso-pao",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/padaria-nosso-pao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:36+00:00"
+        },
+        {
+          "fonte": "pref:turismo/padaria-vovo-josefa",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/padaria-vovo-josefa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:37+00:00"
+        },
+        {
+          "fonte": "pref:turismo/padaria-anderson-fantacine",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/padaria-anderson-fantacine",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:33+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 454
+    },
+    {
+      "secao": "Compras em Santo Antônio da Alegria",
+      "cabecalho": "Açougues de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/acougue-jr-alegria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/acougue-jr-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:50+00:00"
+        },
+        {
+          "fonte": "pref:turismo/casa-de-carnes-ribeiro",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/casa-de-carnes-ribeiro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:51+00:00"
+        },
+        {
+          "fonte": "pref:turismo/casa-de-carnes-lb",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/casa-de-carnes-lb",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:44+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 254
+    },
+    {
+      "secao": "Serviços em Santo Antônio da Alegria",
+      "cabecalho": "Bancos, lotérica e Correios em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/banco-do-brasil",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/banco-do-brasil",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:05+00:00"
+        },
+        {
+          "fonte": "pref:turismo/sicoob-credicitrus",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/sicoob-credicitrus",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:39+00:00"
+        },
+        {
+          "fonte": "pref:turismo/casa-loterica-leon-caixa-economica-federal",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/casa-loterica-leon-caixa-economica-federal",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:54+00:00"
+        },
+        {
+          "fonte": "pref:turismo/correios",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/correios",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:09+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "ausência de casa de câmbio vem do FAQ do Manus",
+      "caracteres": 372
+    },
+    {
+      "secao": "Serviços em Santo Antônio da Alegria",
+      "cabecalho": "Postos de combustível de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/auto-posto-deputado",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/auto-posto-deputado",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:58+00:00"
+        },
+        {
+          "fonte": "pref:turismo/auto-posto-e-conveniencia-alvorada",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/auto-posto-e-conveniencia-alvorada",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:59+00:00"
+        },
+        {
+          "fonte": "pref:turismo/auto-posto-e-conveniencia-central",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/auto-posto-e-conveniencia-central",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:00+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 320
+    },
+    {
+      "secao": "Serviços em Santo Antônio da Alegria",
+      "cabecalho": "Farmácias de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/farma-alegre",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/farma-alegre",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:49+00:00"
+        },
+        {
+          "fonte": "pref:turismo/farmacia-santana",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/farmacia-santana",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:52+00:00"
+        },
+        {
+          "fonte": "pref:turismo/droga-neves",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/droga-neves",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:30+00:00"
+        },
+        {
+          "fonte": "pref:turismo/drogaria-j-l-farma",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/drogaria-j-l-farma",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:35+00:00"
+        },
+        {
+          "fonte": "pref:turismo/drogaria-santa-rita-1",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/drogaria-santa-rita-1",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:36+00:00"
+        },
+        {
+          "fonte": "cnes:9779698",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=9779698",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:8286698",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=8286698",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 417
+    },
+    {
+      "secao": "Serviços em Santo Antônio da Alegria",
+      "cabecalho": "Escolas e creches de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:pagina/10_telefones-uteis.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:38+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 399
+    },
+    {
+      "secao": "Serviços em Santo Antônio da Alegria",
+      "cabecalho": "Serviços públicos e cultura em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:pagina/10_telefones-uteis.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:38+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 455
+    },
+    {
+      "secao": "Saúde em Santo Antônio da Alegria",
+      "cabecalho": "Hospital e pronto-socorro de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "cnes:9208887",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=9208887",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:2078198",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2078198",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "pref:turismo/hospital-municipal-e-pronto-socorro",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/hospital-municipal-e-pronto-socorro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:14+00:00"
+        },
+        {
+          "fonte": "pref:turismo/hospital-santo-antonio-de-padua",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/hospital-santo-antonio-de-padua",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:12+00:00"
+        },
+        {
+          "fonte": "pref:pagina/10_telefones-uteis.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:38+00:00"
+        },
+        {
+          "fonte": "osm:way/1415899484",
+          "url": "https://www.openstreetmap.org/way/1415899484",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 604
+    },
+    {
+      "secao": "Saúde em Santo Antônio da Alegria",
+      "cabecalho": "Postos de saúde e unidades básicas de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "cnes:6799663",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=6799663",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:2048191",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2048191",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:5905206",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=5905206",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:6396364",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=6396364",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:7062931",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=7062931",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "pref:turismo/psf-joao-elias-meziara",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/psf-joao-elias-meziara",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:02+00:00"
+        },
+        {
+          "fonte": "pref:turismo/psf-joaquim-aguiar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/psf-joaquim-aguiar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:06+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 631
+    },
+    {
+      "secao": "Saúde em Santo Antônio da Alegria",
+      "cabecalho": "Especialidades, laboratórios e odontologia em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "cnes:4337581",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=4337581",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:2716623",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2716623",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:2716615",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2716615",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:7782632",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=7782632",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:310425",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=310425",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:9540873",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=9540873",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        },
+        {
+          "fonte": "cnes:8504377",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=8504377",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-09-26T20:09:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "consultórios particulares com nome de pessoa foram omitidos (LGPD)",
+      "caracteres": 724
+    },
+    {
+      "secao": "Segurança, transporte e telefones úteis de Santo Antônio da Alegria",
+      "cabecalho": "Polícia e Guarda Municipal de Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:pagina/10_telefones-uteis.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:38+00:00"
+        },
+        {
+          "fonte": "pref:turismo/delegacia-de-policia",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/delegacia-de-policia",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:16+00:00"
+        },
+        {
+          "fonte": "pref:turismo/policia-militar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/policia-militar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:52+00:00"
+        },
+        {
+          "fonte": "pref:turismo/guarda-municipal",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/guarda-municipal",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:06+00:00"
+        },
+        {
+          "fonte": "osm:node/13684245030",
+          "url": "https://www.openstreetmap.org/node/13684245030",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:node/13684293067",
+          "url": "https://www.openstreetmap.org/node/13684293067",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "osm:node/13684282510",
+          "url": "https://www.openstreetmap.org/node/13684282510",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 416
+    },
+    {
+      "secao": "Segurança, transporte e telefones úteis de Santo Antônio da Alegria",
+      "cabecalho": "Rodoviária e transporte em Santo Antônio da Alegria",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/terminal-rodoviario-jose-julio-fonseca",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/terminal-rodoviario-jose-julio-fonseca",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:40+00:00"
+        },
+        {
+          "fonte": "pref:turismo/departamento-de-transporte-municipal",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/departamento-de-transporte-municipal",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:17+00:00"
+        },
+        {
+          "fonte": "pref:turismo/informacao-sobre-taxi",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/informacao-sobre-taxi",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:18+00:00"
+        },
+        {
+          "fonte": "osm:node/13684279002",
+          "url": "https://www.openstreetmap.org/node/13684279002",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-09-26T20:09:49+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "linhas e empresas de ônibus não verificadas",
+      "caracteres": 441
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde fica o centro de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 430
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Qual é o melhor lugar pra comer em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/bar-do-helio",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bar-do-helio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:07+00:00"
+        },
+        {
+          "fonte": "pref:turismo/bau-do-petisco",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bau-do-petisco",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:11+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "Sorveteria O Rei do Sorvete, AiJapa, Empório Santo Antônio e Hot Grill não constam no site da Prefeitura",
+      "caracteres": 665
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Dá pra andar a pé por Santo Antônio da Alegria ou é melhor pegar um táxi?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 501
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem algum restaurante típico que valha a pena conhecer em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/bar-do-helio",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bar-do-helio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:07+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 461
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde eu posso trocar dinheiro em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/casa-loterica-leon-caixa-economica-federal",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/casa-loterica-leon-caixa-economica-federal",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:54+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 382
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "É seguro andar por Santo Antônio da Alegria à noite?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 408
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Qual é o prato mais famoso da região de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "web:https://www.abagrp.org.br/santo-antonio-da-alegria",
+          "url": "https://www.abagrp.org.br/santo-antonio-da-alegria",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 449
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem Wi-Fi grátis em algum lugar de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/gruta-sossego-das-grutas",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/gruta-sossego-das-grutas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:00+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "Wi-Fi não confirmado pela Prefeitura; distância corrigida para 7 km",
+      "caracteres": 299
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde eu posso comprar lembrancinhas legais em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/?categoria=8",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=8",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:12:59+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 420
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Qual é o horário de funcionamento da Ilha do Ar, do AiJapa e das lojas de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "pref:turismo/serra-da-laginha-ilha-do-ar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/serra-da-laginha-ilha-do-ar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:31+00:00"
+        },
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "horário da Ilha do Ar corrigido de 8h–18h (Manus) para 7h–19h (Prefeitura); horário do AiJapa não verificado",
+      "caracteres": 501
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Como faz pra usar o transporte público em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/terminal-rodoviario-jose-julio-fonseca",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/terminal-rodoviario-jose-julio-fonseca",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:40+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 551
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem algum aplicativo que ajuda a se locomover por Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 333
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Dá pra pagar com cartão de crédito em todo lugar em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 417
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde posso comprar chip de celular em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 368
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "O pessoal de Santo Antônio da Alegria fala inglês?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 349
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Qual é o melhor ponto pra ver o pôr do sol em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/serra-da-laginha-ilha-do-ar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/serra-da-laginha-ilha-do-ar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:31+00:00"
+        },
+        {
+          "fonte": "pref:turismo/morro-da-santa-cruz",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/morro-da-santa-cruz",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:29+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 356
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Dá pra beber a água da torneira em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 270
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Quanto custa mais ou menos um táxi de Santo Antônio da Alegria até o aeroporto?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 548
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem algum lugar bom pra tirar fotos em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/?categoria=1",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=1",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:12:09+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 497
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "O que dá pra fazer de graça em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/?categoria=1",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=1",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:12:09+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "Córrego Fundo e Festa do Doce não verificados",
+      "caracteres": 701
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Qual é a melhor época do ano pra visitar Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/20a-expoasa-2022",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/20a-expoasa-2022",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:40+00:00"
+        },
+        {
+          "fonte": "pref:turismo/42-encontro-de-companhias-de-santos-reis-em-santo-antonio-da-alegria",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/42-encontro-de-companhias-de-santos-reis-em-santo-antonio-da-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:49+00:00"
+        },
+        {
+          "fonte": "pref:turismo/encontro-de-carros-antigos-em-santo-antonio-da-alegria-2023",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/encontro-de-carros-antigos-em-santo-antonio-da-alegria-2023",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:45+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "EXPOASA corrigida de julho para junho; setembro da Festa do Congo e Festa do Doce não verificados",
+      "caracteres": 555
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde tem um caixa eletrônico em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/banco-do-brasil",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/banco-do-brasil",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:05+00:00"
+        },
+        {
+          "fonte": "pref:turismo/casa-loterica-leon-caixa-economica-federal",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/casa-loterica-leon-caixa-economica-federal",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:54+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 303
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "É costume dar gorjeta em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 419
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde ficam os bares mais animados de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/bar-do-helio",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bar-do-helio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:07+00:00"
+        },
+        {
+          "fonte": "pref:turismo/bau-do-petisco",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/bau-do-petisco",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:29:11+00:00"
+        },
+        {
+          "fonte": "pref:turismo/fronteiras-bar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/fronteiras-bar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:04+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 465
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem algum mercado local ou feira tradicional em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/emporio-super-mercado-rede-valor",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/emporio-super-mercado-rede-valor",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:41+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "Festa do Doce, Supermercado Alegria, Lojão do Real e HF Supermercados não verificados",
+      "caracteres": 454
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "O que eu não posso deixar de visitar em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/?categoria=1",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=1",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:12:09+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 566
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem algum passeio bate-volta que valha a pena a partir de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "wikidata",
+          "url": "https://query.wikidata.org/sparql",
+          "licenca": "CC0 (Wikidata)",
+          "coletado_em": "2026-09-26T20:09:19+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "vizinhança confirmada pela Wikidata; distâncias não verificadas",
+      "caracteres": 496
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Como é o clima de Santo Antônio da Alegria em outubro?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 443
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde eu posso alugar bicicleta ou patinete em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 369
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Que eventos acontecem em Santo Antônio da Alegria em outubro?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/encontro-de-carros-antigos-em-santo-antonio-da-alegria-2023",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/encontro-de-carros-antigos-em-santo-antonio-da-alegria-2023",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:30:45+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "Festa do Doce não verificada",
+      "caracteres": 380
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Quanto tempo leva pra conhecer os principais pontos turísticos de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 440
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "É fácil achar táxi ou transporte por aplicativo em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 395
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem alguma comida de rua famosa em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 436
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde posso ver música ao vivo em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/20a-expoasa-2022",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/20a-expoasa-2022",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:40+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 417
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "É preciso comprar ingresso antecipado pra entrar nas atrações de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/20a-expoasa-2022",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/20a-expoasa-2022",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:40+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "a 20ª EXPOASA (2022) teve entrada gratuita todos os dias",
+      "caracteres": 446
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Qual é o jeito mais barato de chegar do aeroporto até o centro de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 471
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde eu posso guardar minha bagagem por algumas horas em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 389
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "O que eu devo evitar fazer pra não parecer um turista perdido em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 698
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Como é a vida noturna de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/?categoria=18",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=18",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:20+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 497
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem algum mirante ou vista panorâmica legal em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/serra-da-laginha-ilha-do-ar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/serra-da-laginha-ilha-do-ar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:31+00:00"
+        },
+        {
+          "fonte": "pref:turismo/morro-da-santa-cruz",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/morro-da-santa-cruz",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:29+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "\"igreja no topo\" do Morro da Santa Cruz substituída pelo galpão na base, segundo a Prefeitura",
+      "caracteres": 356
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde ficam os melhores cafés de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 378
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Dá pra fazer trilha ou algum passeio na natureza perto de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/?categoria=1",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=1",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:12:09+00:00"
+        },
+        {
+          "fonte": "pref:turismo/gruta-sossego-das-grutas",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/gruta-sossego-das-grutas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:00+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "Córrego Fundo não verificado; distância do Sossego das Grutas corrigida para 7 km",
+      "caracteres": 632
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem algum museu interessante que não seja muito cheio em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 447
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde eu posso comprar ingressos pra shows ou eventos em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/20a-expoasa-2022",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/20a-expoasa-2022",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:28:40+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 496
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Como funciona o transporte noturno em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 336
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem algum shopping ou rua boa pra fazer compras em Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 346
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Onde ficam os pontos de informação turística de Santo Antônio da Alegria?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/informacoes",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/informacoes",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:31:20+00:00"
+        },
+        {
+          "fonte": "pref:pagina/10_telefones-uteis.html",
+          "url": "https://santoantoniodaalegria.sp.gov.br/pagina/10_telefones-uteis.html",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:14:38+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "endereço da Prefeitura corrigido segundo o site oficial",
+      "caracteres": 445
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem praia ou montanha perto de Santo Antônio da Alegria? Como chegar?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/serra-da-laginha-ilha-do-ar",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/serra-da-laginha-ilha-do-ar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:32:31+00:00"
+        }
+      ],
+      "confianca": "secundario",
+      "nota": "",
+      "caracteres": 357
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Os moradores de Santo Antônio da Alegria são simpáticos com turistas?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 374
+    },
+    {
+      "secao": "Perguntas frequentes de turistas sobre Santo Antônio da Alegria",
+      "cabecalho": "Tem alguma dica de lugar \"secreto\" que só os moradores de Santo Antônio da Alegria conhecem?",
+      "fontes": [
+        {
+          "fonte": "manus",
+          "url": "database/faq_manus_completa.md",
+          "licenca": "Texto gerado por LLM (Manus), sem fontes verificáveis",
+          "coletado_em": ""
+        },
+        {
+          "fonte": "pref:turismo/?categoria=1",
+          "url": "https://santoantoniodaalegria.sp.gov.br/turismo/?categoria=1",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-09-26T20:12:09+00:00"
+        }
+      ],
+      "confianca": "nao_verificado",
+      "nota": "",
+      "caracteres": 602
+    }
+  ],
+  "conflitos": [
+    "Horário da Ilha do Ar: o FAQ do Manus dizia 8h às 18h; o site da Prefeitura (turismo/serra-da-laginha-ilha-do-ar) diz 7h às 19h. A base usa 7h às 19h. A resposta_referencia de perguntas.csv (\"Qual é o horário de funcionamento das atrações principais?\") ainda diz 8h às 18h.",
+    "EXPOASA: o FAQ do Manus a punha em julho; a Prefeitura divulgou a 20ª EXPOASA de 9 a 12 de junho de 2022, com entrada gratuita, e o baile de escolha da rainha em 16 de maio. A base usa junho.",
+    "\"Cachoeira do Baú\": o FAQ do Manus chamava a Cachoeira do Deosdédi de \"Cachoeira do Baú\"; a Prefeitura dá como nome alternativo \"Cachoeira do Dédi\", e \"Morro do Baú\" é um dos três morros da Ilha do Ar. A base usa \"Cachoeira do Deosdédi (Cachoeira do Dédi)\".",
+    "Distância do Sítio Sossego das Grutas: o FAQ do Manus dizia 8 km; a Prefeitura diz 7 km de asfalto. A base usa 7 km.",
+    "Morro da Santa Cruz: o FAQ do Manus dizia que há uma igreja no topo; a Prefeitura diz que há um galpão na base do morro, onde acontecem festas religiosas. A base segue a Prefeitura.",
+    "Freguesia de origem: a Prefeitura diz que a freguesia pertencia à vila de Batatais; a Wikipedia diz que foi incorporada ao município de Cajuru em abril de 1873. A base registra as duas versões.",
+    "Telefone da Delegacia de Polícia: (16) 3668-1120 na página de telefones úteis e (16) 3668-1104 na página de turismo da Prefeitura. A base registra os dois.",
+    "Telefone da Guarda Municipal: (16) 98108-2437 na página de telefones úteis e (16) 98852-5271 na página de turismo da Prefeitura. A base registra os dois.",
+    "Transporte público: o FAQ do Manus diz que não há transporte público urbano; a Prefeitura lista um Departamento de Transporte Municipal, sem descrever o serviço. A base mantém a afirmação do FAQ como não verificada."
+  ],
+  "lacunas": [
+    "Festa do Doce: citada só pelo FAQ do Manus; nenhuma fonte oficial ou aberta encontrada. Mantida na seção de perguntas frequentes como não verificada.",
+    "Córrego Fundo, AiJapa Restaurante e Delivery, Sorveteria O Rei do Sorvete, Restaurante Empório Santo Antônio, Pastelaria Hot Grill, Supermercado Alegria, Lojão do Real Atacadista, HF Supermercados e Wi-Fi no Sítio Sossego das Grutas: citados só pelo FAQ do Manus.",
+    "Festa do Congo: a Prefeitura divulga as edições de 2022 e 2023 sem data; o mês de setembro vem só do FAQ do Manus.",
+    "Como chegar de São Paulo: nenhuma fonte com linhas, horários ou empresa de ônibus; a Viação São Bento vem só do FAQ do Manus.",
+    "Preços de táxi e distâncias até cidades vizinhas vêm só do FAQ do Manus."
+  ],
+  "documento": "database/guia_santo_antonio_da_alegria.md",
+  "mestre": "database/fontes_brutas/santo_antonio_da_alegria/guia.anotado.md"
+}
