@@ -61,20 +61,22 @@ def test_experiment_config_defaults():
         rags=["naive"],
         retrievers=["similarity"],
         metrics=["answer_relevancy"],
+        llms=["qwen3:1.7b"],
     )
     assert config.name is None
-    assert config.llms == ["gemini"]
     assert config.eval_embedding is None  # the API fills in the saved default
 
 
-def test_experiment_config_llms_defaults_to_gemini():
-    from app.experiments.schemas import ExperimentConfig
+def test_experiment_config_requires_at_least_one_llm():
+    """No implicit Gemini: an experiment names its models (local ones need no key)."""
+    from pydantic import ValidationError
 
-    cfg = ExperimentConfig(
-        base="viagem", chunkings=["recursive"], embeddings=["gemini"],
-        rags=["naive"], retrievers=["similarity"], metrics=["answer_relevancy"],
-    )
-    assert cfg.llms == ["gemini"]
+    base = dict(base="viagem", chunkings=["recursive"], embeddings=["e5"],
+                rags=["naive"], retrievers=["similarity"], metrics=["answer_relevancy"])
+    with pytest.raises(ValidationError):
+        ExperimentConfig(**base)
+    with pytest.raises(ValidationError):
+        ExperimentConfig(**base, llms=[])
 
 
 def test_experiment_config_parses_llms_list():

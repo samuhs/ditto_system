@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from app.core.chunking.base import chunking_registry
 from app.core.embedding.base import embedding_registry
 from app.core.evaluation.base import evaluation_registry
+from app.core.config.runtime import get_gemini_key
 from app.core.llm.gemini import DEFAULT_GEMINI_MODEL
 from app.core.llm.ollama import list_ollama_models
 from app.core.rag.base import rag_registry
@@ -24,8 +25,13 @@ def get_ollama_lister() -> Callable[[], list[str]]:
 
 
 def _llm_options(list_ollama: Callable[[], list[str]]) -> list[dict[str, str]]:
-    """Real model names: the Gemini model in use plus every model on the Ollama server."""
-    llms = [{"value": DEFAULT_GEMINI_MODEL, "label": DEFAULT_GEMINI_MODEL, "location": "remote"}]
+    """Real model names: every model on the local server, plus Gemini when a key is set.
+
+    Without a key a Gemini run would only fail, so it is not offered.
+    """
+    llms = []
+    if get_gemini_key() is not None:
+        llms.append({"value": DEFAULT_GEMINI_MODEL, "label": DEFAULT_GEMINI_MODEL, "location": "remote"})
     try:
         names = list_ollama()
     except Exception:  # noqa: BLE001  an Ollama outage must not break the form pages

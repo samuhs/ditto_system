@@ -32,7 +32,8 @@ class ExperimentConfig(BaseModel):
     # Explicit pairs to test; when set they replace the chunkings x embeddings product
     # (which may include pairs that were never indexed).
     indexes: list[IndexPair] | None = None
-    llms: list[str] = ["gemini"]
+    # No default: every model is chosen explicitly (local ones need no API key).
+    llms: list[str] = Field(min_length=1)
     # None: the API fills in the default saved under Ajustar > Avaliação.
     eval_embedding: str | None = None
     # Questions processed in parallel within each combination. >1 only pays off

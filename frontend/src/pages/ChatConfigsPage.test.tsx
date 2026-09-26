@@ -54,4 +54,23 @@ describe("ChatConfigsPage", () => {
       ),
     );
   });
+
+  it("preselects a local model over Gemini", async () => {
+    vi.mocked(client.getOptions).mockResolvedValue({
+      bases: ["viagem"], chunkings: ["recursive"], embeddings: ["e5"], rags: ["naive"],
+      retrievers: ["similarity"], metrics: ["rouge_l"],
+      llms: ["gemini-2.5-flash-lite", "qwen3:1.7b"],
+      llm_options: [
+        { value: "gemini-2.5-flash-lite", label: "gemini-2.5-flash-lite", location: "remote" },
+        { value: "qwen3:1.7b", label: "qwen3:1.7b", location: "local" },
+      ],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/nome/i), "c-local");
+    await user.click(screen.getByRole("button", { name: /criar/i }));
+    await waitFor(() =>
+      expect(client.createChatConfig).toHaveBeenCalledWith(expect.objectContaining({ llm: "qwen3:1.7b" })),
+    );
+  });
 });

@@ -8,7 +8,7 @@ LOCAL = {"e5", "paraphrase"}
 
 def _config(**kw):
     base = dict(base="b", chunkings=["recursive"], embeddings=["e5"], rags=["naive"],
-                retrievers=["similarity"], metrics=["answer_relevancy"])
+                retrievers=["similarity"], metrics=["answer_relevancy"], llms=["qwen3:1.7b"])
     return ExperimentConfig(**{**base, **kw})
 
 

@@ -77,7 +77,7 @@ def _config_payload():
             "embeddings": ["gemini"],
             "rags": ["naive"],
             "retrievers": ["similarity"],
-            "metrics": ["answer_relevancy"],
+            "metrics": ["answer_relevancy"], "llms": ["gemini"],
         }
     )
 
@@ -170,7 +170,7 @@ def test_experiment_snapshots_prompts(client):
         "embeddings": ["gemini"],
         "rags": ["naive"],
         "retrievers": ["similarity"],
-        "metrics": ["answer_relevancy"],
+        "metrics": ["answer_relevancy"], "llms": ["gemini"],
     }
     files = {"questions": ("q.csv", io.BytesIO(b"pergunta\nOnde fica o centro?\n"), "text/csv")}
     data = {"config": json.dumps(config)}
@@ -257,7 +257,7 @@ def _indexes_payload(indexes):
             "indexes": indexes,
             "rags": ["naive"],
             "retrievers": ["similarity"],
-            "metrics": ["answer_relevancy"],
+            "metrics": ["answer_relevancy"], "llms": ["gemini"],
         }
     )
 

@@ -20,7 +20,7 @@ def memory_warnings(
             f"O embedding de avaliação ({eval_name}) e o de busca ({', '.join(retrieval_locals)}) "
             f"são modelos locais diferentes e ficarão carregados juntos, acima do limite de "
             f"{profile.max_local_models} modelo local do perfil {profile.name}. Para economizar "
-            f"memória, use o mesmo embedding na avaliação ou o Gemini."
+            f"memória, use o mesmo embedding na busca e na avaliação."
         )
     if config.concurrency > profile.max_concurrency:
         warnings.append(

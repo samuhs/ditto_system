@@ -50,7 +50,7 @@ class ChatConfigBody(BaseModel):
     embedding: str
     retriever: str
     rag: str = "naive"
-    llm: str = "gemini"
+    llm: str
     persona: str
 
 

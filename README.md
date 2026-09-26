@@ -85,7 +85,7 @@ Most config comes from `.env` (there's a `.env.example` to copy):
 |---|---|---|
 | `DATABASE_URL` | Postgres connection | `postgresql://ditto:ditto@postgres:5432/ditto` |
 | `QDRANT_URL` | Qdrant connection | `http://qdrant:6333` |
-| `GEMINI_API_KEY` | Gemini key (embeddings + Gemini LLM) | *(empty)* |
+| `GEMINI_API_KEY` | Optional Gemini key (embeddings + Gemini LLM); without it Gemini is not offered | *(empty)* |
 
 You can also set the **Gemini key** and add **named Ollama models** straight from the **Configurações** screen in the app, no restart needed. Those runtime settings land in `backend/config/app_settings.json`. It's git-ignored and stored in plaintext, so keep it on your own machine.
 

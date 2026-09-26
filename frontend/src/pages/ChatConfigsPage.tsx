@@ -27,7 +27,7 @@ export function ChatConfigsPage() {
   const [embedding, setEmbedding] = useState("");
   const [retriever, setRetriever] = useState("");
   const [rag, setRag] = useState("");
-  const [llm, setLlm] = useState("gemini");
+  const [llm, setLlm] = useState("");
   const [persona, setPersona] = useState("travel_guide");
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<string | null>(null);
@@ -47,7 +47,9 @@ export function ChatConfigsPage() {
         if (opts.retrievers.length > 0) setRetriever(opts.retrievers[0]);
         const chatRags = opts.rags.filter((r) => r !== "oracle");
         if (chatRags.length > 0) setRag(chatRags[0]);
-        if (opts.llms.length > 0) setLlm(opts.llms[0]);
+        // A local model first: it needs no API key and costs no quota.
+        const local = opts.llm_options?.find((o) => o.location === "local")?.value;
+        if (local ?? opts.llms[0]) setLlm(local ?? opts.llms[0]);
       })
       .catch((e) => setError(errorText(e)));
     getPersonas()
@@ -94,7 +96,7 @@ export function ChatConfigsPage() {
     }
   }
 
-  const canSubmit = name.trim() !== "" && base && chunking && embedding && retriever && rag && persona;
+  const canSubmit = name.trim() !== "" && base && chunking && embedding && retriever && rag && llm && persona;
 
   return (
     <div>
@@ -150,7 +152,7 @@ export function ChatConfigsPage() {
               )}
               <Select label="Técnica de RAG" data={named("rag", options?.rags.filter((r) => r !== "oracle"))} value={rag || null} onChange={(v) => setRag(v ?? "")} allowDeselect={false} />
               <Select label="Busca" data={named("retriever", options?.retrievers)} value={retriever || null} onChange={(v) => setRetriever(v ?? "")} allowDeselect={false} />
-              <Select label="Modelo (LLM)" data={llmSelectData(options)} value={llm || null} onChange={(v) => setLlm(v ?? "gemini")} searchable allowDeselect={false} />
+              <Select label="Modelo (LLM)" data={llmSelectData(options)} value={llm || null} onChange={(v) => setLlm(v ?? "")} searchable allowDeselect={false} />
               <Select label="Persona" data={personas} value={persona || null} onChange={(v) => setPersona(v ?? "")} allowDeselect={false} />
             </div>
             <div className="ditto-row-actions">

@@ -77,6 +77,7 @@ def test_run_experiment_persists_results(session_factory):
     session.close()
 
     config = ExperimentConfig(
+        llms=["gemini"],
         base="viagem",
         chunkings=["recursive"],
         embeddings=["gemini"],
@@ -136,6 +137,7 @@ def test_question_retry_on_transient_failure(session_factory):
             raise RuntimeError("503 UNAVAILABLE")
 
     config = ExperimentConfig(
+        llms=["gemini"],
         base="viagem",
         chunkings=["recursive"],
         embeddings=["gemini"],
@@ -186,6 +188,7 @@ def test_pause_before_start(session_factory):
     session.close()
 
     config = ExperimentConfig(
+        llms=["gemini"],
         base="viagem",
         chunkings=["recursive"],
         embeddings=["gemini"],
@@ -234,6 +237,7 @@ def test_pause_mid_run_keeps_partial_results(session_factory):
             return "answer"
 
     config = ExperimentConfig(
+        llms=["gemini"],
         base="viagem",
         chunkings=["recursive", "token"],
         embeddings=["gemini"],
@@ -275,6 +279,7 @@ def test_run_experiment_cartesian_product(session_factory):
     session.close()
 
     config = ExperimentConfig(
+        llms=["gemini"],
         base="viagem",
         chunkings=["recursive", "token"],
         embeddings=["gemini"],
@@ -368,6 +373,7 @@ def test_rag_not_in_prompt_specs_receives_no_prompts_kwarg(session_factory):
         return _StubRag()
 
     config = ExperimentConfig(
+        llms=["gemini"],
         base="viagem",
         chunkings=["recursive"],
         embeddings=["gemini"],
@@ -412,6 +418,7 @@ def _new_experiment(session_factory, name):
 
 def _single_combo_config(concurrency):
     return ExperimentConfig(
+        llms=["gemini"],
         base="viagem",
         chunkings=["recursive"],
         embeddings=["gemini"],
@@ -424,6 +431,7 @@ def _single_combo_config(concurrency):
 
 def test_concurrency_defaults_to_one():
     config = ExperimentConfig(
+        llms=["gemini"],
         base="b", chunkings=["c"], embeddings=["e"], rags=["r"], retrievers=["s"], metrics=["m"]
     )
     assert config.concurrency == 1
@@ -507,6 +515,7 @@ def test_indexes_run_only_the_listed_pairs(session_factory):
     )
     experiment_id = _new_experiment(session_factory, "indexes")
     config = ExperimentConfig(
+        llms=["gemini"],
         base="viagem",
         chunkings=["recursive", "token"],
         embeddings=["gemini", "e5"],
