@@ -1,5 +1,5 @@
 import { MantineProvider } from "@mantine/core";
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -91,7 +91,9 @@ describe("ChartsPanel · focus and figure 1", () => {
     expect(onShowAnswers).toHaveBeenCalledWith(
       expect.objectContaining({ chunking: "token", rag: "agentic", llm: "gemma" }),
     );
-    mediaMark(8)!.focus();
+    act(() => {
+      mediaMark(8)!.focus();
+    });
     await user.keyboard("{Enter}");
     expect(onShowAnswers).toHaveBeenLastCalledWith(
       expect.objectContaining({ chunking: "recursive", rag: "naive", llm: "qwen" }),
