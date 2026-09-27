@@ -22,6 +22,12 @@ function jitter(k: number): number {
 }
 
 
+/** Colours from the score as shown (two decimals), so equal labels get equal cells. */
+function cellColors(value: number) {
+  const shown = Math.round(value * 100) / 100;
+  return { background: heat(shown), color: heatText(shown).css };
+}
+
 export function Stability({
   matrix, focused, metric, onOpenRow, onShowAnswers,
 }: {
@@ -181,7 +187,7 @@ export function Stability({
                           type="button"
                           {...cellProps}
                           data-empty={c.value === null || undefined}
-                          style={c.value === null ? undefined : { background: heat(c.value), color: heatText(c.value).css }}
+                          style={c.value === null ? undefined : cellColors(c.value)}
                           aria-label={`${r.question} · #${focused[j].place}: ${formatScore(c.value)}`}
                           onClick={() => onOpenRow(c.row as ExperimentResultRow)}
                         >
