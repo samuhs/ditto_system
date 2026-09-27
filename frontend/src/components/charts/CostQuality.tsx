@@ -5,7 +5,9 @@ import { useState } from "react";
 import { type RankRow, comboText } from "../../experiments/ranking";
 import type { Combination } from "../Score";
 import { COST_LABEL, type CostKind, type CostPoint, type FocusedCombo, metricLabel, paretoFrontier } from "./aggregate";
-import { AxisBottom, AxisLeft, ChartFrame, ComboTip, RankMark, type TipAnchor, formatScore, useChartWidth } from "./primitives";
+import {
+  AxisBottom, AxisLeft, ChartFrame, ComboTip, RankMark, type TipAnchor, formatScore, nText, useChartWidth,
+} from "./primitives";
 
 const M = { top: 12, right: 24, bottom: 44, left: 52 };
 const H = 320;
@@ -50,6 +52,7 @@ export function CostQuality({
       lines={[
         [COST_LABEL[cost], formatCost(tipPoint.cost)],
         [quality, formatScore(tipPoint.quality)],
+        ["Perguntas", nText(tipPoint.n, tipPoint.total)],
         ...(onFrontier.has(tipPoint.key) ? ([["Fronteira de Pareto", "sim"]] as [string, string][]) : []),
       ]}
     />

@@ -182,6 +182,18 @@ describe("ChartsPanel · figures 2 and 3", () => {
     expect(row5).toHaveTextContent("sim");
   });
 
+  it("tells in the tooltip how many questions a cost mark stands on", async () => {
+    const user = userEvent.setup();
+    const results = fixture().map((r) =>
+      r.chunking === "token" && r.rag === "agentic" && r.llm === "gemma" && r.question === "Pergunta fácil"
+        ? { ...r, scores: { answer_relevancy: r.scores.answer_relevancy } }
+        : r,
+    );
+    renderPanel({ results, initial: { ...DEFAULT_FOCUS, metric: "faithfulness" } });
+    await user.hover(screen.getByRole("button", { name: /^#1 Latência/ }));
+    expect(screen.getByRole("tooltip")).toHaveTextContent("n = 1 de 2 perguntas");
+  });
+
   it("falls back to tokens when latency is missing, and to a note when both are", () => {
     const noLatency = fixture().map((r) => ({ ...r, latency_ms: 0 }));
     const { unmount } = renderPanel({ results: noLatency });
@@ -233,6 +245,24 @@ describe("ChartsPanel · figure 4", () => {
       "Pergunta difícil",
       "Pergunta fácil",
     ]);
+  });
+
+  it("has a screen-reader table for figure 4a, one row per focused combination", () => {
+    const results = fixture().map((r) =>
+      r.chunking === "token" && r.rag === "agentic" && r.llm === "gemma" && r.question === "Pergunta fácil"
+        ? { ...r, scores: {} }
+        : r,
+    );
+    renderPanel({ results });
+    const table = screen.getByRole("table", { name: /figura 4a/i });
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(6);
+    expect(within(table).getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
+      "Posição", "Combinação", "Mediana", "Q1", "Q3", "Perguntas",
+    ]);
+    expect(rows[0]).toHaveTextContent(/^#1/);
+    expect(rows[0]).toHaveTextContent("n = 1 de 2 perguntas");
+    expect(rows[1]).toHaveTextContent("2 perguntas");
   });
 
   it("clicking a cell opens that answer", async () => {

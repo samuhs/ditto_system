@@ -191,14 +191,17 @@ export interface CostPoint {
   combo: Combination;
   cost: number;
   quality: number;
+  /** Rows that have the quality metric, out of the combination's rows. */
+  n: number;
+  total: number;
 }
 
 /** Figure 3: mean cost (rows > 0) and quality per combination; combos missing either are left out. */
 export function costPoints(results: ExperimentResultRow[], cost: CostKind, metric: string): CostPoint[] {
   return [...groupByCombo(results).entries()].flatMap(([key, rows]) => {
     const c = mean(rows.map((r) => costOf(r, cost)).filter((v) => v > 0));
-    const q = metricValue(rows, metric).value;
-    return c === null || q === null ? [] : [{ key, combo: rows[0], cost: c, quality: q }];
+    const { value: q, n, total } = metricValue(rows, metric);
+    return c === null || q === null ? [] : [{ key, combo: rows[0], cost: c, quality: q, n, total }];
   });
 }
 

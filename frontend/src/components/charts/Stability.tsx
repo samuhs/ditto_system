@@ -2,10 +2,11 @@ import { scaleLinear } from "d3-scale";
 import { useState } from "react";
 
 import type { ExperimentResultRow } from "../../api/types";
+import { comboText } from "../../experiments/ranking";
 import type { Combination } from "../Score";
 import { type FocusedCombo, type MatrixRow, metricLabel, quartiles } from "./aggregate";
 import {
-  AxisBottom, ChartFrame, ComboTip, GROUP_COLOR, RankMark, type TipAnchor, formatScore, useChartWidth,
+  AxisBottom, ChartFrame, ComboTip, GROUP_COLOR, RankMark, type TipAnchor, formatScore, nText, useChartWidth,
 } from "./primitives";
 
 const LABEL_W = 44;
@@ -42,7 +43,9 @@ export function Stability({
       const v = r.cells[j].value;
       return v === null ? [] : [v];
     });
-    return { f, values, q: quartiles(values) };
+    // Questions in the matrix this combination has an answer for.
+    const answered = matrix.filter((r) => r.cells[j].row !== null).length;
+    return { f, values, answered, q: quartiles(values) };
   });
   const tipColumn = tip ? columns.find((c) => c.f.row.key === tip.key) : undefined;
   const tipContent = tipColumn ? (
@@ -52,7 +55,7 @@ export function Stability({
       lines={[
         ["Mediana", formatScore(tipColumn.q?.median ?? null)],
         ["Intervalo interquartil", tipColumn.q ? `${formatScore(tipColumn.q.q1)}–${formatScore(tipColumn.q.q3)}` : "—"],
-        ["Perguntas", String(tipColumn.values.length)],
+        ["Perguntas", nText(tipColumn.values.length, tipColumn.answered)],
       ]}
     />
   ) : null;
@@ -91,6 +94,33 @@ export function Stability({
             );
           })}
         </svg>
+        <div className="visually-hidden">
+          <table>
+            <caption>Figura 4a: distribuição por pergunta</caption>
+            <thead>
+              <tr>
+                <th scope="col">Posição</th>
+                <th scope="col">Combinação</th>
+                <th scope="col">Mediana</th>
+                <th scope="col">Q1</th>
+                <th scope="col">Q3</th>
+                <th scope="col">Perguntas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {columns.map(({ f, values, answered, q }) => (
+                <tr key={f.row.key}>
+                  <th scope="row">#{f.place}</th>
+                  <td>{comboText(f.row.combo)}</td>
+                  <td>{formatScore(q?.median ?? null)}</td>
+                  <td>{formatScore(q?.q1 ?? null)}</td>
+                  <td>{formatScore(q?.q3 ?? null)}</td>
+                  <td>{nText(values.length, answered)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </ChartFrame>
 
       <h4 className="ditto-chart-panel-title">b. {name} por pergunta</h4>

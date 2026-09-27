@@ -145,6 +145,15 @@ describe("cost", () => {
     expect(points.every((p) => Number.isFinite(p.cost) && Number.isFinite(p.quality))).toBe(true);
   });
 
+  it("reports how many rows have the quality metric", () => {
+    const results = fixture();
+    results[0] = { ...results[0], scores: { answer_relevancy: results[0].scores.answer_relevancy } };
+    const points = costPoints(results, "latency", "faithfulness");
+    const partial = points.find((p) => p.combo.chunking === "recursive" && p.combo.rag === "naive" && p.combo.llm === "qwen");
+    expect(partial).toMatchObject({ n: 1, total: 2 });
+    expect(points.filter((p) => p !== partial).every((p) => p.n === 2 && p.total === 2)).toBe(true);
+  });
+
   it("hasCost is false when every row is 0", () => {
     const zero = fixture().map((r) => ({ ...r, latency_ms: 0 }));
     expect(hasCost(zero, "latency")).toBe(false);
