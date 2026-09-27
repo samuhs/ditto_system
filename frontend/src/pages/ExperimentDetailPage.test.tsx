@@ -296,6 +296,16 @@ describe("ExperimentDetailPage", () => {
     expect(await screen.findByRole("radio", { name: "Só top" })).toBeChecked();
   });
 
+  it("keeps the charts cost choice when switching tabs", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: /gráficos/i }));
+    await user.click(await screen.findByRole("radio", { name: "Tokens" }));
+    await openAnswers(user);
+    await user.click(screen.getByRole("tab", { name: /gráficos/i }));
+    expect(await screen.findByRole("radio", { name: "Tokens" })).toBeChecked();
+  });
+
   it("opens the result drawer from the charts matrix", async () => {
     renderPage();
     const user = userEvent.setup();

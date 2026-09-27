@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import type { ExperimentResultRow } from "../../api/types";
 import { MEDIA_KEY, type RankRow } from "../../experiments/ranking";
@@ -36,13 +36,12 @@ export function ChartsPanel({
 
   const focused = useMemo(() => focusSet(ranked, effective), [ranked, effective]);
   const profile = useMemo(() => metricProfile(results, focused, metricKeys), [results, focused, metricKeys]);
-  const [costChoice, setCostChoice] = useState<CostKind>("latency");
   const available = useMemo(
     () => ({ latency: hasCost(results, "latency"), tokens: hasCost(results, "tokens") }),
     [results],
   );
-  const cost: CostKind | null = available[costChoice]
-    ? costChoice
+  const cost: CostKind | null = available[focus.cost]
+    ? focus.cost
     : available.latency ? "latency" : available.tokens ? "tokens" : null;
   const effects = useMemo(() => dimensionEffects(results, metric), [results, metric]);
   const points = useMemo(() => (cost ? costPoints(results, cost, metric) : []), [results, cost, metric]);
@@ -118,7 +117,7 @@ export function ChartsPanel({
           </Note>
         ) : (
           <CostQuality
-            points={points} cost={cost} onCostChange={setCostChoice} available={available}
+            points={points} cost={cost} onCostChange={(c) => onFocusChange({ ...focus, cost: c })} available={available}
             focused={focused} ranked={ranked} metric={metric} onShowAnswers={onShowAnswers}
           />
         )}

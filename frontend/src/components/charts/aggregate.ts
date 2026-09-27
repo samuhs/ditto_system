@@ -17,9 +17,11 @@ export interface FocusState {
   metric: string;
   /** comboKeys picked by hand. */
   manual: string[];
+  /** Cost axis of figure 3; falls back to the other one when it has no data. */
+  cost: CostKind;
 }
 
-export const DEFAULT_FOCUS: FocusState = { mode: "top_bottom", n: 3, metric: MEDIA_KEY, manual: [] };
+export const DEFAULT_FOCUS: FocusState = { mode: "top_bottom", n: 3, metric: MEDIA_KEY, manual: [], cost: "latency" };
 
 export type Group = "top" | "bottom" | "manual";
 
