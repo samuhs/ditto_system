@@ -58,11 +58,15 @@ export function ChartFrame({
   tip: Tip;
   children: ReactNode;
 }) {
+  // Keep the tooltip (centred on its mark, at most 340px wide) inside the chart.
+  const frameW = frameRef.current?.clientWidth ?? 0;
+  const half = Math.min(170, frameW / 2);
+  const left = tip && frameW > 0 ? Math.min(Math.max(tip.x, half), frameW - half) : tip?.x;
   return (
     <div ref={frameRef} className="ditto-chart">
       {children}
       {tip && (
-        <div className="ditto-chart-tip" role="tooltip" style={{ left: tip.x, top: tip.y }}>
+        <div className="ditto-chart-tip" role="tooltip" style={{ left, top: tip.y }}>
           {tip.content}
         </div>
       )}

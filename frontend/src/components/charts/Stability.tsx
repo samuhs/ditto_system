@@ -20,6 +20,8 @@ function jitter(k: number): number {
 }
 
 const heat = scaleLinear<string>().domain([0, 1]).range(["#fcfbf8", "#6d4bc4"]).clamp(true);
+/** Above this score the heat is dark enough for white text; below it, ink reads better. */
+const HEAT_WHITE_FROM = 0.82;
 
 export function Stability({
   matrix, focused, metric, onOpenRow, onShowAnswers,
@@ -48,7 +50,7 @@ export function Stability({
       <h4 className="ditto-chart-panel-title">a. Distribuição por combinação</h4>
       <ChartFrame frameRef={ref} tip={tip}>
         <svg width={width} height={bottom + AXIS_H} role="group" aria-label="Figura 4a: distribuição por pergunta">
-          <AxisBottom scale={x} y={bottom} gridTop={TOP} />
+          <AxisBottom scale={x} y={bottom} gridTop={TOP} ticks={width < 560 ? 2 : 5} />
           {columns.map(({ f, values, q }, j) => {
             const cy = TOP + j * ROW_H + ROW_H / 2;
             const color = GROUP_COLOR[f.group];
@@ -117,7 +119,7 @@ export function Stability({
                       <button
                         type="button"
                         data-empty={c.value === null || undefined}
-                        style={c.value === null ? undefined : { background: heat(c.value), color: c.value > 0.55 ? "#fff" : "var(--ink)" }}
+                        style={c.value === null ? undefined : { background: heat(c.value), color: c.value >= HEAT_WHITE_FROM ? "var(--ink-inverse)" : "var(--ink)" }}
                         aria-label={`${r.question} · #${focused[j].place}: ${formatScore(c.value)}`}
                         onClick={() => onOpenRow(c.row as ExperimentResultRow)}
                       >

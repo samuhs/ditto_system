@@ -59,7 +59,7 @@ export function CostQuality({
       <ChartFrame frameRef={ref} tip={tip}>
         <svg width={width} height={H} role="group" aria-label="Figura 3: custo e qualidade">
           <AxisLeft scale={y} x={M.left} gridRight={width - M.right} />
-          <AxisBottom scale={x} y={H - M.bottom} format={formatCost} />
+          <AxisBottom scale={x} y={H - M.bottom} format={formatCost} ticks={width < 560 ? 3 : 5} />
           <text x={(M.left + width - M.right) / 2} y={H - 6} textAnchor="middle" className="ditto-chart-label">
             {COST_LABEL[cost]}
           </text>
@@ -105,29 +105,31 @@ export function CostQuality({
             );
           })}
         </svg>
-        <table className="visually-hidden">
-          <caption>Figura 3: {COST_LABEL[cost]} e {quality} por combinação</caption>
-          <thead>
-            <tr>
-              <th scope="col">Posição</th>
-              <th scope="col">Combinação</th>
-              <th scope="col">{COST_LABEL[cost]}</th>
-              <th scope="col">{quality}</th>
-              <th scope="col">Fronteira de Pareto</th>
-            </tr>
-          </thead>
-          <tbody>
-            {points.map((p) => (
-              <tr key={p.key}>
-                <th scope="row">#{placeOf.get(p.key) ?? "—"}</th>
-                <td>{comboText(p.combo)}</td>
-                <td>{formatCost(p.cost)}</td>
-                <td>{formatScore(p.quality)}</td>
-                <td>{onFrontier.has(p.key) ? "sim" : "não"}</td>
+        <div className="visually-hidden">
+          <table>
+            <caption>Figura 3: {COST_LABEL[cost]} e {quality} por combinação</caption>
+            <thead>
+              <tr>
+                <th scope="col">Posição</th>
+                <th scope="col">Combinação</th>
+                <th scope="col">{COST_LABEL[cost]}</th>
+                <th scope="col">{quality}</th>
+                <th scope="col">Fronteira de Pareto</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {points.map((p) => (
+                <tr key={p.key}>
+                  <th scope="row">#{placeOf.get(p.key) ?? "—"}</th>
+                  <td>{comboText(p.combo)}</td>
+                  <td>{formatCost(p.cost)}</td>
+                  <td>{formatScore(p.quality)}</td>
+                  <td>{onFrontier.has(p.key) ? "sim" : "não"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </ChartFrame>
     </div>
   );

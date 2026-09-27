@@ -1310,7 +1310,7 @@ a { color: inherit; text-underline-offset: 3px; }
 
 /* ---- Charts tab */
 .ditto-charts { display: flex; flex-direction: column; gap: 28px; }
-.ditto-chart-focus { align-items: flex-end; }
+.ditto-chart-focus { grid-template-columns: auto 88px minmax(180px, 240px) minmax(240px, 1fr); margin: 0; }
 .ditto-chart-focus-mode { display: flex; flex-direction: column; gap: 4px; }
 .ditto-chart-focus-label { font-size: 14px; font-weight: 650; }
 .ditto-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -12px 0 0; padding: 0; list-style: none; font-size: 13px; }
@@ -1327,12 +1327,15 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-chart-gap { fill: var(--binder); }
 .ditto-chart svg .ditto-chart-gap-value { fill: var(--ink); font-weight: 650; }
 .ditto-chart-mark { cursor: pointer; outline: none; }
-.ditto-chart-mark text { fill: var(--ink-inverse); font-size: 11px; font-weight: 750; pointer-events: none; }
-.ditto-chart-mark[data-group="bottom"] text { fill: var(--ink); }
-.ditto-chart-mark:focus-visible circle, .ditto-chart-mark:hover circle { stroke: var(--ink); stroke-width: 2; }
+/* Numbers inside the discs: white on violet and ultramarine, ink on orange. */
+.ditto-chart svg .ditto-chart-mark text { fill: var(--ink-inverse); font-size: 11px; font-weight: 750; pointer-events: none; }
+.ditto-chart svg .ditto-chart-mark[data-group="bottom"] text { fill: var(--ink); }
+.ditto-chart-mark circle { stroke: var(--leaf); stroke-width: 1.5; }
+.ditto-chart-mark:hover circle { stroke: var(--ink); stroke-width: 2; }
+.ditto-chart-mark:focus-visible circle { stroke: var(--ink); stroke-width: 3; }
 .ditto-chart-tip {
   position: absolute; z-index: 5; transform: translate(-50%, calc(-100% - 16px));
-  min-width: 220px; max-width: 340px; padding: 10px 12px;
+  min-width: 220px; max-width: min(340px, 100%); padding: 10px 12px;
   background: var(--field); border: 1px solid var(--ink); border-radius: 2px;
   box-shadow: var(--leaf-shadow); font-size: 13px; pointer-events: none;
 }
@@ -1344,7 +1347,7 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-chart-panel-title .ditto-muted { font-weight: 400; font-size: 13px; margin-left: 6px; }
 .ditto-chart-range { stroke: var(--line-strong); stroke-width: 2; }
 .ditto-chart-dot { fill: var(--ink); }
-.ditto-chart svg .ditto-chart-value, .ditto-chart-panel svg .ditto-chart-value { fill: var(--ink); font-weight: 650; }
+.ditto-chart-panel svg .ditto-chart-value { fill: var(--ink); font-weight: 650; }
 .ditto-chart-panel svg text { font-size: 12px; fill: var(--ink-2); font-feature-settings: "tnum" 1; }
 .ditto-chart-panel svg .ditto-chart-label { fill: var(--ink); font-size: 13px; }
 .ditto-chart-panel .ditto-chart-axis line { stroke: var(--ink); }
@@ -1356,6 +1359,7 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-chart-iqr { opacity: 0.2; }
 .ditto-chart-median { stroke: var(--ink); stroke-width: 2; }
 .ditto-chart-dot-soft { opacity: 0.6; }
+.ditto-chart-matrix-wrap { max-width: 100%; }
 .ditto-chart-matrix { width: auto; }
 .ditto-chart-matrix td.ditto-chart-cell { padding: 2px; border-bottom: 1px solid var(--field); }
 .ditto-chart-matrix th.ditto-chart-question {
@@ -1372,7 +1376,12 @@ a { color: inherit; text-underline-offset: 3px; }
 }
 .ditto-chart-cell button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 .ditto-chart-cell-empty { display: block; width: 56px; text-align: center; color: var(--ink-3); }
-.ditto-chart-col { display: inline-block; min-width: 26px; padding: 1px 6px; border-radius: 10px; color: var(--ink-inverse); font-weight: 750; }
+.ditto-chart-col { display: inline-block; min-width: 30px; padding: 1px 6px 2px; border-radius: 2px; color: var(--ink-inverse); font-weight: 750; text-align: center; }
 .ditto-chart-col[data-group="top"] { background: var(--hue-violet); }
 .ditto-chart-col[data-group="bottom"] { background: var(--hue-orange); color: var(--ink); }
 .ditto-chart-col[data-group="manual"] { background: var(--hue-ultramarine); }
+.ditto-chart-matrix th.ditto-chart-question { position: sticky; left: 0; z-index: 1; background: var(--leaf); }
+@media (max-width: 900px) {
+  .ditto-chart-focus { grid-template-columns: 1fr; }
+  .ditto-chart-matrix th.ditto-chart-question { max-width: 150px; }
+}
