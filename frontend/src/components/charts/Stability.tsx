@@ -5,6 +5,7 @@ import type { ExperimentResultRow } from "../../api/types";
 import { comboText } from "../../experiments/ranking";
 import type { Combination } from "../Score";
 import { type FocusedCombo, type MatrixRow, metricLabel, quartiles } from "./aggregate";
+import { heat, heatText } from "./heat";
 import {
   AxisBottom, ChartFrame, ComboTip, GROUP_COLOR, RankMark, type TipAnchor, formatScore, nText, useChartWidth,
 } from "./primitives";
@@ -20,9 +21,6 @@ function jitter(k: number): number {
   return ((k * 7) % 11) - 5;
 }
 
-const heat = scaleLinear<string>().domain([0, 1]).range(["#fcfbf8", "#6d4bc4"]).clamp(true);
-/** Above this score the heat is dark enough for white text; below it, ink reads better. */
-const HEAT_WHITE_FROM = 0.82;
 
 export function Stability({
   matrix, focused, metric, onOpenRow, onShowAnswers,
@@ -183,7 +181,7 @@ export function Stability({
                           type="button"
                           {...cellProps}
                           data-empty={c.value === null || undefined}
-                          style={c.value === null ? undefined : { background: heat(c.value), color: c.value >= HEAT_WHITE_FROM ? "var(--ink-inverse)" : "var(--ink)" }}
+                          style={c.value === null ? undefined : { background: heat(c.value), color: heatText(c.value).css }}
                           aria-label={`${r.question} · #${focused[j].place}: ${formatScore(c.value)}`}
                           onClick={() => onOpenRow(c.row as ExperimentResultRow)}
                         >

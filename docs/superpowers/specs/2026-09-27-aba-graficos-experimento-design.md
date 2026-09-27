@@ -81,7 +81,7 @@ As figuras seguem o estilo de manual do DESIGN.md, cada uma com legenda "**Figur
 
 **4b. Mapa pergunta × combinação.**
 - As linhas são as perguntas, as colunas são as combinações em foco (cabeçalho com o número da posição) e cada célula mostra o valor da métrica dos gráficos para aquele par.
-- A escala é sequencial de uma cor só, de `leaf` (0) a `hue-violet` (1). Célula sem valor aparece hachurada.
+- A escala é sequencial de uma cor só, de `leaf` (0) a `#472d8a` (1: o matiz de `hue-violet` escurecido, hsl(257°, 51%, 36%)). O texto é `ink` abaixo de 0.68 e branco a partir dele; para que toda nota de 0 a 1 tenha contraste ≥ 4.5:1, a escala pula a faixa estreita de luminância em que nenhuma das duas cores chega lá (um degrau pequeno em 0.68, junto com a troca da cor do texto). Célula sem valor aparece hachurada.
 - As perguntas vão da mais difícil para a mais fácil, pela média entre as combinações em foco.
 - As linhas são compactas, com o texto da pergunta truncado e completo no tooltip.
 - Clicar numa célula abre o drawer **"Detalhe do resultado"** que já existe, com aquele `ExperimentResultRow`.
