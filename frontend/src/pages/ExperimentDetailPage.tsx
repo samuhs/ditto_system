@@ -4,6 +4,8 @@ import { useParams } from "react-router-dom";
 
 import { exportExperimentUrl, getExperiment, pauseExperiment } from "../api/client";
 import type { ExperimentDetail, ExperimentResultRow } from "../api/types";
+import { DEFAULT_FOCUS, type FocusState } from "../components/charts/aggregate";
+import { ChartsPanel } from "../components/charts/ChartsPanel";
 import { Errata, Note, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { type Combination, ScoreCell, Traits } from "../components/Score";
@@ -44,6 +46,7 @@ export function ExperimentDetailPage() {
   const [page, setPage] = useState(1);
   const [openRow, setOpenRow] = useState<ExperimentResultRow | null>(null);
   const [promptTech, setPromptTech] = useState<string | null>(null);
+  const [focus, setFocus] = useState<FocusState>(DEFAULT_FOCUS);
 
   useEffect(() => {
     if (!id) return;
@@ -340,6 +343,7 @@ export function ExperimentDetailPage() {
           <Tabs value={tab} onChange={(v) => setTab(v ?? "ranking")} keepMounted={false}>
             <Tabs.List mb="md">
               <Tabs.Tab value="ranking">Ranking das combinações</Tabs.Tab>
+              <Tabs.Tab value="charts">Gráficos</Tabs.Tab>
               <Tabs.Tab value="answers">Respostas por pergunta</Tabs.Tab>
               <Tabs.Tab value="difficulty">Dificuldade por pergunta</Tabs.Tab>
               <Tabs.Tab value="prompts">Prompts usados</Tabs.Tab>
@@ -403,6 +407,23 @@ export function ExperimentDetailPage() {
                 </table>
               </div>
               {legend}
+            </Tabs.Panel>
+
+            <Tabs.Panel value="charts">
+              <ChartsPanel
+                results={results}
+                metricKeys={metricKeys}
+                ranked={rankingByMedia}
+                focus={focus}
+                onFocusChange={setFocus}
+                partial={
+                  isRunning && detail.progress && detail.progress.total > 0
+                    ? { completed: detail.progress.completed, total: detail.progress.total }
+                    : null
+                }
+                onShowAnswers={showAnswersOf}
+                onOpenRow={setOpenRow}
+              />
             </Tabs.Panel>
 
             <Tabs.Panel value="answers">

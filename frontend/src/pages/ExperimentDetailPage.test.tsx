@@ -259,4 +259,14 @@ describe("ExperimentDetailPage", () => {
     expect(link).toHaveAttribute("download");
     expect(client.exportExperimentUrl).toHaveBeenCalledWith(7);
   });
+
+  it("has a Gráficos tab whose focus survives switching tabs", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: /gráficos/i }));
+    await user.click(await screen.findByRole("radio", { name: "Só top" }));
+    await openAnswers(user);
+    await user.click(screen.getByRole("tab", { name: /gráficos/i }));
+    expect(await screen.findByRole("radio", { name: "Só top" })).toBeChecked();
+  });
 });

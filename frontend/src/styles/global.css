@@ -1307,3 +1307,34 @@ a { color: inherit; text-underline-offset: 3px; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---- Charts tab */
+.ditto-charts { display: flex; flex-direction: column; gap: 28px; }
+.ditto-chart-focus { align-items: flex-end; }
+.ditto-chart-focus-mode { display: flex; flex-direction: column; gap: 4px; }
+.ditto-chart-focus-label { font-size: 14px; font-weight: 650; }
+.ditto-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -12px 0 0; padding: 0; list-style: none; font-size: 13px; }
+.ditto-chart-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.ditto-chart-swatch { width: 10px; height: 10px; border-radius: 50%; }
+.ditto-chart-figure { margin: 0; }
+.ditto-chart { position: relative; width: 100%; }
+.ditto-chart svg { display: block; overflow: visible; }
+.ditto-chart svg text { font-size: 12px; fill: var(--ink-2); font-feature-settings: "tnum" 1; }
+.ditto-chart-axis line { stroke: var(--ink); stroke-width: 1; }
+.ditto-chart-axis .ditto-chart-grid { stroke: var(--line); }
+.ditto-chart svg .ditto-chart-label { fill: var(--ink); font-size: 13px; }
+.ditto-chart-row[data-media] .ditto-chart-label { font-weight: 700; }
+.ditto-chart-gap { fill: var(--binder); }
+.ditto-chart svg .ditto-chart-gap-value { fill: var(--ink); font-weight: 650; }
+.ditto-chart-mark { cursor: pointer; outline: none; }
+.ditto-chart-mark text { fill: var(--ink-inverse); font-size: 11px; font-weight: 750; pointer-events: none; }
+.ditto-chart-mark[data-group="bottom"] text { fill: var(--ink); }
+.ditto-chart-mark:focus-visible circle, .ditto-chart-mark:hover circle { stroke: var(--ink); stroke-width: 2; }
+.ditto-chart-tip {
+  position: absolute; z-index: 5; transform: translate(-50%, calc(-100% - 16px));
+  min-width: 220px; max-width: 340px; padding: 10px 12px;
+  background: var(--field); border: 1px solid var(--ink); border-radius: 2px;
+  box-shadow: var(--leaf-shadow); font-size: 13px; pointer-events: none;
+}
+.ditto-chart-tip-title { font-weight: 750; margin-bottom: 4px; }
+.ditto-chart-tip .ditto-kv { margin: 8px 0 0; }
