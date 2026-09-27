@@ -1347,6 +1347,11 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-chart-panel-title .ditto-muted { font-weight: 400; font-size: 13px; margin-left: 6px; }
 .ditto-chart-range { stroke: var(--line-strong); stroke-width: 2; }
 .ditto-chart-dot { fill: var(--ink); }
+/* A figure 2 option row: focusable, with a tooltip; the band marks hover and focus. */
+.ditto-chart-option { outline: none; }
+.ditto-chart-hit { fill: transparent; }
+.ditto-chart-option:hover .ditto-chart-hit { fill: var(--binder-2); }
+.ditto-chart-option:focus-visible .ditto-chart-hit { fill: var(--binder-2); stroke: var(--ink); stroke-width: 1.5; }
 .ditto-chart-panel svg .ditto-chart-value { fill: var(--ink); font-weight: 650; }
 .ditto-chart-panel svg text { font-size: 12px; fill: var(--ink-2); font-feature-settings: "tnum" 1; }
 .ditto-chart-panel svg .ditto-chart-label { fill: var(--ink); font-size: 13px; }

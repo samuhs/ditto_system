@@ -1,8 +1,9 @@
 import { scaleLinear } from "d3-scale";
+import { Fragment, useState } from "react";
 
 import { dimName } from "../../experiments/ranking";
 import { DIM_LABEL, type DimensionEffects as Effects, metricLabel } from "./aggregate";
-import { AxisBottom, formatScore, useChartWidth } from "./primitives";
+import { AxisBottom, ChartFrame, type TipAnchor, formatScore, useChartWidth } from "./primitives";
 
 const PANEL_W = 360;
 const LABEL_W = 130;
@@ -15,26 +16,73 @@ function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
+type Effect = Effects["varying"][number];
+type Option = Effect["options"][number];
+
+function optionLabel(d: Effect, o: Option): string {
+  return (
+    `${DIM_LABEL[d.dim]} ${dimName(d.dim, o.option)}: média ${formatScore(o.mean)}, ` +
+    `de ${formatScore(o.min)} a ${formatScore(o.max)}, ${o.combos} ${o.combos === 1 ? "combinação" : "combinações"}`
+  );
+}
+
+function OptionTip({ d, o }: { d: Effect; o: Option }) {
+  const lines: [string, string][] = [
+    ["Média", formatScore(o.mean)],
+    ["Da pior à melhor", `${formatScore(o.min)}–${formatScore(o.max)}`],
+    ["Combinações", String(o.combos)],
+  ];
+  return (
+    <>
+      <div className="ditto-chart-tip-title">
+        {DIM_LABEL[d.dim]}: {dimName(d.dim, o.option)}
+      </div>
+      <dl className="ditto-kv">
+        {lines.map(([k, v]) => (
+          <Fragment key={k}>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </Fragment>
+        ))}
+      </dl>
+    </>
+  );
+}
+
 /** One dimension's panel, drawn at its real width so the text keeps its size. */
-function EffectPanel({ dim: d }: { dim: Effects["varying"][number] }) {
+function EffectPanel({ dim: d }: { dim: Effect }) {
   const [ref, width] = useChartWidth(PANEL_W);
+  const [tip, setTip] = useState<TipAnchor>(null);
   const x = scaleLinear().domain([0, 1]).range([LABEL_W, Math.max(LABEL_W + 80, width - VALUE_W)]);
   const bottom = PAD + d.options.length * ROW_H;
+  const tipOption = tip ? d.options.find((o) => o.option === tip.key) : undefined;
   return (
     <section className="ditto-chart-panel" aria-label={`${DIM_LABEL[d.dim]}: efeito ${formatScore(d.effect)}`}>
       <h4 className="ditto-chart-panel-title">
         {DIM_LABEL[d.dim]} <span className="ditto-muted">efeito {formatScore(d.effect)}</span>
       </h4>
-      <div ref={ref}>
-        <svg width={width} height={bottom + AXIS_H} aria-hidden>
+      <ChartFrame frameRef={ref} width={width} tip={tip} content={tipOption ? <OptionTip d={d} o={tipOption} /> : null}>
+        <svg width={width} height={bottom + AXIS_H}>
           {d.options.map((o, i) => {
             const cy = PAD + i * ROW_H + ROW_H / 2;
             const name = dimName(d.dim, o.option);
+            const show = () => setTip({ key: o.option, x: x(o.mean), y: cy });
+            const hide = () => setTip(null);
             return (
-              <g key={o.option}>
+              <g
+                key={o.option}
+                className="ditto-chart-option"
+                role="img"
+                tabIndex={0}
+                aria-label={optionLabel(d, o)}
+                onMouseEnter={show}
+                onMouseLeave={hide}
+                onFocus={show}
+                onBlur={hide}
+              >
+                <rect className="ditto-chart-hit" x={0} y={cy - ROW_H / 2} width={width} height={ROW_H} />
                 <text x={LABEL_W - 8} y={cy} dy="0.35em" textAnchor="end" className="ditto-chart-label">
                   {clip(name, 18)}
-                  <title>{name}</title>
                 </text>
                 <line className="ditto-chart-range" x1={x(o.min)} x2={x(o.max)} y1={cy} y2={cy} />
                 <circle className="ditto-chart-dot" cx={x(o.mean)} cy={cy} r={5} />
@@ -46,7 +94,7 @@ function EffectPanel({ dim: d }: { dim: Effects["varying"][number] }) {
           })}
           <AxisBottom scale={x} y={bottom} ticks={2} gridTop={PAD} />
         </svg>
-      </div>
+      </ChartFrame>
     </section>
   );
 }

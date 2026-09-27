@@ -168,6 +168,24 @@ describe("ChartsPanel · figures 2 and 3", () => {
     expect(screen.queryByText(/grade incompleta/i)).not.toBeInTheDocument();
   });
 
+  it("makes each dimension option focusable, with its numbers in the name and a tooltip", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    const option = screen.getByRole("img", { name: "Corte Por tokens: média 0.65, de 0.50 a 0.80, 4 combinações" });
+    expect(option).toHaveAttribute("tabindex", "0");
+    act(() => {
+      option.focus();
+    });
+    expect(screen.getByRole("tooltip")).toHaveTextContent(/Por tokens.*0\.65.*0\.50–0\.80.*4/);
+    await user.unhover(option);
+    act(() => {
+      option.blur();
+    });
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    await user.hover(option);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("0.65");
+  });
+
   it("warns about an incomplete grid", () => {
     renderPanel({ results: fixture().filter((r) => !(r.chunking === "recursive" && r.rag === "naive" && r.llm === "qwen")) });
     expect(screen.getByText(/grade incompleta/i)).toBeInTheDocument();
