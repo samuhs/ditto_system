@@ -47,27 +47,39 @@ export function useChartWidth(fallback = 720) {
   return [ref, width] as const;
 }
 
-export type Tip = { x: number; y: number; content: ReactNode } | null;
+/** Radius of a combination's mark (RankMark). */
+export const MARK_R = 10;
+
+/**
+ * The active tooltip: which mark (a key its figure resolves against current
+ * data on every render, so values stay live while polling) and where.
+ */
+export type TipAnchor = { key: string; x: number; y: number } | null;
 
 export function ChartFrame({
   frameRef,
+  width,
   tip,
+  content,
   children,
 }: {
   frameRef: RefObject<HTMLDivElement>;
-  tip: Tip;
+  /** The frame's width (from useChartWidth), used to keep the tooltip inside. */
+  width: number;
+  tip: TipAnchor;
+  /** The tooltip body for `tip`; nothing is shown when null (the mark is gone). */
+  content: ReactNode | null;
   children: ReactNode;
 }) {
   // Keep the tooltip (centred on its mark, at most 340px wide) inside the chart.
-  const frameW = frameRef.current?.clientWidth ?? 0;
-  const half = Math.min(170, frameW / 2);
-  const left = tip && frameW > 0 ? Math.min(Math.max(tip.x, half), frameW - half) : tip?.x;
+  const half = Math.min(170, width / 2);
+  const left = tip && width > 0 ? Math.min(Math.max(tip.x, half), width - half) : tip?.x;
   return (
     <div ref={frameRef} className="ditto-chart">
       {children}
-      {tip && (
+      {tip && content && (
         <div className="ditto-chart-tip" role="tooltip" style={{ left, top: tip.y }}>
-          {tip.content}
+          {content}
         </div>
       )}
     </div>
@@ -76,7 +88,7 @@ export function ChartFrame({
 
 /** A combination's mark: its ranking place in a disc of its group's colour. */
 export function RankMark({
-  x, y, place, group, label, onActivate, onTip, tip,
+  x, y, place, group, label, onActivate, onTip, tipKey,
 }: {
   x: number;
   y: number;
@@ -84,10 +96,11 @@ export function RankMark({
   group: Group;
   label: string;
   onActivate?: () => void;
-  onTip?: (t: Tip) => void;
-  tip?: ReactNode;
+  onTip?: (t: TipAnchor) => void;
+  /** Identifies this mark's tooltip; without it the mark shows none. */
+  tipKey?: string;
 }) {
-  const show = () => onTip?.(tip ? { x, y, content: tip } : null);
+  const show = () => onTip?.(tipKey ? { key: tipKey, x, y } : null);
   const hide = () => onTip?.(null);
   return (
     <g
@@ -109,7 +122,7 @@ export function RankMark({
       onFocus={show}
       onBlur={hide}
     >
-      <circle r={10} fill={GROUP_COLOR[group]} />
+      <circle r={MARK_R} fill={GROUP_COLOR[group]} />
       <text textAnchor="middle" dy="0.35em">
         {place}
       </text>

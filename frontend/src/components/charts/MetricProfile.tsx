@@ -5,12 +5,11 @@ import { MEDIA_KEY } from "../../experiments/ranking";
 import type { Combination } from "../Score";
 import { type Group, type ProfileLine, metricLabel } from "./aggregate";
 import {
-  AxisBottom, ChartFrame, ComboTip, RankMark, type Tip, formatGap, formatScore, nText, useChartWidth,
+  AxisBottom, ChartFrame, ComboTip, MARK_R, RankMark, type TipAnchor, formatGap, formatScore, nText, useChartWidth,
 } from "./primitives";
 
 const TOP = 8;
 const AXIS_H = 28;
-const MARK_R = 10;
 /** Vertical distance between stacked marks: they may overlap a little, the numbers never do. */
 const LANE_STEP = 16;
 const MIN_ROW_H = 40;
@@ -73,16 +72,33 @@ export function MetricProfile({
   onShowAnswers: (combo: Combination) => void;
 }) {
   const [ref, width] = useChartWidth();
-  const [tip, setTip] = useState<Tip>(null);
+  const [tip, setTip] = useState<TipAnchor>(null);
   const narrow = width < 560;
   const labelW = narrow ? 118 : 184;
   const gapW = narrow ? 48 : 64;
   const x = scaleLinear().domain([0, 1]).range([labelW, Math.max(labelW + 120, width - gapW)]);
   const { rows, bottom } = dodge(lines, x);
   const combos = lines[0]?.points.map((p) => p.combo) ?? [];
+  const tipKey = (metric: string, comboKey: string) => `${metric}|${comboKey}`;
+  const tipContent = (() => {
+    if (!tip) return null;
+    for (const line of lines) {
+      for (const p of line.points) {
+        if (p.value === null || tipKey(line.metric, p.combo.row.key) !== tip.key) continue;
+        return (
+          <ComboTip
+            combo={p.combo.row.combo}
+            place={p.combo.place}
+            lines={[[metricLabel(line.metric), formatScore(p.value)], ["Perguntas", nText(p.n, p.total)]]}
+          />
+        );
+      }
+    }
+    return null;
+  })();
 
   return (
-    <ChartFrame frameRef={ref} tip={tip}>
+    <ChartFrame frameRef={ref} width={width} tip={tip} content={tipContent}>
       <svg width={width} height={bottom + AXIS_H} role="group" aria-label="Figura 1: perfil de métricas">
         <AxisBottom scale={x} y={bottom} gridTop={TOP} ticks={narrow ? 2 : 5} />
         {lines.map((line, i) => {
@@ -119,13 +135,7 @@ export function MetricProfile({
                     label={`#${p.combo.place} ${name} ${formatScore(p.value)}`}
                     onActivate={() => onShowAnswers(p.combo.row.combo)}
                     onTip={setTip}
-                    tip={
-                      <ComboTip
-                        combo={p.combo.row.combo}
-                        place={p.combo.place}
-                        lines={[[name, formatScore(p.value)], ["Perguntas", nText(p.n, p.total)]]}
-                      />
-                    }
+                    tipKey={tipKey(line.metric, p.combo.row.key)}
                   />
                 ),
               )}

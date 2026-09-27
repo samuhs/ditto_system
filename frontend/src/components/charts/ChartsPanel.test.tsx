@@ -132,6 +132,24 @@ describe("ChartsPanel · focus and figure 1", () => {
     expect(mediaMark(1)).not.toBeInTheDocument();
   });
 
+  it("keeps an open tooltip current when the results change", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderPanel();
+    await user.hover(mediaMark(1)!);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("0.80");
+    const shifted = fixture().map((r) => ({
+      ...r,
+      scores: Object.fromEntries(Object.entries(r.scores).map(([k, v]) => [k, Math.round((v + 0.05) * 100) / 100])),
+    }));
+    rerender(
+      <MantineProvider>
+        <Harness results={shifted} />
+      </MantineProvider>,
+    );
+    expect(screen.getByRole("tooltip")).toHaveTextContent("0.85");
+    expect(screen.getByRole("tooltip")).not.toHaveTextContent("0.80");
+  });
+
   it("labels the top group 'Todas as combinações' in 'Todas' mode", async () => {
     const user = userEvent.setup();
     renderPanel();

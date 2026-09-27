@@ -5,7 +5,7 @@ import type { ExperimentResultRow } from "../../api/types";
 import type { Combination } from "../Score";
 import { type FocusedCombo, type MatrixRow, metricLabel, quartiles } from "./aggregate";
 import {
-  AxisBottom, ChartFrame, ComboTip, GROUP_COLOR, RankMark, type Tip, formatScore, useChartWidth,
+  AxisBottom, ChartFrame, ComboTip, GROUP_COLOR, RankMark, type TipAnchor, formatScore, useChartWidth,
 } from "./primitives";
 
 const LABEL_W = 44;
@@ -33,7 +33,7 @@ export function Stability({
   onShowAnswers: (combo: Combination) => void;
 }) {
   const [ref, width] = useChartWidth();
-  const [tip, setTip] = useState<Tip>(null);
+  const [tip, setTip] = useState<TipAnchor>(null);
   const x = scaleLinear().domain([0, 1]).range([LABEL_W, width - RIGHT]);
   const bottom = TOP + focused.length * ROW_H;
   const name = metricLabel(metric);
@@ -44,11 +44,23 @@ export function Stability({
     });
     return { f, values, q: quartiles(values) };
   });
+  const tipColumn = tip ? columns.find((c) => c.f.row.key === tip.key) : undefined;
+  const tipContent = tipColumn ? (
+    <ComboTip
+      combo={tipColumn.f.row.combo}
+      place={tipColumn.f.place}
+      lines={[
+        ["Mediana", formatScore(tipColumn.q?.median ?? null)],
+        ["Intervalo interquartil", tipColumn.q ? `${formatScore(tipColumn.q.q1)}–${formatScore(tipColumn.q.q3)}` : "—"],
+        ["Perguntas", String(tipColumn.values.length)],
+      ]}
+    />
+  ) : null;
 
   return (
     <div className="ditto-chart-stability">
       <h4 className="ditto-chart-panel-title">a. Distribuição por combinação</h4>
-      <ChartFrame frameRef={ref} tip={tip}>
+      <ChartFrame frameRef={ref} width={width} tip={tip} content={tipContent}>
         <svg width={width} height={bottom + AXIS_H} role="group" aria-label="Figura 4a: distribuição por pergunta">
           <AxisBottom scale={x} y={bottom} gridTop={TOP} ticks={width < 560 ? 2 : 5} />
           {columns.map(({ f, values, q }, j) => {
@@ -73,17 +85,7 @@ export function Stability({
                   label={`#${f.place} mediana ${formatScore(q?.median ?? null)}`}
                   onActivate={() => onShowAnswers(f.row.combo)}
                   onTip={setTip}
-                  tip={
-                    <ComboTip
-                      combo={f.row.combo}
-                      place={f.place}
-                      lines={[
-                        ["Mediana", formatScore(q?.median ?? null)],
-                        ["Intervalo interquartil", q ? `${formatScore(q.q1)}–${formatScore(q.q3)}` : "—"],
-                        ["Perguntas", String(values.length)],
-                      ]}
-                    />
-                  }
+                  tipKey={f.row.key}
                 />
               </g>
             );

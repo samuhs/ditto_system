@@ -5,7 +5,7 @@ import { useState } from "react";
 import { type RankRow, comboText } from "../../experiments/ranking";
 import type { Combination } from "../Score";
 import { COST_LABEL, type CostKind, type CostPoint, type FocusedCombo, metricLabel, paretoFrontier } from "./aggregate";
-import { AxisBottom, AxisLeft, ChartFrame, ComboTip, RankMark, type Tip, formatScore, useChartWidth } from "./primitives";
+import { AxisBottom, AxisLeft, ChartFrame, ComboTip, RankMark, type TipAnchor, formatScore, useChartWidth } from "./primitives";
 
 const M = { top: 12, right: 24, bottom: 44, left: 52 };
 const H = 320;
@@ -27,7 +27,7 @@ export function CostQuality({
   onShowAnswers: (combo: Combination) => void;
 }) {
   const [ref, width] = useChartWidth();
-  const [tip, setTip] = useState<Tip>(null);
+  const [tip, setTip] = useState<TipAnchor>(null);
   const frontier = paretoFrontier(points);
   const onFrontier = new Set(frontier.map((p) => p.key));
   const byKey = new Map(focused.map((f) => [f.row.key, f]));
@@ -42,6 +42,18 @@ export function CostQuality({
   const muted = points.filter((p) => !byKey.has(p.key));
   const marked = points.filter((p) => byKey.has(p.key));
   const quality = metricLabel(metric);
+  const tipPoint = tip ? marked.find((p) => p.key === tip.key) : undefined;
+  const tipContent = tipPoint ? (
+    <ComboTip
+      combo={tipPoint.combo}
+      place={(byKey.get(tipPoint.key) as FocusedCombo).place}
+      lines={[
+        [COST_LABEL[cost], formatCost(tipPoint.cost)],
+        [quality, formatScore(tipPoint.quality)],
+        ...(onFrontier.has(tipPoint.key) ? ([["Fronteira de Pareto", "sim"]] as [string, string][]) : []),
+      ]}
+    />
+  ) : null;
 
   return (
     <div>
@@ -56,7 +68,7 @@ export function CostQuality({
         ]}
         aria-label="Custo"
       />
-      <ChartFrame frameRef={ref} tip={tip}>
+      <ChartFrame frameRef={ref} width={width} tip={tip} content={tipContent}>
         <svg width={width} height={H} role="group" aria-label="Figura 3: custo e qualidade">
           <AxisLeft scale={y} x={M.left} gridRight={width - M.right} />
           <AxisBottom scale={x} y={H - M.bottom} format={formatCost} ticks={width < 560 ? 3 : 5} />
@@ -89,17 +101,7 @@ export function CostQuality({
                   label={`#${f.place} ${COST_LABEL[cost]} ${formatCost(p.cost)} · ${quality} ${formatScore(p.quality)}${pareto ? " · fronteira de Pareto" : ""}`}
                   onActivate={() => onShowAnswers(p.combo)}
                   onTip={setTip}
-                  tip={
-                    <ComboTip
-                      combo={p.combo}
-                      place={f.place}
-                      lines={[
-                        [COST_LABEL[cost], formatCost(p.cost)],
-                        [quality, formatScore(p.quality)],
-                        ...(pareto ? ([["Fronteira de Pareto", "sim"]] as [string, string][]) : []),
-                      ]}
-                    />
-                  }
+                  tipKey={p.key}
                 />
               </g>
             );
