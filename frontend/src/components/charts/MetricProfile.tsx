@@ -17,16 +17,18 @@ const MIN_ROW_H = 40;
 /**
  * Vertical offsets that keep marks of the same row from covering each other.
  * Top marks stack upwards, bottom and manual ones downwards (a single side
- * spreads around the line). A mark keeps its x; it only moves to the first
- * free lane, and past the last lane it shares the least crowded one.
+ * spreads around the line). A mark keeps its x; it moves to the first lane
+ * where it clears the previous mark, opening a new lane when none is free, so
+ * the row grows with the crowd instead of stacking marks on top of each other.
  */
-function dodge(lines: ProfileLine[], x: (v: number) => number) {
+export function dodge(lines: ProfileLine[], x: (v: number) => number) {
   const sideOf = (g: Group) => (g === "top" ? "up" : "down");
   const sides = new Set(lines.flatMap((l) => l.points.map((p) => sideOf(p.combo.group))));
   const single = sides.size < 2;
-  const laneOffsets = {
-    up: single ? [0, -LANE_STEP, LANE_STEP, -2 * LANE_STEP, 2 * LANE_STEP] : [-8, -8 - LANE_STEP, -8 - 2 * LANE_STEP],
-    down: single ? [0, -LANE_STEP, LANE_STEP, -2 * LANE_STEP, 2 * LANE_STEP] : [8, 8 + LANE_STEP, 8 + 2 * LANE_STEP],
+  // Lane k's offset: 0, −1, +1, −2, +2… steps around the line, or 8 + k steps away from it.
+  const laneOffset = (side: "up" | "down", k: number) => {
+    if (single) return k === 0 ? 0 : (k % 2 === 1 ? -1 : 1) * Math.ceil(k / 2) * LANE_STEP;
+    return (side === "up" ? -1 : 1) * (8 + k * LANE_STEP);
   };
   const offsets = lines.map((line) => {
     const out = new Map<string, number>();
@@ -35,13 +37,12 @@ function dodge(lines: ProfileLine[], x: (v: number) => number) {
         .filter((p) => p.value !== null && sideOf(p.combo.group) === side)
         .map((p) => ({ key: p.combo.row.key, px: x(p.value as number) }))
         .sort((a, b) => a.px - b.px);
-      const lanes = laneOffsets[side];
-      const lastX = lanes.map(() => -Infinity);
+      const lastX: number[] = [];
       for (const p of pts) {
         let lane = lastX.findIndex((lx) => p.px - lx >= 2 * MARK_R + 1);
-        if (lane < 0) lane = lastX.indexOf(Math.min(...lastX));
+        if (lane < 0) lane = lastX.length;
         lastX[lane] = p.px;
-        out.set(p.key, lanes[lane]);
+        out.set(p.key, laneOffset(side, lane));
       }
     }
     return out;
