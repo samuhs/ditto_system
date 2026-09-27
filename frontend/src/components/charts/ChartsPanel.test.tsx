@@ -114,3 +114,43 @@ describe("ChartsPanel · focus and figure 1", () => {
     expect(within(table).getAllByRole("row").length).toBe(4); // header + 2 metrics + média
   });
 });
+
+describe("ChartsPanel · figures 2 and 3", () => {
+  it("orders dimension panels by effect and lists fixed ones", () => {
+    renderPanel();
+    const panels = screen.getAllByRole("region", { name: /: efeito/ }).map((p) => p.getAttribute("aria-label"));
+    expect(panels).toEqual(["Corte: efeito 0.40", "Técnica de RAG: efeito 0.20", "Modelo (LLM): efeito 0.10"]);
+    expect(screen.getByText(/fixo neste experimento: embedding .*, busca /i)).toBeInTheDocument();
+    expect(screen.queryByText(/grade incompleta/i)).not.toBeInTheDocument();
+  });
+
+  it("warns about an incomplete grid", () => {
+    renderPanel({ results: fixture().filter((r) => !(r.chunking === "recursive" && r.rag === "naive" && r.llm === "qwen")) });
+    expect(screen.getByText(/grade incompleta/i)).toBeInTheDocument();
+  });
+
+  it("rings the Pareto frontier, focused or not", () => {
+    renderPanel();
+    expect(screen.getByRole("button", { name: /^#2 Latência.*fronteira de Pareto/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^#3 Latência.*fronteira de Pareto/ })).not.toBeInTheDocument();
+    const table = screen.getByRole("table", { name: /figura 3/i });
+    const row5 = within(table).getAllByRole("row").find((r) => r.textContent?.startsWith("#5"));
+    expect(row5).toHaveTextContent("sim");
+  });
+
+  it("falls back to tokens when latency is missing, and to a note when both are", () => {
+    const noLatency = fixture().map((r) => ({ ...r, latency_ms: 0 }));
+    const { unmount } = renderPanel({ results: noLatency });
+    expect(screen.getAllByText("Tokens médios").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("Latência média (ms)")).toHaveLength(0);
+    unmount();
+    renderPanel({ results: noLatency.map((r) => ({ ...r, tokens: 0 })) });
+    expect(screen.getByText(/sem dados de custo neste experimento/i)).toBeInTheDocument();
+  });
+
+  it("needs at least two combinations for figures 2 and 3", () => {
+    renderPanel({ results: fixture().slice(0, 2) });
+    expect(screen.getAllByText(/precisa de ao menos 2 combinações/i)).toHaveLength(2);
+    expect(mediaMark(1)).toBeInTheDocument();
+  });
+});

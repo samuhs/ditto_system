@@ -1338,3 +1338,17 @@ a { color: inherit; text-underline-offset: 3px; }
 }
 .ditto-chart-tip-title { font-weight: 750; margin-bottom: 4px; }
 .ditto-chart-tip .ditto-kv { margin: 8px 0 0; }
+.ditto-chart-panels { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px 28px; }
+.ditto-chart-panel { border-top: 1.5px solid var(--ink); padding-top: 8px; }
+.ditto-chart-panel-title { margin: 0 0 4px; font-size: 15px; font-weight: 650; }
+.ditto-chart-panel-title .ditto-muted { font-weight: 400; font-size: 13px; margin-left: 6px; }
+.ditto-chart-range { stroke: var(--line-strong); stroke-width: 2; }
+.ditto-chart-dot { fill: var(--ink); }
+.ditto-chart svg .ditto-chart-value, .ditto-chart-panel svg .ditto-chart-value { fill: var(--ink); font-weight: 650; }
+.ditto-chart-panel svg text { font-size: 12px; fill: var(--ink-2); font-feature-settings: "tnum" 1; }
+.ditto-chart-panel svg .ditto-chart-label { fill: var(--ink); font-size: 13px; }
+.ditto-chart-panel .ditto-chart-axis line { stroke: var(--ink); }
+.ditto-chart-panel .ditto-chart-axis .ditto-chart-grid { stroke: var(--line); }
+.ditto-chart-frontier { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.ditto-chart-ring { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.ditto-chart-dot-muted { fill: var(--line-strong); }

@@ -1,9 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type { ExperimentResultRow } from "../../api/types";
 import { MEDIA_KEY, type RankRow } from "../../experiments/ranking";
+import { Note } from "../Notice";
 import type { Combination } from "../Score";
-import { type FocusState, type Group, focusSet, metricProfile } from "./aggregate";
+import {
+  type CostKind, type FocusState, type Group,
+  costPoints, dimensionEffects, focusSet, hasCost, metricLabel, metricProfile,
+} from "./aggregate";
+import { CostQuality } from "./CostQuality";
+import { DimensionEffects } from "./DimensionEffects";
 import { FocusBar } from "./FocusBar";
 import { MetricProfile } from "./MetricProfile";
 import { GROUP_COLOR, GROUP_LABEL } from "./primitives";
@@ -29,6 +35,18 @@ export function ChartsPanel({
 
   const focused = useMemo(() => focusSet(ranked, effective), [ranked, effective]);
   const profile = useMemo(() => metricProfile(results, focused, metricKeys), [results, focused, metricKeys]);
+  const [costChoice, setCostChoice] = useState<CostKind>("latency");
+  const available = useMemo(
+    () => ({ latency: hasCost(results, "latency"), tokens: hasCost(results, "tokens") }),
+    [results],
+  );
+  const cost: CostKind | null = available[costChoice]
+    ? costChoice
+    : available.latency ? "latency" : available.tokens ? "tokens" : null;
+  const effects = useMemo(() => dimensionEffects(results, metric), [results, metric]);
+  const points = useMemo(() => (cost ? costPoints(results, cost, metric) : []), [results, cost, metric]);
+  const enough = ranked.length >= 2;
+  const needTwo = <Note title="Precisa de ao menos 2 combinações">Com uma combinação só não há o que comparar.</Note>;
   const groups = [...new Set(focused.map((f) => f.group))] as Group[];
   const showGap = groups.includes("bottom");
   const suffix = partial ? ` Parcial: ${partial.completed} de ${partial.total} combinações.` : "";
@@ -53,6 +71,35 @@ export function ChartsPanel({
           {suffix}
         </figcaption>
         <MetricProfile lines={profile} showGap={showGap} onShowAnswers={onShowAnswers} />
+      </figure>
+
+      <figure className="ditto-chart-figure">
+        <figcaption className="ditto-caption">
+          <strong>Figura 2.</strong> {metricLabel(metric)} por opção de cada dimensão, sobre todas as combinações. O ponto é a
+          média; a barra vai da pior à melhor combinação com aquela opção. Os painéis estão ordenados pelo tamanho do efeito.
+          {suffix}
+        </figcaption>
+        {enough ? <DimensionEffects effects={effects} metric={metric} /> : needTwo}
+      </figure>
+
+      <figure className="ditto-chart-figure">
+        <figcaption className="ditto-caption">
+          <strong>Figura 3.</strong> Custo × {metricLabel(metric).toLowerCase()} de todas as combinações. A linha liga a
+          fronteira de Pareto: nenhuma outra combinação é ao mesmo tempo mais barata e melhor.
+          {suffix}
+        </figcaption>
+        {!enough ? (
+          needTwo
+        ) : cost === null ? (
+          <Note title="Sem dados de custo neste experimento">
+            Ele não registrou latência nem tokens das respostas.
+          </Note>
+        ) : (
+          <CostQuality
+            points={points} cost={cost} onCostChange={setCostChoice} available={available}
+            focused={focused} ranked={ranked} metric={metric} onShowAnswers={onShowAnswers}
+          />
+        )}
       </figure>
     </div>
   );
