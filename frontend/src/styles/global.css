@@ -1313,7 +1313,14 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-chart-focus { grid-template-columns: auto 88px minmax(180px, 240px) minmax(240px, 1fr); margin: 0; }
 .ditto-chart-focus-mode { display: flex; flex-direction: column; gap: 4px; }
 .ditto-chart-focus-label { font-size: 14px; font-weight: 650; }
-.ditto-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -12px 0 0; padding: 0; list-style: none; font-size: 13px; }
+/* Focus bar and legend stay in view; above the figures and their tooltips, below Mantine's portalled dropdowns. */
+.ditto-chart-sticky {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; flex-direction: column; gap: 12px;
+  margin: 0 -8px; padding: 10px 8px 12px;
+  background: var(--leaf); border-bottom: 1px solid var(--line);
+}
+.ditto-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
 .ditto-chart-legend li { display: inline-flex; align-items: center; gap: 6px; }
 .ditto-chart-swatch { width: 10px; height: 10px; border-radius: 50%; }
 .ditto-chart-figure { margin: 0; }
@@ -1389,6 +1396,16 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-chart-col[data-group="manual"] { background: var(--hue-ultramarine); }
 .ditto-chart-matrix th.ditto-chart-question { position: sticky; left: 0; z-index: 1; background: var(--leaf); }
 @media (max-width: 900px) {
-  .ditto-chart-focus { grid-template-columns: 1fr; }
+  /* Compact bar: mode on its own row, then N beside the metric, then the manual picks. */
+  .ditto-chart-focus { grid-template-columns: 72px minmax(0, 1fr); gap: 8px 10px; }
+  .ditto-chart-focus-mode, .ditto-chart-focus-wide { grid-column: 1 / -1; }
+  .ditto-chart-focus-mode .ditto-chart-focus-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .ditto-chart-focus .mantine-InputWrapper-label { font-size: 13px; }
+  .ditto-chart-sticky { gap: 8px; padding: 8px 8px 10px; }
+}
+@media (max-width: 560px) {
+  /* Phones: the bar sticks, so drop what the controls already say (labels stay for screen readers). */
+  .ditto-chart-focus-wide .mantine-InputWrapper-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .ditto-chart-legend { font-size: 12.5px; gap: 4px 14px; }
   .ditto-chart-matrix th.ditto-chart-question { max-width: 150px; }
 }

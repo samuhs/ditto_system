@@ -70,16 +70,19 @@ export function ChartsPanel({
 
   return (
     <div className="ditto-charts">
-      <FocusBar focus={effective} onChange={onFocusChange} ranked={ranked} metricKeys={metricKeys} />
-      <ul className="ditto-chart-legend" aria-label="Grupos">
-        {groups.map((g) => (
-          <li key={g}>
-            <span className="ditto-chart-swatch" style={{ background: GROUP_COLOR[g] }} aria-hidden />
-            {legendLabel(g)}
-          </li>
-        ))}
-        <li className="ditto-muted">O número é a posição no ranking pela média.</li>
-      </ul>
+      {/* Sticks to the top while the figures scroll under it. */}
+      <div className="ditto-chart-sticky">
+        <FocusBar focus={effective} onChange={onFocusChange} ranked={ranked} metricKeys={metricKeys} />
+        <ul className="ditto-chart-legend" aria-label="Grupos">
+          {groups.map((g) => (
+            <li key={g}>
+              <span className="ditto-chart-swatch" style={{ background: GROUP_COLOR[g] }} aria-hidden />
+              {legendLabel(g)}
+            </li>
+          ))}
+          <li className="ditto-muted">O número é a posição no ranking pela média.</li>
+        </ul>
+      </div>
 
       <figure className="ditto-chart-figure">
         <figcaption className="ditto-caption">

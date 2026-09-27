@@ -48,6 +48,7 @@ export function FocusBar({
         allowDeselect={false}
       />
       <MultiSelect
+        className="ditto-chart-focus-wide"
         label="Adicionar combinações"
         placeholder="Escolha no ranking"
         size="sm"
