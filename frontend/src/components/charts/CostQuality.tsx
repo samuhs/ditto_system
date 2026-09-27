@@ -1,12 +1,11 @@
 import { SegmentedControl } from "@mantine/core";
 import { scaleLinear } from "d3-scale";
-import { useState } from "react";
 
 import { type RankRow, comboText } from "../../experiments/ranking";
 import type { Combination } from "../Score";
 import { COST_LABEL, type CostKind, type CostPoint, type FocusedCombo, metricLabel, paretoFrontier } from "./aggregate";
 import {
-  AxisBottom, AxisLeft, ChartFrame, ComboTip, RankMark, type TipAnchor, formatScore, nText, useChartWidth,
+  AxisBottom, AxisLeft, ChartFrame, ComboTip, RankMark, formatScore, nText, useChartWidth, useTip,
 } from "./primitives";
 
 const M = { top: 12, right: 24, bottom: 44, left: 52 };
@@ -29,7 +28,6 @@ export function CostQuality({
   onShowAnswers: (combo: Combination) => void;
 }) {
   const [ref, width] = useChartWidth();
-  const [tip, setTip] = useState<TipAnchor>(null);
   const frontier = paretoFrontier(points);
   const onFrontier = new Set(frontier.map((p) => p.key));
   const byKey = new Map(focused.map((f) => [f.row.key, f]));
@@ -44,19 +42,26 @@ export function CostQuality({
   const muted = points.filter((p) => !byKey.has(p.key));
   const marked = points.filter((p) => byKey.has(p.key));
   const quality = metricLabel(metric);
-  const tipPoint = tip ? marked.find((p) => p.key === tip.key) : undefined;
-  const tipContent = tipPoint ? (
-    <ComboTip
-      combo={tipPoint.combo}
-      place={(byKey.get(tipPoint.key) as FocusedCombo).place}
-      lines={[
-        [COST_LABEL[cost], formatCost(tipPoint.cost)],
-        [quality, formatScore(tipPoint.quality)],
-        ["Perguntas", nText(tipPoint.n, tipPoint.total)],
-        ...(onFrontier.has(tipPoint.key) ? ([["Fronteira de Pareto", "sim"]] as [string, string][]) : []),
-      ]}
-    />
-  ) : null;
+  const [tip, setTip] = useTip((key) => {
+    const p = marked.find((m) => m.key === key);
+    if (!p) return null;
+    return {
+      x: x(p.cost),
+      y: y(p.quality),
+      content: (
+        <ComboTip
+          combo={p.combo}
+          place={(byKey.get(p.key) as FocusedCombo).place}
+          lines={[
+            [COST_LABEL[cost], formatCost(p.cost)],
+            [quality, formatScore(p.quality)],
+            ["Perguntas", nText(p.n, p.total)],
+            ...(onFrontier.has(p.key) ? ([["Fronteira de Pareto", "sim"]] as [string, string][]) : []),
+          ]}
+        />
+      ),
+    };
+  });
 
   return (
     <div>
@@ -71,7 +76,7 @@ export function CostQuality({
         ]}
         aria-label="Custo"
       />
-      <ChartFrame frameRef={ref} width={width} tip={tip} content={tipContent}>
+      <ChartFrame frameRef={ref} width={width} tip={tip}>
         <svg width={width} height={H} role="group" aria-label="Figura 3: custo e qualidade">
           <AxisLeft scale={y} x={M.left} gridRight={width - M.right} />
           <AxisBottom scale={x} y={H - M.bottom} format={formatCost} ticks={width < 560 ? 3 : 5} />

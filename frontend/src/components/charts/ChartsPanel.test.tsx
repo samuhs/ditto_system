@@ -43,6 +43,14 @@ function renderPanel(props: Parameters<typeof Harness>[0] = {}) {
   );
 }
 
+/** Every score + delta (2 decimals): same combinations, same ranking, new values. */
+function shiftScores(results: ExperimentResultRow[], delta: number): ExperimentResultRow[] {
+  return results.map((r) => ({
+    ...r,
+    scores: Object.fromEntries(Object.entries(r.scores).map(([k, v]) => [k, Math.round((v + delta) * 100) / 100])),
+  }));
+}
+
 const mediaMark = (place: number) => screen.queryByRole("button", { name: new RegExp(`^#${place} Média `) });
 
 beforeEach(() => {
@@ -137,10 +145,7 @@ describe("ChartsPanel · focus and figure 1", () => {
     const { rerender } = renderPanel();
     await user.hover(mediaMark(1)!);
     expect(screen.getByRole("tooltip")).toHaveTextContent("0.80");
-    const shifted = fixture().map((r) => ({
-      ...r,
-      scores: Object.fromEntries(Object.entries(r.scores).map(([k, v]) => [k, Math.round((v + 0.05) * 100) / 100])),
-    }));
+    const shifted = shiftScores(fixture(), 0.05);
     rerender(
       <MantineProvider>
         <Harness results={shifted} />
@@ -148,6 +153,56 @@ describe("ChartsPanel · focus and figure 1", () => {
     );
     expect(screen.getByRole("tooltip")).toHaveTextContent("0.85");
     expect(screen.getByRole("tooltip")).not.toHaveTextContent("0.80");
+  });
+
+  it("moves an open tooltip with its mark when the results change", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderPanel();
+    const markX = () => Number(/translate\(([-\d.]+),([-\d.]+)\)/.exec(mediaMark(8)!.getAttribute("transform")!)![1]);
+    const markY = () => Number(/translate\(([-\d.]+),([-\d.]+)\)/.exec(mediaMark(8)!.getAttribute("transform")!)![2]);
+    await user.hover(mediaMark(8)!);
+    const before = markX();
+    expect(parseFloat(screen.getByRole("tooltip").style.left)).toBeCloseTo(before);
+    rerender(
+      <MantineProvider>
+        <Harness results={shiftScores(fixture(), 0.05)} />
+      </MantineProvider>,
+    );
+    expect(markX()).not.toBeCloseTo(before);
+    expect(parseFloat(screen.getByRole("tooltip").style.left)).toBeCloseTo(markX());
+    expect(parseFloat(screen.getByRole("tooltip").style.top)).toBeCloseTo(markY());
+  });
+
+  it("drops the tooltip when its mark disappears, and does not bring it back", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderPanel();
+    await user.hover(mediaMark(8)!); // recursive · naive · qwen
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+    const withoutIt = fixture().filter((r) => !(r.chunking === "recursive" && r.rag === "naive" && r.llm === "qwen"));
+    rerender(
+      <MantineProvider>
+        <Harness results={withoutIt} />
+      </MantineProvider>,
+    );
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    rerender(
+      <MantineProvider>
+        <Harness results={fixture()} />
+      </MantineProvider>,
+    );
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("publishes the sticky bar's height for scroll padding, and clears it on unmount", () => {
+    const spy = vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(123);
+    try {
+      const { unmount } = renderPanel();
+      expect(document.documentElement.style.getPropertyValue("--ditto-chart-sticky-h")).toBe("123px");
+      unmount();
+      expect(document.documentElement.style.getPropertyValue("--ditto-chart-sticky-h")).toBe("");
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("labels the top group 'Todas as combinações' in 'Todas' mode", async () => {
@@ -324,6 +379,48 @@ describe("ChartsPanel · figure 4", () => {
     expect(onOpenRow).toHaveBeenCalledWith(
       expect.objectContaining({ question: "Pergunta difícil", chunking: "token", rag: "agentic", llm: "gemma" }),
     );
+  });
+
+  it("keeps the matrix tab stop on the same cell when the rows re-sort", () => {
+    const { rerender } = renderPanel();
+    const table = () => screen.getByRole("table", { name: /figura 4b/i });
+    expect(table()).toHaveAccessibleName(/use as setas para percorrer as células/i);
+    const cell = screen.getByRole("button", { name: /^Pergunta difícil · #2:/ });
+    act(() => {
+      cell.focus();
+    });
+    // Swap the questions: "Pergunta difícil" now scores higher and moves to the last row.
+    const swapped = fixture().map((r) => ({
+      ...r,
+      question: r.question === "Pergunta fácil" ? "Pergunta difícil" : "Pergunta fácil",
+    }));
+    rerender(
+      <MantineProvider>
+        <Harness results={swapped} />
+      </MantineProvider>,
+    );
+    expect(within(table()).getAllByRole("rowheader")[1]).toHaveTextContent("Pergunta difícil");
+    const tabbable = table().querySelectorAll('tbody [tabindex="0"]');
+    expect(tabbable).toHaveLength(1);
+    expect(tabbable[0]).toHaveAccessibleName(/^Pergunta difícil · #2:/);
+    expect(document.activeElement).toBe(tabbable[0]);
+  });
+
+  it("keeps focus on a missing-answer cell when its answer arrives", () => {
+    const isGone = (r: ExperimentResultRow) =>
+      r.chunking === "token" && r.rag === "agentic" && r.llm === "qwen" && r.question === "Pergunta difícil";
+    const { rerender } = renderPanel({ results: fixture().filter((r) => !isGone(r)) });
+    const empty = screen.getByRole("img", { name: /^Pergunta difícil · #2: sem resposta/ });
+    act(() => {
+      empty.focus();
+    });
+    rerender(
+      <MantineProvider>
+        <Harness results={fixture()} />
+      </MantineProvider>,
+    );
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Pergunta difícil · #2:/ }));
+    expect(document.activeElement).toHaveAttribute("tabindex", "0");
   });
 
   it("a distribution mark shows the combination's answers", async () => {

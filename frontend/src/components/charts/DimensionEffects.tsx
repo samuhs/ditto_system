@@ -1,9 +1,9 @@
 import { scaleLinear } from "d3-scale";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 
 import { dimName } from "../../experiments/ranking";
 import { DIM_LABEL, type DimensionEffects as Effects, metricLabel } from "./aggregate";
-import { AxisBottom, ChartFrame, type TipAnchor, formatScore, useChartWidth } from "./primitives";
+import { AxisBottom, ChartFrame, formatScore, useChartWidth, useTip } from "./primitives";
 
 const PANEL_W = 360;
 const LABEL_W = 130;
@@ -52,21 +52,24 @@ function OptionTip({ d, o }: { d: Effect; o: Option }) {
 /** One dimension's panel, drawn at its real width so the text keeps its size. */
 function EffectPanel({ dim: d }: { dim: Effect }) {
   const [ref, width] = useChartWidth(PANEL_W);
-  const [tip, setTip] = useState<TipAnchor>(null);
   const x = scaleLinear().domain([0, 1]).range([LABEL_W, Math.max(LABEL_W + 80, width - VALUE_W)]);
   const bottom = PAD + d.options.length * ROW_H;
-  const tipOption = tip ? d.options.find((o) => o.option === tip.key) : undefined;
+  const [tip, setTip] = useTip((key) => {
+    const i = d.options.findIndex((o) => o.option === key);
+    if (i < 0) return null;
+    return { x: x(d.options[i].mean), y: PAD + i * ROW_H + ROW_H / 2, content: <OptionTip d={d} o={d.options[i]} /> };
+  });
   return (
     <section className="ditto-chart-panel" aria-label={`${DIM_LABEL[d.dim]}: efeito ${formatScore(d.effect)}`}>
       <h4 className="ditto-chart-panel-title">
         {DIM_LABEL[d.dim]} <span className="ditto-muted">efeito {formatScore(d.effect)}</span>
       </h4>
-      <ChartFrame frameRef={ref} width={width} tip={tip} content={tipOption ? <OptionTip d={d} o={tipOption} /> : null}>
+      <ChartFrame frameRef={ref} width={width} tip={tip}>
         <svg width={width} height={bottom + AXIS_H}>
           {d.options.map((o, i) => {
             const cy = PAD + i * ROW_H + ROW_H / 2;
             const name = dimName(d.dim, o.option);
-            const show = () => setTip({ key: o.option, x: x(o.mean), y: cy });
+            const show = () => setTip(o.option);
             const hide = () => setTip(null);
             return (
               <g

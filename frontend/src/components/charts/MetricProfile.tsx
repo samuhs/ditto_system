@@ -1,11 +1,10 @@
 import { scaleLinear } from "d3-scale";
-import { useState } from "react";
 
 import { MEDIA_KEY } from "../../experiments/ranking";
 import type { Combination } from "../Score";
 import { type Group, type ProfileLine, metricLabel } from "./aggregate";
 import {
-  AxisBottom, ChartFrame, ComboTip, MARK_R, RankMark, type TipAnchor, formatGap, formatScore, nText, useChartWidth,
+  AxisBottom, ChartFrame, ComboTip, MARK_R, RankMark, formatGap, formatScore, nText, useChartWidth, useTip,
 } from "./primitives";
 
 const TOP = 8;
@@ -73,7 +72,6 @@ export function MetricProfile({
   onShowAnswers: (combo: Combination) => void;
 }) {
   const [ref, width] = useChartWidth();
-  const [tip, setTip] = useState<TipAnchor>(null);
   const narrow = width < 560;
   const labelW = narrow ? 118 : 184;
   const gapW = narrow ? 48 : 64;
@@ -81,25 +79,28 @@ export function MetricProfile({
   const { rows, bottom } = dodge(lines, x);
   const combos = lines[0]?.points.map((p) => p.combo) ?? [];
   const tipKey = (metric: string, comboKey: string) => `${metric}|${comboKey}`;
-  const tipContent = (() => {
-    if (!tip) return null;
-    for (const line of lines) {
+  const [tip, setTip] = useTip((key) => {
+    for (const [i, line] of lines.entries()) {
       for (const p of line.points) {
-        if (p.value === null || tipKey(line.metric, p.combo.row.key) !== tip.key) continue;
-        return (
-          <ComboTip
-            combo={p.combo.row.combo}
-            place={p.combo.place}
-            lines={[[metricLabel(line.metric), formatScore(p.value)], ["Perguntas", nText(p.n, p.total)]]}
-          />
-        );
+        if (p.value === null || tipKey(line.metric, p.combo.row.key) !== key) continue;
+        return {
+          x: x(p.value),
+          y: rows[i].cy + (rows[i].offsets.get(p.combo.row.key) ?? 0),
+          content: (
+            <ComboTip
+              combo={p.combo.row.combo}
+              place={p.combo.place}
+              lines={[[metricLabel(line.metric), formatScore(p.value)], ["Perguntas", nText(p.n, p.total)]]}
+            />
+          ),
+        };
       }
     }
     return null;
-  })();
+  });
 
   return (
-    <ChartFrame frameRef={ref} width={width} tip={tip} content={tipContent}>
+    <ChartFrame frameRef={ref} width={width} tip={tip}>
       <svg width={width} height={bottom + AXIS_H} role="group" aria-label="Figura 1: perfil de métricas">
         <AxisBottom scale={x} y={bottom} gridTop={TOP} ticks={narrow ? 2 : 5} />
         {lines.map((line, i) => {

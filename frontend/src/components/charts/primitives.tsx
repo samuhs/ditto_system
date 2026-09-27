@@ -50,25 +50,39 @@ export function useChartWidth(fallback = 720) {
 /** Radius of a combination's mark (RankMark). */
 export const MARK_R = 10;
 
+/** A tooltip resolved against current data: where its mark is now and what it says. */
+export interface ResolvedTip {
+  x: number;
+  y: number;
+  content: ReactNode;
+}
+
 /**
- * The active tooltip: which mark (a key its figure resolves against current
- * data on every render, so values stay live while polling) and where.
+ * Tooltip state for a figure. Only the active mark's key is stored; `resolve`
+ * turns it into position and content from current data on every render, so
+ * both follow the data while polling. When the key stops resolving (the mark
+ * is gone) the tooltip is cleared, so it does not come back on its own.
  */
-export type TipAnchor = { key: string; x: number; y: number } | null;
+export function useTip(resolve: (key: string) => ResolvedTip | null) {
+  const [key, setKey] = useState<string | null>(null);
+  const tip = key === null ? null : resolve(key);
+  const gone = key !== null && tip === null;
+  useEffect(() => {
+    if (gone) setKey(null);
+  }, [gone]);
+  return [tip, setKey] as const;
+}
 
 export function ChartFrame({
   frameRef,
   width,
   tip,
-  content,
   children,
 }: {
   frameRef: RefObject<HTMLDivElement>;
   /** The frame's width (from useChartWidth), used to keep the tooltip inside. */
   width: number;
-  tip: TipAnchor;
-  /** The tooltip body for `tip`; nothing is shown when null (the mark is gone). */
-  content: ReactNode | null;
+  tip: ResolvedTip | null;
   children: ReactNode;
 }) {
   // Keep the tooltip (centred on its mark, at most 340px wide) inside the chart.
@@ -77,9 +91,9 @@ export function ChartFrame({
   return (
     <div ref={frameRef} className="ditto-chart">
       {children}
-      {tip && content && (
+      {tip && (
         <div className="ditto-chart-tip" role="tooltip" style={{ left, top: tip.y }}>
-          {content}
+          {tip.content}
         </div>
       )}
     </div>
@@ -96,11 +110,12 @@ export function RankMark({
   group: Group;
   label: string;
   onActivate?: () => void;
-  onTip?: (t: TipAnchor) => void;
+  /** Called with `tipKey` on hover/focus and null on leave/blur. */
+  onTip?: (key: string | null) => void;
   /** Identifies this mark's tooltip; without it the mark shows none. */
   tipKey?: string;
 }) {
-  const show = () => onTip?.(tipKey ? { key: tipKey, x, y } : null);
+  const show = () => onTip?.(tipKey ?? null);
   const hide = () => onTip?.(null);
   return (
     <g

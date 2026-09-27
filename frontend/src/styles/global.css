@@ -1402,10 +1402,15 @@ a { color: inherit; text-underline-offset: 3px; }
   .ditto-chart-focus-mode .ditto-chart-focus-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .ditto-chart-focus .mantine-InputWrapper-label { font-size: 13px; }
   .ditto-chart-sticky { gap: 8px; padding: 8px 8px 10px; }
-}
-@media (max-width: 560px) {
-  /* Phones: the bar sticks, so drop what the controls already say (labels stay for screen readers). */
-  .ditto-chart-focus-wide .mantine-InputWrapper-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .ditto-chart-legend { font-size: 12.5px; gap: 4px 14px; }
   .ditto-chart-matrix th.ditto-chart-question { max-width: 150px; }
+}
+/* Phones and short windows: a pinned bar would cover too much of the page (and focused controls). */
+@media (max-width: 560px), (max-height: 600px) {
+  .ditto-chart-sticky { position: static; }
+}
+/* Where it sticks, focus and in-page scrolling stop below the bar (WCAG 2.4.11).
+   --ditto-chart-sticky-h is the bar's measured height, set by ChartsPanel. */
+@media (min-width: 561px) and (min-height: 601px) {
+  html:has(.ditto-chart-sticky) { scroll-padding-top: calc(var(--ditto-chart-sticky-h, 140px) + 16px); }
 }

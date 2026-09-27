@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
 import type { ExperimentResultRow } from "../../api/types";
 import { MEDIA_KEY, type RankRow } from "../../experiments/ranking";
@@ -27,12 +27,35 @@ export interface ChartsPanelProps {
   onOpenRow: (row: ExperimentResultRow) => void;
 }
 
+const STICKY_H_VAR = "--ditto-chart-sticky-h";
+
+/** Publishes the sticky bar's height on <html> as STICKY_H_VAR, which sets the page's scroll padding. */
+function useStickyHeight() {
+  const observer = useRef<ResizeObserver | null>(null);
+  return useCallback((el: HTMLDivElement | null) => {
+    observer.current?.disconnect();
+    observer.current = null;
+    const root = document.documentElement;
+    if (!el) {
+      root.style.removeProperty(STICKY_H_VAR);
+      return;
+    }
+    const measure = () => {
+      if (el.offsetHeight > 0) root.style.setProperty(STICKY_H_VAR, `${el.offsetHeight}px`);
+    };
+    measure();
+    observer.current = new ResizeObserver(measure);
+    observer.current.observe(el);
+  }, []);
+}
+
 export function ChartsPanel({
   results, metricKeys, ranked, focus, onFocusChange, partial, onShowAnswers, onOpenRow,
 }: ChartsPanelProps) {
   // A metric the experiment no longer has falls back to the média.
   const metric = focus.metric === MEDIA_KEY || metricKeys.includes(focus.metric) ? focus.metric : MEDIA_KEY;
   const effective = metric === focus.metric ? focus : { ...focus, metric };
+  const stickyRef = useStickyHeight();
 
   const focused = useMemo(() => focusSet(ranked, effective), [ranked, effective]);
   const profile = useMemo(() => metricProfile(results, focused, metricKeys), [results, focused, metricKeys]);
@@ -71,7 +94,7 @@ export function ChartsPanel({
   return (
     <div className="ditto-charts">
       {/* Sticks to the top while the figures scroll under it. */}
-      <div className="ditto-chart-sticky">
+      <div ref={stickyRef} className="ditto-chart-sticky">
         <FocusBar focus={effective} onChange={onFocusChange} ranked={ranked} metricKeys={metricKeys} />
         <ul className="ditto-chart-legend" aria-label="Grupos">
           {groups.map((g) => (

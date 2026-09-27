@@ -1,5 +1,5 @@
 import { scaleLinear } from "d3-scale";
-import { type KeyboardEvent, useRef, useState } from "react";
+import { type KeyboardEvent, useLayoutEffect, useRef, useState } from "react";
 
 import type { ExperimentResultRow } from "../../api/types";
 import { comboText } from "../../experiments/ranking";
@@ -7,7 +7,7 @@ import type { Combination } from "../Score";
 import { type FocusedCombo, type MatrixRow, metricLabel, quartiles } from "./aggregate";
 import { heat, heatText } from "./heat";
 import {
-  AxisBottom, ChartFrame, ComboTip, GROUP_COLOR, RankMark, type TipAnchor, formatScore, nText, useChartWidth,
+  AxisBottom, ChartFrame, ComboTip, GROUP_COLOR, RankMark, formatScore, nText, useChartWidth, useTip,
 } from "./primitives";
 
 const LABEL_W = 44;
@@ -20,7 +20,6 @@ const AXIS_H = 28;
 function jitter(k: number): number {
   return ((k * 7) % 11) - 5;
 }
-
 
 /** Colours from the score as shown (two decimals), so equal labels get equal cells. */
 function cellColors(value: number) {
@@ -38,18 +37,31 @@ export function Stability({
   onShowAnswers: (combo: Combination) => void;
 }) {
   const [ref, width] = useChartWidth();
-  const [tip, setTip] = useState<TipAnchor>(null);
   // Roving tabindex in the matrix: one cell in the tab order, arrows move it.
-  const [active, setActive] = useState({ r: 0, c: 0 });
+  // The active cell is tracked by (question, combination), not by position,
+  // because rows re-sort by difficulty as results come in.
+  const [active, setActive] = useState<{ question: string; key: string } | null>(null);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
+  // A cell of the matrix had focus; it may be replaced (empty span → button) on a re-render.
+  const hadFocus = useRef(false);
   const rowCount = matrix.length;
   const colCount = focused.length;
-  const current = { r: Math.min(active.r, rowCount - 1), c: Math.min(active.c, colCount - 1) };
+  const activeR = active ? matrix.findIndex((r) => r.question === active.question) : -1;
+  const activeC = active ? focused.findIndex((f) => f.row.key === active.key) : -1;
+  const current = activeR >= 0 && activeC >= 0 ? { r: activeR, c: activeC } : { r: 0, c: 0 };
+  const cellAt = (r: number, c: number) => bodyRef.current?.querySelector<HTMLElement>(`[data-cell="${r}-${c}"]`);
   const moveTo = (r: number, c: number) => {
     const next = { r: Math.max(0, Math.min(rowCount - 1, r)), c: Math.max(0, Math.min(colCount - 1, c)) };
-    setActive(next);
-    bodyRef.current?.querySelector<HTMLElement>(`[data-cell="${next.r}-${next.c}"]`)?.focus();
+    setActive({ question: matrix[next.r].question, key: focused[next.c].row.key });
+    cellAt(next.r, next.c)?.focus();
   };
+  useLayoutEffect(() => {
+    // The focused cell was swapped for another element: keep focus on the active cell.
+    const body = bodyRef.current;
+    if (!hadFocus.current || !body || body.contains(document.activeElement)) return;
+    if (document.activeElement && document.activeElement !== document.body) return;
+    cellAt(current.r, current.c)?.focus();
+  });
   const onCellKey = (e: KeyboardEvent, r: number, c: number) => {
     const target = {
       ArrowLeft: [r, c - 1],
@@ -75,23 +87,31 @@ export function Stability({
     const answered = matrix.filter((r) => r.cells[j].row !== null).length;
     return { f, values, answered, q: quartiles(values) };
   });
-  const tipColumn = tip ? columns.find((c) => c.f.row.key === tip.key) : undefined;
-  const tipContent = tipColumn ? (
-    <ComboTip
-      combo={tipColumn.f.row.combo}
-      place={tipColumn.f.place}
-      lines={[
-        ["Mediana", formatScore(tipColumn.q?.median ?? null)],
-        ["Intervalo interquartil", tipColumn.q ? `${formatScore(tipColumn.q.q1)}–${formatScore(tipColumn.q.q3)}` : "—"],
-        ["Perguntas", nText(tipColumn.values.length, tipColumn.answered)],
-      ]}
-    />
-  ) : null;
+  const [tip, setTip] = useTip((key) => {
+    const j = columns.findIndex((c) => c.f.row.key === key);
+    if (j < 0) return null;
+    const { f, q, values, answered } = columns[j];
+    return {
+      x: LABEL_W / 2,
+      y: TOP + j * ROW_H + ROW_H / 2,
+      content: (
+        <ComboTip
+          combo={f.row.combo}
+          place={f.place}
+          lines={[
+            ["Mediana", formatScore(q?.median ?? null)],
+            ["Intervalo interquartil", q ? `${formatScore(q.q1)}–${formatScore(q.q3)}` : "—"],
+            ["Perguntas", nText(values.length, answered)],
+          ]}
+        />
+      ),
+    };
+  });
 
   return (
     <div className="ditto-chart-stability">
       <h4 className="ditto-chart-panel-title">a. Distribuição por combinação</h4>
-      <ChartFrame frameRef={ref} width={width} tip={tip} content={tipContent}>
+      <ChartFrame frameRef={ref} width={width} tip={tip}>
         <svg width={width} height={bottom + AXIS_H} role="group" aria-label="Figura 4a: distribuição por pergunta">
           <AxisBottom scale={x} y={bottom} gridTop={TOP} ticks={width < 560 ? 2 : 5} />
           {columns.map(({ f, values, q }, j) => {
@@ -154,7 +174,9 @@ export function Stability({
       <h4 className="ditto-chart-panel-title">b. {name} por pergunta</h4>
       <div className="ditto-table-wrap ditto-chart-matrix-wrap">
         <table className="ditto-table ditto-chart-matrix">
-          <caption className="visually-hidden">Figura 4b: {name} por pergunta e combinação</caption>
+          <caption className="visually-hidden">
+            Figura 4b: {name} por pergunta e combinação. Use as setas para percorrer as células.
+          </caption>
           <thead>
             <tr>
               <th scope="col">Pergunta</th>
@@ -177,7 +199,13 @@ export function Stability({
                   const cellProps = {
                     "data-cell": `${i}-${j}`,
                     tabIndex: i === current.r && j === current.c ? 0 : -1,
-                    onFocus: () => setActive({ r: i, c: j }),
+                    onFocus: () => {
+                      hadFocus.current = true;
+                      setActive({ question: r.question, key: focused[j].row.key });
+                    },
+                    onBlur: () => {
+                      hadFocus.current = false;
+                    },
                     onKeyDown: (e: KeyboardEvent) => onCellKey(e, i, j),
                   };
                   return (
