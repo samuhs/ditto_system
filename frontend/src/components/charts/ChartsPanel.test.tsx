@@ -8,6 +8,7 @@ import type { ExperimentResultRow } from "../../api/types";
 import { rankByMedia, rankCombinations } from "../../experiments/ranking";
 import { DEFAULT_FOCUS, type FocusState } from "./aggregate";
 import { ChartsPanel } from "./ChartsPanel";
+import { DimensionEffects } from "./DimensionEffects";
 import { fixture } from "./testFixture";
 
 const onShowAnswers = vi.fn();
@@ -20,7 +21,7 @@ function Harness({
 }: {
   results?: ExperimentResultRow[];
   initial?: FocusState;
-  partial?: { completed: number; total: number } | null;
+  partial?: { completed: number; total: number; phase?: string } | null;
 }) {
   const [focus, setFocus] = useState(initial);
   const metricKeys = [...new Set(results.flatMap((r) => Object.keys(r.scores)))].sort();
@@ -110,10 +111,33 @@ describe("ChartsPanel · focus and figure 1", () => {
     expect(screen.getAllByText(/parcial: 3 de 8 combinações/i).length).toBeGreaterThan(0);
   });
 
+  it("shows an evaluating suffix instead of the count when the phase is evaluating", () => {
+    renderPanel({ partial: { completed: 1, total: 1, phase: "evaluating" } });
+    expect(screen.getAllByText(/parcial: avaliando as respostas\./i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/de 1 combinações/i)).not.toBeInTheDocument();
+  });
+
   it("has a screen-reader table for figure 1", () => {
     renderPanel();
     const table = screen.getByRole("table", { name: /figura 1/i });
     expect(within(table).getAllByRole("row").length).toBe(4); // header + 2 metrics + média
+  });
+
+  it("shows a note instead of the legend and figures before anything is scored", () => {
+    const results = fixture().map((r) => ({ ...r, scores: {} }));
+    renderPanel({ results });
+    expect(screen.getByText(/as respostas ainda não foram avaliadas/i)).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: /combinações em foco/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: /grupos/i })).not.toBeInTheDocument();
+    expect(mediaMark(1)).not.toBeInTheDocument();
+  });
+
+  it("labels the top group 'Todas as combinações' in 'Todas' mode", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByRole("radio", { name: "Todas" }));
+    expect(screen.getByText("Todas as combinações")).toBeInTheDocument();
+    expect(screen.queryByText("Melhores")).not.toBeInTheDocument();
   });
 });
 
@@ -155,6 +179,32 @@ describe("ChartsPanel · figures 2 and 3", () => {
     expect(screen.getAllByText(/precisa de ao menos 2 combinações/i)).toHaveLength(2);
     expect(mediaMark(1)).toBeInTheDocument();
   });
+
+  it("lists a pending dimension when fewer than 2 of its options have scored combinations", () => {
+    const results = fixture().map((r) => (r.chunking === "recursive" ? { ...r, scores: {} } : r));
+    renderPanel({ results });
+    expect(screen.getByText(/sem dados suficientes ainda: corte\./i)).toBeInTheDocument();
+  });
+
+  it("renders a caption instead of blank panels when no dimension has enough data", () => {
+    render(
+      <MantineProvider>
+        <DimensionEffects effects={{ varying: [], fixed: [], pending: [], incompleteGrid: false }} metric="__media__" />
+      </MantineProvider>,
+    );
+    expect(screen.getByText(/sem dados suficientes para comparar as dimensões/i)).toBeInTheDocument();
+  });
+
+  it("shows a note for figure 3 when cost exists but no combination has both cost and quality", () => {
+    // recursive combos keep their scores but lose latency; token combos keep latency but lose scores
+    const results = fixture().map((r) =>
+      r.chunking === "recursive" ? { ...r, latency_ms: 0 } : { ...r, scores: {} },
+    );
+    renderPanel({ results });
+    expect(screen.getByText(/sem combinações avaliadas com custo/i)).toBeInTheDocument();
+    // other figures still render: some combinations do have a média
+    expect(mediaMark(1)).toBeInTheDocument();
+  });
 });
 
 describe("ChartsPanel · figure 4", () => {
@@ -188,7 +238,7 @@ describe("ChartsPanel · figure 4", () => {
       (r) => !(r.chunking === "token" && r.rag === "agentic" && r.llm === "gemma" && r.question === "Pergunta fácil"),
     );
     renderPanel({ results });
-    expect(screen.getByLabelText("sem resposta")).toBeInTheDocument();
+    expect(screen.getByText("sem resposta")).toBeInTheDocument();
   });
 
   it("shows a row without metrics as a dash, not NaN", () => {

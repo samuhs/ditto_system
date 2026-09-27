@@ -219,6 +219,32 @@ describe("ExperimentDetailPage", () => {
     expect(screen.queryByText(/1 de 1 combinações/)).not.toBeInTheDocument();
   });
 
+  it("passes the evaluating phase through to the charts tab caption", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "kind-ember-89",
+      status: "running",
+      progress: { completed: 2, total: 2, phase: "evaluating" },
+      results: [
+        {
+          chunking: "recursive", embedding: "gemini", rag: "naive", retriever: "similarity",
+          llm: "gemini", question: "Pergunta A", answer: "Resposta A completa.",
+          scores: { answer_relevancy: 0.2, faithfulness: 0.4 }, latency_ms: 100, tokens: 10,
+        },
+        {
+          chunking: "token", embedding: "gemini", rag: "agentic", retriever: "mmr",
+          llm: "ollama", question: "Pergunta B", answer: "Resposta B completa.",
+          scores: { answer_relevancy: 0.9, faithfulness: 0.8 }, latency_ms: 200, tokens: 20,
+        },
+      ],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: /gráficos/i }));
+    expect((await screen.findAllByText(/parcial: avaliando as respostas\./i)).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/de 2 combinações/i)).not.toBeInTheDocument();
+  });
+
   it("shows start time and computed duration for a finished experiment", async () => {
     vi.mocked(client.getExperiment).mockResolvedValue({
       id: 7,

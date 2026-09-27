@@ -22,7 +22,7 @@ export interface ChartsPanelProps {
   ranked: RankRow[];
   focus: FocusState;
   onFocusChange: (f: FocusState) => void;
-  partial: { completed: number; total: number } | null;
+  partial: { completed: number; total: number; phase?: string } | null;
   onShowAnswers: (combo: Combination) => void;
   onOpenRow: (row: ExperimentResultRow) => void;
 }
@@ -51,7 +51,23 @@ export function ChartsPanel({
   const needTwo = <Note title="Precisa de ao menos 2 combinações">Com uma combinação só não há o que comparar.</Note>;
   const groups = [...new Set(focused.map((f) => f.group))] as Group[];
   const showGap = groups.includes("bottom");
-  const suffix = partial ? ` Parcial: ${partial.completed} de ${partial.total} combinações.` : "";
+  const suffix = partial
+    ? partial.phase === "evaluating"
+      ? " Parcial: avaliando as respostas."
+      : ` Parcial: ${partial.completed} de ${partial.total} combinações.`
+    : "";
+  const notYetEvaluated = ranked.length > 0 && ranked.every((r) => r.media === null);
+  const legendLabel = (g: Group) => (effective.mode === "all" && g === "top" ? "Todas as combinações" : GROUP_LABEL[g]);
+
+  if (notYetEvaluated) {
+    return (
+      <div className="ditto-charts">
+        <Note title="As respostas ainda não foram avaliadas">
+          Os gráficos aparecem assim que as respostas receberem as métricas. A página se atualiza sozinha.
+        </Note>
+      </div>
+    );
+  }
 
   return (
     <div className="ditto-charts">
@@ -60,7 +76,7 @@ export function ChartsPanel({
         {groups.map((g) => (
           <li key={g}>
             <span className="ditto-chart-swatch" style={{ background: GROUP_COLOR[g] }} aria-hidden />
-            {GROUP_LABEL[g]}
+            {legendLabel(g)}
           </li>
         ))}
         <li className="ditto-muted">O número é a posição no ranking pela média.</li>
@@ -95,6 +111,10 @@ export function ChartsPanel({
         ) : cost === null ? (
           <Note title="Sem dados de custo neste experimento">
             Ele não registrou latência nem tokens das respostas.
+          </Note>
+        ) : points.length === 0 ? (
+          <Note title="Sem combinações avaliadas com custo">
+            As combinações com custo registrado ainda não têm métricas.
           </Note>
         ) : (
           <CostQuality

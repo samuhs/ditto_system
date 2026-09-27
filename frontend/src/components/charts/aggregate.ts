@@ -131,6 +131,8 @@ export interface DimensionEffects {
   /** Largest effect first. */
   varying: DimensionEffect[];
   fixed: { dim: Dim; option: string }[];
+  /** Dimensions with 2+ options in the grid, but fewer than 2 of them have any scored combination. */
+  pending: Dim[];
   /** Fewer combinations than the product of every dimension's options. */
   incompleteGrid: boolean;
 }
@@ -143,6 +145,7 @@ export function dimensionEffects(results: ExperimentResultRow[], metric: string)
   }));
   const varying: DimensionEffect[] = [];
   const fixed: { dim: Dim; option: string }[] = [];
+  const pending: Dim[] = [];
   let gridSize = 1;
   for (const dim of DIMS) {
     const all = [...new Set(combos.map((c) => c.combo[dim]))].sort();
@@ -158,11 +161,14 @@ export function dimensionEffects(results: ExperimentResultRow[], metric: string)
         return [{ option, mean: mean(values) as number, min: Math.min(...values), max: Math.max(...values), combos: values.length }];
       })
       .sort((a, b) => b.mean - a.mean);
-    if (options.length < 2) continue;
+    if (options.length < 2) {
+      pending.push(dim);
+      continue;
+    }
     varying.push({ dim, options, effect: options[0].mean - options[options.length - 1].mean });
   }
   varying.sort((a, b) => b.effect - a.effect);
-  return { varying, fixed, incompleteGrid: combos.length < gridSize };
+  return { varying, fixed, pending, incompleteGrid: combos.length < gridSize };
 }
 
 export type CostKind = "latency" | "tokens";

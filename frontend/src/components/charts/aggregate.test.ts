@@ -119,9 +119,19 @@ describe("dimensionEffects", () => {
       { dim: "embedding", option: "e5" },
       { dim: "retriever", option: "similarity" },
     ]);
+    expect(full.pending).toEqual([]);
     expect(full.incompleteGrid).toBe(false);
     const missing = fixture().filter((r) => !(r.chunking === "recursive" && r.rag === "naive" && r.llm === "qwen"));
     expect(dimensionEffects(missing, MEDIA_KEY).incompleteGrid).toBe(true);
+  });
+
+  it("marks a dimension pending when fewer than 2 of its options have scored combinations", () => {
+    // zero out every combination on the "recursive" side: chunking still has 2 raw values,
+    // but only "token" ends up with a scored option.
+    const results = fixture().map((r) => (r.chunking === "recursive" ? { ...r, scores: {} } : r));
+    const eff = dimensionEffects(results, MEDIA_KEY);
+    expect(eff.pending).toEqual(["chunking"]);
+    expect(eff.varying.map((d) => d.dim)).toEqual(["rag", "llm"]);
   });
 });
 

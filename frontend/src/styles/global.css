@@ -1370,12 +1370,13 @@ a { color: inherit; text-underline-offset: 3px; }
   display: block; width: 56px; height: 26px; border: 0; border-radius: 2px;
   font: inherit; font-size: 12px; font-feature-settings: "tnum" 1; cursor: pointer;
 }
-.ditto-chart-cell button[data-empty] {
+.ditto-chart-cell button[data-empty],
+.ditto-chart-cell-empty {
   background: repeating-linear-gradient(45deg, var(--binder-2) 0 4px, var(--field) 4px 8px);
   color: var(--ink-3);
 }
 .ditto-chart-cell button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
-.ditto-chart-cell-empty { display: block; width: 56px; text-align: center; color: var(--ink-3); }
+.ditto-chart-cell-empty { display: flex; align-items: center; justify-content: center; width: 56px; height: 26px; border-radius: 2px; }
 .ditto-chart-col { display: inline-block; min-width: 30px; padding: 1px 6px 2px; border-radius: 2px; color: var(--ink-inverse); font-weight: 750; text-align: center; }
 .ditto-chart-col[data-group="top"] { background: var(--hue-violet); }
 .ditto-chart-col[data-group="bottom"] { background: var(--hue-orange); color: var(--ink); }

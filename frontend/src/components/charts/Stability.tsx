@@ -126,8 +126,9 @@ export function Stability({
                         {formatScore(c.value)}
                       </button>
                     ) : (
-                      <span className="ditto-chart-cell-empty" aria-label="sem resposta">
-                        —
+                      <span className="ditto-chart-cell-empty">
+                        <span aria-hidden="true">—</span>
+                        <span className="visually-hidden">sem resposta</span>
                       </span>
                     )}
                   </td>

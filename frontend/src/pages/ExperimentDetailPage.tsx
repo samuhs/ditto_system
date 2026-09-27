@@ -418,7 +418,11 @@ export function ExperimentDetailPage() {
                 onFocusChange={setFocus}
                 partial={
                   isRunning && detail.progress && detail.progress.total > 0
-                    ? { completed: detail.progress.completed, total: detail.progress.total }
+                    ? {
+                        completed: detail.progress.completed,
+                        total: detail.progress.total,
+                        phase: detail.progress.phase ?? undefined,
+                      }
                     : null
                 }
                 onShowAnswers={showAnswersOf}

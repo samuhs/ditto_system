@@ -52,6 +52,9 @@ function EffectPanel({ dim: d }: { dim: Effects["varying"][number] }) {
 }
 
 export function DimensionEffects({ effects, metric }: { effects: Effects; metric: string }) {
+  if (effects.varying.length === 0 && effects.fixed.length === 0 && effects.pending.length === 0) {
+    return <p className="ditto-caption">Sem dados suficientes para comparar as dimensões.</p>;
+  }
   return (
     <div>
       {effects.varying.length > 0 && (
@@ -65,6 +68,11 @@ export function DimensionEffects({ effects, metric }: { effects: Effects; metric
         <p className="ditto-caption">
           Fixo neste experimento:{" "}
           {effects.fixed.map((f) => `${DIM_LABEL[f.dim]} ${dimName(f.dim, f.option)}`).join(", ")}.
+        </p>
+      )}
+      {effects.pending.length > 0 && (
+        <p className="ditto-caption">
+          Sem dados suficientes ainda: {effects.pending.map((d) => DIM_LABEL[d]).join(", ")}.
         </p>
       )}
       {effects.incompleteGrid && effects.varying.length > 0 && (
