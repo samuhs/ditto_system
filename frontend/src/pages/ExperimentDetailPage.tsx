@@ -12,64 +12,17 @@ import { StatusTag } from "../components/StatusTag";
 import { DownloadIcon, PauseIcon, SortIcon } from "../components/icons";
 import { techniqueName, term } from "../glossary";
 import { formatDateTime, formatDuration } from "../utils/duration";
+import {
+  DIMS, type Dim, MEDIA_KEY, type RankRow, dimName, rankByMedia, rankCombinations, rowMedia,
+} from "../experiments/ranking";
 
-const MEDIA_KEY = "__media__";
 const PAGE_SIZES = ["10", "25", "50", "100"];
-
-type Dim = keyof Combination;
-const DIMS: Dim[] = ["chunking", "embedding", "rag", "retriever", "llm"];
 
 function experimentDurationMs(createdAt?: string, finishedAt?: string): number | null {
   if (!createdAt) return null;
   const start = new Date(createdAt).getTime();
   const end = finishedAt ? new Date(finishedAt).getTime() : Date.now();
   return end - start;
-}
-
-function mean(values: number[]): number | null {
-  if (values.length === 0) return null;
-  return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-function rowMedia(row: ExperimentResultRow): number | null {
-  return mean(Object.values(row.scores));
-}
-
-function comboKey(c: Combination): string {
-  return DIMS.map((d) => c[d]).join("|");
-}
-
-function dimName(dim: Dim, key: string): string {
-  return dim === "llm" ? key : term(dim, key).name;
-}
-
-interface RankRow {
-  key: string;
-  combo: Combination;
-  count: number;
-  scores: Record<string, number | null>;
-  media: number | null;
-}
-
-function rankCombinations(results: ExperimentResultRow[], metricKeys: string[]): RankRow[] {
-  const groups = new Map<string, ExperimentResultRow[]>();
-  for (const r of results) {
-    const k = comboKey(r);
-    groups.set(k, [...(groups.get(k) ?? []), r]);
-  }
-  return [...groups.entries()].map(([key, rows]) => {
-    const scores: Record<string, number | null> = {};
-    for (const m of metricKeys) {
-      scores[m] = mean(rows.filter((r) => m in r.scores).map((r) => r.scores[m]));
-    }
-    return {
-      key,
-      combo: rows[0],
-      count: rows.length,
-      scores,
-      media: mean(rows.map(rowMedia).filter((v): v is number => v !== null)),
-    };
-  });
 }
 
 export function ExperimentDetailPage() {
@@ -150,10 +103,7 @@ export function ExperimentDetailPage() {
 
   // ---- ranking (one row per combination)
   const ranking = useMemo(() => rankCombinations(results, metricKeys), [results, metricKeys]);
-  const rankingByMedia = useMemo(
-    () => [...ranking].sort((a, b) => (b.media ?? -1) - (a.media ?? -1)),
-    [ranking],
-  );
+  const rankingByMedia = useMemo(() => rankByMedia(ranking), [ranking]);
   const winner = rankingByMedia[0];
 
   const sortedRanking = useMemo(() => {
