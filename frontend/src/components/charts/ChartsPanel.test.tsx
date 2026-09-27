@@ -292,6 +292,40 @@ describe("ChartsPanel · figure 4", () => {
     );
   });
 
+  it("puts one matrix cell in the tab order and moves with the arrow keys", async () => {
+    const user = userEvent.setup();
+    const results = fixture().filter(
+      (r) => !(r.chunking === "token" && r.rag === "agentic" && r.llm === "qwen" && r.question === "Pergunta difícil"),
+    );
+    renderPanel({ results });
+    const table = screen.getByRole("table", { name: /figura 4b/i });
+    const cells = table.querySelectorAll("tbody [tabindex]");
+    expect(cells).toHaveLength(12); // 2 questions × 6 combinations, the missing answer included
+    const tabbable = [...cells].filter((c) => c.getAttribute("tabindex") === "0");
+    expect(tabbable).toHaveLength(1);
+    expect(tabbable[0]).toHaveAccessibleName(/^Pergunta difícil · #1:/);
+
+    act(() => {
+      (tabbable[0] as HTMLElement).focus();
+    });
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toHaveAccessibleName(/^Pergunta difícil · #2: sem resposta/);
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement).toHaveAccessibleName(/^Pergunta fácil · #2:/);
+    expect(document.activeElement).toHaveAttribute("tabindex", "0");
+    expect(table.querySelectorAll('tbody [tabindex="0"]')).toHaveLength(1);
+    await user.keyboard("{End}");
+    expect(document.activeElement).toHaveAccessibleName(/^Pergunta fácil · #8:/);
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toHaveAccessibleName(/^Pergunta fácil · #1:/);
+    await user.keyboard("{ArrowUp}");
+    expect(document.activeElement).toHaveAccessibleName(/^Pergunta difícil · #1:/);
+    await user.keyboard("{Enter}");
+    expect(onOpenRow).toHaveBeenCalledWith(
+      expect.objectContaining({ question: "Pergunta difícil", chunking: "token", rag: "agentic", llm: "gemma" }),
+    );
+  });
+
   it("a distribution mark shows the combination's answers", async () => {
     const user = userEvent.setup();
     renderPanel();

@@ -1,5 +1,5 @@
 import { scaleLinear } from "d3-scale";
-import { useState } from "react";
+import { type KeyboardEvent, useRef, useState } from "react";
 
 import type { ExperimentResultRow } from "../../api/types";
 import { comboText } from "../../experiments/ranking";
@@ -35,6 +35,30 @@ export function Stability({
 }) {
   const [ref, width] = useChartWidth();
   const [tip, setTip] = useState<TipAnchor>(null);
+  // Roving tabindex in the matrix: one cell in the tab order, arrows move it.
+  const [active, setActive] = useState({ r: 0, c: 0 });
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  const rowCount = matrix.length;
+  const colCount = focused.length;
+  const current = { r: Math.min(active.r, rowCount - 1), c: Math.min(active.c, colCount - 1) };
+  const moveTo = (r: number, c: number) => {
+    const next = { r: Math.max(0, Math.min(rowCount - 1, r)), c: Math.max(0, Math.min(colCount - 1, c)) };
+    setActive(next);
+    bodyRef.current?.querySelector<HTMLElement>(`[data-cell="${next.r}-${next.c}"]`)?.focus();
+  };
+  const onCellKey = (e: KeyboardEvent, r: number, c: number) => {
+    const target = {
+      ArrowLeft: [r, c - 1],
+      ArrowRight: [r, c + 1],
+      ArrowUp: [r - 1, c],
+      ArrowDown: [r + 1, c],
+      Home: [r, 0],
+      End: [r, colCount - 1],
+    }[e.key];
+    if (!target) return;
+    e.preventDefault();
+    moveTo(target[0], target[1]);
+  };
   const x = scaleLinear().domain([0, 1]).range([LABEL_W, width - RIGHT]);
   const bottom = TOP + focused.length * ROW_H;
   const name = metricLabel(metric);
@@ -139,32 +163,46 @@ export function Stability({
               ))}
             </tr>
           </thead>
-          <tbody>
-            {matrix.map((r) => (
+          <tbody ref={bodyRef}>
+            {matrix.map((r, i) => (
               <tr key={r.question}>
                 <th scope="row" className="ditto-chart-question" title={r.question}>
                   {r.question}
                 </th>
-                {r.cells.map((c, j) => (
-                  <td key={focused[j].row.key} className="ditto-chart-cell">
-                    {c.row ? (
-                      <button
-                        type="button"
-                        data-empty={c.value === null || undefined}
-                        style={c.value === null ? undefined : { background: heat(c.value), color: c.value >= HEAT_WHITE_FROM ? "var(--ink-inverse)" : "var(--ink)" }}
-                        aria-label={`${r.question} · #${focused[j].place}: ${formatScore(c.value)}`}
-                        onClick={() => onOpenRow(c.row as ExperimentResultRow)}
-                      >
-                        {formatScore(c.value)}
-                      </button>
-                    ) : (
-                      <span className="ditto-chart-cell-empty">
-                        <span aria-hidden="true">—</span>
-                        <span className="visually-hidden">sem resposta</span>
-                      </span>
-                    )}
-                  </td>
-                ))}
+                {r.cells.map((c, j) => {
+                  const cellProps = {
+                    "data-cell": `${i}-${j}`,
+                    tabIndex: i === current.r && j === current.c ? 0 : -1,
+                    onFocus: () => setActive({ r: i, c: j }),
+                    onKeyDown: (e: KeyboardEvent) => onCellKey(e, i, j),
+                  };
+                  return (
+                    <td key={focused[j].row.key} className="ditto-chart-cell">
+                      {c.row ? (
+                        <button
+                          type="button"
+                          {...cellProps}
+                          data-empty={c.value === null || undefined}
+                          style={c.value === null ? undefined : { background: heat(c.value), color: c.value >= HEAT_WHITE_FROM ? "var(--ink-inverse)" : "var(--ink)" }}
+                          aria-label={`${r.question} · #${focused[j].place}: ${formatScore(c.value)}`}
+                          onClick={() => onOpenRow(c.row as ExperimentResultRow)}
+                        >
+                          {formatScore(c.value)}
+                        </button>
+                      ) : (
+                        <span
+                          className="ditto-chart-cell-empty"
+                          role="img"
+                          aria-label={`${r.question} · #${focused[j].place}: sem resposta`}
+                          {...cellProps}
+                        >
+                          <span aria-hidden="true">—</span>
+                          <span className="visually-hidden">sem resposta</span>
+                        </span>
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
