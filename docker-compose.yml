@@ -16,6 +16,7 @@ services:
       DATABASE_URL: postgresql://ditto:ditto@postgres:5432/ditto
       QDRANT_URL: http://qdrant:6333
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      HF_TOKEN: ${HF_TOKEN:-}
       # Host Ollama by default; `make llm-setup LLM_SERVER=docker` points it
       # at the ollama service below (http://ollama:11434/v1) via .env.
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}

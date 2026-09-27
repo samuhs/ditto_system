@@ -114,6 +114,7 @@ up() {
       # Read the root .env before leaving it: after `cd backend`, env_get would
       # read backend/.env and silently drop every setting kept at the root.
       gemini_key="$(env_get GEMINI_API_KEY)"
+      hf_token="$(env_get HF_TOKEN)"
       profile="$(memory_profile)"
       max_local_models="$(env_get MAX_LOCAL_MODELS)"
       embedding_device="$(env_get EMBEDDING_DEVICE)"
@@ -127,6 +128,7 @@ up() {
       QDRANT_URL="http://[::1]:$QD_PORT" \
       OLLAMA_BASE_URL="$LLM_URL" \
       GEMINI_API_KEY="$gemini_key" \
+      HF_TOKEN="$hf_token" \
       MEMORY_PROFILE="$profile" \
       MAX_LOCAL_MODELS="$max_local_models" \
       EMBEDDING_DEVICE="$embedding_device" \

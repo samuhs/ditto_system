@@ -46,6 +46,14 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
       name: "Paraphrase",
       description: "Modelo local e leve, bom para frases com o mesmo sentido.",
     },
+    embeddinggemma: {
+      name: "EmbeddingGemma",
+      description: "Modelo local do Google (300M), o melhor aberto e leve em buscas em português. Precisa de HF_TOKEN.",
+    },
+    granite: {
+      name: "Granite",
+      description: "Modelo local e pequeno da IBM (97M), melhor que o e5 em buscas em português.",
+    },
   },
   rag: {
     closed_book: {

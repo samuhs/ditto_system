@@ -69,7 +69,25 @@ def test_e5_embeds_with_injected_model():
 
 
 def test_local_embedders_registered():
-    assert {"e5", "paraphrase"} <= set(embedding_registry.names())
+    assert {"e5", "paraphrase", "embeddinggemma", "granite"} <= set(embedding_registry.names())
+
+
+def test_embeddinggemma_uses_its_retrieval_prompts():
+    from app.core.embedding import EmbeddingGemmaEmbedder
+
+    emb = EmbeddingGemmaEmbedder(model=_FakeSentenceTransformer())
+    doc_prefix, query_prefix = "title: none | text: ", "task: search result | query: "
+    assert emb.embed_documents(["abc"]) == [[float(len(doc_prefix + "abc")), 0.0, 0.0, 1.0]]
+    assert emb.embed_queries(["ab"]) == [[float(len(query_prefix + "ab")), 0.0, 0.0, 1.0]]
+    assert emb.embed_query("ab") == [float(len(query_prefix + "ab")), 0.0, 0.0, 1.0]
+
+
+def test_granite_embeds_without_prefix():
+    from app.core.embedding import GraniteEmbedder
+
+    emb = GraniteEmbedder(model=_FakeSentenceTransformer())
+    assert emb.embed_documents(["abc"]) == [[3.0, 0.0, 0.0, 1.0]]
+    assert emb.embed_query("ab") == [2.0, 0.0, 0.0, 1.0]
 
 
 def test_paraphrase_built_with_injected_model():
@@ -78,9 +96,16 @@ def test_paraphrase_built_with_injected_model():
 
 
 def test_local_embedders_declare_locality():
-    from app.core.embedding import E5Embedder, GeminiEmbedder, ParaphraseEmbedder
+    from app.core.embedding import (
+        E5Embedder,
+        EmbeddingGemmaEmbedder,
+        GeminiEmbedder,
+        GraniteEmbedder,
+        ParaphraseEmbedder,
+    )
 
     assert E5Embedder.is_local and ParaphraseEmbedder.is_local
+    assert EmbeddingGemmaEmbedder.is_local and GraniteEmbedder.is_local
     assert not GeminiEmbedder.is_local
 
 

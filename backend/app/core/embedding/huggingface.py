@@ -71,5 +71,29 @@ class ParaphraseEmbedder(HuggingFaceEmbedder):
         super().__init__("paraphrase-multilingual-MiniLM-L12-v2", model=model, device=device)
 
 
+class EmbeddingGemmaEmbedder(HuggingFaceEmbedder):
+    """Local embedder using EmbeddingGemma-300m (768 dims, best open <1B model on MTEB-BR).
+
+    The repository is gated: HF_TOKEN must belong to an account that accepted
+    the Gemma terms. Its model card asks for task prompts, and it does not
+    support float16 (sentence-transformers loads it in float32).
+    """
+
+    document_prefix = "title: none | text: "
+    query_prefix = "task: search result | query: "
+
+    def __init__(self, model=None, device: str | None = None) -> None:
+        super().__init__("google/embeddinggemma-300m", model=model, device=device)
+
+
+class GraniteEmbedder(HuggingFaceEmbedder):
+    """Local embedder using IBM granite-embedding-97m-multilingual-r2 (384 dims, no prompts)."""
+
+    def __init__(self, model=None, device: str | None = None) -> None:
+        super().__init__("ibm-granite/granite-embedding-97m-multilingual-r2", model=model, device=device)
+
+
 embedding_registry.register("e5", E5Embedder)
 embedding_registry.register("paraphrase", ParaphraseEmbedder)
+embedding_registry.register("embeddinggemma", EmbeddingGemmaEmbedder)
+embedding_registry.register("granite", GraniteEmbedder)
