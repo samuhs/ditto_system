@@ -6,13 +6,14 @@ import { Note } from "../Notice";
 import type { Combination } from "../Score";
 import {
   type CostKind, type FocusState, type Group,
-  costPoints, dimensionEffects, focusSet, hasCost, metricLabel, metricProfile,
+  costPoints, dimensionEffects, focusSet, hasCost, metricLabel, metricProfile, questionMatrix,
 } from "./aggregate";
 import { CostQuality } from "./CostQuality";
 import { DimensionEffects } from "./DimensionEffects";
 import { FocusBar } from "./FocusBar";
 import { MetricProfile } from "./MetricProfile";
 import { GROUP_COLOR, GROUP_LABEL } from "./primitives";
+import { Stability } from "./Stability";
 
 export interface ChartsPanelProps {
   results: ExperimentResultRow[];
@@ -27,7 +28,7 @@ export interface ChartsPanelProps {
 }
 
 export function ChartsPanel({
-  results, metricKeys, ranked, focus, onFocusChange, partial, onShowAnswers,
+  results, metricKeys, ranked, focus, onFocusChange, partial, onShowAnswers, onOpenRow,
 }: ChartsPanelProps) {
   // A metric the experiment no longer has falls back to the média.
   const metric = focus.metric === MEDIA_KEY || metricKeys.includes(focus.metric) ? focus.metric : MEDIA_KEY;
@@ -45,6 +46,7 @@ export function ChartsPanel({
     : available.latency ? "latency" : available.tokens ? "tokens" : null;
   const effects = useMemo(() => dimensionEffects(results, metric), [results, metric]);
   const points = useMemo(() => (cost ? costPoints(results, cost, metric) : []), [results, cost, metric]);
+  const matrix = useMemo(() => questionMatrix(results, focused, metric), [results, focused, metric]);
   const enough = ranked.length >= 2;
   const needTwo = <Note title="Precisa de ao menos 2 combinações">Com uma combinação só não há o que comparar.</Note>;
   const groups = [...new Set(focused.map((f) => f.group))] as Group[];
@@ -100,6 +102,16 @@ export function ChartsPanel({
             focused={focused} ranked={ranked} metric={metric} onShowAnswers={onShowAnswers}
           />
         )}
+      </figure>
+
+      <figure className="ditto-chart-figure">
+        <figcaption className="ditto-caption">
+          <strong>Figura 4.</strong> Estabilidade das combinações em foco. Em (a), cada ponto é uma pergunta; a faixa é o
+          intervalo interquartil e o traço, a mediana. Em (b), as perguntas vão da mais difícil para a mais fácil; clique
+          numa célula para ler a resposta.
+          {suffix}
+        </figcaption>
+        <Stability matrix={matrix} focused={focused} metric={metric} onOpenRow={onOpenRow} onShowAnswers={onShowAnswers} />
       </figure>
     </div>
   );

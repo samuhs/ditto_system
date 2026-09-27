@@ -269,4 +269,12 @@ describe("ExperimentDetailPage", () => {
     await user.click(screen.getByRole("tab", { name: /gráficos/i }));
     expect(await screen.findByRole("radio", { name: "Só top" })).toBeChecked();
   });
+
+  it("opens the result drawer from the charts matrix", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: /gráficos/i }));
+    await user.click(await screen.findByRole("button", { name: /^Pergunta A · #2:/ }));
+    expect(await screen.findByText("Detalhe do resultado")).toBeInTheDocument();
+  });
 });

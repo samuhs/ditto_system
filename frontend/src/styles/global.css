@@ -1352,3 +1352,27 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-chart-frontier { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; }
 .ditto-chart-ring { fill: none; stroke: var(--ink); stroke-width: 1.5; }
 .ditto-chart-dot-muted { fill: var(--line-strong); }
+.ditto-chart-stability { display: flex; flex-direction: column; gap: 10px; }
+.ditto-chart-iqr { opacity: 0.2; }
+.ditto-chart-median { stroke: var(--ink); stroke-width: 2; }
+.ditto-chart-dot-soft { opacity: 0.6; }
+.ditto-chart-matrix { width: auto; }
+.ditto-chart-matrix td.ditto-chart-cell { padding: 2px; border-bottom: 1px solid var(--field); }
+.ditto-chart-matrix th.ditto-chart-question {
+  max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-weight: 400; font-size: 13px; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line);
+}
+.ditto-chart-cell button {
+  display: block; width: 56px; height: 26px; border: 0; border-radius: 2px;
+  font: inherit; font-size: 12px; font-feature-settings: "tnum" 1; cursor: pointer;
+}
+.ditto-chart-cell button[data-empty] {
+  background: repeating-linear-gradient(45deg, var(--binder-2) 0 4px, var(--field) 4px 8px);
+  color: var(--ink-3);
+}
+.ditto-chart-cell button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.ditto-chart-cell-empty { display: block; width: 56px; text-align: center; color: var(--ink-3); }
+.ditto-chart-col { display: inline-block; min-width: 26px; padding: 1px 6px; border-radius: 10px; color: var(--ink-inverse); font-weight: 750; }
+.ditto-chart-col[data-group="top"] { background: var(--hue-violet); }
+.ditto-chart-col[data-group="bottom"] { background: var(--hue-orange); color: var(--ink); }
+.ditto-chart-col[data-group="manual"] { background: var(--hue-ultramarine); }

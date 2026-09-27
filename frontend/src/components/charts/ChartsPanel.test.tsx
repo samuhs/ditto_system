@@ -154,3 +154,46 @@ describe("ChartsPanel · figures 2 and 3", () => {
     expect(mediaMark(1)).toBeInTheDocument();
   });
 });
+
+describe("ChartsPanel · figure 4", () => {
+  it("lists questions hardest first", () => {
+    renderPanel({ initial: { ...DEFAULT_FOCUS, metric: "faithfulness" } });
+    const table = screen.getByRole("table", { name: /figura 4b/i });
+    expect(within(table).getAllByRole("rowheader").map((h) => h.textContent)).toEqual([
+      "Pergunta difícil",
+      "Pergunta fácil",
+    ]);
+  });
+
+  it("clicking a cell opens that answer", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByRole("button", { name: /^Pergunta difícil · #1:/ }));
+    expect(onOpenRow).toHaveBeenCalledWith(
+      expect.objectContaining({ question: "Pergunta difícil", chunking: "token", rag: "agentic", llm: "gemma" }),
+    );
+  });
+
+  it("a distribution mark shows the combination's answers", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await user.click(screen.getByRole("button", { name: /^#1 mediana/ }));
+    expect(onShowAnswers).toHaveBeenCalledWith(expect.objectContaining({ llm: "gemma", chunking: "token" }));
+  });
+
+  it("shows a missing answer as an empty cell", () => {
+    const results = fixture().filter(
+      (r) => !(r.chunking === "token" && r.rag === "agentic" && r.llm === "gemma" && r.question === "Pergunta fácil"),
+    );
+    renderPanel({ results });
+    expect(screen.getByLabelText("sem resposta")).toBeInTheDocument();
+  });
+
+  it("shows a row without metrics as a dash, not NaN", () => {
+    const results = fixture();
+    const i = results.findIndex((r) => r.chunking === "token" && r.rag === "agentic" && r.llm === "gemma");
+    results[i] = { ...results[i], scores: {} };
+    renderPanel({ results });
+    expect(document.body.innerHTML).not.toContain("NaN");
+  });
+});
