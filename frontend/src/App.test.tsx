@@ -11,7 +11,7 @@ vi.mock("./api/client");
 
 beforeEach(() => {
   vi.mocked(client.getOptions).mockResolvedValue({
-    bases: [], chunkings: [], embeddings: [], llms: [], rags: [], retrievers: [], metrics: [],
+    bases: [], chunkings: [], embeddings: [], llm_options: [], rags: [], retrievers: [], metrics: [],
   });
   vi.mocked(client.listExperiments).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 1 });
 });

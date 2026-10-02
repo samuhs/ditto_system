@@ -142,13 +142,13 @@ def test_experiment_records_llm_dimension(client):
     config = json.dumps({
         "base": "viagem", "chunkings": ["recursive"], "embeddings": ["gemini"],
         "rags": ["naive"], "retrievers": ["similarity"], "metrics": ["answer_relevancy"],
-        "llms": ["gemini", "custom"],
+        "llms": ["gemini", "ollama"],
     })
     resp = client.post("/experiments", data={"config": config}, files=files)
     assert resp.status_code == 200
     detail = client.get(f"/experiments/{resp.json()['id']}").json()
     llms_in_rows = {row["llm"] for row in detail["results"]}
-    assert llms_in_rows == {"gemini", "custom"}
+    assert llms_in_rows == {"gemini", "ollama"}
 
 
 def test_get_experiment_reports_pause_requested(client):

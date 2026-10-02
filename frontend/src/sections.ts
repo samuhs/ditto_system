@@ -80,17 +80,13 @@ export const SECTIONS: Section[] = [
   },
 ];
 
-function matches(pathname: string, to: string): boolean {
+export function isPageActive(pathname: string, to: string): boolean {
   if (to === "/") return pathname === "/";
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
 export function sectionForPath(pathname: string): Section {
-  return SECTIONS.find((s) => s.pages.some((p) => matches(pathname, p.to))) ?? SECTIONS[0];
-}
-
-export function isPageActive(pathname: string, to: string): boolean {
-  return matches(pathname, to);
+  return SECTIONS.find((s) => s.pages.some((p) => isPageActive(pathname, p.to))) ?? SECTIONS[0];
 }
 
 /** The division the current page belongs to; provided by the app shell. */

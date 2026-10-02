@@ -15,7 +15,6 @@ import type {
   ExperimentRef,
   FlowSpec,
   IngestResult,
-  OllamaModel,
   Options,
   Persona,
   PromptsResponse,
@@ -187,16 +186,6 @@ export async function saveGeminiKey(key: string): Promise<{ gemini_api_key_set: 
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key }),
-  }));
-}
-
-export async function saveOllamaModels(
-  models: OllamaModel[],
-): Promise<{ ollama_models: OllamaModel[] }> {
-  return asJson(await fetch(`${BASE}/settings/ollama-models`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ models }),
   }));
 }
 

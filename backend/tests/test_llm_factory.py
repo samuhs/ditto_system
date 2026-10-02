@@ -21,12 +21,6 @@ class _FakeStore:
         return []
 
 
-def test_resolve_llm_named_ollama_model(cfg_dir):
-    runtime.set_ollama_models([{"id": "qwen", "model": "qwen2.5:3b-instruct"}], reserved=set())
-    llm = resolve_llm("qwen", client=object())
-    assert isinstance(llm, OllamaLLM)
-
-
 def test_resolve_llm_registry_name(cfg_dir):
     assert isinstance(resolve_llm("gemini", client=object()), GeminiLLM)
 
@@ -60,7 +54,6 @@ def _options(lister):
 
 
 def test_options_lists_real_model_names_with_location(cfg_dir):
-    runtime.set_ollama_models([{"id": "qwen", "model": "qwen2.5:3b-instruct"}], reserved=set())
     runtime.set_gemini_key("test-key")
     body = _options(lambda: ["qwen2.5:3b-instruct", "llama3.2:latest"])
     assert body["llm_options"] == [
@@ -68,7 +61,6 @@ def test_options_lists_real_model_names_with_location(cfg_dir):
         {"value": "qwen2.5:3b-instruct", "label": "qwen2.5:3b-instruct", "location": "local"},
         {"value": "llama3.2:latest", "label": "llama3.2:latest", "location": "local"},
     ]
-    assert body["llms"] == [o["value"] for o in body["llm_options"]]
 
 
 def test_options_survives_ollama_outage(cfg_dir):
@@ -77,9 +69,9 @@ def test_options_survives_ollama_outage(cfg_dir):
 
     runtime.set_gemini_key("test-key")
     body = _options(_down)
-    assert body["llms"] == ["gemini-2.5-flash-lite"]
+    assert [o["value"] for o in body["llm_options"]] == ["gemini-2.5-flash-lite"]
 
 
 def test_options_hide_gemini_without_a_key(cfg_dir):
     body = _options(lambda: ["qwen3:1.7b"])
-    assert body["llms"] == ["qwen3:1.7b"]
+    assert [o["value"] for o in body["llm_options"]] == ["qwen3:1.7b"]

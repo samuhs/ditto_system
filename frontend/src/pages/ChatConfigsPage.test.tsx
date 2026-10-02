@@ -21,7 +21,7 @@ function renderPage() {
 
 beforeEach(() => {
   vi.mocked(client.getOptions).mockResolvedValue({
-    bases: ["viagem"], chunkings: ["recursive"], embeddings: ["gemini"], llms: ["gemini"],
+    bases: ["viagem"], chunkings: ["recursive"], embeddings: ["gemini"], llm_options: [{ value: "gemini", label: "gemini", location: "remote" }],
     rags: ["naive"], retrievers: ["similarity"], metrics: ["rouge_l"],
   });
   vi.mocked(client.getPersonas).mockResolvedValue({ personas: ["travel_guide", "assistant"] });
@@ -59,7 +59,6 @@ describe("ChatConfigsPage", () => {
     vi.mocked(client.getOptions).mockResolvedValue({
       bases: ["viagem"], chunkings: ["recursive"], embeddings: ["e5"], rags: ["naive"],
       retrievers: ["similarity"], metrics: ["rouge_l"],
-      llms: ["gemini-2.5-flash-lite", "qwen3:1.7b"],
       llm_options: [
         { value: "gemini-2.5-flash-lite", label: "gemini-2.5-flash-lite", location: "remote" },
         { value: "qwen3:1.7b", label: "qwen3:1.7b", location: "local" },

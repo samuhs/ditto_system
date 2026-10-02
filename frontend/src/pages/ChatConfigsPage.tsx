@@ -48,8 +48,9 @@ export function ChatConfigsPage() {
         const chatRags = opts.rags.filter((r) => r !== "oracle");
         if (chatRags.length > 0) setRag(chatRags[0]);
         // A local model first: it needs no API key and costs no quota.
-        const local = opts.llm_options?.find((o) => o.location === "local")?.value;
-        if (local ?? opts.llms[0]) setLlm(local ?? opts.llms[0]);
+        const local = opts.llm_options.find((o) => o.location === "local")?.value;
+        const first = local ?? opts.llm_options[0]?.value;
+        if (first) setLlm(first);
       })
       .catch((e) => setError(errorText(e)));
     getPersonas()

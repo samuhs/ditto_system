@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe("api client", () => {
   it("getOptions returns parsed options", async () => {
-    const options = { chunkings: ["recursive"], embeddings: ["gemini"], llms: ["gemini"], rags: ["naive"], retrievers: ["similarity"], metrics: ["rouge_l"] };
+    const options = { chunkings: ["recursive"], embeddings: ["gemini"], llm_options: [{ value: "gemini", label: "gemini", location: "remote" }], rags: ["naive"], retrievers: ["similarity"], metrics: ["rouge_l"] };
     vi.stubGlobal("fetch", mockFetchOnce(options));
     await expect(getOptions()).resolves.toEqual(options);
     expect(fetch).toHaveBeenCalledWith("/api/options");

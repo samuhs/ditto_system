@@ -37,7 +37,7 @@ def test_options_lists_registered_techniques(client):
     body = response.json()
     assert {"fixed", "recursive", "token", "semantic"} <= set(body["chunkings"])
     assert {"gemini", "e5", "paraphrase"} <= set(body["embeddings"])
-    assert "gemini-2.5-flash-lite" in body["llms"]
+    assert "gemini-2.5-flash-lite" in [o["value"] for o in body["llm_options"]]
     assert {"naive", "agentic"} <= set(body["rags"])
     assert {"similarity", "mmr", "multi_query", "parent_document"} <= set(body["retrievers"])
     assert {"answer_relevancy", "faithfulness", "rouge_l"} <= set(body["metrics"])

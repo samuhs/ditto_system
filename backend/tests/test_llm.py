@@ -1,6 +1,5 @@
 """Tests for the LLM provider interface and implementations."""
 from app.core.llm.base import LLM, build_llm, llm_registry
-from app.core.llm.custom import CustomLLM
 from app.core.llm.gemini import GeminiLLM
 from app.core.llm.ollama import OllamaLLM
 
@@ -29,14 +28,8 @@ def test_gemini_generate_uses_injected_client():
     assert client.last_prompt == "question?"
 
 
-def test_custom_generate_uses_injected_client():
-    client = _FakeClient()
-    llm = CustomLLM(model="qwen2", base_url="http://localhost:11434/v1", client=client)
-    assert llm.generate("hi") == "generated answer"
-
-
 def test_providers_registered():
-    assert set(llm_registry.names()) >= {"gemini", "custom"}
+    assert set(llm_registry.names()) >= {"gemini", "ollama"}
 
 
 def test_build_llm_constructs_provider():
@@ -46,11 +39,9 @@ def test_build_llm_constructs_provider():
     assert isinstance(llm, LLM)
     assert llm.generate("x") == "generated answer"
 
-    custom = build_llm(
-        "custom", model="qwen2", base_url="http://localhost:11434/v1", client=_FakeClient()
-    )
-    assert isinstance(custom, CustomLLM)
-    assert custom.generate("y") == "generated answer"
+    local = build_llm("ollama", model="qwen2", client=_FakeClient())
+    assert isinstance(local, OllamaLLM)
+    assert local.generate("y") == "generated answer"
 
 
 def test_ollama_registered():

@@ -24,7 +24,7 @@ from app.core.difficulty.perplexity import (
 )
 from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
-from app.core.config.runtime import get_eval_embedding, get_ollama_models
+from app.core.config.runtime import get_eval_embedding
 from app.core.evaluation.runner import evaluate_sample, metrics_need_embedder
 from app.core.llm import ollama
 from app.core.llm.factory import is_local_llm, resolve_llm
@@ -303,18 +303,17 @@ def _store_perplexities(
     for llm_name in dict.fromkeys(config.llms):
         if not is_local_llm(llm_name):
             continue
-        model = _llm_server_model(llm_name)
-        scorer = deps.perplexity_scorer_factory(model)
+        scorer = deps.perplexity_scorer_factory(llm_name)
         if scorer is None:
             continue
         try:
-            scores = cached_perplexities(scorer, model, texts)
+            scores = cached_perplexities(scorer, llm_name, texts)
         except PerplexitySkipped as exc:
-            logger.warning("perplexity skipped for %s: %s", model, exc)
+            logger.warning("perplexity skipped for %s: %s", llm_name, exc)
             skipped[llm_name] = {"free_mb": exc.free_mb, "needed_mb": exc.needed_mb}
             continue
         except Exception as exc:  # noqa: BLE001
-            logger.warning("perplexity failed for %s: %s", model, exc)
+            logger.warning("perplexity failed for %s: %s", llm_name, exc)
             skipped[llm_name] = {"error": str(exc)[:300]}
             continue
         for text, value in scores.items():
@@ -329,14 +328,6 @@ def _store_perplexities(
         experiment = session.get(Experiment, experiment_id)
         experiment.config = {**(experiment.config or {}), "perplexity_skipped": skipped}
         session.commit()
-
-
-def _llm_server_model(name: str) -> str:
-    """The model name the local LLM server knows (legacy named ids map to their model)."""
-    for entry in get_ollama_models():
-        if entry.get("id") == name:
-            return entry["model"]
-    return name
 
 
 def _score_with_retry(sample: EvalSample, metrics: list, eval_embedder) -> dict[str, float]:
@@ -359,7 +350,7 @@ def _score_results(
     """Stage C: free the LLM, load the eval embedder once, score every stored answer."""
     for llm_name in dict.fromkeys(config.llms):
         if is_local_llm(llm_name):
-            ollama.unload_local_llm(_llm_server_model(llm_name))
+            ollama.unload_local_llm(llm_name)
     rows = (
         session.query(RunResult)
         .join(ExperimentRun)

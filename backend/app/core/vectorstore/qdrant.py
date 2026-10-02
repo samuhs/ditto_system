@@ -32,6 +32,12 @@ def collection_name(base: str, chunking: str, embedding: str) -> str:
     return f"{base}__{chunking}__{embedding}"
 
 
+def parse_collection_name(name: str) -> tuple[str, str, str] | None:
+    """Split a collection name into (base, chunking, embedding); None if it is not one."""
+    parts = name.rsplit("__", 2)
+    return (parts[0], parts[1], parts[2]) if len(parts) == 3 else None
+
+
 class QdrantStore:
     """Thin wrapper over qdrant-client for the project's collection conventions."""
 

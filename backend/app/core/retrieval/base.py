@@ -1,8 +1,7 @@
-"""Retriever interface, registry, factory, and similarity helpers."""
+"""Retriever interface, registry, and factory."""
 from abc import ABC, abstractmethod
 
 from app.core.registry import Registry
-from app.core.vector_math import cosine_similarity  # re-exported for retrievers
 
 
 class Retriever(ABC):

@@ -3,6 +3,7 @@ import math
 from dataclasses import dataclass, field
 
 from app.core.evaluation.overlap_metrics import normalize_pt_tokens
+from app.core.vectorstore.qdrant import parse_collection_name
 
 
 @dataclass
@@ -35,8 +36,9 @@ def corpus_stats_for_base(store, base: str) -> CorpusStats | None:
     (by name) is used: IDF then counts that chunking's chunks as documents.
     Cached per collection and size, so re-ingesting refreshes it.
     """
-    prefix = f"{base}__"
-    names = sorted(n for n in store.list_collections() if n.startswith(prefix))
+    names = sorted(
+        n for n in store.list_collections() if (parse_collection_name(n) or ("",))[0] == base
+    )
     if not names:
         return None
     name = names[0]

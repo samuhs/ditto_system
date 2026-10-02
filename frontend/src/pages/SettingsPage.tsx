@@ -1,8 +1,8 @@
-import { Button, PasswordInput, TextInput } from "@mantine/core";
+import { Button, PasswordInput } from "@mantine/core";
 import { useEffect, useState } from "react";
 
-import { getMemory, getSettings, saveGeminiKey, saveOllamaModels } from "../api/client";
-import type { MemoryStatus, OllamaModel } from "../api/types";
+import { getMemory, getSettings, saveGeminiKey } from "../api/client";
+import type { MemoryStatus } from "../api/types";
 import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { StatusTag } from "../components/StatusTag";
@@ -18,10 +18,8 @@ const gb = (bytes: number) => `${(bytes / 1024 ** 3).toFixed(1)} GB`;
 export function SettingsPage() {
   const [keySet, setKeySet] = useState(false);
   const [newKey, setNewKey] = useState("");
-  const [models, setModels] = useState<OllamaModel[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [keySaved, setKeySaved] = useState(false);
-  const [modelsSaved, setModelsSaved] = useState(false);
   const [memory, setMemory] = useState<MemoryStatus | null>(null);
   const [memoryError, setMemoryError] = useState(false);
 
@@ -34,10 +32,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     getSettings()
-      .then((s) => {
-        setKeySet(s.gemini_api_key_set);
-        setModels(s.ollama_models);
-      })
+      .then((s) => setKeySet(s.gemini_api_key_set))
       .catch((e) => setError(errorText(e)));
   }, []);
 
@@ -54,36 +49,11 @@ export function SettingsPage() {
     }
   }
 
-  function addModel() {
-    setModels((m) => [...m, { id: "", model: "" }]);
-    setModelsSaved(false);
-  }
-  function updateModel(i: number, field: "id" | "model", value: string) {
-    setModels((m) => m.map((row, idx) => (idx === i ? { ...row, [field]: value } : row)));
-    setModelsSaved(false);
-  }
-  function removeModel(i: number) {
-    setModels((m) => m.filter((_, idx) => idx !== i));
-    setModelsSaved(false);
-  }
-
-  async function saveModels() {
-    setError(null);
-    setModelsSaved(false);
-    try {
-      const r = await saveOllamaModels(models);
-      setModels(r.ollama_models);
-      setModelsSaved(true);
-    } catch (e) {
-      setError(errorText(e));
-    }
-  }
-
   return (
     <div>
       <PageHeader
         title="Sistema"
-        lede="Chaves e modelos usados pelo Ditto. As mudanças valem para as próximas execuções."
+        lede="Memória e chaves usadas pelo Ditto. As mudanças valem para as próximas execuções."
       />
 
       {error && (
@@ -154,51 +124,6 @@ export function SettingsPage() {
                 Salvar
               </Button>
               {keySaved && <Saved>Chave salva</Saved>}
-            </div>
-          </div>
-        </section>
-
-        <section className="ditto-sec">
-          <div className="ditto-sec-head">
-            <h2 className="ditto-h2">Modelos Ollama</h2>
-            <p className="ditto-read">
-              Cada linha vira uma opção de modelo nos experimentos e no chat. O identificador é o
-              nome curto; o modelo é o nome no servidor Ollama.
-            </p>
-          </div>
-          <div className="ditto-sec-body">
-            {models.length === 0 && (
-              <p className="ditto-read" style={{ margin: 0 }}>
-                Nenhum modelo cadastrado.
-              </p>
-            )}
-            {models.map((row, i) => (
-              <div key={i} className="ditto-row-actions" style={{ alignItems: "flex-end" }}>
-                <TextInput
-                  label="Identificador"
-                  placeholder="ex.: qwen"
-                  value={row.id}
-                  onChange={(e) => updateModel(i, "id", e.currentTarget.value)}
-                  w={180}
-                />
-                <TextInput
-                  label="Modelo"
-                  placeholder="ex.: qwen2.5:3b-instruct"
-                  value={row.model}
-                  onChange={(e) => updateModel(i, "model", e.currentTarget.value)}
-                  style={{ flex: "1 1 240px" }}
-                />
-                <Button variant="subtle" onClick={() => removeModel(i)} aria-label={`Remover modelo ${row.id || i + 1}`}>
-                  Remover
-                </Button>
-              </div>
-            ))}
-            <div className="ditto-row-actions">
-              <Button variant="default" onClick={addModel}>
-                Adicionar modelo
-              </Button>
-              <Button onClick={saveModels}>Salvar modelos</Button>
-              {modelsSaved && <Saved>Modelos salvos</Saved>}
             </div>
           </div>
         </section>

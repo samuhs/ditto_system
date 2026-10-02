@@ -19,7 +19,6 @@ function renderPage() {
 beforeEach(() => {
   vi.mocked(client.getSettings).mockResolvedValue({
     gemini_api_key_set: false,
-    ollama_models: [{ id: "qwen", model: "qwen2.5:3b-instruct" }],
   });
   vi.mocked(client.saveGeminiKey).mockResolvedValue({ gemini_api_key_set: true });
   vi.mocked(client.getMemory).mockResolvedValue({
@@ -28,9 +27,6 @@ beforeEach(() => {
     available_bytes: 2 * 1024 ** 3,
     process_memory_bytes: 1024 ** 3,
     loaded_models: [{ name: "e5", device: "cpu", local: true, in_use: 0 }],
-  });
-  vi.mocked(client.saveOllamaModels).mockResolvedValue({
-    ollama_models: [{ id: "qwen", model: "qwen2.5:3b-instruct" }],
   });
 });
 
@@ -46,13 +42,12 @@ describe("SettingsPage", () => {
     vi.mocked(client.getMemory).mockRejectedValue(new Error("down"));
     renderPage();
     expect(await screen.findByText(/Não foi possível ler o estado da memória/)).toBeInTheDocument();
-    expect(await screen.findByDisplayValue("qwen")).toBeInTheDocument();
+    expect(await screen.findByText(/Nenhuma chave configurada/)).toBeInTheDocument();
   });
 
-  it("loads settings and shows key state + models", async () => {
+  it("loads settings and shows the key state", async () => {
     renderPage();
     expect(await screen.findByText(/Nenhuma chave configurada/)).toBeInTheDocument();
-    expect(screen.getByDisplayValue("qwen")).toBeInTheDocument();
   });
 
   it("saves the gemini key", async () => {
@@ -62,17 +57,5 @@ describe("SettingsPage", () => {
     await user.type(screen.getByLabelText(/Nova chave/), "abc");
     await user.click(screen.getByRole("button", { name: /^salvar$/i }));
     await waitFor(() => expect(client.saveGeminiKey).toHaveBeenCalledWith("abc"));
-  });
-
-  it("saves the ollama models", async () => {
-    renderPage();
-    const user = userEvent.setup();
-    await screen.findByDisplayValue("qwen");
-    await user.click(screen.getByRole("button", { name: /salvar modelos/i }));
-    await waitFor(() =>
-      expect(client.saveOllamaModels).toHaveBeenCalledWith([
-        { id: "qwen", model: "qwen2.5:3b-instruct" },
-      ]),
-    );
   });
 });

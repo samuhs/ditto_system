@@ -1,12 +1,9 @@
 """Runtime-editable app settings, backed by a JSON file (env fallback for secrets)."""
 import json
 import os
-import re
 from pathlib import Path
 
 from app.core.config.settings import get_settings
-
-_ID_RE = re.compile(r"^[\w-]+$")
 
 # Local and API-free, so scoring never spends Gemini quota unless the user picks it.
 DEFAULT_EVAL_EMBEDDING = "paraphrase"
@@ -56,36 +53,6 @@ def set_gemini_key(key: str | None) -> None:
         data["gemini_api_key"] = key
     else:
         data.pop("gemini_api_key", None)
-    save_config(data)
-
-
-def get_ollama_models() -> list[dict]:
-    """The list of named Ollama models ([{id, model}, ...])."""
-    return load_config().get("ollama_models", [])
-
-
-def validate_ollama_models(models: list[dict], reserved: set[str]) -> None:
-    """Raise ValueError if any entry is malformed, duplicated, or reserved."""
-    seen: set[str] = set()
-    for entry in models:
-        mid = entry.get("id", "")
-        model = entry.get("model", "")
-        if not _ID_RE.match(mid):
-            raise ValueError(f"invalid model id: {mid!r}")
-        if not model:
-            raise ValueError(f"empty model for id: {mid!r}")
-        if mid in reserved:
-            raise ValueError(f"id conflicts with a built-in provider: {mid!r}")
-        if mid in seen:
-            raise ValueError(f"duplicate model id: {mid!r}")
-        seen.add(mid)
-
-
-def set_ollama_models(models: list[dict], reserved: set[str] | None = None) -> None:
-    """Validate and persist the named Ollama models."""
-    validate_ollama_models(models, reserved or set())
-    data = load_config()
-    data["ollama_models"] = [{"id": m["id"], "model": m["model"]} for m in models]
     save_config(data)
 
 

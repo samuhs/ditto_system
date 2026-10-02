@@ -34,24 +34,3 @@ def test_empty_env_gemini_key_is_none(cfg_dir, monkeypatch):
         assert runtime.get_gemini_key() is None
     finally:
         get_settings.cache_clear()
-
-
-def test_ollama_models_roundtrip(cfg_dir):
-    assert runtime.get_ollama_models() == []
-    runtime.set_ollama_models(
-        [{"id": "qwen", "model": "qwen2.5:3b-instruct"}], reserved={"gemini"}
-    )
-    assert runtime.get_ollama_models() == [{"id": "qwen", "model": "qwen2.5:3b-instruct"}]
-
-
-def test_validate_ollama_models_rejects_bad_entries(cfg_dir):
-    with pytest.raises(ValueError):
-        runtime.validate_ollama_models([{"id": "bad id", "model": "m"}], reserved=set())
-    with pytest.raises(ValueError):
-        runtime.validate_ollama_models([{"id": "qwen", "model": ""}], reserved=set())
-    with pytest.raises(ValueError):
-        runtime.validate_ollama_models([{"id": "gemini", "model": "m"}], reserved={"gemini"})
-    with pytest.raises(ValueError):
-        runtime.validate_ollama_models(
-            [{"id": "x", "model": "m"}, {"id": "x", "model": "n"}], reserved=set()
-        )

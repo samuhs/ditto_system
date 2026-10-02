@@ -67,7 +67,7 @@ export function ExperimentPage() {
     indexKeys.length === allIndexKeys.length &&
     rags.length === options.rags.length &&
     retrievers.length === options.retrievers.length &&
-    llms.length === options.llms.length &&
+    llms.length === options.llm_options.length &&
     metrics.length === options.metrics.length;
 
   function toggleAll() {
@@ -81,7 +81,7 @@ export function ExperimentPage() {
       setIndexKeys(allIndexKeys);
       setRags(options?.rags ?? []);
       setRetrievers(options?.retrievers ?? []);
-      setLlms(options?.llms ?? []);
+      setLlms(options?.llm_options.map((o) => o.value) ?? []);
       setMetrics(options?.metrics ?? []);
     }
   }

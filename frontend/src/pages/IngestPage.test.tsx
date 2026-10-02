@@ -27,7 +27,7 @@ beforeEach(() => {
     bases: ["viagem"],
     chunkings: ["recursive", "fixed"],
     embeddings: ["gemini", "e5"],
-    llms: ["gemini"],
+    llm_options: [{ value: "gemini", label: "gemini", location: "remote" }],
     rags: ["naive"],
     retrievers: ["similarity"],
     metrics: ["rouge_l"],

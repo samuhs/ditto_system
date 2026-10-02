@@ -1,6 +1,7 @@
 """Maximal Marginal Relevance retriever (diversifies results)."""
 from app.core.embedding.base import Embedder
-from app.core.retrieval.base import Retriever, cosine_similarity, retrieval_registry
+from app.core.retrieval.base import Retriever, retrieval_registry
+from app.core.vector_math import cosine_similarity
 from app.core.vectorstore.qdrant import QdrantStore
 
 

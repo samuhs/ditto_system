@@ -18,7 +18,7 @@ def _never_called():
 @pytest.mark.parametrize(
     ("name", "local"),
     [("gemini", False), ("gemini-2.5-flash-lite", False), ("qwen3:1.7b", True),
-     ("mlx-community/Qwen2.5-3B-Instruct-4bit", True), ("ollama", True), ("custom", True)],
+     ("mlx-community/Qwen2.5-3B-Instruct-4bit", True), ("ollama", True)],
 )
 def test_is_local_llm(name, local):
     assert is_local_llm(name) is local

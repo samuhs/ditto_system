@@ -33,7 +33,7 @@ beforeEach(() => {
     },
     chunkings: ["recursive", "fixed", "token"],
     embeddings: ["gemini", "e5"],
-    llms: ["gemini"],
+    llm_options: [{ value: "gemini", label: "gemini", location: "remote" }],
     rags: ["naive"],
     retrievers: ["similarity"],
     metrics: ["answer_relevancy"],
@@ -125,7 +125,6 @@ describe("ExperimentPage", () => {
   it("lists real model names with a local/remote tag", async () => {
     vi.mocked(client.getOptions).mockResolvedValue({
       bases: ["teste-1"], chunkings: ["recursive"], embeddings: ["gemini"],
-      llms: ["gemini-2.5-flash-lite", "qwen2.5:3b-instruct"],
       llm_options: [
         { value: "gemini-2.5-flash-lite", label: "gemini-2.5-flash-lite", location: "remote" },
         { value: "qwen2.5:3b-instruct", label: "qwen2.5:3b-instruct", location: "local" },

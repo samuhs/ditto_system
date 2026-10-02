@@ -11,7 +11,7 @@ from app.core.llm.gemini import DEFAULT_GEMINI_MODEL
 from app.core.llm.ollama import list_ollama_models
 from app.core.rag.base import rag_registry
 from app.core.retrieval.base import retrieval_registry
-from app.core.vectorstore.qdrant import QdrantStore
+from app.core.vectorstore.qdrant import QdrantStore, parse_collection_name
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ def _llm_options(list_ollama: Callable[[], list[str]]) -> list[dict[str, str]]:
 
 
 def _base_indexes(store: QdrantStore) -> dict[str, list[dict[str, str]]]:
-    """Indexed chunking x embedding pairs per base, parsed from collection names.
+    """Indexed chunking x embedding pairs per base, read from the collection names.
 
     Empty if the store is unreachable: a vector-store outage must not break the form pages.
     """
@@ -51,10 +51,10 @@ def _base_indexes(store: QdrantStore) -> dict[str, list[dict[str, str]]]:
         return {}
     indexes: dict[str, list[dict[str, str]]] = {}
     for name in sorted(names):
-        parts = name.rsplit("__", 2)
-        if len(parts) != 3:
+        parsed = parse_collection_name(name)
+        if parsed is None:
             continue
-        base, chunking, embedding = parts
+        base, chunking, embedding = parsed
         indexes.setdefault(base, []).append({"chunking": chunking, "embedding": embedding})
     return dict(sorted(indexes.items()))
 
@@ -66,14 +66,12 @@ def options(
 ) -> dict:
     """List the registered techniques, ingested bases and available LLM models."""
     base_indexes = _base_indexes(store)
-    llm_options = _llm_options(list_ollama)
     return {
         "bases": list(base_indexes),
         "base_indexes": base_indexes,
         "chunkings": chunking_registry.names(),
         "embeddings": embedding_registry.names(),
-        "llms": [o["value"] for o in llm_options],
-        "llm_options": llm_options,
+        "llm_options": _llm_options(list_ollama),
         "rags": rag_registry.names(),
         "retrievers": retrieval_registry.names(),
         "metrics": evaluation_registry.names(),

@@ -2,7 +2,7 @@
 import pytest
 from qdrant_client import QdrantClient
 
-from app.core.vectorstore.qdrant import QdrantStore, collection_name
+from app.core.vectorstore.qdrant import QdrantStore, collection_name, parse_collection_name
 
 
 @pytest.fixture
@@ -12,6 +12,12 @@ def store():
 
 def test_collection_name_convention():
     assert collection_name("viagem", "recursive", "e5") == "viagem__recursive__e5"
+
+
+def test_parse_collection_name_inverts_the_convention():
+    assert parse_collection_name("viagem__recursive__e5") == ("viagem", "recursive", "e5")
+    assert parse_collection_name("guia__da__cidade__token__gemini") == ("guia__da__cidade", "token", "gemini")
+    assert parse_collection_name("solta") is None
 
 
 def test_add_and_search_returns_nearest(store):

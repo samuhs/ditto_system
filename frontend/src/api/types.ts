@@ -14,8 +14,7 @@ export interface Options {
   base_indexes?: Record<string, IndexPair[]>;
   chunkings: string[];
   embeddings: string[];
-  llms: string[];
-  llm_options?: LlmOption[];
+  llm_options: LlmOption[];
   rags: string[];
   retrievers: string[];
   metrics: string[];
@@ -249,11 +248,6 @@ export interface DialogueListParams {
   sort?: "recent" | "oldest" | "rating_asc" | "rating_desc";
 }
 
-export interface OllamaModel {
-  id: string;
-  model: string;
-}
-
 export interface MemoryStatus {
   profile: { name: string; max_local_models: number; embedding_device: string; max_concurrency: number };
   total_bytes: number;
@@ -265,7 +259,6 @@ export interface MemoryStatus {
 
 export interface AppSettings {
   gemini_api_key_set: boolean;
-  ollama_models: OllamaModel[];
 }
 
 export interface EvaluationSettings {
