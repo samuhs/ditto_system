@@ -1026,9 +1026,10 @@ def test_graph_builds_the_indexes_grafo_once_and_answers_from_its_chunks(session
     # graph does not multiply by the Retrievers.
     assert sorted(runs) == [("graph", "similarity"), ("naive", "mmr"), ("naive", "similarity")]
     graph_run = runs[("graph", "similarity")]
-    # The malformed line is counted, and the row still runs.
+    # The malformed line is counted, and the row still runs. Igreja Matriz, only an
+    # endpoint, is promoted to an entity.
     assert graph_run.graph_stats == {
-        "entities": 1, "relations": 1, "chunks": len(chunks),
+        "entities": 2, "relations": 1, "chunks": len(chunks),
         "lines": 3 * len(chunks), "failed_lines": len(chunks), "failed_chunks": 0,
     }
     assert runs[("naive", "similarity")].graph_stats is None

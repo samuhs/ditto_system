@@ -3,7 +3,8 @@
 The query is a LangGraph StateGraph with no LLM call before generation:
 
     START -> link (question vector -> top-k entities and relations)
-          -> expand (1-hop neighbours) -> score_chunks (top-k chunks)
+          -> expand (1-hop neighbours and synonyms, weighted by specificity)
+          -> score_chunks (top-k chunks)
           -> generate (naive answer prompt + a short block of facts) -> END
 
 The contexts are the Índice's chunks, in the same format as the other techniques.
@@ -74,10 +75,20 @@ class GraphRAG(RAG):
             }
 
         def expand(state: QueryState) -> dict:
-            scores = dict(state["entity_scores"])
-            for key, score in state["entity_scores"].items():
-                for neighbour in graph.neighbours(key):
-                    scores[neighbour] = max(scores.get(neighbour, 0.0), score * NEIGHBOUR_WEIGHT)
+            # Every node counts for its specificity: the city named in almost every
+            # chunk weighs little as a seed, and passes little on to its neighbours.
+            scores = {
+                key: score * graph.specificity(key)
+                for key, score in state["entity_scores"].items()
+            }
+            for key, score in list(scores.items()):
+                # Relation neighbours count for a share; synonyms for their similarity.
+                reached = [(n, NEIGHBOUR_WEIGHT) for n in graph.neighbours(key)] + list(
+                    graph.entities[key].synonyms.items()
+                )
+                for neighbour, weight in reached:
+                    reach = score * weight * graph.specificity(neighbour)
+                    scores[neighbour] = max(scores.get(neighbour, 0.0), reach)
             return {"node_scores": scores}
 
         def score_chunks(state: QueryState) -> dict:
@@ -87,8 +98,13 @@ class GraphRAG(RAG):
                 for cid in entity.chunk_ids if entity else []:
                     chunk_scores[cid] = chunk_scores.get(cid, 0.0) + score
             for relation, score in state["relations"]:
+                # A relation weighs the geometric mean of its endpoints' specificity:
+                # one that only links an entity to the city counts for little.
+                weight = (
+                    graph.specificity(relation.source_key) * graph.specificity(relation.target_key)
+                ) ** 0.5
                 for cid in relation.chunk_ids:
-                    chunk_scores[cid] = chunk_scores.get(cid, 0.0) + score
+                    chunk_scores[cid] = chunk_scores.get(cid, 0.0) + score * weight
             ranked = sorted(
                 (item for item in chunk_scores.items() if item[1] > 0 and item[0] in graph.chunks),
                 key=lambda item: (-item[1], item[0]),

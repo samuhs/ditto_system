@@ -3,18 +3,18 @@
     START -> load_chunks -> [Send("extract", chunk) per chunk] -> merge -> write -> END
 
 Each chunk is extracted on its own branch (run in parallel up to max_concurrency)
-and the results accumulate through a reducer. Entities merge by normalized name;
-relations by their pair of entity keys.
+and the results accumulate through a reducer, then are consolidated without an LLM
+(names, aliases, synonyms: see consolidation.py).
 """
 import logging
 import operator
 from abc import ABC, abstractmethod
-from collections import Counter
 from typing import Annotated, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
+from app.core.graph.consolidation import consolidate, link_synonyms
 from app.core.graph.extraction import Extraction, extract
 from app.core.graph.knowledge import (
     GraphEntity,
@@ -22,7 +22,6 @@ from app.core.graph.knowledge import (
     KnowledgeGraph,
     index_chunks,
     load_graph,
-    normalize_name,
     write_graph,
 )
 from app.core.llm.base import LLM
@@ -48,62 +47,6 @@ class BuildState(TypedDict, total=False):
     entities: list[GraphEntity]
     relations: list[GraphRelation]
     stats: dict
-
-
-def _join(texts: list[str]) -> str:
-    """Distinct non-empty texts, in order, as one."""
-    return " ".join(dict.fromkeys(t for t in texts if t))
-
-
-def merge_extractions(
-    extractions: list[ChunkExtraction],
-) -> tuple[list[GraphEntity], list[GraphRelation]]:
-    """Merge the chunks' entities by normalized name and relations by entity pair.
-
-    An entity keeps its first spelling, the majority type and every description;
-    both keep the ids of every chunk they came from.
-    """
-    entities: dict[str, dict] = {}
-    relations: dict[tuple[str, str], dict] = {}
-    for item in sorted(extractions, key=lambda x: x["chunk_id"]):
-        found = item["extraction"]
-        if found is None:
-            continue
-        chunk_id = item["chunk_id"]
-        for e in found.entities:
-            slot = entities.setdefault(
-                normalize_name(e.name),
-                {"name": e.name, "types": Counter(), "descriptions": [], "chunk_ids": set()},
-            )
-            slot["types"][e.type] += 1
-            slot["descriptions"].append(e.description)
-            slot["chunk_ids"].add(chunk_id)
-        for r in found.relations:
-            key = (normalize_name(r.source), normalize_name(r.target))
-            slot = relations.setdefault(
-                key,
-                {"source": r.source, "target": r.target, "keywords": [], "descriptions": [],
-                 "chunk_ids": set()},
-            )
-            slot["keywords"].append(r.keywords)
-            slot["descriptions"].append(r.description)
-            slot["chunk_ids"].add(chunk_id)
-    merged_entities = [
-        GraphEntity(
-            key=key, name=s["name"], type=s["types"].most_common(1)[0][0],
-            description=_join(s["descriptions"]), chunk_ids=sorted(s["chunk_ids"]),
-        )
-        for key, s in entities.items()
-    ]
-    merged_relations = [
-        GraphRelation(
-            source=s["source"], target=s["target"], source_key=source, target_key=target,
-            keywords=_join(s["keywords"]), description=_join(s["descriptions"]),
-            chunk_ids=sorted(s["chunk_ids"]),
-        )
-        for (source, target), s in relations.items()
-    ]
-    return merged_entities, merged_relations
 
 
 def _stats(extractions: list[ChunkExtraction], entities, relations) -> dict:
@@ -171,7 +114,8 @@ class LLMGraphBuilder(GraphBuilder):
             extractions = state.get("extractions", [])
             if extractions and all(x["extraction"] is None for x in extractions):
                 raise GraphBuildError("the LLM extrator failed on every chunk")
-            entities, relations = merge_extractions(extractions)
+            entities, relations = consolidate(extractions)
+            entities = link_synonyms(entities, embedder)
             return {
                 "entities": entities,
                 "relations": relations,

@@ -27,6 +27,10 @@ class GraphEntity(BaseModel):
     type: str
     description: str
     chunk_ids: list[int]
+    # Other names of the same entity (nicknames between parentheses).
+    aliases: list[str] = []
+    # Keys of entities with a close name, by cosine; linked, never merged.
+    synonyms: dict[str, float] = {}
 
 
 class GraphRelation(BaseModel):
@@ -142,6 +146,11 @@ class KnowledgeGraph:
             return []
         hits = self._store.search(self._relations_name, vector, top_k, where={"record": _RELATION})
         return [(GraphRelation.model_validate(h["payload"]), h["score"]) for h in hits]
+
+    def specificity(self, key: str) -> float:
+        """1 / the number of chunks the entity appears in (HippoRAG's node specificity)."""
+        entity = self.entities.get(key)
+        return 1.0 / max(len(entity.chunk_ids), 1) if entity else 0.0
 
     def neighbours(self, key: str) -> list[str]:
         """Entity keys one hop away."""
