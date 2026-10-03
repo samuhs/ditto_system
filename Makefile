@@ -1,4 +1,4 @@
-.PHONY: help memory-profile mem-watch up-local down-local status-local doctor certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
+.PHONY: help memory-profile mem-watch up-local down-local status-local doctor certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm graph-gate up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
 
 # MODEL and PARALLEL are optional: each LLM server has its own defaults.
 
@@ -13,6 +13,7 @@ help:
 	@echo "Modelos:   make model-add <modelo> | model-rm <modelo> | model-list"
 	@echo "           MLX: Qwen2.5-7B-Instruct-4bit (mlx-community) ou org/repo · Ollama: qwen3:1.7b"
 	@echo "Benchmark: make bench-llm MODEL=... [LEVELS=1,2,4,8 N=16]"
+	@echo "GraphRAG:  make graph-gate MODEL=...   (precisão/recall do extrator do Grafo de conhecimento contra o gabarito)"
 	@echo ""
 	@echo "Dia a dia: make down | logs | build | llm-up | llm-down | llm-status | docker-clean"
 	@echo "Sem Docker p/ API e front: make up-local | down-local | status-local (só banco e Qdrant no Docker)"
@@ -66,6 +67,11 @@ BASE_URL ?= $(shell ./scripts/llm.sh url 2>/dev/null)
 bench-llm:
 	@[ -n "$(MODEL)" ] || { echo "informe o modelo: make bench-llm MODEL=... (veja make model-list)"; exit 1; }
 	@python3 scripts/bench_llm.py --base-url "$(BASE_URL)" --model "$(MODEL)" --levels "$(LEVELS)" -n "$(N)"
+
+# Quality gate of the knowledge-graph extractor against the hand-made key (needs the LLM server).
+graph-gate:
+	@[ -n "$(MODEL)" ] || { echo "informe o modelo: make graph-gate MODEL=... (veja make model-list)"; exit 1; }
+	@backend/.venv/bin/python scripts/graph_extraction_gate.py --model "$(MODEL)" $(if $(BASE_URL),--base-url "$(BASE_URL)")
 
 # Exports the host's trusted CAs for the Docker builds (VPN/proxy-safe builds).
 certs:

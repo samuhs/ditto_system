@@ -34,3 +34,14 @@ def test_update_prompt_missing_placeholder_returns_422(client):
 def test_update_unknown_prompt_returns_404(client):
     resp = client.put("/prompts/naive/nope", json={"text": "x"})
     assert resp.status_code == 404
+
+
+def test_graph_extraction_prompt_is_listed_and_editable(client):
+    extract = client.get("/prompts").json()["graph"]["extract"]
+    assert extract["required_placeholders"] == ["text"]
+    assert "entidade<|>" in extract["text"]
+
+    edited = extract["text"].replace("Exemplo", "Exemplo de outra base")
+    assert client.put("/prompts/graph/extract", json={"text": edited}).status_code == 200
+    assert client.get("/prompts").json()["graph"]["extract"]["text"] == edited
+    assert client.put("/prompts/graph/extract", json={"text": "sem texto"}).status_code == 422

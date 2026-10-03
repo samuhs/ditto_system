@@ -1,0 +1,171 @@
+{
+  "descricao": "Gabarito de entidades e relações de 10 seções do guia, para medir o LLM extrator do Grafo de conhecimento (scripts/graph_extraction_gate.py). Relações não têm direção. Redigido pelo agente; precisa de revisão humana.",
+  "revisado": false,
+  "secoes": [
+    {
+      "titulo": "### Ilha do Ar (Serra da Lajinha): voo livre e mirante em Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Ilha do Ar", "tipo": "lugar"},
+        {"nome": "Serra da Lajinha", "tipo": "lugar", "aliases": ["Serra da Laginha"]},
+        {"nome": "Três Montes", "tipo": "lugar"},
+        {"nome": "Morro do Baú", "tipo": "lugar"},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"},
+        {"nome": "campeonatos de parapente", "tipo": "evento", "aliases": ["campeonatos estaduais e brasileiros de parapente"]}
+      ],
+      "relacoes": [
+        ["Ilha do Ar", "Serra da Lajinha"],
+        ["Ilha do Ar", "Três Montes"],
+        ["Serra da Lajinha", "Três Montes"],
+        ["Morro do Baú", "Três Montes"],
+        ["Ilha do Ar", "Santo Antônio da Alegria"],
+        ["campeonatos de parapente", "Ilha do Ar"]
+      ]
+    },
+    {
+      "titulo": "### Cachoeira do Deosdédi (Cachoeira do Dédi) em Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Cachoeira do Deosdédi", "tipo": "lugar", "aliases": ["Cachoeira do Dédi"]},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"}
+      ],
+      "relacoes": [
+        ["Cachoeira do Deosdédi", "Santo Antônio da Alegria"]
+      ]
+    },
+    {
+      "titulo": "### Morro da Santa Cruz em Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Morro da Santa Cruz", "tipo": "lugar"},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"},
+        {"nome": "festas religiosas", "tipo": "evento"}
+      ],
+      "relacoes": [
+        ["Morro da Santa Cruz", "Santo Antônio da Alegria"],
+        ["festas religiosas", "Morro da Santa Cruz"]
+      ]
+    },
+    {
+      "titulo": "### Parque Ecológico Municipal José Jorge Felício em Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Parque Ecológico Municipal José Jorge Felício", "tipo": "lugar", "aliases": ["Parque Ecológico José Jorge Felício"]},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"},
+        {"nome": "Rua Vicentino B. dos Santos", "tipo": "lugar"},
+        {"nome": "carnaval", "tipo": "evento"},
+        {"nome": "Encontro de Carros Antigos", "tipo": "evento"},
+        {"nome": "Boteco do Tom", "tipo": "estabelecimento"},
+        {"nome": "Praemi Chopp", "tipo": "estabelecimento"}
+      ],
+      "relacoes": [
+        ["Parque Ecológico Municipal José Jorge Felício", "Santo Antônio da Alegria"],
+        ["Parque Ecológico Municipal José Jorge Felício", "Rua Vicentino B. dos Santos"],
+        ["carnaval", "Parque Ecológico Municipal José Jorge Felício"],
+        ["Encontro de Carros Antigos", "Parque Ecológico Municipal José Jorge Felício"],
+        ["Boteco do Tom", "Parque Ecológico Municipal José Jorge Felício"],
+        ["Praemi Chopp", "Parque Ecológico Municipal José Jorge Felício"]
+      ]
+    },
+    {
+      "titulo": "### EXPOASA, exposição agropecuária de Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "EXPOASA", "tipo": "evento", "aliases": ["Exposição Agropecuária de Santo Antônio da Alegria"]},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"},
+        {"nome": "Prefeitura", "tipo": "organizacao", "aliases": ["Prefeitura de Santo Antônio da Alegria"]},
+        {"nome": "baile de escolha da Rainha da EXPOASA", "tipo": "evento", "aliases": ["Rainha da EXPOASA"]}
+      ],
+      "relacoes": [
+        ["EXPOASA", "Santo Antônio da Alegria"],
+        ["Prefeitura", "baile de escolha da Rainha da EXPOASA"],
+        ["baile de escolha da Rainha da EXPOASA", "EXPOASA"]
+      ]
+    },
+    {
+      "titulo": "### Encontro de Carros Antigos em Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Encontro de Carros Antigos", "tipo": "evento"},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"},
+        {"nome": "Parque Ecológico José Jorge Felício", "tipo": "lugar", "aliases": ["Parque Ecológico Municipal José Jorge Felício"]},
+        {"nome": "Prefeitura", "tipo": "organizacao", "aliases": ["Prefeitura de Santo Antônio da Alegria"]}
+      ],
+      "relacoes": [
+        ["Encontro de Carros Antigos", "Santo Antônio da Alegria"],
+        ["Encontro de Carros Antigos", "Parque Ecológico José Jorge Felício"],
+        ["Prefeitura", "Encontro de Carros Antigos"]
+      ]
+    },
+    {
+      "titulo": "### Rua da Gastronomia de Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Rua da Gastronomia", "tipo": "lugar"},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"},
+        {"nome": "Departamento de Apoio aos Municípios Turísticos", "tipo": "organizacao"},
+        {"nome": "São Paulo", "tipo": "lugar", "aliases": ["estado de São Paulo"]},
+        {"nome": "Rua João Batista de Paiva", "tipo": "lugar"},
+        {"nome": "Distrito Industrial", "tipo": "lugar"},
+        {"nome": "Prefeitura", "tipo": "organizacao", "aliases": ["Prefeitura de Santo Antônio da Alegria"]},
+        {"nome": "doces", "tipo": "produto"},
+        {"nome": "bolachas", "tipo": "produto"},
+        {"nome": "queijos", "tipo": "produto"}
+      ],
+      "relacoes": [
+        ["Rua da Gastronomia", "Santo Antônio da Alegria"],
+        ["Departamento de Apoio aos Municípios Turísticos", "Rua da Gastronomia"],
+        ["Departamento de Apoio aos Municípios Turísticos", "São Paulo"],
+        ["Rua João Batista de Paiva", "Distrito Industrial"],
+        ["doces", "Rua da Gastronomia"],
+        ["bolachas", "Rua da Gastronomia"],
+        ["queijos", "Rua da Gastronomia"]
+      ]
+    },
+    {
+      "titulo": "### Bar do Hélio: bar e restaurante em Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Bar do Hélio", "tipo": "estabelecimento"},
+        {"nome": "Rodovia Altino Arantes", "tipo": "lugar"},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"},
+        {"nome": "pão com linguiça", "tipo": "produto"},
+        {"nome": "Monumento Biker 23", "tipo": "lugar"},
+        {"nome": "Rota Biker", "tipo": "lugar"}
+      ],
+      "relacoes": [
+        ["Bar do Hélio", "Rodovia Altino Arantes"],
+        ["Bar do Hélio", "Santo Antônio da Alegria"],
+        ["pão com linguiça", "Bar do Hélio"],
+        ["Monumento Biker 23", "Bar do Hélio"],
+        ["Monumento Biker 23", "Rota Biker"]
+      ]
+    },
+    {
+      "titulo": "### Pousadas no centro de Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Pousada das Margaridas", "tipo": "estabelecimento"},
+        {"nome": "Pousada da 9", "tipo": "estabelecimento", "aliases": ["Pousada da Nove"]},
+        {"nome": "Rua Nove de Julho", "tipo": "lugar"},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"}
+      ],
+      "relacoes": [
+        ["Pousada das Margaridas", "Rua Nove de Julho"],
+        ["Pousada da 9", "Rua Nove de Julho"],
+        ["Rua Nove de Julho", "Santo Antônio da Alegria"]
+      ]
+    },
+    {
+      "titulo": "### Hospital e pronto-socorro de Santo Antônio da Alegria",
+      "entidades": [
+        {"nome": "Hospital Municipal e Pronto-Socorro", "tipo": "estabelecimento", "aliases": ["Hospital Municipal"]},
+        {"nome": "Hospital Santo Antônio de Pádua", "tipo": "estabelecimento"},
+        {"nome": "Unidade Mista de Saúde", "tipo": "estabelecimento"},
+        {"nome": "SAMU", "tipo": "servico"},
+        {"nome": "SUS", "tipo": "organizacao"},
+        {"nome": "Rua Nove de Julho", "tipo": "lugar"},
+        {"nome": "Prefeitura", "tipo": "organizacao", "aliases": ["Prefeitura de Santo Antônio da Alegria"]},
+        {"nome": "Santo Antônio da Alegria", "tipo": "lugar"}
+      ],
+      "relacoes": [
+        ["Hospital Municipal e Pronto-Socorro", "Rua Nove de Julho"],
+        ["Hospital Santo Antônio de Pádua", "Rua Nove de Julho"],
+        ["Unidade Mista de Saúde", "Rua Nove de Julho"],
+        ["Unidade Mista de Saúde", "SUS"],
+        ["Prefeitura", "Hospital Santo Antônio de Pádua"]
+      ]
+    }
+  ]
+}

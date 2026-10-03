@@ -9,15 +9,20 @@ from app.core.llm.base import LLM, llm_registry
 class OllamaLLM(LLM):
     """Generates answers via the local server's OpenAI-compatible chat endpoint."""
 
-    def __init__(self, model=None, base_url=None, api_key="ollama", client=None) -> None:
+    def __init__(
+        self, model=None, base_url=None, api_key="ollama", client=None, temperature=None
+    ) -> None:
         if client is None:
             from langchain_openai import ChatOpenAI
 
             settings = get_settings()
+            # Without a temperature the server's default sampling applies.
+            sampling = {} if temperature is None else {"temperature": temperature}
             client = ChatOpenAI(
                 model=model or settings.ollama_model,
                 base_url=base_url or settings.ollama_base_url,
                 api_key=api_key,
+                **sampling,
             )
         self._client = client
 

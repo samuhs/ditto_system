@@ -83,3 +83,17 @@ def test_ollama_uses_settings_defaults(monkeypatch):
         assert llm.generate("x") == "ok"
     finally:
         get_settings.cache_clear()
+
+
+def test_ollama_passes_an_explicit_temperature(monkeypatch):
+    import langchain_openai
+
+    captured = {}
+
+    class _FakeChatOpenAI:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(langchain_openai, "ChatOpenAI", _FakeChatOpenAI)
+    OllamaLLM(model="m", base_url="http://localhost:11436/v1", temperature=0)
+    assert captured["temperature"] == 0
