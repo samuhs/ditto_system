@@ -14,6 +14,9 @@ import numpy as np
 # (docs/research/2026-09-25-dificuldade-da-pergunta.md, section 5.4), not a
 # number from the literature.
 MIN_RELIABLE_QUESTIONS = 50
+# Below this many questions a fit is not estimated at all: centred difficulties
+# of one or two questions say nothing about them.
+MIN_FIT_QUESTIONS = 3
 
 _ITERATIONS = 200
 _L2 = 0.1

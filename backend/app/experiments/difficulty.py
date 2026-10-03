@@ -17,12 +17,15 @@ import numpy as np
 
 from app.core.db.models import Experiment
 from app.core.rag.base import rag_registry
-from app.experiments.irt import MIN_RELIABLE_QUESTIONS, fit_rasch
+from app.experiments.irt import MIN_FIT_QUESTIONS, MIN_RELIABLE_QUESTIONS, fit_rasch
+from app.experiments.schemas import QUESTION_TYPES
 
 HIT_METRIC = "context_hit"
 # Answer-quality metrics tried, in order, when no metric is asked for.
 PREFERRED_METRICS = ["chrf", "token_f1", "answer_correctness", "rouge_l"]
 _ERROR_PREFIX = "[ERRO: "
+# Questions from before the Tipo de pergunta existed read as single-passage ones.
+DEFAULT_TYPE = QUESTION_TYPES[0]
 
 
 def _kind(rag: str) -> str:
@@ -55,22 +58,59 @@ def _means(score_dicts: list[dict]) -> dict[str, float]:
     return {m: s["mean"] for m, s in _metric_summaries(score_dicts).items()}
 
 
-def _irt(responses: dict[tuple[str, str, str], float], llms: list[str], metric: str) -> dict:
-    """Rasch fit over every retrieval configuration, and one per LLM."""
+def _fit(responses: dict[tuple[str, str, str], float], llms: list[str]) -> tuple[dict, dict, dict]:
+    """Rasch fit over every configuration (difficulty, ability) and one difficulty per LLM."""
     overall, ability = fit_rasch({(c, q): s for (c, _, q), s in responses.items()})
     by_llm = {
         llm: fit_rasch({(c, q): s for (c, l, q), s in responses.items() if l == llm})[0]
         for llm in llms
     }
+    return overall, by_llm, ability
+
+
+def _irt_by_type(
+    responses: dict[tuple[str, str, str], float], llms: list[str], types: dict[str, str],
+) -> dict[str, dict]:
+    """One fit per Tipo de pergunta, so types of a different nature do not share a scale.
+
+    A type with fewer than MIN_FIT_QUESTIONS answered questions has no estimate.
+    """
+    questions_of: dict[str, set[str]] = {}
+    for _, _, question in responses:
+        questions_of.setdefault(types.get(question, DEFAULT_TYPE), set()).add(question)
+    order = {t: k for k, t in enumerate(QUESTION_TYPES)}
+    by_type = {}
+    for qtype in sorted(questions_of, key=lambda t: (order.get(t, len(order)), t)):
+        questions = questions_of[qtype]
+        fit = None
+        if len(questions) >= MIN_FIT_QUESTIONS:
+            fit = _fit({k: s for k, s in responses.items() if k[2] in questions}, llms)
+        by_type[qtype] = {
+            "n_questions": len(questions),
+            "reliable": len(questions) >= MIN_RELIABLE_QUESTIONS,
+            "difficulty": fit[0] if fit else None,
+            "difficulty_by_llm": fit[1] if fit else None,
+        }
+    return by_type
+
+
+def _irt(
+    responses: dict[tuple[str, str, str], float], llms: list[str], metric: str,
+    types: dict[str, str],
+) -> dict:
+    """Rasch fit over every retrieval configuration, one per LLM and one per Tipo de pergunta."""
+    overall, by_llm, ability = _fit(responses, llms)
     return {
         "metric": metric,
         "n_questions": len(overall),
         "n_configurations": len(ability),
         "reliable": len(overall) >= MIN_RELIABLE_QUESTIONS,
         "min_questions": MIN_RELIABLE_QUESTIONS,
+        "min_fit_questions": MIN_FIT_QUESTIONS,
         "difficulty": overall,
         "difficulty_by_llm": by_llm,
         "ability": ability,
+        "by_type": _irt_by_type(responses, llms, types),
     }
 
 
@@ -139,6 +179,7 @@ def question_difficulty(experiment: Experiment, metric: str | None = None) -> di
     """Per-question signals and observed difficulty, per LLM, plus an IRT fit on one metric."""
     profiles = {p.question: p.signals for p in experiment.question_profiles}
     model_signals = {p.question: p.model_signals or {} for p in experiment.question_profiles}
+    types = {p.question: p.question_type for p in experiment.question_profiles if p.question_type}
     llms: list[str] = []
     metrics: set[str] = set()
     grouped: dict[str, dict[str, dict[str, list]]] = {}
@@ -162,6 +203,8 @@ def question_difficulty(experiment: Experiment, metric: str | None = None) -> di
             slot[kind].append(result.scores)
             if kind == "retrieval":
                 rows.append((config_key, llm, result.question, result.scores))
+            if result.question_type:
+                types.setdefault(result.question, result.question_type)
             if result.retrieval_signals:
                 signals.setdefault(result.question, []).append(result.retrieval_signals)
 
@@ -182,6 +225,7 @@ def question_difficulty(experiment: Experiment, metric: str | None = None) -> di
             }
         questions.append({
             "question": question,
+            "question_type": types.get(question, DEFAULT_TYPE),
             "signals": profiles.get(question, {}),
             "model_signals": model_signals.get(question, {}),
             "retrieval_signals": _means(signals.get(question, [])),
@@ -194,7 +238,7 @@ def question_difficulty(experiment: Experiment, metric: str | None = None) -> di
         for config, llm, question, scores in rows
         if metric in scores
     }
-    irt = _irt(responses, llms, metric) if metric else None
+    irt = _irt(responses, llms, metric, types) if metric else None
     return {
         "llms": llms,
         "metrics": sorted(metrics),

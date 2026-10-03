@@ -2,6 +2,7 @@
 import type { ExperimentResultRow } from "../api/types";
 import type { Combination } from "../components/Score";
 import { term } from "../glossary";
+import { ofType, typesIn } from "./questionTypes";
 
 /** Sort key and metric id for the plain mean of every metric. */
 export const MEDIA_KEY = "__media__";
@@ -47,20 +48,50 @@ export interface RankRow {
   count: number;
   scores: Record<string, number | null>;
   media: number | null;
+  /** Média over the questions of each Tipo de pergunta the combination answered. */
+  mediaByType: Record<string, number | null>;
+}
+
+function metricMeans(rows: ExperimentResultRow[], metricKeys: string[]): Record<string, number | null> {
+  const scores: Record<string, number | null> = {};
+  for (const m of metricKeys) {
+    scores[m] = mean(rows.filter((r) => m in r.scores).map((r) => r.scores[m]));
+  }
+  return scores;
+}
+
+function mediaOf(rows: ExperimentResultRow[]): number | null {
+  return mean(rows.map(rowMedia).filter((v): v is number => v !== null));
 }
 
 export function rankCombinations(results: ExperimentResultRow[], metricKeys: string[]): RankRow[] {
-  return [...groupByCombo(results).entries()].map(([key, rows]) => {
-    const scores: Record<string, number | null> = {};
-    for (const m of metricKeys) {
-      scores[m] = mean(rows.filter((r) => m in r.scores).map((r) => r.scores[m]));
-    }
+  return [...groupByCombo(results).entries()].map(([key, rows]) => ({
+    key,
+    combo: rows[0],
+    count: rows.length,
+    scores: metricMeans(rows, metricKeys),
+    media: mediaOf(rows),
+    mediaByType: Object.fromEntries(typesIn(rows).map((t) => [t, mediaOf(ofType(rows, t))])),
+  }));
+}
+
+export interface TypeSummary {
+  type: string;
+  /** Distinct questions of this type. */
+  questions: number;
+  scores: Record<string, number | null>;
+  media: number | null;
+}
+
+/** Mean of each metric per Tipo de pergunta, over every answer of every combination. */
+export function meansByType(results: ExperimentResultRow[], metricKeys: string[]): TypeSummary[] {
+  return typesIn(results).map((type) => {
+    const rows = ofType(results, type);
     return {
-      key,
-      combo: rows[0],
-      count: rows.length,
-      scores,
-      media: mean(rows.map(rowMedia).filter((v): v is number => v !== null)),
+      type,
+      questions: new Set(rows.map((r) => r.question)).size,
+      scores: metricMeans(rows, metricKeys),
+      media: mediaOf(rows),
     };
   });
 }

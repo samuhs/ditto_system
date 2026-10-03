@@ -150,6 +150,8 @@ export interface DifficultyCell {
 
 export interface QuestionDifficulty {
   question: string;
+  /** "simples" | "ponte" | "comparacao" | "agregacao"; absent on older payloads. */
+  question_type?: string;
   signals: Record<string, number>;
   retrieval_signals: Record<string, number>;
   /** Signals that depend on the model but not on its answer, per LLM (perplexity). */
@@ -168,6 +170,18 @@ export interface IrtFit {
   difficulty: Record<string, number>;
   difficulty_by_llm: Record<string, Record<string, number>>;
   ability: Record<string, number>;
+  /** Below this many questions a Tipo de pergunta gets no fit. */
+  min_fit_questions?: number;
+  /** One fit per Tipo de pergunta, each centred at 0 on its own questions. */
+  by_type?: Record<string, IrtTypeFit>;
+}
+
+export interface IrtTypeFit {
+  n_questions: number;
+  reliable: boolean;
+  /** Null when the type has too few questions for a fit. */
+  difficulty: Record<string, number> | null;
+  difficulty_by_llm: Record<string, Record<string, number>> | null;
 }
 
 export interface SignalCorrelation {

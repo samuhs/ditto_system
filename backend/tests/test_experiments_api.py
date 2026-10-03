@@ -340,6 +340,9 @@ def test_difficulty_endpoint(client):
     body = client.get(f"/experiments/{exp_id}/difficulty").json()
     assert body["llms"] == ["gemini"]
     assert {q["question"] for q in body["questions"]} == {"Onde fica?", "Quando?"}
+    # Stored before the Tipo de pergunta existed: every question reads as simples.
+    assert {q["question_type"] for q in body["questions"]} == {"simples"}
+    assert list(body["irt"]["by_type"]) == ["simples"]
     assert client.get("/experiments/99999/difficulty").status_code == 404
 
 
@@ -457,3 +460,16 @@ def test_hops_are_not_matched_for_a_technique_that_retrieves_nothing(client):
     result = client.get(f"/experiments/{exp_id}").json()["results"][0]
     assert "context_all_hops" not in result["scores"]
     assert result["hops_found"] == []
+
+
+def test_difficulty_reports_each_question_type(client):
+    exp_id = _post_questions(
+        client,
+        "pergunta,evidencia_referencia,tipo,evidencia_salto,entidades_ponte\n"
+        "Quando é o evento do parque?,Para one|Para two,ponte,1|2,Parque\n"
+        "Onde fica?,Para three,,,\n",
+    ).json()["id"]
+
+    body = client.get(f"/experiments/{exp_id}/difficulty").json()
+    types = {q["question"]: q["question_type"] for q in body["questions"]}
+    assert types == {"Quando é o evento do parque?": "ponte", "Onde fica?": "simples"}

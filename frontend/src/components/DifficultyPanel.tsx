@@ -2,8 +2,10 @@ import { Drawer, Loader, Select } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 
 import { getExperimentDifficulty } from "../api/client";
-import type { ExperimentDifficulty, QuestionDifficulty, SignalCorrelations } from "../api/types";
-import { term } from "../glossary";
+import type {
+  ExperimentDifficulty, IrtTypeFit, QuestionDifficulty, SignalCorrelations,
+} from "../api/types";
+import { questionType, term } from "../glossary";
 import { DifficultyGuide } from "./DifficultyGuide";
 import { Errata, Note, errorText } from "./Notice";
 import { ScoreCell } from "./Score";
@@ -121,6 +123,43 @@ function SignalCorrelationTable({ data, llms }: { data: SignalCorrelations; llms
   );
 }
 
+/** A question's difficulty within its own Tipo de pergunta, or why there is none. */
+function TypeFit({
+  fit, question, typeName, llms, minQuestions,
+}: {
+  fit: IrtTypeFit;
+  question: string;
+  typeName: string;
+  llms: string[];
+  minQuestions?: number;
+}) {
+  const n = fit.n_questions;
+  return (
+    <>
+      <p className="ditto-muted" style={{ margin: "14px 0 6px", fontSize: 13 }}>
+        Entre as perguntas do tipo {typeName}
+      </p>
+      {fit.difficulty === null ? (
+        <p className="ditto-muted" style={{ margin: 0, fontSize: 13 }}>
+          Sem estimativa: só {n} {n === 1 ? "pergunta" : "perguntas"} deste tipo
+          {minQuestions ? ` (a TRI precisa de pelo menos ${minQuestions})` : ""}.
+        </p>
+      ) : (
+        <dl className="ditto-kv">
+          <dt>Todas as combinações</dt>
+          <dd>{signed(fit.difficulty[question])}</dd>
+          {llms.map((llm) => (
+            <div key={llm} style={{ display: "contents" }}>
+              <dt>{llm}</dt>
+              <dd>{signed(fit.difficulty_by_llm?.[llm]?.[question])}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </>
+  );
+}
+
 function meanOver(q: QuestionDifficulty, metric: string): number | null {
   const values = Object.values(q.by_llm)
     .map((cell) => cell.retrieval[metric]?.mean)
@@ -174,6 +213,9 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
     Object.values(q.by_llm).some((c) => c.hit_rate !== null),
   );
   const perLlm = 1 + (hasClosedBook ? 1 : 0) + (hasOracle ? 1 : 0) + (hasEvidence ? 1 : 0);
+  // The Tipo de pergunta only earns a column (and a per-type fit) when the experiment mixes types.
+  const typeKey = (q: QuestionDifficulty) => q.question_type || "simples";
+  const mixedTypes = new Set(data.questions.map(typeKey)).size > 1;
 
   return (
     <>
@@ -200,6 +242,7 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
         <strong>Tabela 2.</strong> Nota média de cada pergunta por modelo, sobre as combinações com
         busca (± desvio entre elas). As mais difíceis vêm primeiro.
         {irt && " “TRI” é a dificuldade estimada sobre todas as combinações: acima de 0, mais difícil que a média."}
+        {irt && mixedTypes && " A dificuldade dentro de cada tipo de pergunta aparece ao abrir a pergunta."}
         {hasClosedBook && " “Sem busca” é o mesmo modelo respondendo sem os documentos."}
         {hasOracle && " “Oráculo” é o modelo com o trecho correto no contexto: o melhor que ele consegue."}
         {hasEvidence && " “Evidência” é a parte das buscas que trouxe o trecho anotado."} Clique numa
@@ -210,6 +253,7 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
           <thead>
             <tr>
               <th rowSpan={2}>Pergunta</th>
+              {mixedTypes && <th rowSpan={2}>Tipo</th>}
               {irt && (
                 <th rowSpan={2} className="ditto-num">
                   TRI
@@ -246,6 +290,7 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
                     {q.question}
                   </button>
                 </td>
+                {mixedTypes && <td data-label="Tipo">{questionType(q.question_type).name}</td>}
                 {irt && (
                   <td className="ditto-num" data-label="TRI">
                     {signed(irt.difficulty[q.question])}
@@ -311,6 +356,10 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
             <p className="ditto-read" style={{ color: "var(--ink)", margin: 0 }}>
               {open.question}
             </p>
+            <dl className="ditto-kv">
+              <dt>Tipo de pergunta</dt>
+              <dd>{questionType(open.question_type).name}</dd>
+            </dl>
             {irt && (
               <div>
                 <h3 className="ditto-h3" style={{ marginBottom: 8 }}>
@@ -326,6 +375,15 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
                     </div>
                   ))}
                 </dl>
+                {mixedTypes && irt.by_type?.[typeKey(open)] && (
+                  <TypeFit
+                    fit={irt.by_type[typeKey(open)]}
+                    question={open.question}
+                    typeName={questionType(open.question_type).name}
+                    llms={data.llms}
+                    minQuestions={irt.min_fit_questions}
+                  />
+                )}
               </div>
             )}
             <div>

@@ -201,6 +201,85 @@ describe("ExperimentDetailPage", () => {
     expect(within(drawer).getByText("Um trecho")).toBeInTheDocument();
   });
 
+  describe("filter by Tipo de pergunta", () => {
+    async function mockTyped() {
+      const [a, b] = (await client.getExperiment(7)).results;
+      // Pergunta A (simples) and Pergunta C (ponte) on combination A; Pergunta B (ponte) on B.
+      vi.mocked(client.getExperiment).mockResolvedValue({
+        id: 7,
+        name: "kind-ember-89",
+        status: "done",
+        results: [
+          a,
+          { ...a, question: "Pergunta C", question_type: "ponte", scores: { answer_relevancy: 1, faithfulness: 1 } },
+          { ...b, question_type: "ponte" },
+        ],
+      });
+    }
+
+    it("is hidden when every question has the same type", async () => {
+      renderPage();
+      await screen.findByRole("region", { name: /melhor combinação/i });
+      expect(screen.queryByRole("radiogroup", { name: /tipo de pergunta/i })).not.toBeInTheDocument();
+    });
+
+    it("narrows the ranking and the answers to the chosen type", async () => {
+      await mockTyped();
+      renderPage();
+      const user = userEvent.setup();
+      const filter = await screen.findByRole("radiogroup", { name: /tipo de pergunta/i });
+      // Over every question, combination B (0.85) beats A (mean of 0.30 and 1.0 = 0.65).
+      expect(screen.getByRole("region", { name: /melhor combinação/i })).toHaveTextContent("Por tokens");
+
+      await user.click(within(filter).getByRole("radio", { name: "Ponte" }));
+      // Only ponte questions: A scores 1.0 on Pergunta C and wins.
+      const winner = screen.getByRole("region", { name: /melhor combinação/i });
+      expect(winner).toHaveTextContent("Recursivo");
+      expect(winner).toHaveTextContent("Média 1.00");
+
+      await openAnswers(user);
+      expect(await screen.findByText("Pergunta C")).toBeInTheDocument();
+      expect(screen.getByText("Pergunta B")).toBeInTheDocument();
+      expect(screen.queryByText("Pergunta A")).not.toBeInTheDocument();
+    });
+
+    it("shows in the ranking the mean of each metric per type", async () => {
+      await mockTyped();
+      renderPage();
+      const byType = await screen.findByRole("table", { name: /média de cada métrica por tipo/i });
+      const ponte = within(byType).getByRole("row", { name: /ponte/i });
+      // Ponte answers: Pergunta C (1.0, 1.0) and Pergunta B (0.9, 0.8).
+      expect(ponte).toHaveTextContent("0.95"); // answer_relevancy
+      expect(ponte).toHaveTextContent("0.90"); // faithfulness and média
+      expect(within(byType).getByRole("row", { name: /um trecho/i })).toHaveTextContent("0.30");
+
+      // Each combination also gets its média per type.
+      const ranking = screen.getByRole("table", { name: /média de cada métrica por combinação/i });
+      expect(within(ranking).getByRole("columnheader", { name: /média · ponte/i })).toBeInTheDocument();
+    });
+
+    it("drops the per-type columns once a single type is chosen", async () => {
+      await mockTyped();
+      renderPage();
+      const user = userEvent.setup();
+      const filter = await screen.findByRole("radiogroup", { name: /tipo de pergunta/i });
+      await user.click(within(filter).getByRole("radio", { name: "Ponte" }));
+      expect(screen.queryByRole("table", { name: /média de cada métrica por tipo/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("columnheader", { name: /média · ponte/i })).not.toBeInTheDocument();
+    });
+
+    it("applies to the charts", async () => {
+      await mockTyped();
+      renderPage();
+      const user = userEvent.setup();
+      const filter = await screen.findByRole("radiogroup", { name: /tipo de pergunta/i });
+      await user.click(within(filter).getByRole("radio", { name: "Ponte" }));
+      await user.click(screen.getByRole("tab", { name: /gráficos/i }));
+      expect((await screen.findAllByRole("button", { name: /^Pergunta C · / })).length).toBeGreaterThan(0);
+      expect(screen.queryByRole("button", { name: /^Pergunta A · / })).not.toBeInTheDocument();
+    });
+  });
+
   it("shows a Pausar button for a running experiment and calls pauseExperiment", async () => {
     vi.mocked(client.getExperiment).mockResolvedValue({
       id: 7,

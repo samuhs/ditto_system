@@ -119,4 +119,61 @@ describe("DifficultyPanel", () => {
     expect(drawer.getByText("Perplexidade da pergunta no modelo")).toBeInTheDocument();
     expect(drawer.getByText("42.5")).toBeInTheDocument();
   });
+
+  describe("Tipo de pergunta", () => {
+    async function mockTyped() {
+      const base = await client.getExperimentDifficulty(7);
+      vi.mocked(client.getExperimentDifficulty).mockResolvedValue({
+        ...base,
+        irt: {
+          ...base.irt!,
+          min_fit_questions: 3,
+          by_type: {
+            ponte: {
+              n_questions: 1, reliable: false, difficulty: null, difficulty_by_llm: null,
+            },
+            simples: {
+              n_questions: 3, reliable: false,
+              difficulty: { "Fácil?": -0.4 },
+              difficulty_by_llm: { "qwen3:1.7b": { "Fácil?": -0.3 } },
+            },
+          },
+        },
+        questions: [
+          { ...base.questions[0], question_type: "simples" },
+          { ...base.questions[1], question_type: "ponte" },
+        ],
+      });
+    }
+
+    it("shows each question's type", async () => {
+      await mockTyped();
+      renderPanel();
+      const rows = await screen.findAllByRole("row");
+      expect(screen.getByRole("columnheader", { name: "Tipo" })).toBeInTheDocument();
+      expect(rows[2]).toHaveTextContent("Ponte");
+      expect(rows[3]).toHaveTextContent("Um trecho");
+    });
+
+    it("gives the difficulty within the type, or says the type has too few questions", async () => {
+      await mockTyped();
+      renderPanel();
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole("button", { name: "Fácil?" }));
+      let drawer = within(await screen.findByRole("dialog"));
+      expect(drawer.getByText("Entre as perguntas do tipo Um trecho")).toBeInTheDocument();
+      expect(drawer.getByText("-0.40")).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+      await user.click(await screen.findByRole("button", { name: "Difícil?" }));
+      drawer = within(await screen.findByRole("dialog"));
+      expect(drawer.getByText(/sem estimativa: só 1 pergunta deste tipo/i)).toBeInTheDocument();
+    });
+
+    it("leaves the type column out when every question has the same type", async () => {
+      renderPanel();
+      await screen.findAllByRole("row");
+      expect(screen.queryByRole("columnheader", { name: "Tipo" })).not.toBeInTheDocument();
+    });
+  });
 });

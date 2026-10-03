@@ -82,6 +82,59 @@ def test_irt_ranks_questions_on_the_chosen_metric(db_session):
     assert flipped["difficulty"]["Fácil"] > flipped["difficulty"]["Difícil"]
 
 
+def _typed_run(rag, llm, results):
+    run = ExperimentRun(chunking="recursive", embedding="e5", rag_technique=rag,
+                        retriever="similarity", llm=llm, status="done")
+    run.results = [
+        RunResult(question=q, question_type=t, generated_answer="a", scores={"chrf": s})
+        for q, t, s in results
+    ]
+    return run
+
+
+def test_irt_is_fitted_per_question_type(db_session):
+    experiment = Experiment(name="irt-tipo", status="done", config={})
+    questions = [
+        ("S1", "simples", 0.9), ("S2", "simples", 0.6), ("S3", "simples", 0.2),
+        ("P1", "ponte", 0.8), ("P2", "ponte", 0.1), ("P3", "ponte", 0.4),
+        ("C1", "comparacao", 0.5),
+    ]
+    experiment.runs = [
+        _typed_run(rag, "gemini", [(q, t, s + shift) for q, t, s in questions])
+        for rag, shift in [("naive", 0.0), ("rerank", -0.05)]
+    ]
+    db_session.add(experiment)
+    db_session.commit()
+
+    by_type = question_difficulty(experiment)["irt"]["by_type"]
+    assert set(by_type) == {"simples", "ponte", "comparacao"}
+    ponte = by_type["ponte"]
+    assert ponte["n_questions"] == 3 and ponte["reliable"] is False
+    # Each type is its own scale: only its questions, centred at 0.
+    assert set(ponte["difficulty"]) == {"P1", "P2", "P3"}
+    assert ponte["difficulty"]["P2"] > ponte["difficulty"]["P3"] > ponte["difficulty"]["P1"]
+    assert sum(ponte["difficulty"].values()) == pytest.approx(0.0, abs=1e-6)
+    assert set(ponte["difficulty_by_llm"]["gemini"]) == {"P1", "P2", "P3"}
+    # Too few questions for a fit: listed, with no estimate.
+    assert by_type["comparacao"]["n_questions"] == 1
+    assert by_type["comparacao"]["difficulty"] is None
+    assert by_type["comparacao"]["difficulty_by_llm"] is None
+
+
+def test_old_experiment_has_a_single_simple_type(db_session):
+    experiment = Experiment(name="antigo", status="done", config={})
+    experiment.runs = [_run("naive", "gemini", [("Q1", "a", {"chrf": 0.5}, None),
+                                                ("Q2", "a", {"chrf": 0.4}, None),
+                                                ("Q3", "a", {"chrf": 0.3}, None)])]
+    db_session.add(experiment)
+    db_session.commit()
+
+    report = question_difficulty(experiment)
+    assert {q["question_type"] for q in report["questions"]} == {"simples"}
+    assert list(report["irt"]["by_type"]) == ["simples"]
+    assert report["irt"]["by_type"]["simples"]["difficulty"] == pytest.approx(report["irt"]["difficulty"])
+
+
 def test_spearman_handles_ties_and_constants():
     from app.experiments.difficulty import spearman
 

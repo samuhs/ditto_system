@@ -905,6 +905,17 @@ a { color: inherit; text-underline-offset: 3px; }
   margin: 0 0 18px;
 }
 
+/* Tipo de pergunta filter: above the winner, it narrows every tab. */
+.ditto-type-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: 100%;
+  margin: 0 0 18px;
+  overflow-x: auto;
+}
+
 /* Meta line under a page title */
 .ditto-meta {
   display: flex;

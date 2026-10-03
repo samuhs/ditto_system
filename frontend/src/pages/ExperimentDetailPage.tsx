@@ -1,4 +1,4 @@
-import { Button, Drawer, Loader, MultiSelect, Pagination, Select, Tabs } from "@mantine/core";
+import { Button, Drawer, Loader, MultiSelect, Pagination, SegmentedControl, Select, Tabs } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -13,9 +13,11 @@ import { DifficultyPanel } from "../components/DifficultyPanel";
 import { StatusTag } from "../components/StatusTag";
 import { DownloadIcon, PauseIcon, SortIcon } from "../components/icons";
 import { questionType, techniqueName, term } from "../glossary";
+import { ALL_TYPES, ofType, typesIn } from "../experiments/questionTypes";
 import { formatDateTime, formatDuration } from "../utils/duration";
 import {
-  DIMS, type Dim, MEDIA_KEY, type RankRow, dimName, rankByMedia, rankCombinations, rowMedia,
+  DIMS, type Dim, MEDIA_KEY, type RankRow, dimName, meansByType, rankByMedia, rankCombinations,
+  rowMedia,
 } from "../experiments/ranking";
 
 const PAGE_SIZES = ["10", "25", "50", "100"];
@@ -53,6 +55,7 @@ export function ExperimentDetailPage() {
   const [openRow, setOpenRow] = useState<ExperimentResultRow | null>(null);
   const [promptTech, setPromptTech] = useState<string | null>(null);
   const [focus, setFocus] = useState<FocusState>(DEFAULT_FOCUS);
+  const [typeFilter, setTypeFilter] = useState<string>(ALL_TYPES);
 
   useEffect(() => {
     if (!id) return;
@@ -96,7 +99,11 @@ export function ExperimentDetailPage() {
     }
   }
 
-  const results = useMemo(() => detail?.results ?? [], [detail]);
+  const allResults = useMemo(() => detail?.results ?? [], [detail]);
+  const questionTypes = useMemo(() => typesIn(allResults), [allResults]);
+  // The Tipo de pergunta filter narrows every view (ranking, charts, answers) at once.
+  const activeType = questionTypes.includes(typeFilter) ? typeFilter : ALL_TYPES;
+  const results = useMemo(() => ofType(allResults, activeType), [allResults, activeType]);
   const promptTechniques = detail?.prompts ? Object.keys(detail.prompts) : [];
 
   const metricKeys = useMemo(() => {
@@ -130,6 +137,21 @@ export function ExperimentDetailPage() {
     }
     return best;
   }, [ranking, metricKeys]);
+
+  // With every type shown, the ranking also breaks the média down per type.
+  const typeColumns = activeType === ALL_TYPES && questionTypes.length > 1 ? questionTypes : [];
+  const byType = useMemo(
+    () => (typeColumns.length > 0 ? meansByType(results, metricKeys) : []),
+    [typeColumns.length, results, metricKeys],
+  );
+  const bestOfType = useMemo(() => {
+    const best: Record<string, number> = {};
+    for (const t of typeColumns) {
+      const values = ranking.map((r) => r.mediaByType[t]).filter((v): v is number => v != null);
+      if (values.length > 0) best[t] = Math.max(...values);
+    }
+    return best;
+  }, [ranking, typeColumns]);
 
   // ---- answers (one row per question × combination)
   const filtered = useMemo(
@@ -318,6 +340,22 @@ export function ExperimentDetailPage() {
 
       {detail && !loading && results.length > 0 && (
         <>
+          {questionTypes.length > 1 && (
+            <div className="ditto-type-filter" role="radiogroup" aria-labelledby="type-filter-label">
+              <span id="type-filter-label" className="ditto-chart-focus-label">
+                Tipo de pergunta
+              </span>
+              <SegmentedControl
+                size="sm"
+                value={activeType}
+                onChange={setTypeFilter}
+                data={[
+                  { value: ALL_TYPES, label: "Todos" },
+                  ...questionTypes.map((t) => ({ value: t, label: questionType(t).name })),
+                ]}
+              />
+            </div>
+          )}
           {winner && (
             <section className="ditto-winner" aria-label="Melhor combinação">
               <span className="ditto-winner-badge" aria-hidden>
@@ -356,18 +394,27 @@ export function ExperimentDetailPage() {
             </Tabs.List>
 
             <Tabs.Panel value="ranking">
-              <p className="ditto-caption">
-                <strong>Tabela 1.</strong> Média de cada métrica por combinação, sobre todas as
-                perguntas. Clique numa linha para ver as respostas dela.
+              <p className="ditto-caption" id="ranking-caption">
+                <strong>Tabela 1.</strong> Média de cada métrica por combinação, sobre{" "}
+                {activeType === ALL_TYPES
+                  ? "todas as perguntas"
+                  : `as perguntas do tipo ${questionType(activeType).name}`}
+                .{typeColumns.length > 0 && " As últimas colunas dão a média de cada tipo de pergunta."}{" "}
+                Clique numa linha para ver as respostas dela.
               </p>
               <div className="ditto-table-wrap">
-                <table className="ditto-table" data-stack="true">
+                <table className="ditto-table" data-stack="true" aria-labelledby="ranking-caption">
                   <thead>
                     <tr>
                       <th className="ditto-num">#</th>
                       <th>Combinação</th>
                       <th className="ditto-num">Perguntas</th>
                       {metricHeaders}
+                      {typeColumns.map((t) => (
+                        <th key={t} className="ditto-num">
+                          Média · {questionType(t).name}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -406,12 +453,62 @@ export function ExperimentDetailPage() {
                           <td className="ditto-num ditto-cell-media" data-label="Média">
                             <ScoreCell value={r.media} best={r.media === bestOf[MEDIA_KEY]} />
                           </td>
+                          {typeColumns.map((t) => {
+                            const value = r.mediaByType[t] ?? null;
+                            return (
+                              <td key={t} className="ditto-num" data-label={`Média · ${questionType(t).name}`}>
+                                <ScoreCell value={value} best={value !== null && value === bestOfType[t]} />
+                              </td>
+                            );
+                          })}
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </div>
+              {byType.length > 0 && (
+                <>
+                  <p className="ditto-caption" id="by-type-caption" style={{ marginTop: 28 }}>
+                    <strong>Tabela 1a.</strong> Média de cada métrica por tipo de pergunta, sobre
+                    todas as combinações. Para ver uma combinação só num tipo, escolha o tipo acima.
+                  </p>
+                  <div className="ditto-table-wrap">
+                    <table className="ditto-table" data-stack="true" aria-labelledby="by-type-caption">
+                      <thead>
+                        <tr>
+                          <th>Tipo de pergunta</th>
+                          <th className="ditto-num">Perguntas</th>
+                          {metricKeys.map((k) => (
+                            <th key={k} className="ditto-num">
+                              {term("metric", k).name}
+                            </th>
+                          ))}
+                          <th className="ditto-num">Média</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {byType.map((s) => (
+                          <tr key={s.type}>
+                            <th scope="row" className="ditto-cell-title">
+                              {questionType(s.type).name}
+                            </th>
+                            <td className="ditto-num" data-label="Perguntas">{s.questions}</td>
+                            {metricKeys.map((k) => (
+                              <td key={k} className="ditto-num" data-label={term("metric", k).name}>
+                                <ScoreCell value={s.scores[k]} />
+                              </td>
+                            ))}
+                            <td className="ditto-num ditto-cell-media" data-label="Média">
+                              <ScoreCell value={s.media} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
               {legend}
             </Tabs.Panel>
 
