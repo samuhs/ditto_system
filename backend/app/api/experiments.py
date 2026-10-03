@@ -77,6 +77,8 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                     "tokens": result.tokens,
                     "question_signals": profiles.get(result.question, {}),
                     "retrieval_signals": result.retrieval_signals or {},
+                    # GraphRAG runs: the Grafo de conhecimento's stats; None otherwise.
+                    "graph_stats": run.graph_stats,
                 }
             )
     return rows
@@ -105,6 +107,7 @@ def _results_csv(rows: list[dict]) -> str:
     metric_keys = sorted({k for row in rows for k in row["scores"]})
     question_keys = sorted({k for row in rows for k in row["question_signals"]})
     retrieval_keys = sorted({k for row in rows for k in row["retrieval_signals"]})
+    graph_keys = list(dict.fromkeys(k for row in rows for k in row["graph_stats"] or {}))
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(
@@ -112,7 +115,8 @@ def _results_csv(rows: list[dict]) -> str:
          "pergunta", "resposta_referencia", "resposta",
          "tipo", "evidencia_salto", "entidades_ponte",
          *metric_keys, "media", "latency_ms", "tokens",
-         *(f"pergunta_{k}" for k in question_keys), *(f"busca_{k}" for k in retrieval_keys)]
+         *(f"pergunta_{k}" for k in question_keys), *(f"busca_{k}" for k in retrieval_keys),
+         *(f"grafo_{k}" for k in graph_keys)]
     )
     for row in rows:
         scores = row["scores"]
@@ -124,7 +128,8 @@ def _results_csv(rows: list[dict]) -> str:
              "|".join(row["bridge_entities"]),
              *(scores.get(k, "") for k in metric_keys), mean, row["latency_ms"], row["tokens"],
              *(row["question_signals"].get(k, "") for k in question_keys),
-             *(row["retrieval_signals"].get(k, "") for k in retrieval_keys)]
+             *(row["retrieval_signals"].get(k, "") for k in retrieval_keys),
+             *((row["graph_stats"] or {}).get(k, "") for k in graph_keys)]
         )
     return buffer.getvalue()
 

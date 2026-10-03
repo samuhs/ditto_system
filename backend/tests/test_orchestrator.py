@@ -976,3 +976,92 @@ def test_context_all_hops_equals_context_hit_on_a_single_hop(session_factory, ev
 def test_context_all_hops_is_skipped_when_nothing_is_retrieved(session_factory):
     scores = _all_hops_score(session_factory, ["Para one."], [1], rag="closed_book")
     assert "context_all_hops" not in scores
+
+
+# One entity, one relation and a line the parser cannot read, in the extraction format.
+_EXTRACTION_REPLY = (
+    "entidade<|>Praça Central<|>lugar<|>Praça no centro.\n"
+    "relacao<|>Praça Central<|>Igreja Matriz<|>vizinhança<|>A praça fica ao lado da igreja.\n"
+    "uma linha fora do formato\n"
+    "<|FIM|>"
+)
+
+
+class _GraphLLM:
+    """Answers the extraction prompt with extraction lines and anything else with an answer."""
+
+    def __init__(self, extractions):
+        self._extractions = extractions
+
+    def generate(self, prompt):
+        if prompt.startswith("Extraia do texto"):
+            self._extractions.append(prompt)
+            return _EXTRACTION_REPLY
+        return "Resposta gerada."
+
+
+@pytest.mark.parametrize("staged", [True, False])
+def test_graph_builds_the_indexes_grafo_once_and_answers_from_its_chunks(session_factory, staged):
+    from app.core.vectorstore.qdrant import collection_name, graph_collection_names
+
+    store = _indexed_store("e5")
+    chunks = [p["payload"]["text"] for p in store.scroll(collection_name("viagem", "recursive", "e5"))]
+    extractions = []
+    deps = _staged_deps(store, session_factory, [])
+    deps.llm_factory = lambda name, **kw: _GraphLLM(extractions)
+    experiment_id = _new_experiment(session_factory, f"graph-{staged}")
+
+    run_experiment(
+        experiment_id,
+        _staged_config(rags=["naive", "graph"], retrievers=["similarity", "mmr"],
+                       metrics=["context_hit", "context_recall_gold"], staged=staged),
+        [QuestionItem(text="Where?", evidence=["Para one."])],
+        deps,
+    )
+
+    check = session_factory()
+    experiment = check.get(Experiment, experiment_id)
+    assert experiment.status == "done"
+    runs = {(r.rag_technique, r.retriever): r for r in experiment.runs}
+    # graph does not multiply by the Retrievers.
+    assert sorted(runs) == [("graph", "similarity"), ("naive", "mmr"), ("naive", "similarity")]
+    graph_run = runs[("graph", "similarity")]
+    # The malformed line is counted, and the row still runs.
+    assert graph_run.graph_stats == {
+        "entities": 1, "relations": 1, "chunks": len(chunks),
+        "lines": 3 * len(chunks), "failed_lines": len(chunks), "failed_chunks": 0,
+    }
+    assert runs[("naive", "similarity")].graph_stats is None
+    [row] = graph_run.results
+    assert row.generated_answer == "Resposta gerada."
+    assert [c["text"] for c in row.retrieved_context] == chunks
+    assert row.scores["context_hit"] == 1.0 and row.scores["context_recall_gold"] == 1.0
+    check.close()
+    # Built once, in collections that carry the LLM extrator.
+    assert len(extractions) == len(chunks)
+    assert set(graph_collection_names("viagem", "recursive", "e5", "qwen3:1.7b")) <= set(
+        store.list_collections()
+    )
+
+
+def test_a_grafo_that_cannot_be_built_fails_only_its_own_row(session_factory):
+    class _NoExtractionLLM:
+        def generate(self, prompt):
+            if prompt.startswith("Extraia do texto"):
+                raise RuntimeError("servidor fora do ar")
+            return "Resposta gerada."
+
+    store = _indexed_store("e5")
+    deps = _staged_deps(store, session_factory, [])
+    deps.llm_factory = lambda name, **kw: _NoExtractionLLM()
+    experiment_id = _new_experiment(session_factory, "graph-unbuildable")
+    run_experiment(experiment_id, _staged_config(rags=["graph", "naive"], metrics=["rouge_l"]),
+                   [QuestionItem(text="Where?", reference="Aqui.")], deps)
+
+    check = session_factory()
+    experiment = check.get(Experiment, experiment_id)
+    assert experiment.status == "done"
+    answers = {run.rag_technique: run.results[0].generated_answer for run in experiment.runs}
+    check.close()
+    assert answers["graph"].startswith("[ERRO: Grafo:")
+    assert answers["naive"] == "Resposta gerada."

@@ -4,6 +4,7 @@ from app.core.rag import (  # noqa: F401  registers the built-ins
     closed_book,
     compression,
     crag,
+    graph,
     hyde,
     naive,
     oracle,

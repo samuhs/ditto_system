@@ -13,6 +13,7 @@ class ClosedBookRAG(RAG):
     """Generate without context; the retriever is accepted and never called."""
 
     uses_retrieval = False
+    uses_index = False
 
     def __init__(
         self, retriever: Retriever, llm: LLM, prompts: dict[str, str] | None = None

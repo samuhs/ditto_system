@@ -473,3 +473,27 @@ def test_difficulty_reports_each_question_type(client):
     body = client.get(f"/experiments/{exp_id}/difficulty").json()
     types = {q["question"]: q["question_type"] for q in body["questions"]}
     assert types == {"Quando é o evento do parque?": "ponte", "Onde fica?": "simples"}
+
+
+def test_graph_rows_carry_the_stats_of_their_grafo(client):
+    import csv
+
+    # The fake LLM never writes the extraction format: every line fails, the row still runs.
+    exp_id = _post_with_metrics(
+        client, ["rouge_l"], "pergunta,resposta_referencia\nOnde?,Ali\n", rags=("naive", "graph")
+    ).json()["id"]
+
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["status"] == "done"
+    stats = {row["rag"]: row["graph_stats"] for row in detail["results"]}
+    assert stats["naive"] is None
+    graph = stats["graph"]
+    assert graph["entities"] == graph["relations"] == 0
+    assert graph["chunks"] >= 1 and graph["failed_lines"] == graph["lines"] == graph["chunks"]
+
+    text = client.get(f"/experiments/{exp_id}/export.csv").content.decode("utf-8")
+    rows = list(csv.DictReader(io.StringIO(text.lstrip("﻿"))))
+    by_rag = {row["rag"]: row for row in rows}
+    assert by_rag["graph"]["grafo_entities"] == "0"
+    assert by_rag["graph"]["grafo_failed_lines"] == str(graph["failed_lines"])
+    assert by_rag["naive"]["grafo_entities"] == ""

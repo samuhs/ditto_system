@@ -54,6 +54,9 @@ class ExperimentRun(Base):
     retriever: Mapped[str] = mapped_column(String(60))
     llm: Mapped[str | None] = mapped_column(String(60), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")
+    # GraphRAG runs: stats of the Grafo de conhecimento used (entities, relations,
+    # chunks, extraction lines and failures); None for other techniques.
+    graph_stats: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     experiment: Mapped["Experiment"] = relationship(back_populates="runs")
     results: Mapped[list["RunResult"]] = relationship(

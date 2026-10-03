@@ -15,6 +15,7 @@ class OracleRAG(RAG):
     """Generate from the reference evidence; the retriever is accepted and never called."""
 
     uses_retrieval = False
+    uses_index = False
     uses_evidence = True
 
     def __init__(

@@ -33,8 +33,9 @@ from app.core.memory.leases import CachedQueryEmbedder, LeaseSwitcher
 from app.core.memory.manager import ModelManager
 from app.core.memory.profile import active_profile
 from app.core.memory.stats import process_memory_bytes
+from app.core.graph.build import ensure_graph
 from app.core.prompts import PROMPT_SPECS
-from app.core.rag.base import build_rag
+from app.core.rag.base import build_rag, rag_registry
 from app.core.retrieval.base import build_retriever
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.schemas import ExperimentConfig, QuestionItem, combinations, index_pairs
@@ -130,6 +131,29 @@ def _build_retriever(deps: ExperimentDeps, name: str, collection: str, embedder,
         kwargs["llm"] = llm
         kwargs["prompts"] = prompts
     return deps.retriever_factory(name, **kwargs)
+
+
+def _uses_graph(rag_name: str) -> bool:
+    """Whether the technique answers from the Índice's Grafo de conhecimento."""
+    return rag_name in rag_registry.names() and rag_registry.get(rag_name).uses_graph
+
+
+def _error_result(run_id: int, question: QuestionItem, error: str) -> RunResult:
+    """The stored row of a question that could not be answered."""
+    return RunResult(
+        run_id=run_id,
+        question=question.text,
+        reference_answer=question.reference,
+        reference_contexts=question.evidence,
+        question_type=question.question_type,
+        evidence_hops=question.evidence_hops,
+        bridge_entities=question.bridge_entities,
+        generated_answer=f"{ERROR_PREFIX}{error}]",
+        retrieved_context=[],
+        scores={},
+        latency_ms=0,
+        tokens=0,
+    )
 
 
 def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder):
@@ -462,6 +486,25 @@ def _run_experiment(
                 rag_kwargs = {"retriever": retriever, "llm": llm}
                 if rag_name in PROMPT_SPECS:
                     rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
+                if _uses_graph(rag_name):
+                    # The LLM de resposta is, for now, also the LLM extrator.
+                    try:
+                        graph = ensure_graph(
+                            deps.store, config.base, chunking, embedding,
+                            extractor=llm_name, llm=llm, embedder=embedder,
+                            prompt=(prompt_snapshot.get(rag_name) or {}).get("extract"),
+                            max_concurrency=concurrency,
+                        )
+                    except Exception as exc:  # noqa: BLE001  the other runs go on
+                        logger.error("graph build failed for run %d: %s", run.id, exc)
+                        for question in questions:
+                            session.add(_error_result(run.id, question, f"Grafo: {exc}"))
+                        run.status = "done"
+                        session.commit()
+                        continue
+                    run.graph_stats = graph.stats
+                    session.commit()
+                    rag_kwargs.update(graph=graph, embedder=embedder)
                 rag = deps.rag_factory(rag_name, **rag_kwargs)
 
                 # The oracle answers from the reference evidence: only questions with one.
@@ -481,22 +524,7 @@ def _run_experiment(
 
                     answer_text, contexts, scores, latency_ms, tokens, error = outcome
                     if error is not None:
-                        session.add(
-                            RunResult(
-                                run_id=run.id,
-                                question=question.text,
-                                reference_answer=question.reference,
-                                reference_contexts=question.evidence,
-                                question_type=question.question_type,
-                                evidence_hops=question.evidence_hops,
-                                bridge_entities=question.bridge_entities,
-                                generated_answer=f"{ERROR_PREFIX}{error}]",
-                                retrieved_context=[],
-                                scores={},
-                                latency_ms=0,
-                                tokens=0,
-                            )
-                        )
+                        session.add(_error_result(run.id, question, error))
                     else:
                         session.add(
                             RunResult(

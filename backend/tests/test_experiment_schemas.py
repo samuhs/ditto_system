@@ -88,3 +88,60 @@ def test_experiment_config_parses_llms_list():
         llms=["gemini", "ollama"],
     )
     assert cfg.llms == ["gemini", "ollama"]
+
+
+# The techniques that existed before GraphRAG; the combination rule must not move for them.
+_PRE_GRAPH_TECHNIQUES = [
+    "naive", "closed_book", "oracle", "agentic", "hyde", "rerank", "crag", "compression",
+]
+
+
+def _pre_graph_combinations(config):
+    """The combination rule as it was before GraphRAG (frozen copy, the golden master)."""
+    import itertools
+
+    from app.core.rag.base import rag_registry
+    from app.experiments.schemas import index_pairs
+
+    pairs = index_pairs(config)
+    first = (pairs[0], config.retrievers[0])
+    for llm, pair, rag, retriever in itertools.product(
+        config.llms, pairs, config.rags, config.retrievers
+    ):
+        if rag_registry.get(rag).uses_retrieval or (pair, retriever) == first:
+            yield llm, pair, rag, retriever
+
+
+def _matrix(**overrides):
+    import app.core.rag  # noqa: F401  registers the techniques
+
+    fields = dict(
+        base="viagem", chunkings=["recursive", "markdown"], embeddings=["e5", "gemini"],
+        rags=_PRE_GRAPH_TECHNIQUES, retrievers=["similarity", "mmr"],
+        metrics=["rouge_l"], llms=["qwen3:1.7b", "gemini"],
+    )
+    return ExperimentConfig(**{**fields, **overrides})
+
+
+def test_current_techniques_keep_exactly_the_same_combinations():
+    from app.experiments.schemas import combinations
+
+    config = _matrix()
+    runs = list(combinations(config))
+    assert runs == list(_pre_graph_combinations(config))
+    # 6 retrieving techniques x 4 indexes x 2 retrievers, plus closed book and oracle once, per LLM.
+    assert len(runs) == 2 * (6 * 4 * 2 + 2)
+
+
+def test_graph_runs_once_per_index_and_llm_without_multiplying_by_retrievers():
+    from app.experiments.schemas import combination_count, combinations
+
+    config = _matrix(rags=["graph"], retrievers=["similarity", "mmr", "hybrid"])
+    runs = list(combinations(config))
+    assert combination_count(config) == len(runs) == 2 * 4
+    assert {(llm, pair) for llm, pair, _, _ in runs} == {
+        (llm, (c, e))
+        for llm in ["qwen3:1.7b", "gemini"]
+        for c in ["recursive", "markdown"]
+        for e in ["e5", "gemini"]
+    }

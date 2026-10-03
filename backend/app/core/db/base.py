@@ -42,6 +42,7 @@ ADDED_COLUMNS = {
         "question_type": "VARCHAR(20)", "evidence_hops": "JSON", "bridge_entities": "JSON",
     },
     "question_profile": {"model_signals": "JSON", "question_type": "VARCHAR(20)"},
+    "experiment_run": {"graph_stats": "JSON"},
 }
 
 

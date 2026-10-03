@@ -36,7 +36,7 @@ def _kind(rag: str) -> str:
     technique = rag_registry.get(rag)
     if technique.uses_evidence:
         return "oracle"
-    return "retrieval" if technique.uses_retrieval else "closed_book"
+    return "retrieval" if technique.uses_index else "closed_book"
 
 
 def _summary(values: list[float]) -> dict:

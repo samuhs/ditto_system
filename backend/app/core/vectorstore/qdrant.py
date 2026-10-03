@@ -1,4 +1,6 @@
 """Qdrant vector store wrapper: named collections, metadata, similarity search."""
+import re
+
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -32,8 +34,27 @@ def collection_name(base: str, chunking: str, embedding: str) -> str:
     return f"{base}__{chunking}__{embedding}"
 
 
+# Marks the collections of a Grafo de conhecimento, so they never read as an Índice.
+_GRAPH_MARKER = "__kg_"
+
+
+def graph_collection_names(
+    base: str, chunking: str, embedding: str, extractor: str
+) -> tuple[str, str]:
+    """The (entities, relations) collections of an Índice's Grafo de conhecimento.
+
+    They extend the Índice's name, so a Base's graphs are found by its prefix, and
+    carry the LLM extrator (sanitized: Qdrant names take no '/' or ':').
+    """
+    index = collection_name(base, chunking, embedding)
+    llm = re.sub(r"[^A-Za-z0-9.-]+", "-", extractor).strip("-")
+    return f"{index}{_GRAPH_MARKER}ent__{llm}", f"{index}{_GRAPH_MARKER}rel__{llm}"
+
+
 def parse_collection_name(name: str) -> tuple[str, str, str] | None:
-    """Split a collection name into (base, chunking, embedding); None if it is not one."""
+    """Split an Índice's collection name into (base, chunking, embedding); None if it is not one."""
+    if _GRAPH_MARKER in name:
+        return None
     parts = name.rsplit("__", 2)
     return (parts[0], parts[1], parts[2]) if len(parts) == 3 else None
 
@@ -56,6 +77,11 @@ class QdrantStore:
             collection_name=name,
             vectors_config=VectorParams(size=dimension, distance=Distance.COSINE),
         )
+
+    def delete_collection(self, name: str) -> None:
+        """Drop the collection if it exists."""
+        if self._client.collection_exists(name):
+            self._client.delete_collection(name)
 
     def count(self, name: str) -> int:
         """Number of points in the collection."""
