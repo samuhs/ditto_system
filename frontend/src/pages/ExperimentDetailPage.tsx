@@ -167,7 +167,7 @@ export function ExperimentDetailPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [filters, sortKey, sortDir, pageSize]);
+  }, [filters, sortKey, sortDir, pageSize, activeType]);
 
   const size = Number(pageSize);
   const pageCount = Math.max(1, Math.ceil(sorted.length / size));

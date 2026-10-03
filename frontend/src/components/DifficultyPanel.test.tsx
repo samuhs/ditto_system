@@ -170,10 +170,25 @@ describe("DifficultyPanel", () => {
       expect(drawer.getByText(/sem estimativa: só 1 pergunta deste tipo/i)).toBeInTheDocument();
     });
 
-    it("leaves the type column out when every question has the same type", async () => {
+    it("adds the difficulty within the type to the table, flagged as indicative", async () => {
+      await mockTyped();
       renderPanel();
-      await screen.findAllByRole("row");
-      expect(screen.queryByRole("columnheader", { name: "Tipo" })).not.toBeInTheDocument();
+      const rows = await screen.findAllByRole("row");
+      expect(screen.getByRole("columnheader", { name: "TRI no tipo" })).toBeInTheDocument();
+      expect(within(rows[3]).getByText("-0.40")).toBeInTheDocument();
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: "Fácil?" }));
+      const drawer = within(await screen.findByRole("dialog"));
+      expect(drawer.getByText(/só indicativa: 3 perguntas/i)).toBeInTheDocument();
+    });
+
+    it("shows an unannotated question as a single-passage one", async () => {
+      renderPanel();
+      const rows = await screen.findAllByRole("row");
+      expect(screen.getByRole("columnheader", { name: "Tipo" })).toBeInTheDocument();
+      expect(rows[2]).toHaveTextContent("Um trecho");
+      expect(screen.queryByRole("columnheader", { name: "TRI no tipo" })).not.toBeInTheDocument();
     });
   });
 });

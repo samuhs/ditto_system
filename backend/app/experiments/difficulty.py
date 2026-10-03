@@ -12,6 +12,7 @@ corpus, evidence, retrieval scores, perplexity) are correlated with it: which
 of them predict difficulty, for which model.
 """
 import statistics
+from typing import NamedTuple
 
 import numpy as np
 
@@ -58,38 +59,43 @@ def _means(score_dicts: list[dict]) -> dict[str, float]:
     return {m: s["mean"] for m, s in _metric_summaries(score_dicts).items()}
 
 
-def _fit(responses: dict[tuple[str, str, str], float], llms: list[str]) -> tuple[dict, dict, dict]:
-    """Rasch fit over every configuration (difficulty, ability) and one difficulty per LLM."""
+class _Fit(NamedTuple):
+    difficulty: dict[str, float]
+    difficulty_by_llm: dict[str, dict[str, float]]
+    ability: dict[str, float]
+
+
+def _fit(responses: dict[tuple[str, str, str], float], llms: list[str]) -> _Fit:
+    """Rasch fit over every configuration, plus one difficulty fit per LLM."""
     overall, ability = fit_rasch({(c, q): s for (c, _, q), s in responses.items()})
     by_llm = {
         llm: fit_rasch({(c, q): s for (c, l, q), s in responses.items() if l == llm})[0]
         for llm in llms
     }
-    return overall, by_llm, ability
+    return _Fit(overall, by_llm, ability)
 
 
 def _irt_by_type(
     responses: dict[tuple[str, str, str], float], llms: list[str], types: dict[str, str],
 ) -> dict[str, dict]:
-    """One fit per Tipo de pergunta, so types of a different nature do not share a scale.
+    """One fit per Tipo de pergunta of `types` (question -> type), so types do not share a scale.
 
-    A type with fewer than MIN_FIT_QUESTIONS answered questions has no estimate.
+    Every type is listed; one with fewer than MIN_FIT_QUESTIONS questions answered
+    on the metric has no estimate.
     """
-    questions_of: dict[str, set[str]] = {}
-    for _, _, question in responses:
-        questions_of.setdefault(types.get(question, DEFAULT_TYPE), set()).add(question)
+    answered = {question for _, _, question in responses}
     order = {t: k for k, t in enumerate(QUESTION_TYPES)}
     by_type = {}
-    for qtype in sorted(questions_of, key=lambda t: (order.get(t, len(order)), t)):
-        questions = questions_of[qtype]
+    for qtype in sorted(set(types.values()), key=lambda t: (order.get(t, len(order)), t)):
+        questions = {q for q, t in types.items() if t == qtype and q in answered}
         fit = None
         if len(questions) >= MIN_FIT_QUESTIONS:
             fit = _fit({k: s for k, s in responses.items() if k[2] in questions}, llms)
         by_type[qtype] = {
             "n_questions": len(questions),
             "reliable": len(questions) >= MIN_RELIABLE_QUESTIONS,
-            "difficulty": fit[0] if fit else None,
-            "difficulty_by_llm": fit[1] if fit else None,
+            "difficulty": fit.difficulty if fit else None,
+            "difficulty_by_llm": fit.difficulty_by_llm if fit else None,
         }
     return by_type
 
@@ -99,17 +105,17 @@ def _irt(
     types: dict[str, str],
 ) -> dict:
     """Rasch fit over every retrieval configuration, one per LLM and one per Tipo de pergunta."""
-    overall, by_llm, ability = _fit(responses, llms)
+    fit = _fit(responses, llms)
     return {
         "metric": metric,
-        "n_questions": len(overall),
-        "n_configurations": len(ability),
-        "reliable": len(overall) >= MIN_RELIABLE_QUESTIONS,
+        "n_questions": len(fit.difficulty),
+        "n_configurations": len(fit.ability),
+        "reliable": len(fit.difficulty) >= MIN_RELIABLE_QUESTIONS,
         "min_questions": MIN_RELIABLE_QUESTIONS,
         "min_fit_questions": MIN_FIT_QUESTIONS,
-        "difficulty": overall,
-        "difficulty_by_llm": by_llm,
-        "ability": ability,
+        "difficulty": fit.difficulty,
+        "difficulty_by_llm": fit.difficulty_by_llm,
+        "ability": fit.ability,
         "by_type": _irt_by_type(responses, llms, types),
     }
 
@@ -238,7 +244,8 @@ def question_difficulty(experiment: Experiment, metric: str | None = None) -> di
         for config, llm, question, scores in rows
         if metric in scores
     }
-    irt = _irt(responses, llms, metric, types) if metric else None
+    question_types = {q["question"]: q["question_type"] for q in questions}
+    irt = _irt(responses, llms, metric, question_types) if metric else None
     return {
         "llms": llms,
         "metrics": sorted(metrics),

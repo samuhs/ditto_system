@@ -121,6 +121,21 @@ def test_irt_is_fitted_per_question_type(db_session):
     assert by_type["comparacao"]["difficulty_by_llm"] is None
 
 
+def test_type_with_no_scored_retrieval_is_listed_without_estimate(db_session):
+    experiment = Experiment(name="irt-vazio", status="done", config={})
+    experiment.runs = [
+        _typed_run("naive", "gemini", [("S1", "simples", 0.9), ("S2", "simples", 0.5),
+                                       ("S3", "simples", 0.1)]),
+        # The ponte question only has a closed-book answer: no IRT response at all.
+        _typed_run("closed_book", "gemini", [("P1", "ponte", 0.3)]),
+    ]
+    db_session.add(experiment)
+    db_session.commit()
+
+    ponte = question_difficulty(experiment)["irt"]["by_type"]["ponte"]
+    assert ponte["n_questions"] == 0 and ponte["difficulty"] is None
+
+
 def test_old_experiment_has_a_single_simple_type(db_session):
     experiment = Experiment(name="antigo", status="done", config={})
     experiment.runs = [_run("naive", "gemini", [("Q1", "a", {"chrf": 0.5}, None),

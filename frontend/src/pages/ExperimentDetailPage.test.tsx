@@ -268,6 +268,22 @@ describe("ExperimentDetailPage", () => {
       expect(screen.queryByRole("columnheader", { name: /média · ponte/i })).not.toBeInTheDocument();
     });
 
+    it("goes back to the first page of answers when the type changes", async () => {
+      const a = (await client.getExperiment(7)).results[0];
+      const many = Array.from({ length: 12 }, (_, i) => ({ ...a, question: `Simples ${i}` }));
+      vi.mocked(client.getExperiment).mockResolvedValue({
+        id: 7, name: "kind-ember-89", status: "done",
+        results: [...many, { ...a, question: "Só ponte", question_type: "ponte" }],
+      });
+      renderPage();
+      const user = userEvent.setup();
+      const filter = await screen.findByRole("radiogroup", { name: /tipo de pergunta/i });
+      await openAnswers(user);
+      await user.click(screen.getByRole("button", { name: "2" }));
+      await user.click(within(filter).getByRole("radio", { name: "Ponte" }));
+      expect(await screen.findByText("Só ponte")).toBeInTheDocument();
+    });
+
     it("applies to the charts", async () => {
       await mockTyped();
       renderPage();

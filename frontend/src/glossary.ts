@@ -168,8 +168,11 @@ export const QUESTION_TYPES: Record<string, Term> = {
   agregacao: { name: "Agregação", description: "Junta ou lista o que vários trechos dizem." },
 };
 
+/** Type of a question without annotation (and of every result stored before annotations). */
+export const DEFAULT_QUESTION_TYPE = "simples";
+
 export function questionType(key: string | undefined): Term {
-  const k = key || "simples";
+  const k = key || DEFAULT_QUESTION_TYPE;
   return QUESTION_TYPES[k] ?? { name: k };
 }
 

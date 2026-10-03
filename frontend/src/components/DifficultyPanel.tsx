@@ -5,6 +5,7 @@ import { getExperimentDifficulty } from "../api/client";
 import type {
   ExperimentDifficulty, IrtTypeFit, QuestionDifficulty, SignalCorrelations,
 } from "../api/types";
+import { typeOf } from "../experiments/questionTypes";
 import { questionType, term } from "../glossary";
 import { DifficultyGuide } from "./DifficultyGuide";
 import { Errata, Note, errorText } from "./Notice";
@@ -156,6 +157,11 @@ function TypeFit({
           ))}
         </dl>
       )}
+      {fit.difficulty !== null && !fit.reliable && (
+        <p className="ditto-muted" style={{ margin: "6px 0 0", fontSize: 13 }}>
+          Só indicativa: {n} perguntas deste tipo.
+        </p>
+      )}
     </>
   );
 }
@@ -213,9 +219,9 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
     Object.values(q.by_llm).some((c) => c.hit_rate !== null),
   );
   const perLlm = 1 + (hasClosedBook ? 1 : 0) + (hasOracle ? 1 : 0) + (hasEvidence ? 1 : 0);
-  // The Tipo de pergunta only earns a column (and a per-type fit) when the experiment mixes types.
-  const typeKey = (q: QuestionDifficulty) => q.question_type || "simples";
-  const mixedTypes = new Set(data.questions.map(typeKey)).size > 1;
+  // A difficulty within each Tipo de pergunta only adds something when the experiment mixes types.
+  const mixedTypes = new Set(data.questions.map(typeOf)).size > 1;
+  const typeFits = irt && mixedTypes ? irt.by_type ?? null : null;
 
   return (
     <>
@@ -242,7 +248,7 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
         <strong>Tabela 2.</strong> Nota média de cada pergunta por modelo, sobre as combinações com
         busca (± desvio entre elas). As mais difíceis vêm primeiro.
         {irt && " “TRI” é a dificuldade estimada sobre todas as combinações: acima de 0, mais difícil que a média."}
-        {irt && mixedTypes && " A dificuldade dentro de cada tipo de pergunta aparece ao abrir a pergunta."}
+        {typeFits && " “TRI no tipo” é a mesma estimativa feita só entre as perguntas do mesmo tipo; “—” quando o tipo tem perguntas de menos."}
         {hasClosedBook && " “Sem busca” é o mesmo modelo respondendo sem os documentos."}
         {hasOracle && " “Oráculo” é o modelo com o trecho correto no contexto: o melhor que ele consegue."}
         {hasEvidence && " “Evidência” é a parte das buscas que trouxe o trecho anotado."} Clique numa
@@ -253,10 +259,15 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
           <thead>
             <tr>
               <th rowSpan={2}>Pergunta</th>
-              {mixedTypes && <th rowSpan={2}>Tipo</th>}
+              <th rowSpan={2}>Tipo</th>
               {irt && (
                 <th rowSpan={2} className="ditto-num">
                   TRI
+                </th>
+              )}
+              {typeFits && (
+                <th rowSpan={2} className="ditto-num">
+                  TRI no tipo
                 </th>
               )}
               {data.llms.map((llm) => (
@@ -290,10 +301,15 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
                     {q.question}
                   </button>
                 </td>
-                {mixedTypes && <td data-label="Tipo">{questionType(q.question_type).name}</td>}
+                <td data-label="Tipo">{questionType(q.question_type).name}</td>
                 {irt && (
                   <td className="ditto-num" data-label="TRI">
                     {signed(irt.difficulty[q.question])}
+                  </td>
+                )}
+                {typeFits && (
+                  <td className="ditto-num" data-label="TRI no tipo">
+                    {signed(typeFits[typeOf(q)]?.difficulty?.[q.question])}
                   </td>
                 )}
                 {data.llms.map((llm) => {
@@ -375,9 +391,9 @@ export function DifficultyPanel({ experimentId }: { experimentId: number }) {
                     </div>
                   ))}
                 </dl>
-                {mixedTypes && irt.by_type?.[typeKey(open)] && (
+                {typeFits?.[typeOf(open)] && (
                   <TypeFit
-                    fit={irt.by_type[typeKey(open)]}
+                    fit={typeFits[typeOf(open)]}
                     question={open.question}
                     typeName={questionType(open.question_type).name}
                     llms={data.llms}

@@ -1,6 +1,6 @@
 /** Tipo de pergunta of result rows: which types an experiment has and the rows of one. */
 import type { ExperimentResultRow } from "../api/types";
-import { QUESTION_TYPES } from "../glossary";
+import { DEFAULT_QUESTION_TYPE, QUESTION_TYPES } from "../glossary";
 
 /** Filter value meaning every Tipo de pergunta. */
 export const ALL_TYPES = "__all__";
@@ -8,8 +8,8 @@ export const ALL_TYPES = "__all__";
 const ORDER = Object.keys(QUESTION_TYPES);
 
 /** A row's Tipo de pergunta; rows stored before annotations existed are "simples". */
-export function typeOf(row: ExperimentResultRow): string {
-  return row.question_type || "simples";
+export function typeOf(row: { question_type?: string }): string {
+  return row.question_type || DEFAULT_QUESTION_TYPE;
 }
 
 /** Types present in the rows, in glossary order (unknown ones last, by name). */
