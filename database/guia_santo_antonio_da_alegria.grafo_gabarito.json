@@ -1,6 +1,6 @@
 {
-  "descricao": "Gabarito de entidades e relações de 10 seções do guia, para medir o LLM extrator do Grafo de conhecimento (scripts/graph_extraction_gate.py). Relações não têm direção. Redigido pelo agente; precisa de revisão humana.",
-  "revisado": false,
+  "descricao": "Gabarito de entidades e relações de 10 seções do guia, para medir o LLM extrator do Grafo de conhecimento (scripts/graph_extraction_gate.py). Relações não têm direção. Redigido pelo agente e aprovado pelo pesquisador em 2026-10-03.",
+  "revisado": true,
   "secoes": [
     {
       "titulo": "### Ilha do Ar (Serra da Lajinha): voo livre e mirante em Santo Antônio da Alegria",
