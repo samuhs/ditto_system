@@ -13,6 +13,7 @@ import { DifficultyPanel } from "../components/DifficultyPanel";
 import { StatusTag } from "../components/StatusTag";
 import { DownloadIcon, PauseIcon, SortIcon } from "../components/icons";
 import { questionType, techniqueName, term } from "../glossary";
+import { graphStatsText } from "../experiments/graphStats";
 import { ALL_TYPES, ofType, typesIn } from "../experiments/questionTypes";
 import { formatDateTime, formatDuration } from "../utils/duration";
 import {
@@ -443,6 +444,11 @@ export function ExperimentDetailPage() {
                             >
                               <Traits combo={r.combo} />
                             </button>
+                            {r.graphStats && (
+                              <div className="ditto-muted ditto-graph-stats">
+                                Grafo: {graphStatsText(r.graphStats)}
+                              </div>
+                            )}
                           </td>
                           <td className="ditto-num ditto-cell-count" data-label="Perguntas">{r.count}</td>
                           {metricKeys.map((k) => (
@@ -733,6 +739,12 @@ export function ExperimentDetailPage() {
                   <dd>{hopList(openRow.hops_found!, true)}</dd>
                   <dt>Saltos faltantes</dt>
                   <dd>{hopList(openRow.hops_found!, false)}</dd>
+                </>
+              )}
+              {openRow.graph_stats && (
+                <>
+                  <dt>Grafo de conhecimento</dt>
+                  <dd>{graphStatsText(openRow.graph_stats)}</dd>
                 </>
               )}
               <dt>Tempo de resposta</dt>

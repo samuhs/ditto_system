@@ -88,6 +88,11 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
       name: "Compressão",
       description: "Reduz cada trecho ao que interessa à pergunta antes de responder.",
     },
+    graph: {
+      name: "Grafo (GraphRAG)",
+      description:
+        "Acha as entidades da pergunta no Grafo de conhecimento do índice e responde com os trechos delas e das vizinhas. O modelo monta o grafo na primeira vez. Não usa a busca.",
+    },
   },
   retriever: {
     similarity: {

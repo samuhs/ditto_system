@@ -182,6 +182,47 @@ describe("ExperimentDetailPage", () => {
     expect(within(drawer).getByText("Todos os saltos")).toBeInTheDocument();
   });
 
+  describe("a GraphRAG combination", () => {
+    beforeEach(async () => {
+      const base = (await client.getExperiment(7)).results[0];
+      vi.mocked(client.getExperiment).mockResolvedValue({
+        id: 7,
+        name: "kind-ember-89",
+        status: "done",
+        results: [
+          {
+            ...base,
+            rag: "graph",
+            graph_stats: {
+              entities: 12, relations: 8, chunks: 30, lines: 40, failed_lines: 4, failed_chunks: 0,
+            },
+          },
+        ],
+      });
+    });
+
+    it("shows its Grafo de conhecimento stats on the ranking row", async () => {
+      renderPage();
+      const button = await screen.findByRole("button", { name: /ver respostas da combinação 1/i });
+      const row = button.closest("tr")!;
+      expect(row).toHaveTextContent("Grafo (GraphRAG)");
+      expect(row).toHaveTextContent("12 entidades · 8 relações · 30 trechos · 10% das linhas com falha");
+      // graph searches no Retriever.
+      expect(within(row).getByTitle("Busca: —")).toBeInTheDocument();
+    });
+
+    it("shows the stats in the result drawer", async () => {
+      renderPage();
+      const user = userEvent.setup();
+      await openAnswers(user);
+      await user.click(await screen.findByText(/Pergunta A/));
+      const drawer = await screen.findByRole("dialog", { name: "Detalhe do resultado" });
+      expect(within(drawer).getByText("Grafo de conhecimento").nextElementSibling).toHaveTextContent(
+        "12 entidades · 8 relações · 30 trechos · 10% das linhas com falha",
+      );
+    });
+  });
+
   it("hides the hops when they were not matched", async () => {
     renderPage();
     const user = userEvent.setup();

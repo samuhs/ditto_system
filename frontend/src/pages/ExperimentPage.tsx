@@ -16,6 +16,7 @@ import { joinPt } from "../utils/text";
 
 
 const NO_RETRIEVAL_RAGS = ["closed_book", "oracle"];
+const INDEX_ONLY_RAGS = ["graph"];
 export function ExperimentPage() {
   const { addExperimentTask } = useTasks();
   const [options, setOptions] = useState<Options | null>(null);
@@ -87,9 +88,13 @@ export function ExperimentPage() {
   }
 
   // "Sem busca" and "Oráculo" ignore the index and retriever: they run once per model.
+  // The Grafo reads the index but no retriever: it runs once per index.
   const baselines = rags.filter((r) => NO_RETRIEVAL_RAGS.includes(r)).length;
+  const perIndex = rags.filter((r) => INDEX_ONLY_RAGS.includes(r)).length;
+  const searching = rags.length - baselines - perIndex;
   const forms =
-    (indexKeys.length * (rags.length - baselines) * retrievers.length +
+    (indexKeys.length * searching * retrievers.length +
+      (retrievers.length > 0 ? indexKeys.length * perIndex : 0) +
       (indexKeys.length > 0 && retrievers.length > 0 ? baselines : 0)) *
     llms.length;
   const missing = [

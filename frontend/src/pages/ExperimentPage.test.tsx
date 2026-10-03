@@ -122,6 +122,20 @@ describe("ExperimentPage", () => {
     expect(screen.getByText("respostas a gerar e avaliar").previousElementSibling).toHaveTextContent("4");
   });
 
+  it("offers the Grafo technique and runs it once per index, not per retriever", async () => {
+    const options = await client.getOptions();
+    vi.mocked(client.getOptions).mockResolvedValue({
+      ...options, rags: ["naive", "graph"], retrievers: ["similarity", "mmr"],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    expect(screen.getByText("Grafo (GraphRAG)")).toBeInTheDocument();
+    expect(await screen.findByText(/2 perguntas encontradas/i)).toBeInTheDocument();
+    // naive: 2 indexes × 2 retrievers = 4; graph: 2 indexes = 2; 6 combinations × 2 questions
+    expect(screen.getByText("respostas a gerar e avaliar").previousElementSibling).toHaveTextContent("12");
+  });
+
   it("lists real model names with a local/remote tag", async () => {
     vi.mocked(client.getOptions).mockResolvedValue({
       bases: ["teste-1"], chunkings: ["recursive"], embeddings: ["gemini"],

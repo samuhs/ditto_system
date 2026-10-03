@@ -65,6 +65,20 @@ export interface ExperimentResultRow {
   bridge_entities?: string[];
   /** Whether each hop's evidence was retrieved (only when context_all_hops is scored). */
   hops_found?: { hop: number; found: boolean }[];
+  /** GraphRAG runs: stats of the Grafo de conhecimento used; null for other techniques. */
+  graph_stats?: GraphStats | null;
+}
+
+export interface GraphStats {
+  entities: number;
+  relations: number;
+  /** Chunks of the Índice the graph was extracted from. */
+  chunks: number;
+  /** Extraction lines the LLM wrote, and how many of them could not be read. */
+  lines: number;
+  failed_lines: number;
+  /** Chunks whose extraction call failed. */
+  failed_chunks: number;
 }
 
 export interface ExperimentProgress {

@@ -843,6 +843,7 @@ a { color: inherit; text-underline-offset: 3px; }
   white-space: nowrap;
 }
 .ditto-trait-dim { font-weight: 500; color: var(--ink-2); }
+.ditto-graph-stats { margin-top: 4px; font-size: 12.5px; max-width: 360px; }
 
 .ditto-rank {
   font-weight: 750;

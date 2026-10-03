@@ -24,13 +24,15 @@ export interface Combination {
 
 /** The five traits of a combination, each labelled with its dimension. */
 export function Traits({ combo }: { combo: Combination }) {
-  // "Sem busca" and "Oráculo" run attached to an index and retriever they never use.
+  // "Sem busca" and "Oráculo" run attached to an index and retriever they never use;
+  // the Grafo reads its index but runs attached to a retriever it never uses.
   const unused = combo.rag === "closed_book" || combo.rag === "oracle" ? "—" : null;
+  const noRetriever = unused ?? (combo.rag === "graph" ? "—" : null);
   const items: [string, string][] = [
     [DIMENSION_LABEL.chunking, unused ?? term("chunking", combo.chunking).name],
     [DIMENSION_LABEL.embedding, unused ?? term("embedding", combo.embedding).name],
     [DIMENSION_LABEL.rag, term("rag", combo.rag).name],
-    [DIMENSION_LABEL.retriever, unused ?? term("retriever", combo.retriever).name],
+    [DIMENSION_LABEL.retriever, noRetriever ?? term("retriever", combo.retriever).name],
     ["LLM", combo.llm],
   ];
   return (

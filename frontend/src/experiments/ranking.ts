@@ -1,5 +1,5 @@
 /** Ranking of an experiment's combinations, shared by the ranking table and the charts. */
-import type { ExperimentResultRow } from "../api/types";
+import type { ExperimentResultRow, GraphStats } from "../api/types";
 import type { Combination } from "../components/Score";
 import { term } from "../glossary";
 import { ofType, typesIn } from "./questionTypes";
@@ -47,6 +47,8 @@ export interface RankRow {
   combo: Combination;
   count: number;
   scores: Record<string, number | null>;
+  /** GraphRAG combinations: stats of the Grafo de conhecimento they used. */
+  graphStats: GraphStats | null;
   media: number | null;
   /** Média over the questions of each Tipo de pergunta the combination answered. */
   mediaByType: Record<string, number | null>;
@@ -72,6 +74,7 @@ export function rankCombinations(results: ExperimentResultRow[], metricKeys: str
     scores: metricMeans(rows, metricKeys),
     media: mediaOf(rows),
     mediaByType: Object.fromEntries(typesIn(rows).map((t) => [t, mediaOf(ofType(rows, t))])),
+    graphStats: rows[0].graph_stats ?? null,
   }));
 }
 
