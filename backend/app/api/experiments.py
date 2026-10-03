@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.config.runtime import get_eval_embedding
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
-from app.core.evaluation.gold_metrics import hops_found
+from app.core.evaluation.gold_metrics import ALL_HOPS_METRIC, hops_found
 from app.core.memory.manager import get_model_manager
 from app.core.memory.profile import active_profile
 from app.core.prompts import PROMPT_SPECS, load_technique
@@ -45,7 +45,7 @@ def _hops_found(result) -> list[dict]:
     contexts = [c.get("text", "") for c in result.retrieved_context or []]
     if not contexts or not result.reference_contexts:
         return []
-    found = hops_found(result.reference_contexts, result.evidence_hops, contexts)
+    found = hops_found(result.reference_contexts, _evidence_hops(result), contexts)
     return [{"hop": hop, "found": hit} for hop, hit in found.items()]
 
 
@@ -54,7 +54,7 @@ def _result_rows(experiment: Experiment) -> list[dict]:
     profiles = {p.question: p.signals for p in experiment.question_profiles}
     # Matching evidence to chunks is fuzzy text alignment: only paid for when
     # the experiment scores context_all_hops.
-    match_hops = "context_all_hops" in (experiment.config or {}).get("metrics", [])
+    match_hops = ALL_HOPS_METRIC in (experiment.config or {}).get("metrics", [])
     rows = []
     for run in experiment.runs:
         for result in run.results:

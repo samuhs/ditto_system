@@ -15,6 +15,8 @@ from app.core.evaluation.base import EvalSample, Evaluator, evaluation_registry
 MATCH_THRESHOLD = 80
 # A chunk shorter than this share of the evidence holds too little of it to count.
 MIN_LENGTH_SHARE = 0.5
+# Registry name of ContextAllHops (the API matches hops only for experiments scoring it).
+ALL_HOPS_METRIC = "context_all_hops"
 
 _NON_WORD = re.compile(r"[\W_]+")
 
@@ -115,4 +117,4 @@ class ContextAllHops(Evaluator):
 evaluation_registry.register("context_hit", ContextHit)
 evaluation_registry.register("context_mrr", ContextMRR)
 evaluation_registry.register("context_recall_gold", ContextRecallGold)
-evaluation_registry.register("context_all_hops", ContextAllHops)
+evaluation_registry.register(ALL_HOPS_METRIC, ContextAllHops)
