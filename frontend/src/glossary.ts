@@ -152,6 +152,11 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
       name: "Evidência recuperada",
       description: "Quanto da evidência anotada os trechos recuperados trazem.",
     },
+    context_all_hops: {
+      name: "Todos os saltos",
+      description:
+        "Os trechos recuperados trazem a evidência de cada salto da pergunta? Basta uma evidência por salto.",
+    },
   },
 };
 

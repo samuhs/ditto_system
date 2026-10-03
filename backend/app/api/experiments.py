@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.config.runtime import get_eval_embedding
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
+from app.core.evaluation.gold_metrics import hops_found
 from app.core.memory.manager import get_model_manager
 from app.core.memory.profile import active_profile
 from app.core.prompts import PROMPT_SPECS, load_technique
@@ -39,9 +40,21 @@ def _evidence_hops(result) -> list[int]:
     return [1] * len(result.reference_contexts or [])
 
 
+def _hops_found(result) -> list[dict]:
+    """Whether each hop's evidence was retrieved; empty when nothing was retrieved."""
+    contexts = [c.get("text", "") for c in result.retrieved_context or []]
+    if not contexts or not result.reference_contexts:
+        return []
+    found = hops_found(result.reference_contexts, result.evidence_hops, contexts)
+    return [{"hop": hop, "found": hit} for hop, hit in found.items()]
+
+
 def _result_rows(experiment: Experiment) -> list[dict]:
     """Flatten an experiment's runs into one row per (combination, question)."""
     profiles = {p.question: p.signals for p in experiment.question_profiles}
+    # Matching evidence to chunks is fuzzy text alignment: only paid for when
+    # the experiment scores context_all_hops.
+    match_hops = "context_all_hops" in (experiment.config or {}).get("metrics", [])
     rows = []
     for run in experiment.runs:
         for result in run.results:
@@ -57,6 +70,7 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                     "question_type": result.question_type or "simples",
                     "evidence_hops": _evidence_hops(result),
                     "bridge_entities": result.bridge_entities or [],
+                    "hops_found": _hops_found(result) if match_hops else [],
                     "answer": result.generated_answer,
                     "scores": result.scores,
                     "latency_ms": result.latency_ms,

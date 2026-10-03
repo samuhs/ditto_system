@@ -10,7 +10,9 @@ class EvalSample(BaseModel):
     """One evaluation unit: a question, an answer, its contexts, and optional references.
 
     reference_contexts holds annotated evidence passages (literal text from the
-    source document) that a good retrieval should bring back.
+    source document) that a good retrieval should bring back. reference_hops
+    gives the hop (1-based) of each of those passages, aligned with them;
+    passages sharing a hop are alternatives for it. None means all in hop 1.
     """
 
     question: str
@@ -18,6 +20,7 @@ class EvalSample(BaseModel):
     contexts: list[str]
     reference_answer: str | None = None
     reference_contexts: list[str] | None = None
+    reference_hops: list[int] | None = None
 
 
 class Evaluator(ABC):

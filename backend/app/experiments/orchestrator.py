@@ -150,6 +150,7 @@ def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder)
         contexts=context_texts,
         reference_answer=question.reference,
         reference_contexts=question.evidence,
+        reference_hops=question.evidence_hops,
     )
     scores = evaluate_sample(sample, metrics, embedder=eval_embedder)
     return answer.answer, answer.contexts, scores, latency_ms, len(answer.answer.split())
@@ -376,6 +377,7 @@ def _score_results(
                 contexts=[c.get("text", "") for c in row.retrieved_context],
                 reference_answer=row.reference_answer,
                 reference_contexts=row.reference_contexts,
+                reference_hops=row.evidence_hops,
             )
             row.scores = _score_with_retry(sample, config.metrics, eval_embedder)
         session.commit()

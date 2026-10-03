@@ -42,6 +42,19 @@ def _relevant_ranks(sample: EvalSample) -> list[int]:
     ]
 
 
+def hops_found(evidence: list[str], hops: list[int] | None, contexts: list[str]) -> dict[int, bool]:
+    """Whether each hop (in order) has one of its evidence passages in some chunk.
+
+    hops is aligned with evidence; None puts every passage in hop 1.
+    """
+    found: dict[int, bool] = {}
+    for passage, hop in zip(evidence, hops or [1] * len(evidence)):
+        found[hop] = found.get(hop, False) or any(
+            evidence_found_in(passage, chunk) for chunk in contexts
+        )
+    return dict(sorted(found.items()))
+
+
 class ContextHit(Evaluator):
     """1 if any retrieved chunk holds reference evidence, else 0 (hit rate at k)."""
 
@@ -83,6 +96,23 @@ class ContextRecallGold(Evaluator):
         return found / len(evidence)
 
 
+class ContextAllHops(Evaluator):
+    """1 if every hop has one of its evidence passages retrieved, else 0.
+
+    Passages of the same hop are alternatives; with a single hop it equals
+    context_hit.
+    """
+
+    requires_reference_contexts = True
+    requires_contexts = True
+
+    def score(self, sample: EvalSample) -> float:
+        """Return 1.0 when no hop is missing from the retrieved chunks."""
+        found = hops_found(sample.reference_contexts or [], sample.reference_hops, sample.contexts)
+        return 1.0 if all(found.values()) else 0.0
+
+
 evaluation_registry.register("context_hit", ContextHit)
 evaluation_registry.register("context_mrr", ContextMRR)
 evaluation_registry.register("context_recall_gold", ContextRecallGold)
+evaluation_registry.register("context_all_hops", ContextAllHops)

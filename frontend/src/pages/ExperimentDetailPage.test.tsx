@@ -148,6 +148,50 @@ describe("ExperimentDetailPage", () => {
     expect(screen.getByText("Parque · Evento")).toBeInTheDocument();
   });
 
+  it("shows which hops were retrieved and which are missing in the drawer", async () => {
+    const base = (await client.getExperiment(7)).results[0];
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "kind-ember-89",
+      status: "done",
+      results: [
+        {
+          ...base,
+          scores: { context_all_hops: 0 },
+          question_type: "ponte",
+          evidence_hops: [1, 2, 3],
+          hops_found: [
+            { hop: 1, found: true },
+            { hop: 2, found: false },
+            { hop: 3, found: true },
+          ],
+        },
+      ],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await openAnswers(user);
+    await user.click(await screen.findByText(/Pergunta A/));
+    const drawer = await screen.findByRole("dialog", { name: "Detalhe do resultado" });
+    expect(within(drawer).getByText("Saltos recuperados").nextElementSibling).toHaveTextContent(
+      /^1, 3$/,
+    );
+    expect(within(drawer).getByText("Saltos faltantes").nextElementSibling).toHaveTextContent(
+      /^2$/,
+    );
+    expect(within(drawer).getByText("Todos os saltos")).toBeInTheDocument();
+  });
+
+  it("hides the hops when they were not matched", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await openAnswers(user);
+    await user.click(await screen.findByText(/Pergunta A/));
+    const drawer = await screen.findByRole("dialog", { name: "Detalhe do resultado" });
+    expect(within(drawer).queryByText("Saltos recuperados")).not.toBeInTheDocument();
+    expect(within(drawer).queryByText("Saltos faltantes")).not.toBeInTheDocument();
+  });
+
   it("shows an unannotated question as a single-passage question", async () => {
     renderPage();
     const user = userEvent.setup();

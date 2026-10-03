@@ -63,6 +63,8 @@ export interface ExperimentResultRow {
   /** Hop (1-based) of each reference evidence passage. */
   evidence_hops?: number[];
   bridge_entities?: string[];
+  /** Whether each hop's evidence was retrieved (only when context_all_hops is scored). */
+  hops_found?: { hop: number; found: boolean }[];
 }
 
 export interface ExperimentProgress {

@@ -933,3 +933,46 @@ def test_skipped_perplexity_is_recorded_for_the_ui(session_factory):
     status, _, config = _results(session_factory, experiment_id)
     assert status == "done"
     assert config["perplexity_skipped"] == {"org/small-4bit": {"free_mb": 1107, "needed_mb": 2178}}
+
+
+_ABSENT = "Um trecho que não está em parte alguma da base indexada."
+
+
+def _all_hops_score(session_factory, evidence, hops, staged=True, rag="naive"):
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, f"all-hops-{rag}-{staged}-{hops}")
+    run_experiment(
+        experiment_id,
+        _staged_config(metrics=["context_all_hops", "context_hit"], rags=[rag], staged=staged),
+        [QuestionItem(text="Where?", evidence=evidence, evidence_hops=hops)],
+        _staged_deps(store, session_factory, events),
+    )
+    _, [row], _ = _results(session_factory, experiment_id)
+    return row.scores
+
+
+@pytest.mark.parametrize("staged", [True, False])
+@pytest.mark.parametrize(
+    "evidence, hops, expected",
+    [
+        (["Para one.", "Para two here."], [1, 2], 1.0),      # every hop retrieved
+        (["Para one.", _ABSENT], [1, 2], 0.0),               # hop 2 missing
+        (["Para one.", _ABSENT, "Para two here."], [1, 2, 2], 1.0),  # one alternative suffices
+        ([_ABSENT, _ABSENT + " Outro."], [1, 1], 0.0),        # one hop, nothing found
+    ],
+)
+def test_context_all_hops_needs_every_hop_retrieved(session_factory, staged, evidence, hops, expected):
+    scores = _all_hops_score(session_factory, evidence, hops, staged=staged)
+    assert scores["context_all_hops"] == expected
+
+
+@pytest.mark.parametrize("evidence", [["Para two here."], [_ABSENT], [_ABSENT, "Para one."]])
+def test_context_all_hops_equals_context_hit_on_a_single_hop(session_factory, evidence):
+    scores = _all_hops_score(session_factory, evidence, None)
+    assert scores["context_all_hops"] == scores["context_hit"]
+
+
+def test_context_all_hops_is_skipped_when_nothing_is_retrieved(session_factory):
+    scores = _all_hops_score(session_factory, ["Para one."], [1], rag="closed_book")
+    assert "context_all_hops" not in scores

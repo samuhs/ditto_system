@@ -27,6 +27,12 @@ function experimentDurationMs(createdAt?: string, finishedAt?: string): number |
   return end - start;
 }
 
+/** The hops whose evidence was (or was not) retrieved, as "1, 3" ("Nenhum" if none). */
+function hopList(hops: NonNullable<ExperimentResultRow["hops_found"]>, found: boolean): string {
+  const picked = hops.filter((h) => h.found === found).map((h) => h.hop);
+  return picked.length ? picked.join(", ") : "Nenhum";
+}
+
 export function ExperimentDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -622,6 +628,14 @@ export function ExperimentDetailPage() {
                 <>
                   <dt>Entidades-ponte</dt>
                   <dd>{openRow.bridge_entities!.join(" · ")}</dd>
+                </>
+              )}
+              {(openRow.hops_found?.length ?? 0) > 0 && (
+                <>
+                  <dt>Saltos recuperados</dt>
+                  <dd>{hopList(openRow.hops_found!, true)}</dd>
+                  <dt>Saltos faltantes</dt>
+                  <dd>{hopList(openRow.hops_found!, false)}</dd>
                 </>
               )}
               <dt>Tempo de resposta</dt>

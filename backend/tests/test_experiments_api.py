@@ -418,3 +418,42 @@ def test_export_carries_the_question_annotations(client):
     assert annotations["tipo"] == "comparacao"
     assert annotations["evidencia_salto"] == "1|2"
     assert annotations["entidades_ponte"] == "Morro|Ilha"
+
+
+def _post_with_metrics(client, metrics: list[str], csv_text: str, rags=("naive",)):
+    payload = {**json.loads(_config_payload()), "metrics": metrics, "rags": list(rags)}
+    files = {"questions": ("q.csv", io.BytesIO(csv_text.encode()), "text/csv")}
+    return client.post("/experiments", data={"config": json.dumps(payload)}, files=files)
+
+
+_THREE_HOPS_CSV = (
+    "pergunta,evidencia_referencia,tipo,evidencia_salto\n"
+    "Onde e quando?,Para one|Trecho ausente de toda a base indexada|Para three,ponte,1|2|3\n"
+)
+
+
+def test_result_shows_which_hops_were_retrieved(client):
+    exp_id = _post_with_metrics(client, ["context_all_hops"], _THREE_HOPS_CSV).json()["id"]
+
+    result = client.get(f"/experiments/{exp_id}").json()["results"][0]
+    assert result["scores"]["context_all_hops"] == 0.0
+    assert result["hops_found"] == [
+        {"hop": 1, "found": True}, {"hop": 2, "found": False}, {"hop": 3, "found": True},
+    ]
+
+
+def test_hops_are_not_matched_unless_context_all_hops_was_chosen(client):
+    exp_id = _post_with_metrics(client, ["context_hit"], _THREE_HOPS_CSV).json()["id"]
+
+    result = client.get(f"/experiments/{exp_id}").json()["results"][0]
+    assert result["hops_found"] == []
+
+
+def test_hops_are_not_matched_for_a_technique_that_retrieves_nothing(client):
+    exp_id = _post_with_metrics(
+        client, ["context_all_hops"], _THREE_HOPS_CSV, rags=("closed_book",)
+    ).json()["id"]
+
+    result = client.get(f"/experiments/{exp_id}").json()["results"][0]
+    assert "context_all_hops" not in result["scores"]
+    assert result["hops_found"] == []
