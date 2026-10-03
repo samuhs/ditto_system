@@ -49,6 +49,28 @@ def _hops_found(result) -> list[dict]:
     return [{"hop": hop, "found": hit} for hop, hit in found.items()]
 
 
+def _lenient(name: str) -> str:
+    """A name casefolded, without accents and with single spaces, padded for word matching."""
+    plain = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    return f" {' '.join(re.sub(r'[^0-9a-z]+', ' ', plain.casefold()).split())} "
+
+
+def _bridges_found(result) -> list[dict]:
+    """Whether the Grafo found each annotated Entidade-ponte; empty without a Grafo.
+
+    Lenient: an entity name matches when one contains the other as whole words,
+    ignoring case, accents and punctuation ("parque" finds "Parque Ecológico").
+    """
+    if result.graph_explanation is None:
+        return []
+    names = [_lenient(e["name"]) for e in result.graph_explanation.get("entities", [])]
+    return [
+        {"entity": bridge, "found": any(b in n or n in b for n in names if n.strip())}
+        for bridge in result.bridge_entities or []
+        if (b := _lenient(bridge)).strip()
+    ]
+
+
 def _result_rows(experiment: Experiment) -> list[dict]:
     """Flatten an experiment's runs into one row per (combination, question)."""
     profiles = {p.question: p.signals for p in experiment.question_profiles}
@@ -79,6 +101,9 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                     "retrieval_signals": result.retrieval_signals or {},
                     # GraphRAG runs: the Grafo de conhecimento's stats; None otherwise.
                     "graph_stats": run.graph_stats,
+                    # GraphRAG results: entities found and facts used; None otherwise.
+                    "graph_explanation": result.graph_explanation,
+                    "bridges_found": _bridges_found(result),
                 }
             )
     return rows
@@ -108,6 +133,7 @@ def _results_csv(rows: list[dict]) -> str:
     question_keys = sorted({k for row in rows for k in row["question_signals"]})
     retrieval_keys = sorted({k for row in rows for k in row["retrieval_signals"]})
     graph_keys = list(dict.fromkeys(k for row in rows for k in row["graph_stats"] or {}))
+    explained = any(row["graph_explanation"] is not None for row in rows)
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(
@@ -116,7 +142,8 @@ def _results_csv(rows: list[dict]) -> str:
          "tipo", "evidencia_salto", "entidades_ponte",
          *metric_keys, "media", "latency_ms", "tokens",
          *(f"pergunta_{k}" for k in question_keys), *(f"busca_{k}" for k in retrieval_keys),
-         *(f"grafo_{k}" for k in graph_keys)]
+         *(f"grafo_{k}" for k in graph_keys),
+         *(["grafo_entidades", "grafo_fatos", "grafo_pontes_encontradas"] if explained else [])]
     )
     for row in rows:
         scores = row["scores"]
@@ -129,9 +156,22 @@ def _results_csv(rows: list[dict]) -> str:
              *(scores.get(k, "") for k in metric_keys), mean, row["latency_ms"], row["tokens"],
              *(row["question_signals"].get(k, "") for k in question_keys),
              *(row["retrieval_signals"].get(k, "") for k in retrieval_keys),
-             *((row["graph_stats"] or {}).get(k, "") for k in graph_keys)]
+             *((row["graph_stats"] or {}).get(k, "") for k in graph_keys),
+             *(_explanation_cells(row) if explained else [])]
         )
     return buffer.getvalue()
+
+
+def _explanation_cells(row: dict) -> list[str]:
+    """Entities found, facts used and Entidades-ponte found, '|'-joined; empty without a Grafo."""
+    explanation = row["graph_explanation"]
+    if explanation is None:
+        return ["", "", ""]
+    return [
+        "|".join(e["name"] for e in explanation.get("entities", [])),
+        "|".join(explanation.get("facts", [])),
+        "|".join(b["entity"] for b in row["bridges_found"] if b["found"]),
+    ]
 
 
 def _snapshot_prompts(config: ExperimentConfig) -> dict[str, dict[str, str]]:

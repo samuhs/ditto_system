@@ -510,3 +510,52 @@ def test_graph_rows_carry_the_stats_of_their_grafo(client):
     assert by_rag["graph"]["grafo_entities"] == "0"
     assert by_rag["graph"]["grafo_failed_lines"] == str(graph["failed_lines"])
     assert by_rag["naive"]["grafo_entities"] == ""
+
+
+class _ExtractingLLM:
+    """Writes one entity and one relation for every chunk; answers anything else."""
+
+    def generate(self, prompt: str) -> str:
+        if prompt.startswith("Extraia do texto"):
+            return (
+                "entidade<|>Parque Ecológico<|>lugar<|>Um parque.\n"
+                "relacao<|>Parque Ecológico<|>Festa do Peão<|>evento<|>A festa é no parque.\n"
+                "<|FIM|>"
+            )
+        return "An answer."
+
+
+def test_graph_rows_explain_what_the_grafo_found_and_used(client):
+    import csv
+
+    client.app.dependency_overrides[get_experiment_deps]().llm_factory = (
+        lambda name, **kw: _ExtractingLLM()
+    )
+    exp_id = _post_with_metrics(
+        client, ["rouge_l"],
+        "pergunta,resposta_referencia,tipo,entidades_ponte\n"
+        "Quando é a festa?,Em maio,ponte,parque ecologico|Festa do Peão\n",
+        rags=("naive", "graph"),
+    ).json()["id"]
+
+    rows = {row["rag"]: row for row in client.get(f"/experiments/{exp_id}").json()["results"]}
+    graph = rows["graph"]
+    assert [e["name"] for e in graph["graph_explanation"]["entities"]] == ["Parque Ecológico"]
+    assert graph["graph_explanation"]["facts"] == [
+        "Parque Ecológico → Festa do Peão: A festa é no parque."
+    ]
+    # Annotated Entidades-ponte match the Grafo's names ignoring case and accents.
+    assert graph["bridges_found"] == [
+        {"entity": "parque ecologico", "found": True},
+        {"entity": "Festa do Peão", "found": False},
+    ]
+    assert rows["naive"]["graph_explanation"] is None
+    assert rows["naive"]["bridges_found"] == []
+
+    text = client.get(f"/experiments/{exp_id}/export.csv").content.decode("utf-8")
+    by_rag = {row["rag"]: row for row in csv.DictReader(io.StringIO(text.lstrip("﻿")))}
+    assert by_rag["graph"]["grafo_entidades"] == "Parque Ecológico"
+    assert by_rag["graph"]["grafo_fatos"] == "Parque Ecológico → Festa do Peão: A festa é no parque."
+    assert by_rag["graph"]["grafo_pontes_encontradas"] == "parque ecologico"
+    assert by_rag["graph"]["grafo_entities"] == "1"
+    assert by_rag["naive"]["grafo_entidades"] == ""

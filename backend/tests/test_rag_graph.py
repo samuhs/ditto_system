@@ -137,3 +137,30 @@ def test_graph_is_built_once_and_read_back_from_its_collections():
 def test_graph_technique_is_registered_and_uses_an_index_but_no_retriever():
     technique = rag_registry.get("graph")
     assert technique.uses_index and not technique.uses_retrieval
+
+
+def test_answer_keeps_the_entities_found_and_the_facts_used_apart_from_the_contexts():
+    rag = build_rag(
+        "graph", retriever=None, llm=_AnswerLLM(), graph=_graph(_indexed_store()),
+        embedder=_KeywordEmbedder(), top_k_entities=1, top_k_relations=1, top_k=2,
+    )
+
+    result = rag.answer("O que tem perto da Cachoeira do Dédi?")
+
+    # The question's entity, then its 1-hop neighbour reached through the Grafo.
+    assert [(e["name"], e["hop"]) for e in result.graph_explanation["entities"]] == [
+        ("Cachoeira do Dédi", 0), ("Sítio Boa Vista", 1),
+    ]
+    assert all(isinstance(e["score"], float) for e in result.graph_explanation["entities"])
+    assert result.graph_explanation["facts"][0] == (
+        "Cachoeira do Dédi → Sítio Boa Vista: A Cachoeira do Dédi fica no Sítio Boa Vista."
+    )
+    # The contexts stay chunks only.
+    assert all(set(c) >= {"text", "score"} for c in result.contexts)
+    assert not any("→" in c["text"] for c in result.contexts)
+
+
+def test_techniques_without_a_grafo_have_no_graph_explanation():
+    from app.core.rag.base import RAGResult
+
+    assert RAGResult(answer="a", contexts=[]).graph_explanation is None

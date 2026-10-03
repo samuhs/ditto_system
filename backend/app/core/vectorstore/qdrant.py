@@ -63,6 +63,16 @@ def parse_collection_name(name: str) -> tuple[str, str, str] | None:
     return (parts[0], parts[1], parts[2]) if len(parts) == 3 else None
 
 
+def collection_base(name: str) -> str | None:
+    """The Base an Índice's or Grafo's collection belongs to; None for any other collection.
+
+    Parsed from the Índice's name, never matched by prefix: Base "viagem" must
+    not claim "viagem2__..." or "viagem__x__...".
+    """
+    parsed = parse_collection_name(name.split(_GRAPH_MARKER, 1)[0])
+    return parsed[0] if parsed else None
+
+
 class QdrantStore:
     """Thin wrapper over qdrant-client for the project's collection conventions."""
 
@@ -86,6 +96,13 @@ class QdrantStore:
         """Drop the collection if it exists."""
         if self._client.collection_exists(name):
             self._client.delete_collection(name)
+
+    def delete_base(self, base: str) -> list[str]:
+        """Drop every Índice of the Base and the Grafos built from them; return their names."""
+        names = [name for name in self.list_collections() if collection_base(name) == base]
+        for name in names:
+            self._client.delete_collection(name)
+        return names
 
     def count(self, name: str) -> int:
         """Number of points in the collection."""

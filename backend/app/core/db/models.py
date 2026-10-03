@@ -81,6 +81,9 @@ class RunResult(Base):
     bridge_entities: Mapped[list | None] = mapped_column(JSON, nullable=True)
     generated_answer: Mapped[str] = mapped_column(String)
     retrieved_context: Mapped[list] = mapped_column(JSON, default=list)
+    # GraphRAG results: the entities the Grafo found and the facts it used
+    # ({"entities": [...], "facts": [...]}); None for other techniques.
+    graph_explanation: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     scores: Mapped[dict] = mapped_column(JSON, default=dict)
     # Difficulty signals from the retrieved chunks' scores ({} when none were retrieved).
     retrieval_signals: Mapped[dict | None] = mapped_column(JSON, nullable=True)

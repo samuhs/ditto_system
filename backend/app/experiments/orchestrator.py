@@ -160,7 +160,7 @@ def _error_result(run_id: int, question: QuestionItem, error: str) -> RunResult:
 def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder):
     """Run rag.answer + evaluate for one question.
 
-    Returns (answer, contexts, scores, latency_ms, tokens).
+    Returns (answer, contexts, scores, latency_ms, tokens, graph_explanation).
     """
     start = time.perf_counter()
     if getattr(rag, "uses_evidence", False):
@@ -178,22 +178,22 @@ def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder)
         reference_hops=question.evidence_hops,
     )
     scores = evaluate_sample(sample, metrics, embedder=eval_embedder)
-    return answer.answer, answer.contexts, scores, latency_ms, len(answer.answer.split())
+    return (
+        answer.answer, answer.contexts, scores, latency_ms, len(answer.answer.split()),
+        answer.graph_explanation,
+    )
 
 
 def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eval_embedder):
     """Try _process_question up to _MAX_RETRIES times with _RETRY_DELAY_S between attempts.
 
-    Returns (answer_text, contexts, scores, latency_ms, tokens, error_str).
+    Returns (answer_text, contexts, scores, latency_ms, tokens, graph_explanation, error_str).
     On permanent failure error_str is set and the other values are None.
     """
     last_exc = None
     for attempt in range(_MAX_RETRIES):
         try:
-            answer_text, contexts, scores, latency_ms, tokens = _process_question(
-                rag, question, metrics, eval_embedder
-            )
-            return answer_text, contexts, scores, latency_ms, tokens, None
+            return (*_process_question(rag, question, metrics, eval_embedder), None)
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
             if attempt < _MAX_RETRIES - 1:
@@ -213,7 +213,7 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
                     _MAX_RETRIES,
                     exc,
                 )
-    return None, None, None, None, None, str(last_exc)
+    return None, None, None, None, None, None, str(last_exc)
 
 
 def _run_questions(
@@ -525,7 +525,7 @@ def _run_experiment(
                         paused = True
                         continue
 
-                    answer_text, contexts, scores, latency_ms, tokens, error = outcome
+                    answer_text, contexts, scores, latency_ms, tokens, explanation, error = outcome
                     if error is not None:
                         session.add(_error_result(run.id, question, error))
                     else:
@@ -540,6 +540,7 @@ def _run_experiment(
                                 bridge_entities=question.bridge_entities,
                                 generated_answer=answer_text,
                                 retrieved_context=contexts,
+                                graph_explanation=explanation,
                                 retrieval_signals=retrieval_profile(contexts),
                                 scores=scores,
                                 latency_ms=latency_ms,

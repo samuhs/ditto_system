@@ -1036,6 +1036,12 @@ def test_graph_builds_the_indexes_grafo_once_and_answers_from_its_chunks(session
     assert row.generated_answer == "Resposta gerada."
     assert [c["text"] for c in row.retrieved_context] == chunks
     assert row.scores["context_hit"] == 1.0 and row.scores["context_recall_gold"] == 1.0
+    # What the Grafo found and used is kept per result, apart from the chunks.
+    assert [e["name"] for e in row.graph_explanation["entities"]] == ["Praça Central"]
+    assert row.graph_explanation["facts"] == [
+        "Praça Central → Igreja Matriz: A praça fica ao lado da igreja."
+    ]
+    assert runs[("naive", "similarity")].results[0].graph_explanation is None
     check.close()
     # Built once, in collections that carry the LLM extrator.
     assert len(extractions) == len(chunks)

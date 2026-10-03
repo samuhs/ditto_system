@@ -24,6 +24,8 @@ NEIGHBOUR_WEIGHT = 0.5
 MAX_FACTS = 10
 MAX_FACTS_CHARS = 2000
 FACTS_HEADER = "Fatos do Grafo de conhecimento:"
+# A hub entity can have hundreds of neighbours: the result keeps only the best ones.
+MAX_NEIGHBOURS_SHOWN = 20
 
 
 class QueryState(TypedDict, total=False):
@@ -130,7 +132,21 @@ class GraphRAG(RAG):
     def answer(self, query: str) -> RAGResult:
         """Retrieve chunks through the graph and generate the answer."""
         state = self._flow.invoke({"question": query})
-        return RAGResult(answer=state["answer"], contexts=state["contexts"])
+        return RAGResult(
+            answer=state["answer"], contexts=state["contexts"],
+            graph_explanation={"entities": self._entities_found(state), "facts": state["facts"]},
+        )
+
+    def _entities_found(self, state: QueryState) -> list[dict]:
+        """The linked entities (hop 0), then their best neighbours (hop 1), by score."""
+        seeds = state["entity_scores"]
+        found = [
+            {"name": entity.name, "score": float(score), "hop": 0 if key in seeds else 1}
+            for key, score in state["node_scores"].items()
+            if (entity := self._graph.entities.get(key)) is not None
+        ]
+        found.sort(key=lambda e: (e["hop"], -e["score"], e["name"]))
+        return found[: len(seeds) + MAX_NEIGHBOURS_SHOWN]
 
 
 rag_registry.register("graph", GraphRAG)

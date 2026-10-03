@@ -67,6 +67,16 @@ export interface ExperimentResultRow {
   hops_found?: { hop: number; found: boolean }[];
   /** GraphRAG runs: stats of the Grafo de conhecimento used; null for other techniques. */
   graph_stats?: GraphStats | null;
+  /** GraphRAG results: entities the Grafo found and facts it used; null otherwise. */
+  graph_explanation?: GraphExplanation | null;
+  /** Whether the Grafo found each annotated Entidade-ponte (GraphRAG results only). */
+  bridges_found?: { entity: string; found: boolean }[];
+}
+
+export interface GraphExplanation {
+  /** hop 0: linked to the question; hop 1: a neighbour of a linked entity. */
+  entities: { name: string; score: number; hop: number }[];
+  facts: string[];
 }
 
 export interface GraphStats {

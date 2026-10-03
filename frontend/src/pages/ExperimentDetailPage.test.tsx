@@ -196,6 +196,21 @@ describe("ExperimentDetailPage", () => {
             graph_stats: {
               entities: 12, relations: 8, chunks: 30, lines: 40, failed_lines: 4, failed_chunks: 0,
             },
+            bridge_entities: ["Sítio Boa Vista", "Festa do Peão"],
+            graph_explanation: {
+              entities: [
+                { name: "Cachoeira do Dédi", score: 0.9, hop: 0 },
+                { name: "Sítio Boa Vista", score: 0.45, hop: 1 },
+              ],
+              facts: [
+                "Cachoeira do Dédi → Sítio Boa Vista: fica no sítio.",
+                "Sítio Boa Vista → Queijo: vende queijo.",
+              ],
+            },
+            bridges_found: [
+              { entity: "Sítio Boa Vista", found: true },
+              { entity: "Festa do Peão", found: false },
+            ],
           },
         ],
       });
@@ -221,6 +236,47 @@ describe("ExperimentDetailPage", () => {
         "12 entidades · 8 relações · 30 trechos · 10% das linhas com falha",
       );
     });
+
+    it("explains the answer with the entities found and the facts used", async () => {
+      renderPage();
+      const user = userEvent.setup();
+      await openAnswers(user);
+      await user.click(await screen.findByText(/Pergunta A/));
+      const drawer = await screen.findByRole("dialog", { name: "Detalhe do resultado" });
+      expect(within(drawer).getByText("Entidades encontradas").nextElementSibling).toHaveTextContent(
+        /^Cachoeira do Dédi · Sítio Boa Vista \(vizinha\)$/,
+      );
+      const facts = within(drawer).getByText("Fatos usados").nextElementSibling as HTMLElement;
+      expect(within(facts).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+        "Cachoeira do Dédi → Sítio Boa Vista: fica no sítio.",
+        "Sítio Boa Vista → Queijo: vende queijo.",
+      ]);
+    });
+
+    it("shows which annotated Entidades-ponte the Grafo found", async () => {
+      renderPage();
+      const user = userEvent.setup();
+      await openAnswers(user);
+      await user.click(await screen.findByText(/Pergunta A/));
+      const drawer = await screen.findByRole("dialog", { name: "Detalhe do resultado" });
+      expect(
+        within(drawer).getByText("Entidades-ponte no Grafo").nextElementSibling,
+      ).toHaveTextContent(/^Sítio Boa Vista$/);
+      expect(
+        within(drawer).getByText("Entidades-ponte fora do Grafo").nextElementSibling,
+      ).toHaveTextContent(/^Festa do Peão$/);
+    });
+  });
+
+  it("hides the Grafo's explanation on other techniques", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await openAnswers(user);
+    await user.click(await screen.findByText(/Pergunta A/));
+    const drawer = await screen.findByRole("dialog", { name: "Detalhe do resultado" });
+    expect(within(drawer).queryByText("Entidades encontradas")).not.toBeInTheDocument();
+    expect(within(drawer).queryByText("Fatos usados")).not.toBeInTheDocument();
+    expect(within(drawer).queryByText("Entidades-ponte no Grafo")).not.toBeInTheDocument();
   });
 
   it("hides the hops when they were not matched", async () => {

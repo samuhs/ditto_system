@@ -11,6 +11,10 @@ class RAGResult(BaseModel):
 
     answer: str
     contexts: list[dict]
+    # GraphRAG only: {"entities": [{"name", "score", "hop"}], "facts": [str]}, the
+    # entities the Grafo found and the facts it put in the prompt. Kept apart from
+    # the contexts, which stay chunks so the metrics compare techniques alike.
+    graph_explanation: dict | None = None
 
 
 def format_context(contexts: list[dict]) -> str:

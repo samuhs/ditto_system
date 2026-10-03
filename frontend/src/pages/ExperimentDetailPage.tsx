@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { exportExperimentUrl, getExperiment, pauseExperiment } from "../api/client";
-import type { ExperimentDetail, ExperimentResultRow } from "../api/types";
+import type { ExperimentDetail, ExperimentResultRow, GraphExplanation } from "../api/types";
 import { DEFAULT_FOCUS, type FocusState } from "../components/charts/aggregate";
 import { ChartsPanel } from "../components/charts/ChartsPanel";
 import { Errata, Note, errorText } from "../components/Notice";
@@ -34,6 +34,18 @@ function experimentDurationMs(createdAt?: string, finishedAt?: string): number |
 function hopList(hops: NonNullable<ExperimentResultRow["hops_found"]>, found: boolean): string {
   const picked = hops.filter((h) => h.found === found).map((h) => h.hop);
   return picked.length ? picked.join(", ") : "Nenhum";
+}
+
+/** The entities the Grafo found, neighbours marked: "A · B (vizinha)" ("Nenhuma" if none). */
+function entityList(explanation: GraphExplanation): string {
+  const names = explanation.entities.map((e) => (e.hop > 0 ? `${e.name} (vizinha)` : e.name));
+  return names.length ? names.join(" · ") : "Nenhuma";
+}
+
+/** The annotated Entidades-ponte the Grafo did (or did not) find ("Nenhuma" if none). */
+function bridgeList(bridges: NonNullable<ExperimentResultRow["bridges_found"]>, found: boolean): string {
+  const picked = bridges.filter((b) => b.found === found).map((b) => b.entity);
+  return picked.length ? picked.join(" · ") : "Nenhuma";
 }
 
 export function ExperimentDetailPage() {
@@ -745,6 +757,32 @@ export function ExperimentDetailPage() {
                 <>
                   <dt>Grafo de conhecimento</dt>
                   <dd>{graphStatsText(openRow.graph_stats)}</dd>
+                </>
+              )}
+              {openRow.graph_explanation && (
+                <>
+                  <dt>Entidades encontradas</dt>
+                  <dd>{entityList(openRow.graph_explanation)}</dd>
+                  <dt>Fatos usados</dt>
+                  <dd>
+                    {openRow.graph_explanation.facts.length ? (
+                      <ul className="ditto-graph-facts">
+                        {openRow.graph_explanation.facts.map((fact) => (
+                          <li key={fact}>{fact}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      "Nenhum"
+                    )}
+                  </dd>
+                </>
+              )}
+              {(openRow.bridges_found?.length ?? 0) > 0 && (
+                <>
+                  <dt>Entidades-ponte no Grafo</dt>
+                  <dd>{bridgeList(openRow.bridges_found!, true)}</dd>
+                  <dt>Entidades-ponte fora do Grafo</dt>
+                  <dd>{bridgeList(openRow.bridges_found!, false)}</dd>
                 </>
               )}
               <dt>Tempo de resposta</dt>
