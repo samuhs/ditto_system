@@ -99,9 +99,10 @@ def _store_question_profiles(
         p.question
         for p in session.query(QuestionProfile).filter_by(experiment_id=experiment_id)
     }
-    evidence = {}
+    evidence, types = {}, {}
     for q in questions:
         evidence.setdefault(q.text, q.evidence)
+        types.setdefault(q.text, q.question_type)
     missing = [t for t in evidence if t not in known]
     if not missing:
         return
@@ -116,6 +117,7 @@ def _store_question_profiles(
                 experiment_id=experiment_id,
                 question=text,
                 signals=question_profile(text, corpus, evidence[text]),
+                question_type=types[text],
             )
         )
     session.commit()
@@ -483,6 +485,9 @@ def _run_experiment(
                                 question=question.text,
                                 reference_answer=question.reference,
                                 reference_contexts=question.evidence,
+                                question_type=question.question_type,
+                                evidence_hops=question.evidence_hops,
+                                bridge_entities=question.bridge_entities,
                                 generated_answer=f"{ERROR_PREFIX}{error}]",
                                 retrieved_context=[],
                                 scores={},
@@ -497,6 +502,9 @@ def _run_experiment(
                                 question=question.text,
                                 reference_answer=question.reference,
                                 reference_contexts=question.evidence,
+                                question_type=question.question_type,
+                                evidence_hops=question.evidence_hops,
+                                bridge_entities=question.bridge_entities,
                                 generated_answer=answer_text,
                                 retrieved_context=contexts,
                                 retrieval_signals=retrieval_profile(contexts),

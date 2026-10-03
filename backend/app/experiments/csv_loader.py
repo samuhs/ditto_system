@@ -2,22 +2,57 @@
 import csv
 import io
 
-from app.experiments.schemas import QuestionItem
+from app.experiments.schemas import QUESTION_TYPES, QuestionItem
+
+
+def _split(cell: str | None) -> list[str]:
+    """The non-empty '|'-separated items of a cell."""
+    return [p.strip() for p in (cell or "").split("|") if p.strip()]
+
+
+def _hops(cell: str | None, evidence: list[str], line: int) -> list[int] | None:
+    """Hop of each evidence passage; all in hop 1 when the column is empty."""
+    if not evidence:
+        return None
+    items = _split(cell)
+    if not items:
+        return [1] * len(evidence)
+    if len(items) != len(evidence) or not all(i.isdigit() and int(i) >= 1 for i in items):
+        raise ValueError(
+            f"linha {line}: evidencia_salto precisa de um número de salto (1, 2, ...) "
+            f"para cada um dos {len(evidence)} trechos de evidencia_referencia"
+        )
+    return [int(i) for i in items]
 
 
 def parse_questions_csv(content: str) -> list[QuestionItem]:
-    """Parse a CSV with 'pergunta' and optional 'resposta_referencia' and
-    'evidencia_referencia' columns (evidence passages separated by '|')."""
+    """Parse a CSV with 'pergunta' and optional 'resposta_referencia',
+    'evidencia_referencia' (passages separated by '|'), 'tipo', 'evidencia_salto'
+    (the hop of each passage) and 'entidades_ponte' columns."""
     reader = csv.DictReader(io.StringIO(content))
     if "pergunta" not in (reader.fieldnames or []):
         raise ValueError("CSV missing required column: pergunta")
     items = []
-    for row in reader:
+    for line, row in enumerate(reader, start=2):
         text = (row.get("pergunta") or "").strip()
         if not text:
             continue
         reference = (row.get("resposta_referencia") or "").strip() or None
-        passages = [p.strip() for p in (row.get("evidencia_referencia") or "").split("|")]
-        evidence = [p for p in passages if p] or None
-        items.append(QuestionItem(text=text, reference=reference, evidence=evidence))
+        evidence = _split(row.get("evidencia_referencia"))
+        question_type = (row.get("tipo") or "").strip() or "simples"
+        if question_type not in QUESTION_TYPES:
+            raise ValueError(
+                f"linha {line}: tipo desconhecido '{question_type}' "
+                f"(use {', '.join(QUESTION_TYPES)})"
+            )
+        items.append(
+            QuestionItem(
+                text=text,
+                reference=reference,
+                evidence=evidence or None,
+                question_type=question_type,
+                evidence_hops=_hops(row.get("evidencia_salto"), evidence, line),
+                bridge_entities=_split(row.get("entidades_ponte")),
+            )
+        )
     return items

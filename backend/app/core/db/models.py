@@ -36,6 +36,7 @@ class QuestionProfile(Base):
     experiment_id: Mapped[int] = mapped_column(ForeignKey("experiment.id"))
     question: Mapped[str] = mapped_column(String)
     signals: Mapped[dict] = mapped_column(JSON, default=dict)
+    question_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     # Signals that depend on the LLM but not on its answer: {llm: {"perplexity": x}}.
     model_signals: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
@@ -70,6 +71,11 @@ class RunResult(Base):
     question: Mapped[str] = mapped_column(String)
     reference_answer: Mapped[str | None] = mapped_column(String, nullable=True)
     reference_contexts: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    # Question annotations (None on results stored before they existed: a
+    # single-hop "simples" question).
+    question_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    evidence_hops: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    bridge_entities: Mapped[list | None] = mapped_column(JSON, nullable=True)
     generated_answer: Mapped[str] = mapped_column(String)
     retrieved_context: Mapped[list] = mapped_column(JSON, default=list)
     scores: Mapped[dict] = mapped_column(JSON, default=dict)

@@ -232,16 +232,18 @@ def test_export_experiment_csv(client):
     assert rows[0] == [
         "chunking", "embedding", "rag", "retriever", "llm",
         "pergunta", "resposta_referencia", "resposta",
+        "tipo", "evidencia_salto", "entidades_ponte",
         "answer_relevancy", "faithfulness", "media", "latency_ms", "tokens",
     ]
     assert len(rows) == 3
     assert rows[1] == [
         "recursive", "gemini", "naive", "similarity", "gemini",
-        "Onde fica?", "Ali", "Lá, perto", "1.0", "0.5", "0.75", "120", "42",
+        "Onde fica?", "Ali", "Lá, perto", "simples", "", "",
+        "1.0", "0.5", "0.75", "120", "42",
     ]
     # missing metric → empty cell; media averages only present scores
     assert rows[2][6] == ""
-    assert rows[2][8:] == ["0.25", "", "0.25", "80", "10"]
+    assert rows[2][11:] == ["0.25", "", "0.25", "80", "10"]
 
 
 def test_export_missing_experiment_404(client):
@@ -355,3 +357,62 @@ def test_oracle_without_any_evidence_is_rejected(client):
         b"pergunta,resposta_referencia,evidencia_referencia\nWhere?,,Aqui.\n"), "text/csv")}
     response = client.post("/experiments", data={"config": json.dumps(payload)}, files=files)
     assert response.status_code == 200
+
+
+def _post_questions(client, csv_text: str):
+    files = {"questions": ("q.csv", io.BytesIO(csv_text.encode()), "text/csv")}
+    return client.post("/experiments", data={"config": _config_payload()}, files=files)
+
+
+def test_annotated_question_is_kept_with_each_result(client):
+    response = _post_questions(
+        client,
+        "pergunta,evidencia_referencia,tipo,evidencia_salto,entidades_ponte\n"
+        "Quando é o evento do parque?,Para one|Para two|Para three,ponte,1|2|2,Parque|Evento\n",
+    )
+    assert response.status_code == 200
+
+    result = client.get(f"/experiments/{response.json()['id']}").json()["results"][0]
+    assert result["question_type"] == "ponte"
+    assert result["evidence_hops"] == [1, 2, 2]
+    assert result["bridge_entities"] == ["Parque", "Evento"]
+
+
+def test_unannotated_question_is_a_single_hop_simple_question(client):
+    response = _post_questions(client, "pergunta,evidencia_referencia\nOnde?,Para one|Para two\n")
+
+    result = client.get(f"/experiments/{response.json()['id']}").json()["results"][0]
+    assert result["question_type"] == "simples"
+    assert result["evidence_hops"] == [1, 1]
+    assert result["bridge_entities"] == []
+
+
+@pytest.mark.parametrize(
+    "csv_text, message",
+    [
+        ("pergunta,tipo\nOnde?,global\n", "tipo"),
+        ("pergunta,evidencia_referencia,evidencia_salto\nOnde?,a|b,1\n", "evidencia_salto"),
+        ("pergunta,evidencia_referencia,evidencia_salto\nOnde?,a|b,1|x\n", "evidencia_salto"),
+    ],
+)
+def test_invalid_annotation_is_rejected_on_upload(client, csv_text, message):
+    response = _post_questions(client, csv_text)
+    assert response.status_code == 422
+    assert message in response.json()["detail"]
+
+
+def test_export_carries_the_question_annotations(client):
+    import csv
+
+    exp_id = _post_questions(
+        client,
+        "pergunta,evidencia_referencia,tipo,evidencia_salto,entidades_ponte\n"
+        "Qual é mais alto?,Para one|Para two,comparacao,1|2,Morro|Ilha\n",
+    ).json()["id"]
+
+    text = client.get(f"/experiments/{exp_id}/export.csv").content.decode("utf-8")
+    header, row = list(csv.reader(io.StringIO(text.lstrip("﻿"))))
+    annotations = dict(zip(header, row))
+    assert annotations["tipo"] == "comparacao"
+    assert annotations["evidencia_salto"] == "1|2"
+    assert annotations["entidades_ponte"] == "Morro|Ilha"

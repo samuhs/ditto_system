@@ -58,6 +58,11 @@ export interface ExperimentResultRow {
   scores: Record<string, number>;
   latency_ms: number;
   tokens: number;
+  /** "simples" | "ponte" | "comparacao" | "agregacao"; absent on older payloads. */
+  question_type?: string;
+  /** Hop (1-based) of each reference evidence passage. */
+  evidence_hops?: number[];
+  bridge_entities?: string[];
 }
 
 export interface ExperimentProgress {

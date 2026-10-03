@@ -32,6 +32,13 @@ def _iso_utc(dt):
     return dt.replace(tzinfo=timezone.utc).isoformat() if dt else None
 
 
+def _evidence_hops(result) -> list[int]:
+    """Hop of each reference passage; results stored before hops existed are single-hop."""
+    if result.evidence_hops:
+        return result.evidence_hops
+    return [1] * len(result.reference_contexts or [])
+
+
 def _result_rows(experiment: Experiment) -> list[dict]:
     """Flatten an experiment's runs into one row per (combination, question)."""
     profiles = {p.question: p.signals for p in experiment.question_profiles}
@@ -47,6 +54,9 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                     "llm": run.llm or "gemini",
                     "question": result.question,
                     "reference": result.reference_answer,
+                    "question_type": result.question_type or "simples",
+                    "evidence_hops": _evidence_hops(result),
+                    "bridge_entities": result.bridge_entities or [],
                     "answer": result.generated_answer,
                     "scores": result.scores,
                     "latency_ms": result.latency_ms,
@@ -86,6 +96,7 @@ def _results_csv(rows: list[dict]) -> str:
     writer.writerow(
         ["chunking", "embedding", "rag", "retriever", "llm",
          "pergunta", "resposta_referencia", "resposta",
+         "tipo", "evidencia_salto", "entidades_ponte",
          *metric_keys, "media", "latency_ms", "tokens",
          *(f"pergunta_{k}" for k in question_keys), *(f"busca_{k}" for k in retrieval_keys)]
     )
@@ -95,6 +106,8 @@ def _results_csv(rows: list[dict]) -> str:
         writer.writerow(
             [row["chunking"], row["embedding"], row["rag"], row["retriever"], row["llm"],
              row["question"], row["reference"] or "", row["answer"],
+             row["question_type"], "|".join(map(str, row["evidence_hops"])),
+             "|".join(row["bridge_entities"]),
              *(scores.get(k, "") for k in metric_keys), mean, row["latency_ms"], row["tokens"],
              *(row["question_signals"].get(k, "") for k in question_keys),
              *(row["retrieval_signals"].get(k, "") for k in retrieval_keys)]

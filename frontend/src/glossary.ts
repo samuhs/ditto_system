@@ -155,6 +155,19 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
   },
 };
 
+/** Question types of an annotated questions CSV, by how many passages they need. */
+export const QUESTION_TYPES: Record<string, Term> = {
+  simples: { name: "Um trecho", description: "Um único trecho da base responde." },
+  ponte: { name: "Ponte", description: "Um trecho leva ao outro por uma entidade em comum." },
+  comparacao: { name: "Comparação", description: "Compara o que dois trechos dizem." },
+  agregacao: { name: "Agregação", description: "Junta ou lista o que vários trechos dizem." },
+};
+
+export function questionType(key: string | undefined): Term {
+  const k = key || "simples";
+  return QUESTION_TYPES[k] ?? { name: k };
+}
+
 export function term(dimension: Dimension, key: string): Term {
   return TERMS[dimension][key] ?? { name: key };
 }

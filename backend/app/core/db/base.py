@@ -37,8 +37,11 @@ def get_session() -> Iterator[Session]:
 # Columns added after their table first shipped. create_all never alters an
 # existing table, so these are added on startup: {table: {column: SQL type}}.
 ADDED_COLUMNS = {
-    "run_result": {"reference_contexts": "JSON", "retrieval_signals": "JSON"},
-    "question_profile": {"model_signals": "JSON"},
+    "run_result": {
+        "reference_contexts": "JSON", "retrieval_signals": "JSON",
+        "question_type": "VARCHAR(20)", "evidence_hops": "JSON", "bridge_entities": "JSON",
+    },
+    "question_profile": {"model_signals": "JSON", "question_type": "VARCHAR(20)"},
 }
 
 

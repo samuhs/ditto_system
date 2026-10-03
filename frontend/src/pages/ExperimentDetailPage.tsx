@@ -12,7 +12,7 @@ import { type Combination, ScoreCell, Traits } from "../components/Score";
 import { DifficultyPanel } from "../components/DifficultyPanel";
 import { StatusTag } from "../components/StatusTag";
 import { DownloadIcon, PauseIcon, SortIcon } from "../components/icons";
-import { techniqueName, term } from "../glossary";
+import { questionType, techniqueName, term } from "../glossary";
 import { formatDateTime, formatDuration } from "../utils/duration";
 import {
   DIMS, type Dim, MEDIA_KEY, type RankRow, dimName, rankByMedia, rankCombinations, rowMedia,
@@ -616,6 +616,14 @@ export function ExperimentDetailPage() {
               </table>
             </div>
             <dl className="ditto-kv">
+              <dt>Tipo de pergunta</dt>
+              <dd>{questionType(openRow.question_type).name}</dd>
+              {(openRow.bridge_entities?.length ?? 0) > 0 && (
+                <>
+                  <dt>Entidades-ponte</dt>
+                  <dd>{openRow.bridge_entities!.join(" · ")}</dd>
+                </>
+              )}
               <dt>Tempo de resposta</dt>
               <dd>{openRow.latency_ms} ms</dd>
               <dt>Tokens</dt>

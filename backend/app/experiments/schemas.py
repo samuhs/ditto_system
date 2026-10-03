@@ -4,12 +4,22 @@ import itertools
 from pydantic import BaseModel, Field
 
 
+QUESTION_TYPES = ("simples", "ponte", "comparacao", "agregacao")
+
+
 class QuestionItem(BaseModel):
-    """A question to ask, with an optional reference answer and reference evidence."""
+    """A question to ask, with an optional reference answer and reference evidence.
+
+    evidence_hops gives the hop (1-based) each evidence passage supports, aligned
+    with evidence; passages sharing a hop are alternatives for it.
+    """
 
     text: str
     reference: str | None = None
     evidence: list[str] | None = None
+    question_type: str = "simples"
+    evidence_hops: list[int] | None = None
+    bridge_entities: list[str] = Field(default_factory=list)
 
 
 class IndexPair(BaseModel):

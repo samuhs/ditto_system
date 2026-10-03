@@ -1,5 +1,5 @@
 import { MantineProvider } from "@mantine/core";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -128,6 +128,33 @@ describe("ExperimentDetailPage", () => {
     expect(await screen.findByText("Detalhe do resultado")).toBeInTheDocument();
     // latency only renders inside the drawer
     expect(await screen.findByText(/100 ms/)).toBeInTheDocument();
+  });
+
+  it("shows the question type and bridge entities in the drawer", async () => {
+    const base = (await client.getExperiment(7)).results[0];
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "kind-ember-89",
+      status: "done",
+      results: [
+        { ...base, question_type: "ponte", evidence_hops: [1, 2], bridge_entities: ["Parque", "Evento"] },
+      ],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await openAnswers(user);
+    await user.click(await screen.findByText(/Pergunta A/));
+    expect(await screen.findByText("Ponte")).toBeInTheDocument();
+    expect(screen.getByText("Parque · Evento")).toBeInTheDocument();
+  });
+
+  it("shows an unannotated question as a single-passage question", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await openAnswers(user);
+    await user.click(await screen.findByText(/Pergunta A/));
+    const drawer = await screen.findByRole("dialog", { name: "Detalhe do resultado" });
+    expect(within(drawer).getByText("Um trecho")).toBeInTheDocument();
   });
 
   it("shows a Pausar button for a running experiment and calls pauseExperiment", async () => {
