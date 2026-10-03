@@ -12,15 +12,13 @@ def _split(cell: str | None) -> list[str]:
 
 def _hops(cell: str | None, evidence: list[str], line: int) -> list[int] | None:
     """Hop of each evidence passage; all in hop 1 when the column is empty."""
-    if not evidence:
-        return None
     items = _split(cell)
     if not items:
-        return [1] * len(evidence)
+        return [1] * len(evidence) if evidence else None
     if len(items) != len(evidence) or not all(i.isdigit() and int(i) >= 1 for i in items):
         raise ValueError(
-            f"linha {line}: evidencia_salto precisa de um número de salto (1, 2, ...) "
-            f"para cada um dos {len(evidence)} trechos de evidencia_referencia"
+            f"line {line}: evidencia_salto needs one hop number (1, 2, ...) for each of "
+            f"the {len(evidence)} evidencia_referencia passages"
         )
     return [int(i) for i in items]
 
@@ -42,7 +40,7 @@ def parse_questions_csv(content: str) -> list[QuestionItem]:
         question_type = (row.get("tipo") or "").strip() or "simples"
         if question_type not in QUESTION_TYPES:
             raise ValueError(
-                f"linha {line}: tipo desconhecido '{question_type}' "
+                f"line {line}: unknown tipo '{question_type}' "
                 f"(use {', '.join(QUESTION_TYPES)})"
             )
         items.append(

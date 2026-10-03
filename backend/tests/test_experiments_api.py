@@ -360,6 +360,7 @@ def test_oracle_without_any_evidence_is_rejected(client):
 
 
 def _post_questions(client, csv_text: str):
+    """Create an experiment from a questions CSV given as text."""
     files = {"questions": ("q.csv", io.BytesIO(csv_text.encode()), "text/csv")}
     return client.post("/experiments", data={"config": _config_payload()}, files=files)
 
@@ -393,6 +394,7 @@ def test_unannotated_question_is_a_single_hop_simple_question(client):
         ("pergunta,tipo\nOnde?,global\n", "tipo"),
         ("pergunta,evidencia_referencia,evidencia_salto\nOnde?,a|b,1\n", "evidencia_salto"),
         ("pergunta,evidencia_referencia,evidencia_salto\nOnde?,a|b,1|x\n", "evidencia_salto"),
+        ("pergunta,evidencia_salto\nOnde?,1|2\n", "evidencia_salto"),
     ],
 )
 def test_invalid_annotation_is_rejected_on_upload(client, csv_text, message):
