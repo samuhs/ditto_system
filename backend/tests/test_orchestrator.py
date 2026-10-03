@@ -1044,6 +1044,34 @@ def test_graph_builds_the_indexes_grafo_once_and_answers_from_its_chunks(session
     )
 
 
+def test_graph_answers_with_the_experiments_snapshot_of_its_prompts(session_factory):
+    prompts = []
+
+    class _RecordingLLM(_GraphLLM):
+        def generate(self, prompt):
+            prompts.append(prompt)
+            return super().generate(prompt)
+
+    store = _indexed_store("e5")
+    deps = _staged_deps(store, session_factory, [])
+    deps.llm_factory = lambda name, **kw: _RecordingLLM([])
+    session = session_factory()
+    experiment = Experiment(name="graph-snapshot", status="pending", config={"prompts": {"graph": {
+        "extract": "Extraia do texto (versão do experimento): {text}",
+        "answer": "RESPONDA {question} COM {context}",
+    }}})
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+
+    run_experiment(experiment_id, _staged_config(rags=["graph"], metrics=["rouge_l"]),
+                   [QuestionItem(text="Where?")], deps)
+
+    assert prompts[0].startswith("Extraia do texto (versão do experimento):")
+    assert prompts[-1].startswith("RESPONDA Where? COM ")
+
+
 def test_a_grafo_that_cannot_be_built_fails_only_its_own_row(session_factory):
     class _NoExtractionLLM:
         def generate(self, prompt):

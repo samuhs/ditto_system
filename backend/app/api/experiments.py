@@ -15,7 +15,7 @@ from app.core.db.models import Experiment
 from app.core.evaluation.gold_metrics import ALL_HOPS_METRIC, hops_found
 from app.core.memory.manager import get_model_manager
 from app.core.memory.profile import active_profile
-from app.core.prompts import PROMPT_SPECS, load_technique
+from app.core.prompts import PROMPT_SPECS, load_prompt, load_technique
 from app.core.rag.base import rag_registry
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
@@ -139,7 +139,11 @@ def _snapshot_prompts(config: ExperimentConfig) -> dict[str, dict[str, str]]:
     techniques = list(config.rags)
     if "multi_query" in config.retrievers:
         techniques.append("multi_query")
-    return {t: load_technique(t) for t in techniques if t in PROMPT_SPECS}
+    snapshot = {t: load_technique(t) for t in techniques if t in PROMPT_SPECS}
+    if "graph" in snapshot:
+        # GraphRAG answers with the naive prompt: snapshot it too, so the run replays.
+        snapshot["graph"]["answer"] = load_prompt("naive", "answer")
+    return snapshot
 
 
 def get_experiment_deps() -> ExperimentDeps:

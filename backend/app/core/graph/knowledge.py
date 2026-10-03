@@ -20,7 +20,7 @@ def normalize_name(name: str) -> str:
 
 
 class GraphEntity(BaseModel):
-    """An entity of the Grafo, merged across the chunks that mention it."""
+    """An entity of the Grafo de conhecimento, merged across the chunks that mention it."""
 
     key: str
     name: str
@@ -30,7 +30,7 @@ class GraphEntity(BaseModel):
 
 
 class GraphRelation(BaseModel):
-    """A relation of the Grafo between two entity keys."""
+    """A relation of the Grafo de conhecimento between two entity keys."""
 
     source: str
     target: str
@@ -73,21 +73,24 @@ def write_graph(
 ) -> None:
     """Replace the graph's collections with these entities, relations and metadata."""
     entities_name, relations_name = names
-    dimension = embedder.dimension
+    entity_vectors = embedder.embed_documents([_entity_text(e) for e in entities]) if entities else []
+    relation_vectors = (
+        embedder.embed_documents([_relation_text(r) for r in relations]) if relations else []
+    )
+    # The vectors' own length: a query-cache embedder may not know it before loading.
+    dimension = len((entity_vectors or relation_vectors or [[]])[0]) or embedder.dimension
     for name in names:
         store.delete_collection(name)
         store.ensure_collection(name, dimension)
     if entities:
         store.add(
-            entities_name,
-            embedder.embed_documents([_entity_text(e) for e in entities]),
+            entities_name, entity_vectors,
             [{"record": _ENTITY, **e.model_dump()} for e in entities],
             start_id=_META_ID + 1,
         )
     if relations:
         store.add(
-            relations_name,
-            embedder.embed_documents([_relation_text(r) for r in relations]),
+            relations_name, relation_vectors,
             [{"record": _RELATION, **r.model_dump()} for r in relations],
             start_id=0,
         )

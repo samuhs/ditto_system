@@ -185,6 +185,19 @@ def test_experiment_snapshots_prompts(client):
     assert "{context}" in detail["prompts"]["naive"]["answer"]
 
 
+def test_graph_snapshots_its_extraction_prompt_and_the_naive_answer_prompt(client):
+    from app.core.prompts import load_prompt
+
+    exp_id = _post_with_metrics(
+        client, ["rouge_l"], "pergunta\nOnde?\n", rags=("graph",)
+    ).json()["id"]
+
+    prompts = client.get(f"/experiments/{exp_id}").json()["prompts"]
+    assert set(prompts) == {"graph"}
+    assert prompts["graph"]["extract"] == load_prompt("graph", "extract")
+    assert prompts["graph"]["answer"] == load_prompt("naive", "answer")
+
+
 def _seed_experiment(client, name="Exp Árvore/1"):
     """Insert an experiment with two results, one of them missing a metric."""
     from app.core.db.models import Experiment, ExperimentRun, RunResult

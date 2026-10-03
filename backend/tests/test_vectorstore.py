@@ -64,6 +64,19 @@ def test_add_appends_without_id_collision(store):
     assert {h["payload"]["text"] for h in hits} == {"first", "second"}
 
 
+def test_graph_collections_keep_llm_extrators_apart_and_never_read_as_an_index():
+    from app.core.vectorstore.qdrant import graph_collection_names
+
+    names = {
+        llm: graph_collection_names("guia", "markdown", "e5", llm)
+        for llm in ["qwen3:1.7b", "qwen3-1.7b", "org/model", "org:model"]
+    }
+    assert len({n for pair in names.values() for n in pair}) == 8
+    assert names["qwen3-1.7b"][0] == "guia__markdown__e5__kg_ent__qwen3-1.7b"
+    assert all("/" not in n and ":" not in n for pair in names.values() for n in pair)
+    assert all(parse_collection_name(n) is None for pair in names.values() for n in pair)
+
+
 def test_add_rejects_mismatched_lengths(store):
     store.ensure_collection("c", dimension=3)
     with pytest.raises(ValueError):

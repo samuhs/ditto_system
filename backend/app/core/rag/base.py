@@ -42,6 +42,11 @@ class RAG(ABC):
 rag_registry: Registry[type[RAG]] = Registry("rag")
 
 
+def technique_class(name: str) -> type[RAG] | None:
+    """The registered technique, or None for a name the registry does not know."""
+    return rag_registry.get(name) if name in rag_registry.names() else None
+
+
 def build_rag(name: str, **kwargs) -> RAG:
     """Instantiate a registered RAG technique by name."""
     return rag_registry.get(name)(**kwargs)

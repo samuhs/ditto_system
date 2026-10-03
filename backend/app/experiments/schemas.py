@@ -62,13 +62,6 @@ def index_pairs(config: ExperimentConfig) -> list[tuple[str, str]]:
     return list(itertools.product(config.chunkings, config.embeddings))
 
 
-def _technique(rag: str):
-    """The registered technique class, or None for an unknown name (run as retrieving)."""
-    from app.core.rag.base import rag_registry
-
-    return rag_registry.get(rag) if rag in rag_registry.names() else None
-
-
 def combinations(config: ExperimentConfig):
     """Every run as (llm, (chunking, embedding), rag, retriever), in LLM-major order.
 
@@ -76,13 +69,15 @@ def combinations(config: ExperimentConfig):
     retriever (which it ignores); one that reads no Índice either (closed book)
     runs once per LLM, attached to the first index too.
     """
+    from app.core.rag.base import technique_class
+
     pairs = index_pairs(config)
     first_pair = pairs[0] if pairs else None
     first_retriever = config.retrievers[0] if config.retrievers else None
     for llm, pair, rag, retriever in itertools.product(
         config.llms, pairs, config.rags, config.retrievers
     ):
-        technique = _technique(rag)
+        technique = technique_class(rag)  # unknown names run as retrieving
         uses_retrieval = technique is None or technique.uses_retrieval
         uses_index = technique is None or technique.uses_index
         if uses_retrieval or (

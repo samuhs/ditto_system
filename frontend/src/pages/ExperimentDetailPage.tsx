@@ -446,7 +446,7 @@ export function ExperimentDetailPage() {
                             </button>
                             {r.graphStats && (
                               <div className="ditto-muted ditto-graph-stats">
-                                Grafo: {graphStatsText(r.graphStats)}
+                                Grafo de conhecimento: {graphStatsText(r.graphStats)}
                               </div>
                             )}
                           </td>

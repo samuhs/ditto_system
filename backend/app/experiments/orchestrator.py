@@ -35,7 +35,7 @@ from app.core.memory.profile import active_profile
 from app.core.memory.stats import process_memory_bytes
 from app.core.graph.build import ensure_graph
 from app.core.prompts import PROMPT_SPECS
-from app.core.rag.base import build_rag, rag_registry
+from app.core.rag.base import build_rag, technique_class
 from app.core.retrieval.base import build_retriever
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.schemas import ExperimentConfig, QuestionItem, combinations, index_pairs
@@ -135,7 +135,8 @@ def _build_retriever(deps: ExperimentDeps, name: str, collection: str, embedder,
 
 def _uses_graph(rag_name: str) -> bool:
     """Whether the technique answers from the Índice's Grafo de conhecimento."""
-    return rag_name in rag_registry.names() and rag_registry.get(rag_name).uses_graph
+    technique = technique_class(rag_name)
+    return technique is not None and technique.uses_graph
 
 
 def _error_result(run_id: int, question: QuestionItem, error: str) -> RunResult:
@@ -487,7 +488,9 @@ def _run_experiment(
                 if rag_name in PROMPT_SPECS:
                     rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
                 if _uses_graph(rag_name):
-                    # The LLM de resposta is, for now, also the LLM extrator.
+                    # The LLM de resposta is, for now, also the LLM extrator. A graph
+                    # still to build loads the Índice's embedder (embed_documents)
+                    # next to the LLM, even when staged; an existing one does not.
                     try:
                         graph = ensure_graph(
                             deps.store, config.base, chunking, embedding,

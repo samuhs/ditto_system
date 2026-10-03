@@ -1,4 +1,5 @@
 """Qdrant vector store wrapper: named collections, metadata, similarity search."""
+import hashlib
 import re
 
 from qdrant_client import QdrantClient
@@ -44,10 +45,13 @@ def graph_collection_names(
     """The (entities, relations) collections of an Índice's Grafo de conhecimento.
 
     They extend the Índice's name, so a Base's graphs are found by its prefix, and
-    carry the LLM extrator (sanitized: Qdrant names take no '/' or ':').
+    carry the LLM extrator (sanitized: Qdrant names take no '/' or ':'). A name
+    that had to change gets a short hash of the original, so two LLMs never share one.
     """
     index = collection_name(base, chunking, embedding)
     llm = re.sub(r"[^A-Za-z0-9.-]+", "-", extractor).strip("-")
+    if llm != extractor:
+        llm += "-" + hashlib.sha1(extractor.encode()).hexdigest()[:8]
     return f"{index}{_GRAPH_MARKER}ent__{llm}", f"{index}{_GRAPH_MARKER}rel__{llm}"
 
 
