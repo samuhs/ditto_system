@@ -50,24 +50,24 @@ def _hops_found(result) -> list[dict]:
 
 
 def _lenient(name: str) -> str:
-    """A name casefolded, without accents and with single spaces, padded for word matching."""
+    """A name casefolded, without accents or punctuation, with single spaces."""
     plain = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
-    return f" {' '.join(re.sub(r'[^0-9a-z]+', ' ', plain.casefold()).split())} "
+    return " ".join(re.sub(r"[^0-9a-z]+", " ", plain.casefold()).split())
 
 
 def _bridges_found(result) -> list[dict]:
     """Whether the Grafo found each annotated Entidade-ponte; empty without a Grafo.
 
-    Lenient: an entity name matches when one contains the other as whole words,
-    ignoring case, accents and punctuation ("parque" finds "Parque Ecológico").
+    Lenient on spelling only: the names match ignoring case, accents and
+    punctuation ("parque ecologico" finds "Parque Ecológico", "parque" does not).
     """
     if result.graph_explanation is None:
         return []
-    names = [_lenient(e["name"]) for e in result.graph_explanation.get("entities", [])]
+    names = {_lenient(e["name"]) for e in result.graph_explanation.get("entities", [])}
     return [
-        {"entity": bridge, "found": any(b in n or n in b for n in names if n.strip())}
+        {"entity": bridge, "found": _lenient(bridge) in names}
         for bridge in result.bridge_entities or []
-        if (b := _lenient(bridge)).strip()
+        if _lenient(bridge)
     ]
 
 
@@ -143,7 +143,7 @@ def _results_csv(rows: list[dict]) -> str:
          *metric_keys, "media", "latency_ms", "tokens",
          *(f"pergunta_{k}" for k in question_keys), *(f"busca_{k}" for k in retrieval_keys),
          *(f"grafo_{k}" for k in graph_keys),
-         *(["grafo_entidades", "grafo_fatos", "grafo_pontes_encontradas"] if explained else [])]
+         *(["grafo_entidades_encontradas", "grafo_fatos_usados", "grafo_pontes_encontradas"] if explained else [])]
     )
     for row in rows:
         scores = row["scores"]

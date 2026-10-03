@@ -44,7 +44,7 @@ def graph_collection_names(
 ) -> tuple[str, str]:
     """The (entities, relations) collections of an Índice's Grafo de conhecimento.
 
-    They extend the Índice's name, so a Base's graphs are found by its prefix, and
+    They extend the Índice's name, so collection_base() finds the Base they belong to, and
     carry the LLM extrator (sanitized: Qdrant names take no '/' or ':'). A name
     that had to change gets a short hash of the original, so two LLMs never share one.
     """

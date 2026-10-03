@@ -534,7 +534,7 @@ def test_graph_rows_explain_what_the_grafo_found_and_used(client):
     exp_id = _post_with_metrics(
         client, ["rouge_l"],
         "pergunta,resposta_referencia,tipo,entidades_ponte\n"
-        "Quando é a festa?,Em maio,ponte,parque ecologico|Festa do Peão\n",
+        "Quando é a festa?,Em maio,ponte,parque ecologico|Festa do Peão|Parque\n",
         rags=("naive", "graph"),
     ).json()["id"]
 
@@ -548,14 +548,16 @@ def test_graph_rows_explain_what_the_grafo_found_and_used(client):
     assert graph["bridges_found"] == [
         {"entity": "parque ecologico", "found": True},
         {"entity": "Festa do Peão", "found": False},
+        # Part of a name is not the entity.
+        {"entity": "Parque", "found": False},
     ]
     assert rows["naive"]["graph_explanation"] is None
     assert rows["naive"]["bridges_found"] == []
 
     text = client.get(f"/experiments/{exp_id}/export.csv").content.decode("utf-8")
     by_rag = {row["rag"]: row for row in csv.DictReader(io.StringIO(text.lstrip("﻿")))}
-    assert by_rag["graph"]["grafo_entidades"] == "Parque Ecológico"
-    assert by_rag["graph"]["grafo_fatos"] == "Parque Ecológico → Festa do Peão: A festa é no parque."
+    assert by_rag["graph"]["grafo_entidades_encontradas"] == "Parque Ecológico"
+    assert by_rag["graph"]["grafo_fatos_usados"] == "Parque Ecológico → Festa do Peão: A festa é no parque."
     assert by_rag["graph"]["grafo_pontes_encontradas"] == "parque ecologico"
     assert by_rag["graph"]["grafo_entities"] == "1"
-    assert by_rag["naive"]["grafo_entidades"] == ""
+    assert by_rag["naive"]["grafo_entidades_encontradas"] == ""

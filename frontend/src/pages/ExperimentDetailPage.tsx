@@ -767,8 +767,8 @@ export function ExperimentDetailPage() {
                   <dd>
                     {openRow.graph_explanation.facts.length ? (
                       <ul className="ditto-graph-facts">
-                        {openRow.graph_explanation.facts.map((fact) => (
-                          <li key={fact}>{fact}</li>
+                        {openRow.graph_explanation.facts.map((fact, i) => (
+                          <li key={i}>{fact}</li>
                         ))}
                       </ul>
                     ) : (

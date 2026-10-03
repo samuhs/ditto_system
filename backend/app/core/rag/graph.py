@@ -140,13 +140,16 @@ class GraphRAG(RAG):
     def _entities_found(self, state: QueryState) -> list[dict]:
         """The linked entities (hop 0), then their best neighbours (hop 1), by score."""
         seeds = state["entity_scores"]
-        found = [
-            {"name": entity.name, "score": float(score), "hop": 0 if key in seeds else 1}
-            for key, score in state["node_scores"].items()
-            if (entity := self._graph.entities.get(key)) is not None
-        ]
-        found.sort(key=lambda e: (e["hop"], -e["score"], e["name"]))
-        return found[: len(seeds) + MAX_NEIGHBOURS_SHOWN]
+        found = sorted(
+            (
+                {"name": entity.name, "score": float(score), "hop": 0 if key in seeds else 1}
+                for key, score in state["node_scores"].items()
+                if (entity := self._graph.entities.get(key)) is not None
+            ),
+            key=lambda e: (e["hop"], -e["score"], e["name"]),
+        )
+        linked = [e for e in found if e["hop"] == 0]
+        return linked + [e for e in found if e["hop"] == 1][:MAX_NEIGHBOURS_SHOWN]
 
 
 rag_registry.register("graph", GraphRAG)
