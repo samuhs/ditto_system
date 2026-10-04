@@ -136,6 +136,20 @@ describe("ExperimentPage", () => {
     expect(screen.getByText("respostas a gerar e avaliar").previousElementSibling).toHaveTextContent("12");
   });
 
+  it("offers the Grafo + busca technique and runs it per index and retriever", async () => {
+    const options = await client.getOptions();
+    vi.mocked(client.getOptions).mockResolvedValue({
+      ...options, rags: ["graph_mix"], retrievers: ["similarity", "mmr"],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    expect(screen.getByText("Grafo + busca")).toBeInTheDocument();
+    expect(await screen.findByText(/2 perguntas encontradas/i)).toBeInTheDocument();
+    // graph_mix: 2 indexes × 2 retrievers = 4 combinations × 2 questions
+    expect(screen.getByText("respostas a gerar e avaliar").previousElementSibling).toHaveTextContent("8");
+  });
+
   it("lists real model names with a local/remote tag", async () => {
     vi.mocked(client.getOptions).mockResolvedValue({
       bases: ["teste-1"], chunkings: ["recursive"], embeddings: ["gemini"],

@@ -93,6 +93,11 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
       description:
         "Acha as entidades da pergunta no Grafo de conhecimento do índice e responde com os trechos delas e das vizinhas. O próprio modelo de resposta monta o Grafo de conhecimento na primeira vez. Não usa a busca.",
     },
+    graph_mix: {
+      name: "Grafo + busca",
+      description:
+        "Junta os trechos achados pelo Grafo de conhecimento do índice com os da busca marcada, sem repetir trecho. Usa o mesmo Grafo de conhecimento da técnica Grafo e roda uma vez por busca.",
+    },
   },
   retriever: {
     similarity: {
