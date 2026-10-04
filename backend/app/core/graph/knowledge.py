@@ -155,18 +155,18 @@ class KnowledgeGraph:
         return [(GraphRelation.model_validate(h["payload"]), h["score"]) for h in hits]
 
     def specificity(self, key: str) -> float:
-        """A soft IDF, log(N/n) / log(N), of the entity over the Índice's N chunks.
+        """A soft IDF, log((N+1)/n) / log(N+1), of the entity over the Índice's N chunks.
 
-        1 for an entity in one chunk, near 0 for one in almost every chunk (the
-        city). HippoRAG's 1/n halved an entity named in two chunks, so a nearer
-        entity lost to any one-chunk entity (experiment #21).
+        1 for an entity in one chunk, near 0 (never 0) for one in almost every
+        chunk, such as the city. HippoRAG's 1/n halved an entity named in two
+        chunks, so a nearer entity lost to any one-chunk entity (experiment #21).
+        N is every chunk of the Índice (load_graph reads them all), not only those
+        the graph's entities came from.
         """
         entity = self.entities.get(key)
         if entity is None:
             return 0.0
-        total = max(len(self.chunks), len(entity.chunk_ids))
-        if total <= 1:
-            return 1.0
+        total = max(len(self.chunks), len(entity.chunk_ids)) + 1
         return math.log(total / max(len(entity.chunk_ids), 1)) / math.log(total)
 
     def neighbours(self, key: str) -> list[str]:

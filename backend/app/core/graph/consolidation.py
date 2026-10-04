@@ -38,7 +38,7 @@ _NOT_AN_ENTITY = re.compile(r"^\s*(\d|R\$|\$|€)")
 
 
 def _fold(text: str) -> str:
-    """Casefolded and without accents, for comparing spellings of the hub."""
+    """Casefolded and without accents, for comparing spellings (the hub, synonyms)."""
     folded = unicodedata.normalize("NFKD", text.casefold())
     return "".join(c for c in folded if not unicodedata.combining(c))
 

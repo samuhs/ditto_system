@@ -13,6 +13,7 @@ from app.core.rag.base import build_rag
 from app.core.vectorstore.qdrant import QdrantStore
 from app.ingestion.pipeline import ingest_documents
 from app.ingestion.schemas import Document, IngestConfig
+from tests.test_rag_graph import _body
 
 CITY = "Santo Antônio da Alegria"
 
@@ -83,11 +84,6 @@ class _TrigramEmbedder:
 
     def embed_documents(self, texts):
         return [self.embed_query(t) for t in texts]
-
-
-def _body(chunk):
-    """The chunk's text after its heading line: what the extractor reads."""
-    return chunk.split("\n", 1)[1]
 
 
 class _ExtractorLLM:

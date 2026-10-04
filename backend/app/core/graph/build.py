@@ -76,6 +76,8 @@ class ChunkExtraction(TypedDict):
 
 class BuildState(TypedDict, total=False):
     chunks: dict[int, str]
+    # What the LLM extrator reads of each chunk: the text without its heading path.
+    bodies: dict[int, str]
     extractions: Annotated[list[ChunkExtraction], operator.add]
     entities: list[GraphEntity]
     relations: list[GraphRelation]
@@ -149,11 +151,16 @@ class LLMGraphBuilder(GraphBuilder):
         def load_chunks(state: BuildState) -> dict:
             chunks = index_chunks(store, base, chunking, embedding)
             texts = {cid: p.get("text", "") for cid, p in chunks.items()}
-            # Chunks some earlier build already extracted (any Índice with this chunking),
-            # keyed by the text the extractor reads: the body, without the heading path.
+            bodies = {cid: without_headings(text) for cid, text in texts.items()}
+            # A chunk with nothing but headings has nothing to extract.
+            empty = [
+                {"chunk_id": cid, "extraction": Extraction()}
+                for cid, body in bodies.items() if not body
+            ]
+            # Chunks some earlier build already extracted (any Índice with this chunking).
             keys = {
-                cid: extraction_key(without_headings(text), extractor, prompt)
-                for cid, text in texts.items()
+                cid: extraction_key(body, extractor, prompt)
+                for cid, body in bodies.items() if body
             }
             known = cache.get_many(list(keys.values())) if cache else {}
             cached = [
@@ -161,14 +168,14 @@ class LLMGraphBuilder(GraphBuilder):
                 for cid, key in keys.items() if key in known
             ]
             progress["total"] = len(texts)
-            tick(len(cached))
-            return {"chunks": texts, "extractions": cached}
+            tick(len(empty) + len(cached))
+            return {"chunks": texts, "bodies": bodies, "extractions": empty + cached}
 
         def fan_out(state: BuildState) -> list[Send] | str:
             done = {x["chunk_id"] for x in state.get("extractions", [])}
             sends = [
-                Send("extract", {"chunk_id": cid, "text": without_headings(text)})
-                for cid, text in state["chunks"].items()
+                Send("extract", {"chunk_id": cid, "text": body})
+                for cid, body in state["bodies"].items()
                 if cid not in done
             ]
             return sends or "merge"  # an empty Índice still yields an (empty) graph

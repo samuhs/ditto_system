@@ -156,6 +156,56 @@ def test_reingesting_the_index_rebuilds_the_grafo_on_the_new_chunks(session_fact
     assert new_chunk in calls[-1]
 
 
+def test_a_markdown_index_is_extracted_without_its_heading_path(session_factory):  # noqa: F811
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="guia.md", text=(
+            "# Guia da cidade\n## Perguntas frequentes\n### A praça\nA Praça Central fica no centro."
+        ))],
+        IngestConfig(base="viagem", chunkings=["markdown"], embeddings=["e5"]),
+        store, embedder_factory=_embedder_factory,
+    )
+    calls = []
+    status, [(_, _, stats, _)] = _run(
+        session_factory, _deps(store, session_factory, calls), "markdown",
+        _config(chunkings=["markdown"]),
+    )
+    assert status == "done" and stats["entities"] == 1
+    [prompt] = calls
+    assert "Texto: A Praça Central fica no centro." in prompt
+    assert "Guia da cidade" not in prompt and "Perguntas frequentes" not in prompt
+
+
+def test_a_chunk_of_headings_only_is_not_sent_to_the_extractor(session_factory):  # noqa: F811
+    # The paragraph fills a recursive chunk, so the title is cut off on its own.
+    store, calls = _store(text="# Guia da cidade\n\n" + "A praça fica no centro. " * 41), []
+    assert "# Guia da cidade" in [c["payload"]["text"] for c in _chunks(store)]
+
+    status, [(_, _, stats, _)] = _run(session_factory, _deps(store, session_factory, calls), "h")
+    assert status == "done" and stats["chunks"] == len(_chunks(store))
+    assert len(calls) == len(_chunks(store)) - 1
+
+
+def test_a_grafo_built_by_an_older_version_is_rebuilt_from_the_cache(
+    session_factory, monkeypatch,  # noqa: F811
+):
+    from app.core.graph import build
+
+    store, calls = _store(), []
+    deps = _deps(store, session_factory, calls)
+    _run(session_factory, deps, "v1")
+    seen = []
+    monkeypatch.setattr(build, "GRAPH_VERSION", build.GRAPH_VERSION + 1)
+    monkeypatch.setattr(orchestrator, "build_graph", lambda *a, **kw: seen.append(1) or
+                        build.build_graph(*a, **kw))
+
+    status, [(_, _, stats, _)] = _run(session_factory, deps, "v2")
+    assert status == "done" and stats["entities"] == 1
+    # Rebuilt, but the extractions still hold: no new LLM call.
+    assert seen == [1]
+    assert len(calls) == len(_chunks(store))
+
+
 def test_the_build_shows_as_building_graph_with_chunks_extracted(session_factory):  # noqa: F811
     seen = []
 
