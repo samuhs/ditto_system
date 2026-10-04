@@ -40,7 +40,10 @@ export const SECTIONS: Section[] = [
     step: 1,
     label: "Preparar",
     purpose: "Envie documentos e gere os índices de busca.",
-    pages: [{ to: "/ingest", label: "Documentos" }],
+    pages: [
+      { to: "/ingest", label: "Documentos" },
+      { to: "/bases", label: "Bases" },
+    ],
   },
   {
     id: "experimentar",

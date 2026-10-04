@@ -5,6 +5,7 @@ import { TasksToast } from "./components/TasksToast";
 import { TasksProvider } from "./context/TasksContext";
 import { AgentePage } from "./pages/AgentePage";
 import { AvaliacaoPage } from "./pages/AvaliacaoPage";
+import { BasesPage } from "./pages/BasesPage";
 import { ChatConfigsPage } from "./pages/ChatConfigsPage";
 import { ChatPage } from "./pages/ChatPage";
 import { DialoguePage } from "./pages/DialoguePage";
@@ -38,6 +39,7 @@ export function App() {
                 <Routes location={location}>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/ingest" element={<IngestPage />} />
+                  <Route path="/bases" element={<BasesPage />} />
                   <Route path="/experiment" element={<ExperimentPage />} />
                   <Route path="/results" element={<ResultsPage />} />
                   <Route path="/results/:id" element={<ExperimentDetailPage />} />

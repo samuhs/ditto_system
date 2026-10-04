@@ -25,6 +25,32 @@ export interface IngestResult {
   total_chunks: number;
 }
 
+/** A finished Grafo de conhecimento of an Índice, built by one LLM extrator. */
+export interface GraphSummary {
+  extractor: string;
+  entities: number;
+  relations: number;
+  /** Share (0–100) of the extraction lines that could not be read. */
+  failed_pct: number;
+  /** ISO timestamp; null for a Grafo built before the date was recorded. */
+  built_at: string | null;
+}
+
+/** An Índice (corte × embedding) of a Base. */
+export interface IndexSummary {
+  chunking: string;
+  embedding: string;
+  chunks: number;
+  graphs: GraphSummary[];
+}
+
+/** A Base; `in_use` says why it cannot be deleted now (null: it can). */
+export interface BaseSummary {
+  name: string;
+  indexes: IndexSummary[];
+  in_use: string | null;
+}
+
 export interface ExperimentRef {
   id: number;
   name: string;

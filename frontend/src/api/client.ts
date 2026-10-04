@@ -1,5 +1,6 @@
 import type {
   AppSettings,
+  BaseSummary,
   EvaluationSettings,
   MemoryStatus,
   ChatConfig,
@@ -46,6 +47,16 @@ export async function getOptions(): Promise<Options> {
 
 export async function ingest(form: FormData): Promise<IngestResult> {
   return asJson<IngestResult>(await fetch(`${BASE}/ingest`, { method: "POST", body: form }));
+}
+
+/** Every Base with its Índices and the Grafos de conhecimento built from them. */
+export async function listBases(): Promise<BaseSummary[]> {
+  return asJson<BaseSummary[]>(await fetch(`${BASE}/bases`));
+}
+
+/** Deletes a Base; refused (409, with the reason) while an experiment uses it. */
+export async function deleteBase(name: string): Promise<{ base: string; deleted: string[] }> {
+  return asJson(await fetch(`${BASE}/bases/${encodeURIComponent(name)}`, { method: "DELETE" }));
 }
 
 export async function createExperiment(form: FormData): Promise<ExperimentRef> {

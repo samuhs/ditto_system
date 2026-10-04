@@ -16,10 +16,10 @@ beforeEach(() => {
   vi.mocked(client.listExperiments).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 1 });
 });
 
-function renderApp() {
+function renderApp(path = "/") {
   return render(
     <MantineProvider>
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={[path]}>
         <App />
       </MemoryRouter>
     </MantineProvider>,
@@ -41,5 +41,13 @@ describe("App shell", () => {
   it("points a first-time user to their documents", async () => {
     renderApp();
     expect(await screen.findByRole("link", { name: /preparar documentos/i })).toHaveAttribute("href", "/ingest");
+  });
+
+  it("lists the Bases as a page of Preparar", async () => {
+    vi.mocked(client.listBases).mockResolvedValue([]);
+    renderApp("/bases");
+    expect(await screen.findByRole("heading", { level: 1, name: /bases/i })).toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: /navegação principal/i });
+    expect(within(nav).getByRole("link", { name: "Bases" })).toHaveAttribute("href", "/bases");
   });
 });
