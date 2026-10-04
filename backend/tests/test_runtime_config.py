@@ -34,3 +34,19 @@ def test_empty_env_gemini_key_is_none(cfg_dir, monkeypatch):
         assert runtime.get_gemini_key() is None
     finally:
         get_settings.cache_clear()
+
+
+def test_stall_limit_defaults_to_600s(cfg_dir):
+    assert runtime.get_stall_limit_s() == 600.0
+
+
+def test_stall_limit_persists(cfg_dir):
+    runtime.set_stall_limit_s(120.0)
+    assert runtime.get_stall_limit_s() == 120.0
+
+
+def test_stall_limit_rejects_non_positive_values(cfg_dir):
+    with pytest.raises(ValueError):
+        runtime.set_stall_limit_s(0)
+    with pytest.raises(ValueError):
+        runtime.set_stall_limit_s(-5)

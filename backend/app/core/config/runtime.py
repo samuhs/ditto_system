@@ -8,6 +8,11 @@ from app.core.config.settings import get_settings
 # Local and API-free, so scoring never spends Gemini quota unless the user picks it.
 DEFAULT_EVAL_EMBEDDING = "paraphrase"
 
+# Travamento (#20): how long a running experiment may go without a heartbeat
+# (a result recorded, a phase change, a Combinação starting) before the watchdog
+# pauses it. Per-call LLM/embedder timeouts derive from half of this value.
+DEFAULT_STALL_LIMIT_S = 600.0
+
 
 def config_dir() -> Path:
     """Directory holding the runtime settings file (env APP_CONFIG_DIR overrides)."""
@@ -65,4 +70,18 @@ def set_eval_embedding(name: str) -> None:
     """Persist the default evaluation embedder."""
     data = load_config()
     data["eval_embedding"] = name
+    save_config(data)
+
+
+def get_stall_limit_s() -> float:
+    """Seconds a running experiment may go without a heartbeat before Travamento."""
+    return load_config().get("stall_limit_s") or DEFAULT_STALL_LIMIT_S
+
+
+def set_stall_limit_s(seconds: float) -> None:
+    """Persist the Travamento limit, in seconds. Must be positive."""
+    if seconds <= 0:
+        raise ValueError("stall_limit_s must be positive")
+    data = load_config()
+    data["stall_limit_s"] = seconds
     save_config(data)

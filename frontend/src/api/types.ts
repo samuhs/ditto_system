@@ -398,6 +398,8 @@ export interface MemoryStatus {
 
 export interface AppSettings {
   gemini_api_key_set: boolean;
+  /** Travamento: minutes a running experiment may go without progress before it pauses itself. */
+  stall_limit_minutes: number;
 }
 
 export interface EvaluationSettings {

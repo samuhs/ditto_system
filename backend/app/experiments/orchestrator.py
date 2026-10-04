@@ -5,6 +5,7 @@ import time
 import traceback
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as _FutureTimeoutError
 from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -25,7 +26,7 @@ from app.core.difficulty.perplexity import (
 )
 from app.core.embedding.base import build_embedder
 from app.core.evaluation.base import EvalSample
-from app.core.config.runtime import get_eval_embedding
+from app.core.config.runtime import get_eval_embedding, get_stall_limit_s
 from app.core.evaluation.runner import evaluate_sample, metrics_need_embedder
 from app.core.llm import ollama
 from app.core.llm.factory import is_local_llm, resolve_llm
@@ -40,6 +41,7 @@ from app.core.rag.base import build_rag, technique_class
 from app.core.retrieval.base import build_retriever
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.schemas import ExperimentConfig, QuestionItem, combinations, index_pairs
+from app.experiments.watchdog import StallWatchdog
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +184,8 @@ class ExperimentDeps:
     models: ModelManager | None = None
     # Model name -> PerplexityScorer, or None when the model cannot be scored.
     perplexity_scorer_factory: Callable = perplexity_scorer_for
+    # Travamento limit in seconds (#20); None reads Configurações gerais at run time.
+    stall_limit_s: float | None = None
 
     def __post_init__(self) -> None:
         if self.models is None:
@@ -317,16 +321,28 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
     return None, None, None, None, None, None, str(last_exc)
 
 
+# How often a question's future is polled for a stall signal while waiting on it.
+# Small relative to the fractions-of-a-second limits the test suite injects.
+_STALL_POLL_S = 0.02
+
+
 def _run_questions(
     rag, questions: list[QuestionItem], metrics: list, eval_embedder,
     concurrency: int, experiment_id: int, combo: dict, tracker: "_InFlightTracker",
+    stall_event: threading.Event | None = None,
 ) -> Iterator[tuple[QuestionItem, tuple | None]]:
     """Yield (question, outcome) in question order, running up to `concurrency` at once.
 
     The outcome is None for a question skipped because a pause was requested
-    before it started; questions already in flight run to completion. Each
-    question is registered on `tracker` for the span of its call, so a pause
-    entry recorded while it runs can show it under `in_flight`.
+    before it started, or because `stall_event` fired while this call was still
+    waiting on it. The second case is the Travamento watchdog abandoning a stuck
+    call (ADR 0001): every question runs on its own worker thread (even with
+    concurrency 1), so the loop can give up waiting on one without blocking.
+    Nothing here ever reads a future's result once it has been abandoned, so a
+    late answer — the call unblocking well after the fact — is never recorded.
+
+    Each question is registered on `tracker` for the span of its call, so a
+    pause entry recorded while it runs (or stuck) can show it under `in_flight`.
     """
 
     def work(question: QuestionItem):
@@ -338,12 +354,30 @@ def _run_questions(
         finally:
             tracker.finish(token)
 
-    if concurrency <= 1:
-        for question in questions:
-            yield question, work(question)
-        return
-    with ThreadPoolExecutor(max_workers=concurrency) as pool:
-        yield from zip(questions, pool.map(work, questions))
+    pool = ThreadPoolExecutor(max_workers=max(concurrency, 1))
+    abandoned = False
+    try:
+        futures = [pool.submit(work, question) for question in questions]
+        for question, future in zip(questions, futures):
+            if abandoned:
+                yield question, None
+                continue
+            outcome = None
+            while True:
+                try:
+                    outcome = future.result(timeout=_STALL_POLL_S)
+                    break
+                except _FutureTimeoutError:
+                    if stall_event is not None and stall_event.is_set():
+                        abandoned = True
+                        break
+            yield question, outcome
+    finally:
+        # A stalled call is abandoned, not awaited (ADR 0001: Python cannot kill a
+        # thread). shutdown(wait=True) here would block on the very thread this
+        # loop just gave up on; a clean pass has nothing left running and shuts
+        # down normally.
+        pool.shutdown(wait=not abandoned, cancel_futures=abandoned)
 
 
 def run_experiment(
@@ -528,11 +562,29 @@ def _run_experiment(
     only the LLM in memory, C) score. Unstaged: one pass, scoring as it goes.
     """
     session = deps.session_factory()
+    watchdog: StallWatchdog | None = None
     try:
         experiment = session.get(Experiment, experiment_id)
         experiment.status = "running"
         session.commit()
         _store_question_profiles(session, experiment_id, config.base, questions, deps.store)
+
+        stall_limit_s = deps.stall_limit_s if deps.stall_limit_s is not None else get_stall_limit_s()
+        # Half the Travamento limit: a call that outlasts it fails on its own,
+        # entering the usual retry path, well before the watchdog would fire.
+        call_timeout_s = stall_limit_s / 2
+        stall_event = threading.Event()
+
+        def _on_stall() -> None:
+            # Runs on the watchdog's own thread: no session/ORM access here, only
+            # the module-level pause request and this run's abandon signal.
+            request_pause(
+                experiment_id, reason="stall", score_partial=False,
+                detail={"message": f"Travamento: sem progresso por {stall_limit_s:.0f}s"},
+            )
+            stall_event.set()
+
+        watchdog = StallWatchdog(stall_limit_s, _on_stall).start()
 
         prompt_snapshot = (experiment.config or {}).get("prompts", {})
         profile = active_profile()
@@ -547,6 +599,7 @@ def _run_experiment(
         vectors = _question_vectors(deps, config, questions, device) if staged else {}
         if staged:
             _set_phase(session, experiment, "generating")
+            watchdog.heartbeat()
         eval_context = (
             deps.models.acquire(config.eval_embedding, device)
             if not staged and metrics_need_embedder(config.metrics)
@@ -576,9 +629,10 @@ def _run_experiment(
                 )
                 session.add(run)
                 session.commit()
+                watchdog.heartbeat()  # a Combinação just started
 
                 if llm_name != loaded_llm_name:
-                    llm, loaded_llm_name = deps.llm_factory(llm_name), llm_name
+                    llm, loaded_llm_name = deps.llm_factory(llm_name, timeout=call_timeout_s), llm_name
                 if staged:
                     cached = vectors[embedding]
                     embedder = CachedQueryEmbedder(
@@ -635,9 +689,11 @@ def _run_experiment(
                 # DB writes stay on this thread: the Session is not thread-safe.
                 for question, outcome in _run_questions(
                     rag, run_questions, inline_metrics, eval_embedder, concurrency, experiment_id,
-                    combo, tracker,
+                    combo, tracker, stall_event=stall_event,
                 ):
-                    # Checkpoint: questions not started before a pause are skipped.
+                    # Checkpoint: questions not started before a pause are skipped,
+                    # and so is a question _run_questions gave up waiting on because
+                    # the watchdog fired (abandoned, never recorded — ADR 0001).
                     if outcome is None:
                         if not paused:
                             # First detection: snapshot whatever is still mid-call right
@@ -668,6 +724,7 @@ def _run_experiment(
                                 tokens=tokens,
                             )
                         )
+                    watchdog.heartbeat()  # a result was just recorded
                 logger.info("run %d finished; API memory %.0f MB", run.id, process_memory_bytes() / 1e6)
 
                 if paused:
@@ -688,6 +745,7 @@ def _run_experiment(
             # Scores what was generated, paused or not — unless the pause asked to
             # skip scoring (#19/#20: free the machine right away).
             _set_phase(session, experiment, "evaluating")
+            watchdog.heartbeat()
             _score_results(session, experiment_id, config, deps)
         if score_partial:
             _store_evidence_distances(
@@ -722,5 +780,7 @@ def _run_experiment(
                 last_error=_error_detail(exc),
             )
     finally:
+        if watchdog is not None:
+            watchdog.stop()  # the run is over either way: never fire after this
         _pause_requests.pop(experiment_id, None)
         session.close()

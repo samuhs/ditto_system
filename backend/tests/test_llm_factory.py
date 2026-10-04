@@ -46,6 +46,23 @@ def test_resolve_llm_huggingface_model_name(cfg_dir):
     assert isinstance(llm, OllamaLLM)
 
 
+def test_resolve_llm_forwards_timeout_to_the_local_client(cfg_dir):
+    """Travamento/2 (#20): the hard per-call timeout reaches the built ChatOpenAI."""
+    llm = resolve_llm("qwen3:1.7b", timeout=12.5)
+    assert llm._client.request_timeout == 12.5
+
+
+def test_resolve_llm_forwards_timeout_to_the_gemini_client(cfg_dir):
+    runtime.set_gemini_key("test-key")
+    llm = resolve_llm("gemini-2.5-flash-lite", timeout=12.5)
+    assert llm._client.timeout == 12.5
+
+
+def test_resolve_llm_without_a_timeout_leaves_the_client_default(cfg_dir):
+    llm = resolve_llm("qwen3:1.7b")
+    assert llm._client.request_timeout is None
+
+
 def _options(lister):
     app = create_app()
     app.dependency_overrides[get_store] = lambda: _FakeStore()

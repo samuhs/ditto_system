@@ -66,3 +66,23 @@ def test_put_eval_embedding_persists(client):
 def test_put_eval_embedding_rejects_unknown_name(client):
     resp = client.put("/settings/eval-embedding", json={"name": "nope"})
     assert resp.status_code == 422
+
+
+def test_get_settings_includes_the_stall_limit_default(client):
+    body = client.get("/settings").json()
+    assert body["stall_limit_minutes"] == 10.0  # 600s default
+
+
+def test_put_stall_limit_persists_in_minutes(client):
+    resp = client.put("/settings/stall-limit", json={"minutes": 5})
+    assert resp.status_code == 200 and resp.json() == {"stall_limit_minutes": 5.0}
+    assert client.get("/settings").json()["stall_limit_minutes"] == 5.0
+
+    from app.core.config.runtime import get_stall_limit_s
+
+    assert get_stall_limit_s() == 300.0
+
+
+def test_put_stall_limit_rejects_non_positive_minutes(client):
+    resp = client.put("/settings/stall-limit", json={"minutes": 0})
+    assert resp.status_code == 422

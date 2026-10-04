@@ -1,7 +1,7 @@
-import { Button, PasswordInput } from "@mantine/core";
+import { Button, NumberInput, PasswordInput } from "@mantine/core";
 import { useEffect, useState } from "react";
 
-import { getMemory, getSettings, saveGeminiKey } from "../api/client";
+import { getMemory, getSettings, saveGeminiKey, saveStallLimit } from "../api/client";
 import type { MemoryStatus } from "../api/types";
 import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
@@ -22,6 +22,8 @@ export function SettingsPage() {
   const [keySaved, setKeySaved] = useState(false);
   const [memory, setMemory] = useState<MemoryStatus | null>(null);
   const [memoryError, setMemoryError] = useState(false);
+  const [stallLimit, setStallLimit] = useState<number | null>(null);
+  const [stallLimitSaved, setStallLimitSaved] = useState(false);
 
   // Separate from the settings load: a memory-status failure must not hide the rest.
   useEffect(() => {
@@ -32,7 +34,10 @@ export function SettingsPage() {
 
   useEffect(() => {
     getSettings()
-      .then((s) => setKeySet(s.gemini_api_key_set))
+      .then((s) => {
+        setKeySet(s.gemini_api_key_set);
+        setStallLimit(s.stall_limit_minutes);
+      })
       .catch((e) => setError(errorText(e)));
   }, []);
 
@@ -44,6 +49,19 @@ export function SettingsPage() {
       setKeySet(r.gemini_api_key_set);
       setNewKey("");
       setKeySaved(true);
+    } catch (e) {
+      setError(errorText(e));
+    }
+  }
+
+  async function saveStall() {
+    if (stallLimit === null) return;
+    setError(null);
+    setStallLimitSaved(false);
+    try {
+      const r = await saveStallLimit(stallLimit);
+      setStallLimit(r.stall_limit_minutes);
+      setStallLimitSaved(true);
     } catch (e) {
       setError(errorText(e));
     }
@@ -124,6 +142,31 @@ export function SettingsPage() {
                 Salvar
               </Button>
               {keySaved && <Saved>Chave salva</Saved>}
+            </div>
+          </div>
+        </section>
+
+        <section className="ditto-sec">
+          <div className="ditto-sec-head">
+            <h2 className="ditto-h2">Travamento</h2>
+            <p className="ditto-read">
+              Quando um experimento em andamento fica tempo demais sem gravar progresso, o Ditto pausa
+              sozinho e libera a máquina.
+            </p>
+          </div>
+          <div className="ditto-sec-body">
+            <div className="ditto-row-actions" style={{ alignItems: "flex-end" }}>
+              <NumberInput
+                label="Pausar experimento travado após (min)"
+                min={1}
+                value={stallLimit ?? undefined}
+                onChange={(v) => setStallLimit(typeof v === "number" && v > 0 ? v : null)}
+                w={300}
+              />
+              <Button onClick={saveStall} disabled={stallLimit === null}>
+                Salvar
+              </Button>
+              {stallLimitSaved && <Saved>Limite salvo</Saved>}
             </div>
           </div>
         </section>

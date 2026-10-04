@@ -1,5 +1,5 @@
 import { MantineProvider } from "@mantine/core";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -16,11 +16,17 @@ function renderPage() {
   );
 }
 
+function section(heading: string) {
+  return screen.getByText(heading).closest("section") as HTMLElement;
+}
+
 beforeEach(() => {
   vi.mocked(client.getSettings).mockResolvedValue({
     gemini_api_key_set: false,
+    stall_limit_minutes: 10,
   });
   vi.mocked(client.saveGeminiKey).mockResolvedValue({ gemini_api_key_set: true });
+  vi.mocked(client.saveStallLimit).mockResolvedValue({ stall_limit_minutes: 5 });
   vi.mocked(client.getMemory).mockResolvedValue({
     profile: { name: "low", max_local_models: 1, embedding_device: "cpu", max_concurrency: 2 },
     total_bytes: 8 * 1024 ** 3,
@@ -54,8 +60,26 @@ describe("SettingsPage", () => {
     renderPage();
     const user = userEvent.setup();
     await screen.findByText(/Nenhuma chave configurada/);
-    await user.type(screen.getByLabelText(/Nova chave/), "abc");
-    await user.click(screen.getByRole("button", { name: /^salvar$/i }));
+    const geminiSection = section("Chave do Gemini");
+    await user.type(within(geminiSection).getByLabelText(/Nova chave/), "abc");
+    await user.click(within(geminiSection).getByRole("button", { name: /^salvar$/i }));
     await waitFor(() => expect(client.saveGeminiKey).toHaveBeenCalledWith("abc"));
+  });
+
+  it("shows the Travamento limit and saves a new one", async () => {
+    renderPage();
+    await screen.findByText(/Nenhuma chave configurada/);
+    const stallSection = section("Travamento");
+    expect(within(stallSection).getByLabelText(/Pausar experimento travado após \(min\)/)).toHaveValue(
+      "10",
+    );
+
+    const user = userEvent.setup();
+    const input = within(stallSection).getByLabelText(/Pausar experimento travado após \(min\)/);
+    await user.clear(input);
+    await user.type(input, "5");
+    await user.click(within(stallSection).getByRole("button", { name: /^salvar$/i }));
+    await waitFor(() => expect(client.saveStallLimit).toHaveBeenCalledWith(5));
+    expect(await within(stallSection).findByText("Limite salvo")).toBeInTheDocument();
   });
 });

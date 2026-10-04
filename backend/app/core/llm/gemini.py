@@ -13,6 +13,7 @@ class GeminiLLM(LLM):
         model: str = DEFAULT_GEMINI_MODEL,
         api_key: str | None = None,
         client=None,
+        timeout: float | None = None,
     ) -> None:
         if client is None:
             from langchain_google_genai import ChatGoogleGenerativeAI
@@ -20,6 +21,9 @@ class GeminiLLM(LLM):
             client = ChatGoogleGenerativeAI(
                 model=model,
                 google_api_key=api_key or get_gemini_key(),
+                # Travamento/2 (#20): a hard timeout so a stuck call fails into the
+                # usual retry path instead of hanging the worker thread.
+                timeout=timeout,
             )
         self._client = client
 
