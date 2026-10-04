@@ -94,8 +94,29 @@ export interface GraphStats {
 export interface ExperimentProgress {
   completed: number;
   total: number;
-  /** Staged runs: "generating", then "evaluating" while the answers are scored. */
+  /** Staged runs: "generating", then "evaluating" while the answers are scored;
+   * "building_graph" while a Grafo de conhecimento is built. */
   phase?: string | null;
+  /** Chunks extracted / total of the Grafo being built; null when none is. */
+  graph?: { extracted: number; total: number } | null;
+}
+
+/** A Grafo de conhecimento the experiment would build: Índice × LLM extrator. */
+export interface GraphToBuild {
+  chunking: string;
+  embedding: string;
+  llm: string;
+}
+
+export interface ExperimentPreflightInput {
+  base: string;
+  indexes: IndexPair[];
+  rags: string[];
+  llms: string[];
+}
+
+export interface ExperimentPreflight {
+  graphs_to_build: GraphToBuild[];
 }
 
 export interface ExperimentDetail {

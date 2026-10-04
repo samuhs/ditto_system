@@ -12,6 +12,8 @@ import type {
   ExperimentDetail,
   ExperimentDifficulty,
   ExperimentList,
+  ExperimentPreflight,
+  ExperimentPreflightInput,
   ExperimentRef,
   FlowSpec,
   IngestResult,
@@ -49,6 +51,17 @@ export async function ingest(form: FormData): Promise<IngestResult> {
 export async function createExperiment(form: FormData): Promise<ExperimentRef> {
   return asJson<ExperimentRef>(
     await fetch(`${BASE}/experiments`, { method: "POST", body: form }),
+  );
+}
+
+/** Before running: the Grafos de conhecimento the chosen experiment would still build. */
+export async function preflightExperiment(body: ExperimentPreflightInput): Promise<ExperimentPreflight> {
+  return asJson<ExperimentPreflight>(
+    await fetch(`${BASE}/experiments/preflight`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
   );
 }
 

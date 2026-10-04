@@ -150,6 +150,30 @@ describe("ExperimentPage", () => {
     expect(screen.getByText("respostas a gerar e avaliar").previousElementSibling).toHaveTextContent("8");
   });
 
+  it("says how many new Grafos will be built before running", async () => {
+    const options = await client.getOptions();
+    vi.mocked(client.getOptions).mockResolvedValue({ ...options, rags: ["naive", "graph"] });
+    vi.mocked(client.preflightExperiment).mockResolvedValue({
+      graphs_to_build: [
+        { chunking: "fixed", embedding: "e5", llm: "gemini" },
+        { chunking: "recursive", embedding: "gemini", llm: "gemini" },
+      ],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    expect(await screen.findByText(/2 Grafos de conhecimento novos/)).toBeInTheDocument();
+    expect(client.preflightExperiment).toHaveBeenLastCalledWith({
+      base: "teste-1",
+      indexes: [
+        { chunking: "fixed", embedding: "e5" },
+        { chunking: "recursive", embedding: "gemini" },
+      ],
+      rags: ["naive", "graph"],
+      llms: ["gemini"],
+    });
+  });
+
   it("lists real model names with a local/remote tag", async () => {
     vi.mocked(client.getOptions).mockResolvedValue({
       bases: ["teste-1"], chunkings: ["recursive"], embeddings: ["gemini"],

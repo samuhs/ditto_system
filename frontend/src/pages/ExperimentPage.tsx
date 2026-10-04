@@ -2,7 +2,7 @@ import { Button, FileInput, NumberInput, Select, TextInput } from "@mantine/core
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { createExperiment, getExperiment, getOptions, listExperiments } from "../api/client";
+import { createExperiment, getExperiment, getOptions, listExperiments, preflightExperiment } from "../api/client";
 import type { ExperimentRef, IndexPair, Options } from "../api/types";
 import { ChoiceGroup } from "../components/ChoiceGroup";
 import { Errata, Note, Saved, errorText } from "../components/Notice";
@@ -56,6 +56,12 @@ export function ExperimentPage() {
 
   const baseIndexes: IndexPair[] = (base && options?.base_indexes?.[base]) || [];
   const allIndexKeys = baseIndexes.map(indexKey);
+  const graphsToBuild = useGraphsToBuild(
+    base,
+    baseIndexes.filter((i) => indexKeys.includes(indexKey(i))),
+    rags,
+    llms,
+  );
 
   function chooseBase(value: string) {
     setBase(value);
@@ -368,6 +374,15 @@ export function ExperimentPage() {
               <Link to={`/results/${created.id}`}>Acompanhar</Link>
             </p>
           )}
+          {graphsToBuild > 0 && (
+            <Note title="Grafos de conhecimento a construir">
+              {graphsToBuild === 1
+                ? "1 Grafo de conhecimento novo será construído"
+                : `${graphsToBuild} Grafos de conhecimento novos serão construídos`}{" "}
+              (um por Índice × LLM) antes das respostas: o LLM lê cada trecho do Índice uma vez.
+              Os próximos experimentos reaproveitam o que já foi construído.
+            </Note>
+          )}
           {created?.warnings?.map((w) => (
             <Note key={w} title="Atenção à memória">
               {w}
@@ -377,6 +392,30 @@ export function ExperimentPage() {
       </div>
     </div>
   );
+}
+
+/**
+ * How many Grafos de conhecimento the chosen experiment would still build
+ * (asked to the API; 0 while the choice is incomplete or the API cannot tell).
+ */
+function useGraphsToBuild(base: string, indexes: IndexPair[], rags: string[], llms: string[]): number {
+  const [count, setCount] = useState(0);
+  const key = JSON.stringify({ base, indexes, rags, llms });
+  useEffect(() => {
+    setCount(0);
+    if (!base || indexes.length === 0 || rags.length === 0 || llms.length === 0) return;
+    let active = true;
+    Promise.resolve()
+      .then(() => preflightExperiment({ base, indexes, rags, llms }))
+      .then((preflight) => {
+        if (active && preflight) setCount(preflight.graphs_to_build.length);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [key]); // the serialized key covers the inputs (new arrays every render)
+  return count;
 }
 
 /**
