@@ -2,8 +2,8 @@ import { Button, FileInput, NumberInput, Select, TextInput } from "@mantine/core
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { createExperiment, getExperiment, getOptions, listExperiments, preflightExperiment } from "../api/client";
-import type { ExperimentRef, IndexPair, Options } from "../api/types";
+import { createExperiment, getExperiment, getOptions, listExperiments } from "../api/client";
+import type { ExperimentRef, IndexOption, IndexPair, Options } from "../api/types";
 import { ChoiceGroup } from "../components/ChoiceGroup";
 import { Errata, Note, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
@@ -17,6 +17,8 @@ import { joinPt } from "../utils/text";
 
 const NO_RETRIEVAL_RAGS = ["closed_book", "oracle"];
 const INDEX_ONLY_RAGS = ["graph"];
+// Techniques that query an Índice's Grafo de conhecimento (built at ingestion, never here).
+const GRAPH_RAGS = ["graph", "graph_mix"];
 export function ExperimentPage() {
   const { addExperimentTask } = useTasks();
   const [options, setOptions] = useState<Options | null>(null);
@@ -24,6 +26,7 @@ export function ExperimentPage() {
   const [base, setBase] = useState("");
   const [indexKeys, setIndexKeys] = useState<string[]>([]);
   const [rags, setRags] = useState<string[]>([]);
+  const [graphExtractor, setGraphExtractor] = useState<string | null>(null);
   const [retrievers, setRetrievers] = useState<string[]>([]);
   const [llms, setLlms] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
@@ -54,14 +57,26 @@ export function ExperimentPage() {
     };
   }, [csv]);
 
-  const baseIndexes: IndexPair[] = (base && options?.base_indexes?.[base]) || [];
+  const baseIndexes: IndexOption[] = (base && options?.base_indexes?.[base]) || [];
   const allIndexKeys = baseIndexes.map(indexKey);
-  const graphsToBuild = useGraphsToBuild(
-    base,
-    baseIndexes.filter((i) => indexKeys.includes(indexKey(i))),
-    rags,
-    llms,
+  const chosenIndexes = baseIndexes.filter((i) => indexKeys.includes(indexKey(i)));
+  // graph and graph_mix only query: offered when every chosen Índice has a Grafo by
+  // a common LLM extrator.
+  const graphExtractors = chosenIndexes.length > 0
+    ? chosenIndexes
+        .map((i) => i.graph_extractors ?? [])
+        .reduce((common, list) => common.filter((x) => list.includes(x)))
+    : [];
+  const offeredRags = (options?.rags ?? []).filter(
+    (r) => !GRAPH_RAGS.includes(r) || graphExtractors.length > 0,
   );
+  const graphHidden = base !== "" && offeredRags.length < (options?.rags ?? []).length;
+  const chosenRags = rags.filter((r) => offeredRags.includes(r));
+  const usesGraph = chosenRags.some((r) => GRAPH_RAGS.includes(r));
+  const extractor =
+    graphExtractor !== null && graphExtractors.includes(graphExtractor)
+      ? graphExtractor
+      : graphExtractors[0] ?? null;
 
   function chooseBase(value: string) {
     setBase(value);
@@ -72,7 +87,7 @@ export function ExperimentPage() {
     options !== null &&
     options.rags.length > 0 &&
     indexKeys.length === allIndexKeys.length &&
-    rags.length === options.rags.length &&
+    chosenRags.length === offeredRags.length &&
     retrievers.length === options.retrievers.length &&
     llms.length === options.llm_options.length &&
     metrics.length === options.metrics.length;
@@ -86,7 +101,7 @@ export function ExperimentPage() {
       setMetrics([]);
     } else {
       setIndexKeys(allIndexKeys);
-      setRags(options?.rags ?? []);
+      setRags(offeredRags);
       setRetrievers(options?.retrievers ?? []);
       setLlms(options?.llm_options.map((o) => o.value) ?? []);
       setMetrics(options?.metrics ?? []);
@@ -95,9 +110,9 @@ export function ExperimentPage() {
 
   // "Sem busca" and "Oráculo" ignore the index and retriever: they run once per model.
   // The Grafo reads the index but no retriever: it runs once per index.
-  const baselines = rags.filter((r) => NO_RETRIEVAL_RAGS.includes(r)).length;
-  const perIndex = rags.filter((r) => INDEX_ONLY_RAGS.includes(r)).length;
-  const searching = rags.length - baselines - perIndex;
+  const baselines = chosenRags.filter((r) => NO_RETRIEVAL_RAGS.includes(r)).length;
+  const perIndex = chosenRags.filter((r) => INDEX_ONLY_RAGS.includes(r)).length;
+  const searching = chosenRags.length - baselines - perIndex;
   const forms =
     (indexKeys.length * searching * retrievers.length +
       (retrievers.length > 0 ? indexKeys.length * perIndex : 0) +
@@ -106,7 +121,7 @@ export function ExperimentPage() {
   const missing = [
     base === "" && "a base",
     base !== "" && indexKeys.length === 0 && "um índice",
-    rags.length === 0 && "uma técnica de RAG",
+    chosenRags.length === 0 && "uma técnica de RAG",
     retrievers.length === 0 && "uma busca",
     llms.length === 0 && "um modelo",
     metrics.length === 0 && "uma métrica",
@@ -117,14 +132,15 @@ export function ExperimentPage() {
     setSubmitError(null);
     setCreated(null);
     try {
-      const indexes = baseIndexes.filter((i) => indexKeys.includes(indexKey(i)));
+      const indexes: IndexPair[] = chosenIndexes.map((i) => ({ chunking: i.chunking, embedding: i.embedding }));
       const config = {
         name: name || undefined,
         base,
         chunkings: unique(indexes.map((i) => i.chunking)),
         embeddings: unique(indexes.map((i) => i.embedding)),
         indexes,
-        rags,
+        rags: chosenRags,
+        graph_extractor: usesGraph ? extractor : undefined,
         retrievers,
         llms,
         metrics,
@@ -224,11 +240,29 @@ export function ExperimentPage() {
           <div className="ditto-sec-body">
             <ChoiceGroup
               legend="Técnica de RAG"
-              choices={(options?.rags ?? []).map((k) => ({ value: k, code: k, ...term("rag", k) }))}
-              value={rags}
+              choices={offeredRags.map((k) => ({ value: k, code: k, ...term("rag", k) }))}
+              value={chosenRags}
               onChange={setRags}
               empty="Carregando…"
             />
+            {graphHidden && (
+              <p className="ditto-read">
+                As técnicas de Grafo (graph e graph_mix) aparecem quando todos os índices marcados
+                têm um Grafo de conhecimento do mesmo LLM extrator.{" "}
+                <Link to={`/ingest?base=${encodeURIComponent(base)}`}>Gere o Grafo na ingestão</Link>.
+              </p>
+            )}
+            {usesGraph && (
+              <Select
+                label="LLM extrator do Grafo"
+                description="O modelo que construiu os Grafos que graph e graph_mix vão consultar. Para comparar extratores, rode um experimento para cada um."
+                data={graphExtractors}
+                value={extractor}
+                onChange={(v) => setGraphExtractor(v)}
+                allowDeselect={false}
+                maw={420}
+              />
+            )}
             <ChoiceGroup
               legend="Busca (retriever)"
               choices={(options?.retrievers ?? []).map((k) => ({ value: k, code: k, ...term("retriever", k) }))}
@@ -374,15 +408,6 @@ export function ExperimentPage() {
               <Link to={`/results/${created.id}`}>Acompanhar</Link>
             </p>
           )}
-          {graphsToBuild > 0 && (
-            <Note title="Grafos de conhecimento a construir">
-              {graphsToBuild === 1
-                ? "1 Grafo de conhecimento novo será construído"
-                : `${graphsToBuild} Grafos de conhecimento novos serão construídos`}{" "}
-              (um por Índice × LLM) antes das respostas: o LLM lê cada trecho do Índice uma vez.
-              Os próximos experimentos reaproveitam o que já foi construído.
-            </Note>
-          )}
           {created?.warnings?.map((w) => (
             <Note key={w} title="Atenção à memória">
               {w}
@@ -392,30 +417,6 @@ export function ExperimentPage() {
       </div>
     </div>
   );
-}
-
-/**
- * How many Grafos de conhecimento the chosen experiment would still build
- * (asked to the API; 0 while the choice is incomplete or the API cannot tell).
- */
-function useGraphsToBuild(base: string, indexes: IndexPair[], rags: string[], llms: string[]): number {
-  const [count, setCount] = useState(0);
-  const key = JSON.stringify({ base, indexes, rags, llms });
-  useEffect(() => {
-    setCount(0);
-    if (!base || indexes.length === 0 || rags.length === 0 || llms.length === 0) return;
-    let active = true;
-    Promise.resolve()
-      .then(() => preflightExperiment({ base, indexes, rags, llms }))
-      .then((preflight) => {
-        if (active && preflight) setCount(preflight.graphs_to_build.length);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [key]); // the serialized key covers the inputs (new arrays every render)
-  return count;
 }
 
 /**

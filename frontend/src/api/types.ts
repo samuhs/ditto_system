@@ -9,9 +9,14 @@ export interface IndexPair {
   embedding: string;
 }
 
+/** An Índice in /options: the LLM extratores with a current Grafo de conhecimento of it. */
+export interface IndexOption extends IndexPair {
+  graph_extractors?: string[];
+}
+
 export interface Options {
   bases: string[];
-  base_indexes?: Record<string, IndexPair[]>;
+  base_indexes?: Record<string, IndexOption[]>;
   chunkings: string[];
   embeddings: string[];
   llm_options: LlmOption[];
@@ -23,6 +28,38 @@ export interface Options {
 export interface IngestResult {
   collections: string[];
   total_chunks: number;
+  /** The Grafo de conhecimento build queued after the Índices; null without one. */
+  graph_build?: GraphBuildJob | null;
+}
+
+/** One Índice of a Grafo build: its state and chunks extracted / total. */
+export interface IndexBuild {
+  chunking: string;
+  embedding: string;
+  status: "pending" | "building" | "done" | "failed";
+  extracted: number;
+  total: number;
+  stats: GraphStats | null;
+  error: string | null;
+}
+
+/** A background build of the Grafos of some Índices of a Base by one LLM extrator. */
+export interface GraphBuildJob {
+  id: number;
+  base: string;
+  extractor: string;
+  indexes: IndexBuild[];
+  status: "pending" | "running" | "paused" | "done" | "failed";
+  pause_requested: boolean;
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface GraphBuildRequest {
+  base: string;
+  extractor: string;
+  /** Omitted: every Índice of the Base. */
+  indexes?: IndexPair[];
 }
 
 /** A finished Grafo de conhecimento of an Índice, built by one LLM extrator. */
@@ -49,6 +86,8 @@ export interface BaseSummary {
   name: string;
   indexes: IndexSummary[];
   in_use: string | null;
+  /** Grafo builds still running, queued or paused, with their progress. */
+  graph_builds?: GraphBuildJob[];
 }
 
 export interface ExperimentRef {
@@ -115,34 +154,15 @@ export interface GraphStats {
   failed_lines: number;
   /** Chunks whose extraction call failed. */
   failed_chunks: number;
+  /** The LLM extrator that built the Grafo (experiment rows). */
+  extractor?: string;
 }
 
 export interface ExperimentProgress {
   completed: number;
   total: number;
-  /** Staged runs: "generating", then "evaluating" while the answers are scored;
-   * "building_graph" while a Grafo de conhecimento is built. */
+  /** Staged runs: "generating", then "evaluating" while the answers are scored. */
   phase?: string | null;
-  /** Chunks extracted / total of the Grafo being built; null when none is. */
-  graph?: { extracted: number; total: number } | null;
-}
-
-/** A Grafo de conhecimento the experiment would build: Índice × LLM extrator. */
-export interface GraphToBuild {
-  chunking: string;
-  embedding: string;
-  llm: string;
-}
-
-export interface ExperimentPreflightInput {
-  base: string;
-  indexes: IndexPair[];
-  rags: string[];
-  llms: string[];
-}
-
-export interface ExperimentPreflight {
-  graphs_to_build: GraphToBuild[];
 }
 
 export interface ExperimentDetail {
@@ -155,6 +175,8 @@ export interface ExperimentDetail {
   error?: string | null;
   /** Embedder that scored this experiment's answers (absent on old runs). */
   eval_embedding?: string | null;
+  /** The LLM extrator whose Grafos graph/graph_mix queried; null without them. */
+  graph_extractor?: string | null;
   progress?: ExperimentProgress;
   results: ExperimentResultRow[];
   prompts?: Record<string, Record<string, string>>;

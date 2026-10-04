@@ -482,19 +482,20 @@ describe("ExperimentDetailPage", () => {
     expect(screen.queryByText(/1 de 1 combinações/)).not.toBeInTheDocument();
   });
 
-  it("shows the Grafo being built with its chunks extracted", async () => {
+  it("names the LLM extrator whose Grafo the GraphRAG rows queried", async () => {
     vi.mocked(client.getExperiment).mockResolvedValue({
       id: 9,
-      name: "construindo",
+      name: "com-grafo",
       status: "running",
-      progress: { completed: 0, total: 2, phase: "building_graph", graph: { extracted: 3, total: 10 } },
+      graph_extractor: "mlx-community/Qwen2.5-3B-Instruct-4bit",
+      progress: { completed: 0, total: 2, phase: "generating" },
       results: [],
     });
     renderPage();
     expect(
-      await screen.findByText("Construindo o Grafo de conhecimento: 3 de 10 trechos extraídos"),
+      await screen.findByText("Grafo do LLM extrator mlx-community/Qwen2.5-3B-Instruct-4bit"),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/0 de 2 combinações/)).not.toBeInTheDocument();
+    expect(screen.getByText(/0 de 2 combinações/)).toBeInTheDocument();
   });
 
   it("passes the evaluating phase through to the charts tab caption", async () => {

@@ -13,8 +13,8 @@ import type {
   ExperimentDetail,
   ExperimentDifficulty,
   ExperimentList,
-  ExperimentPreflight,
-  ExperimentPreflightInput,
+  GraphBuildJob,
+  GraphBuildRequest,
   ExperimentRef,
   FlowSpec,
   IngestResult,
@@ -65,15 +65,33 @@ export async function createExperiment(form: FormData): Promise<ExperimentRef> {
   );
 }
 
-/** Before running: the Grafos de conhecimento the chosen experiment would still build. */
-export async function preflightExperiment(body: ExperimentPreflightInput): Promise<ExperimentPreflight> {
-  return asJson<ExperimentPreflight>(
-    await fetch(`${BASE}/experiments/preflight`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }),
-  );
+/** Builds the Grafos de conhecimento of a Base's Índices in the background. */
+export async function startGraphBuild(body: GraphBuildRequest): Promise<GraphBuildJob> {
+  return asJson<GraphBuildJob>(await fetch(`${BASE}/graph-builds`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+}
+
+/** The Grafo build jobs of the API process (of one Base, if given), newest first. */
+export async function listGraphBuilds(base?: string): Promise<GraphBuildJob[]> {
+  const query = base ? `?base=${encodeURIComponent(base)}` : "";
+  return asJson<GraphBuildJob[]>(await fetch(`${BASE}/graph-builds${query}`));
+}
+
+export async function getGraphBuild(id: number): Promise<GraphBuildJob> {
+  return asJson<GraphBuildJob>(await fetch(`${BASE}/graph-builds/${id}`));
+}
+
+/** Stops the build at its next chunk; the chunks already extracted stay cached. */
+export async function pauseGraphBuild(id: number): Promise<GraphBuildJob> {
+  return asJson<GraphBuildJob>(await fetch(`${BASE}/graph-builds/${id}/pause`, { method: "POST" }));
+}
+
+/** Runs a paused (or failed) build again, extracting only the chunks still missing. */
+export async function resumeGraphBuild(id: number): Promise<GraphBuildJob> {
+  return asJson<GraphBuildJob>(await fetch(`${BASE}/graph-builds/${id}/resume`, { method: "POST" }));
 }
 
 export async function getExperiment(id: number): Promise<ExperimentDetail> {

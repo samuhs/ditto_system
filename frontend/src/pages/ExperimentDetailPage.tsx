@@ -274,16 +274,8 @@ export function ExperimentDetailPage() {
         <div className="ditto-meta">
           <StatusTag status={detail.status} />
           {isRunning && detail.progress?.phase === "evaluating" && <span>Avaliando as respostas</span>}
-          {isRunning && detail.progress?.phase === "building_graph" && (
-            <span>
-              Construindo o Grafo de conhecimento
-              {detail.progress.graph
-                ? `: ${detail.progress.graph.extracted} de ${detail.progress.graph.total} trechos extraídos`
-                : ""}
-            </span>
-          )}
           {isRunning && detail.progress && detail.progress.total > 0 &&
-            detail.progress.phase !== "evaluating" && detail.progress.phase !== "building_graph" && (
+            detail.progress.phase !== "evaluating" && (
             <span>
               {detail.progress.completed} de {detail.progress.total} combinações
             </span>
@@ -298,6 +290,7 @@ export function ExperimentDetailPage() {
             {metricKeys.length === 1 ? "métrica" : "métricas"}
           </span>
           {detail.eval_embedding && <span>Avaliado com {term("embedding", detail.eval_embedding).name}</span>}
+          {detail.graph_extractor && <span>Grafo do LLM extrator {detail.graph_extractor}</span>}
           <span className="ditto-meta-actions">
             {isRunning && (
               <>

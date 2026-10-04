@@ -10,6 +10,8 @@ import { ExperimentPage, countCsvRecords } from "./ExperimentPage";
 
 vi.mock("../api/client");
 
+const EXTRACTOR = "mlx-community/Qwen2.5-3B-Instruct-4bit";
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -27,8 +29,8 @@ beforeEach(() => {
     bases: ["teste-1"],
     base_indexes: {
       "teste-1": [
-        { chunking: "fixed", embedding: "e5" },
-        { chunking: "recursive", embedding: "gemini" },
+        { chunking: "fixed", embedding: "e5", graph_extractors: [EXTRACTOR] },
+        { chunking: "recursive", embedding: "gemini", graph_extractors: [EXTRACTOR] },
       ],
     },
     chunkings: ["recursive", "fixed", "token"],
@@ -150,28 +152,64 @@ describe("ExperimentPage", () => {
     expect(screen.getByText("respostas a gerar e avaliar").previousElementSibling).toHaveTextContent("8");
   });
 
-  it("says how many new Grafos will be built before running", async () => {
+  it("offers graph and graph_mix only while every chosen index has a Grafo", async () => {
     const options = await client.getOptions();
-    vi.mocked(client.getOptions).mockResolvedValue({ ...options, rags: ["naive", "graph"] });
-    vi.mocked(client.preflightExperiment).mockResolvedValue({
-      graphs_to_build: [
-        { chunking: "fixed", embedding: "e5", llm: "gemini" },
-        { chunking: "recursive", embedding: "gemini", llm: "gemini" },
-      ],
+    vi.mocked(client.getOptions).mockResolvedValue({
+      ...options,
+      base_indexes: {
+        "teste-1": [
+          { chunking: "fixed", embedding: "e5", graph_extractors: [EXTRACTOR] },
+          { chunking: "recursive", embedding: "gemini", graph_extractors: [] },
+        ],
+      },
+      rags: ["naive", "graph", "graph_mix"],
     });
     renderPage();
     const user = userEvent.setup();
     await fillValidForm(user);
-    expect(await screen.findByText(/2 Grafos de conhecimento novos/)).toBeInTheDocument();
-    expect(client.preflightExperiment).toHaveBeenLastCalledWith({
-      base: "teste-1",
-      indexes: [
-        { chunking: "fixed", embedding: "e5" },
-        { chunking: "recursive", embedding: "gemini" },
-      ],
+    expect(screen.queryByText("Grafo (GraphRAG)")).not.toBeInTheDocument();
+    expect(screen.getByText(/aparecem quando todos os índices marcados/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /gere o grafo na ingestão/i })).toHaveAttribute(
+      "href", "/ingest?base=teste-1",
+    );
+
+    await user.click(screen.getByRole("checkbox", { name: /recursive · gemini/ }));
+    expect(screen.getByText("Grafo (GraphRAG)")).toBeInTheDocument();
+    expect(screen.queryByText(/aparecem quando todos os índices marcados/i)).not.toBeInTheDocument();
+  });
+
+  it("submits the LLM extrator common to the chosen indexes' Grafos", async () => {
+    const options = await client.getOptions();
+    vi.mocked(client.getOptions).mockResolvedValue({
+      ...options,
+      base_indexes: {
+        "teste-1": [
+          { chunking: "fixed", embedding: "e5", graph_extractors: ["qwen3:1.7b", EXTRACTOR] },
+          { chunking: "recursive", embedding: "gemini", graph_extractors: ["qwen3:1.7b", EXTRACTOR] },
+        ],
+      },
       rags: ["naive", "graph"],
-      llms: ["gemini"],
     });
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    const select = screen.getByRole("textbox", { name: /llm extrator do grafo/i });
+    expect(select).toHaveValue("qwen3:1.7b");
+    await user.click(select);
+    await user.click(await screen.findByRole("option", { name: EXTRACTOR }));
+    await user.click(screen.getByRole("button", { name: /gerar experimento/i }));
+    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    expect(submittedConfig()).toMatchObject({ rags: ["naive", "graph"], graph_extractor: EXTRACTOR });
+  });
+
+  it("sends no LLM extrator without a Grafo technique", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    expect(screen.queryByRole("textbox", { name: /llm extrator do grafo/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /gerar experimento/i }));
+    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    expect(submittedConfig().graph_extractor).toBeUndefined();
   });
 
   it("lists real model names with a local/remote tag", async () => {
