@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as client from "../api/client";
 import { TasksProvider } from "../context/TasksContext";
+import type { GraphBuildJob } from "../api/types";
 import { IngestPage } from "./IngestPage";
 
 vi.mock("../api/client");
@@ -27,7 +28,10 @@ beforeEach(() => {
     bases: ["viagem"],
     chunkings: ["recursive", "fixed"],
     embeddings: ["gemini", "e5"],
-    llm_options: [{ value: "gemini", label: "gemini", location: "remote" }],
+    llm_options: [
+      { value: "gemini", label: "gemini", location: "remote" },
+      { value: "qwen3:1.7b", label: "qwen3:1.7b", location: "local" },
+    ],
     rags: ["naive"],
     retrievers: ["similarity"],
     metrics: ["rouge_l"],
@@ -36,7 +40,32 @@ beforeEach(() => {
     collections: ["viagem__recursive__gemini"],
     total_chunks: 12,
   });
+  vi.mocked(client.listGraphBuilds).mockResolvedValue([]);
 });
+
+function job(status: GraphBuildJob["status"]): GraphBuildJob {
+  return {
+    id: 4, base: "viagem", extractor: "qwen3:1.7b", status, pause_requested: false,
+    created_at: "2026-10-04T10:00:00Z", finished_at: null,
+    indexes: [{
+      chunking: "recursive", embedding: "e5", status: status === "running" ? "building" : "pending",
+      extracted: 3, total: 12, stats: null, error: null,
+    }],
+  };
+}
+
+async function fillForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(await screen.findByLabelText(/nome da base/i), "viagem");
+  await user.upload(
+    document.querySelector('input[type="file"]') as HTMLInputElement,
+    new File(["texto"], "faq.md", { type: "text/markdown" }),
+  );
+  await user.click(await screen.findByRole("button", { name: /preencher tudo/i }));
+}
+
+function submittedForm(): FormData {
+  return vi.mocked(client.ingest).mock.calls[0][0] as FormData;
+}
 
 describe("IngestPage", () => {
   it("fills all fields when 'Preencher tudo' is clicked and shows 'Limpar tudo'; clears on second click", async () => {
@@ -81,6 +110,65 @@ describe("IngestPage", () => {
     renderPage();
     expect(await screen.findByText("Recursivo")).toBeInTheDocument();
     expect(screen.getByText(/corta por parágrafo/i)).toBeInTheDocument();
+  });
+
+  it("sends no LLM extrator unless 'Gerar Grafo de conhecimento' is checked", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await fillForm(user);
+    expect(screen.queryByRole("textbox", { name: /llm extrator/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /inserir documentos/i }));
+    await waitFor(() => expect(client.ingest).toHaveBeenCalled());
+    expect(submittedForm().get("graph_extractor")).toBeNull();
+  });
+
+  it("asks for the LLM extrator and sends it when the Grafo is wanted", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await fillForm(user);
+    await user.click(screen.getByRole("checkbox", { name: /gerar grafo de conhecimento/i }));
+    expect(screen.getByRole("button", { name: /inserir documentos/i })).toBeDisabled();
+    expect(screen.getByText(/ainda falta: o llm extrator/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("textbox", { name: /llm extrator/i }));
+    await user.click(await screen.findByRole("option", { name: /qwen3:1.7b/ }));
+    await user.click(screen.getByRole("button", { name: /inserir documentos/i }));
+    await waitFor(() => expect(client.ingest).toHaveBeenCalled());
+    expect(submittedForm().get("graph_extractor")).toBe("qwen3:1.7b");
+  });
+
+  it("follows the Grafo build: chunks extracted, pause and resume", async () => {
+    vi.mocked(client.ingest).mockResolvedValue({
+      collections: ["viagem__recursive__e5"], total_chunks: 12, graph_build: job("running"),
+    });
+    vi.mocked(client.listGraphBuilds).mockResolvedValue([job("running")]);
+    vi.mocked(client.pauseGraphBuild).mockResolvedValue({ ...job("running"), pause_requested: true });
+    renderPage();
+    const user = userEvent.setup();
+    await fillForm(user);
+    await user.click(screen.getByRole("checkbox", { name: /gerar grafo de conhecimento/i }));
+    await user.click(screen.getByRole("textbox", { name: /llm extrator/i }));
+    await user.click(await screen.findByRole("option", { name: /qwen3:1.7b/ }));
+    await user.click(screen.getByRole("button", { name: /inserir documentos/i }));
+
+    expect(await screen.findByText("Construindo Grafo: 3 / 12 trechos")).toBeInTheDocument();
+    vi.mocked(client.listGraphBuilds).mockResolvedValue([job("paused")]);
+    await user.click(screen.getByRole("button", { name: /pausar/i }));
+    expect(client.pauseGraphBuild).toHaveBeenCalledWith(4);
+    expect(await screen.findByText("Pausado")).toBeInTheDocument();
+
+    vi.mocked(client.resumeGraphBuild).mockResolvedValue(job("pending"));
+    vi.mocked(client.listGraphBuilds).mockResolvedValue([job("pending")]);
+    await user.click(screen.getByRole("button", { name: /retomar/i }));
+    expect(client.resumeGraphBuild).toHaveBeenCalledWith(4);
+    expect(await screen.findByText("Na fila")).toBeInTheDocument();
+  });
+
+  it("shows Grafo builds already running when the page opens", async () => {
+    vi.mocked(client.listGraphBuilds).mockResolvedValue([job("running")]);
+    renderPage();
+    expect(await screen.findByText("Construindo Grafo: 3 / 12 trechos")).toBeInTheDocument();
+    expect(screen.getByText(/viagem/)).toBeInTheDocument();
   });
 
   it("prefills the base name from ?base=", async () => {

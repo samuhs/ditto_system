@@ -1427,3 +1427,9 @@ a { color: inherit; text-underline-offset: 3px; }
 @media (min-width: 561px) and (min-height: 601px) {
   html:has(.ditto-chart-sticky) { scroll-padding-top: calc(var(--ditto-chart-sticky-h, 140px) + 16px); }
 }
+
+/* Grafo de conhecimento builds: one entry per job, one line per Índice */
+.ditto-graph-builds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.ditto-graph-build { border-top: 1px solid var(--line); padding-top: 12px; font-size: 14px; color: var(--ink-2); }
+.ditto-graph-build-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; color: var(--ink); }
+.ditto-graph-build-indexes { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-variant-numeric: tabular-nums; }

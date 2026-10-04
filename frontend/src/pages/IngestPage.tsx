@@ -1,10 +1,12 @@
-import { Button, FileInput, TextInput } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { Button, Checkbox, FileInput, Select, TextInput } from "@mantine/core";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { getOptions, ingest } from "../api/client";
-import type { Options } from "../api/types";
+import { getOptions, ingest, listGraphBuilds, pauseGraphBuild, resumeGraphBuild } from "../api/client";
+import type { GraphBuildJob, Options } from "../api/types";
 import { ChoiceGroup } from "../components/ChoiceGroup";
+import { GraphBuildList } from "../components/GraphBuildList";
+import { llmSelectData } from "../components/llmOptions";
 import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon, UploadIcon } from "../components/icons";
@@ -22,6 +24,9 @@ export function IngestPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [started, setStarted] = useState<string | null>(null);
+  const [withGraph, setWithGraph] = useState(false);
+  const [extractor, setExtractor] = useState<string | null>(null);
+  const builds = useGraphBuilds();
 
   useEffect(() => {
     getOptions().then(setOptions).catch((e) => setOptionsError(errorText(e)));
@@ -53,6 +58,7 @@ export function IngestPage() {
     files.length === 0 && "os arquivos",
     chunkings.length === 0 && "um tipo de corte",
     embeddings.length === 0 && "um embedding",
+    withGraph && !extractor && "o LLM extrator",
   ].filter(Boolean) as string[];
 
   function submit() {
@@ -61,7 +67,10 @@ export function IngestPage() {
     form.append("chunkings", chunkings.join(","));
     form.append("embeddings", embeddings.join(","));
     files.forEach((file) => form.append("files", file));
-    addIngestTask(baseName || "sem nome", ingest(form));
+    if (withGraph && extractor) form.append("graph_extractor", extractor);
+    const result = ingest(form);
+    addIngestTask(baseName || "sem nome", result);
+    result.then((r) => r.graph_build && builds.follow(r.graph_build)).catch(() => {});
     setStarted(baseName);
     setFiles([]);
   }
@@ -172,6 +181,50 @@ export function IngestPage() {
           </div>
         </section>
 
+        <section className="ditto-sec">
+          <div className="ditto-sec-head">
+            <h2 className="ditto-h2">Grafo de conhecimento</h2>
+            <p className="ditto-read">
+              Opcional. Um LLM lê cada trecho uma vez e anota entidades e relações. As técnicas
+              graph e graph_mix dos experimentos consultam esse Grafo. A construção roda em segundo
+              plano depois dos índices e pode ser pausada.
+            </p>
+          </div>
+          <div className="ditto-sec-body">
+            <Checkbox
+              label="Gerar Grafo de conhecimento"
+              checked={withGraph}
+              onChange={(e) => setWithGraph(e.currentTarget.checked)}
+            />
+            {withGraph && (
+              <Select
+                label="LLM extrator"
+                description="O modelo que lê os trechos. Os locais (MLX ou Ollama) não têm custo de API."
+                placeholder="Escolha um modelo"
+                data={llmSelectData(options)}
+                value={extractor}
+                onChange={setExtractor}
+                allowDeselect={false}
+                maw={420}
+              />
+            )}
+          </div>
+        </section>
+
+        {builds.shown.length > 0 && (
+          <section className="ditto-sec">
+            <div className="ditto-sec-head">
+              <h2 className="ditto-h2">Construção do Grafo</h2>
+              <p className="ditto-read">
+                Ao retomar, só os trechos ainda não lidos vão para o LLM.
+              </p>
+            </div>
+            <div className="ditto-sec-body">
+              <GraphBuildList jobs={builds.shown} onPause={builds.pause} onResume={builds.resume} />
+            </div>
+          </section>
+        )}
+
         <div className="ditto-strip">
           <div className="ditto-strip-figures" aria-live="polite">
             <span className="ditto-strip-fig">
@@ -213,3 +266,46 @@ export function IngestPage() {
   );
 }
 
+
+const POLL_MS = 2000;
+
+const isActive = (job: GraphBuildJob) => job.status === "pending" || job.status === "running";
+
+/**
+ * The Grafo builds to show: those running, queued or paused, and any this page
+ * started; polled while one is active.
+ */
+function useGraphBuilds() {
+  const [jobs, setJobs] = useState<GraphBuildJob[]>([]);
+  const [mine, setMine] = useState<number[]>([]);
+
+  const refresh = useCallback(() => {
+    Promise.resolve()
+      .then(() => listGraphBuilds())
+      .then((list) => list && setJobs(list))
+      .catch(() => {});
+  }, []);
+
+  useEffect(refresh, [refresh]);
+
+  useEffect(() => {
+    if (!jobs.some(isActive)) return;
+    const timer = window.setTimeout(refresh, POLL_MS);
+    return () => window.clearTimeout(timer);
+  }, [jobs, refresh]);
+
+  return {
+    shown: jobs.filter((j) => isActive(j) || j.status === "paused" || mine.includes(j.id)),
+    follow(job: GraphBuildJob) {
+      setMine((ids) => [...ids, job.id]);
+      setJobs((list) => [job, ...list.filter((j) => j.id !== job.id)]);
+      refresh();
+    },
+    pause(job: GraphBuildJob) {
+      pauseGraphBuild(job.id).then(refresh).catch(() => {});
+    },
+    resume(job: GraphBuildJob) {
+      resumeGraphBuild(job.id).then(refresh).catch(() => {});
+    },
+  };
+}
