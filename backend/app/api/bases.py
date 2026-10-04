@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.deps import get_graph_builds, get_session_factory, get_store
 from app.core.catalog import BaseSummary, list_bases
-from app.core.graph.jobs import GraphBuilds
+from app.core.graph.jobs import UNFINISHED, GraphBuilds
 from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.usage import bases_in_use
 
@@ -25,9 +25,7 @@ def bases(
         summary.model_copy(update={
             "in_use": in_use.get(summary.name),
             # Builds still running, queued or paused, with their progress.
-            "graph_builds": [
-                j for j in jobs if j.base == summary.name and j.status in ("pending", "running", "paused")
-            ],
+            "graph_builds": [j for j in jobs if j.base == summary.name and j.status in UNFINISHED],
         })
         for summary in list_bases(store)
     ]

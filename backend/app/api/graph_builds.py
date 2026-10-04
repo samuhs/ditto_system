@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.api.deps import get_graph_build_deps, get_graph_builds
-from app.core.graph.jobs import ACTIVE, GraphBuildDeps, GraphBuildJob, GraphBuilds
+from app.core.graph.jobs import GraphBuildDeps, GraphBuildJob, GraphBuilds
 from app.core.vectorstore.qdrant import parse_collection_name
 from app.experiments.schemas import IndexPair
 
@@ -107,13 +107,13 @@ def get_graph_build(job_id: int, builds: GraphBuilds = Depends(get_graph_builds)
 @router.post("/graph-builds/{job_id}/pause", response_model=GraphBuildJob)
 def pause_graph_build(job_id: int, builds: GraphBuilds = Depends(get_graph_builds)) -> GraphBuildJob:
     """Stop the job at its next chunk; the chunks already extracted stay cached."""
-    job = _job(builds, job_id)
-    if job.status not in ACTIVE:
+    status = _job(builds, job_id).status
+    job = builds.request_pause(job_id)
+    if job is None:
         raise HTTPException(
-            status_code=409, detail=f"A construção não está em andamento (status: {job.status})."
+            status_code=409, detail=f"A construção não está em andamento (status: {status})."
         )
-    builds.request_pause(job_id)
-    return _job(builds, job_id)
+    return job
 
 
 @router.post("/graph-builds/{job_id}/resume", status_code=202, response_model=GraphBuildJob)
@@ -124,12 +124,12 @@ def resume_graph_build(
     deps: GraphBuildDeps = Depends(get_graph_build_deps),
 ) -> GraphBuildJob:
     """Run a paused (or failed) job again: only chunks not yet extracted go to the LLM."""
-    job = _job(builds, job_id)
-    if job.status not in ("paused", "failed"):
+    status = _job(builds, job_id).status
+    job = builds.resume(job_id)
+    if job is None:
         raise HTTPException(
             status_code=409, detail=f"Só uma construção pausada ou com falha pode ser retomada "
-            f"(status: {job.status})."
+            f"(status: {status})."
         )
-    job = builds.resume(job_id)
     background_tasks.add_task(builds.run, job_id, deps)
     return job

@@ -38,6 +38,8 @@ logger = logging.getLogger(__name__)
 JobStatus = Literal["pending", "running", "paused", "done", "failed"]
 # A job that will still read its Base.
 ACTIVE: tuple[JobStatus, ...] = ("pending", "running")
+# A job not finished yet: active, or paused until resumed.
+UNFINISHED: tuple[JobStatus, ...] = (*ACTIVE, "paused")
 
 
 class IndexBuild(BaseModel):
@@ -142,15 +144,29 @@ class GraphBuilds:
         """Jobs running or queued, oldest first: they will still read their Base."""
         return [j for j in reversed(self.list_jobs()) if j.status in ACTIVE]
 
-    def request_pause(self, job_id: int) -> None:
-        """Stop the job at its next chunk; chunks already extracted stay cached."""
-        with self._lock:
-            self._jobs[job_id].pause_requested = True
+    def request_pause(self, job_id: int) -> GraphBuildJob | None:
+        """Stop the job at its next chunk (a queued one pauses at once); None if not active.
 
-    def resume(self, job_id: int) -> GraphBuildJob:
-        """Queue a paused (or failed) job again; run() then extracts only what is missing."""
+        Chunks already extracted stay cached.
+        """
         with self._lock:
             job = self._jobs[job_id]
+            if job.status not in ACTIVE:
+                return None
+            job.pause_requested = True
+            if job.status == "pending":
+                job.status, job.finished_at = "paused", _now()
+            return job.model_copy(deep=True)
+
+    def resume(self, job_id: int) -> GraphBuildJob | None:
+        """Queue a paused (or failed) job again, or None if it is neither.
+
+        run() then extracts only what is missing.
+        """
+        with self._lock:
+            job = self._jobs[job_id]
+            if job.status not in ("paused", "failed"):
+                return None
             job.status, job.pause_requested, job.finished_at = "pending", False, None
             for item in job.indexes:
                 if item.status != "done":
@@ -172,10 +188,12 @@ class GraphBuilds:
 
     def _run(self, job_id: int, deps: GraphBuildDeps) -> None:
         job, prompt = self._jobs[job_id], self._prompts[job_id]
-        if job.pause_requested:
-            self._update(job, status="paused", finished_at=_now())
-            return
-        self._update(job, status="running")
+        with self._lock:
+            # Only a queued job runs: one paused while queued, or already run by
+            # an earlier queued call (a resume queues another), is left alone.
+            if job.status != "pending":
+                return
+            job.status = "running"
         cache = ExtractionCache(deps.session_factory)
         device = resolve_embedding_device(active_profile(), [job.extractor])
         llm = None

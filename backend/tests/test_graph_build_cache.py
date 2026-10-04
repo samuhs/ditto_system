@@ -252,3 +252,20 @@ def test_low_profile_never_holds_the_extractor_and_the_embedder_together(
     assert not any(e.startswith("load:") for e in events[first:last])  # extraction: LLM only
     assert "unload" in events[last:write]                               # LLM out before embedder
     assert "evict" in events[write:]                                    # embedder out at the end
+
+
+def test_a_queued_job_pauses_at_once_and_runs_once_after_resuming(session_factory):  # noqa: F811
+    builds = GraphBuilds()
+    store, calls = _store(), []
+    job_id = builds.create("viagem", _EXTRACTOR, [("recursive", "e5")]).id
+    assert builds.request_pause(job_id).status == "paused"
+    assert builds.resume(job_id).status == "pending"
+    assert builds.resume(job_id) is None  # not paused any more
+    # The run queued at creation and the one queued by the resume: only one builds.
+    builds.run(job_id, _deps(store, session_factory, calls))
+    finished = builds.get(job_id).finished_at
+    builds.run(job_id, _deps(store, session_factory, calls))
+    job = builds.get(job_id)
+    assert (job.status, job.finished_at) == ("done", finished)
+    assert len(calls) == len(_chunks(store))
+    assert builds.request_pause(job_id) is None  # done: nothing to pause

@@ -275,14 +275,18 @@ def _is_current(meta: dict, fingerprint: str, prompt: str | None) -> bool:
 
 def current_extractors(
     store: QdrantStore, base: str, chunking: str, embedding: str, prompt: str | None = None,
+    collections: list[str] | None = None,
 ) -> list[str]:
     """The LLM extratores with a current Grafo of this Índice, sorted.
 
     Cheaper than current_graph: reads each Grafo's metadata point and the
-    Índice's chunk texts, never the entities and relations.
+    Índice's chunk texts, never the entities and relations, and only when the
+    Índice has a Grafo. `collections`: the store's collection names, when the
+    caller already listed them.
     """
     index = collection_name(base, chunking, embedding)
-    graphs = [n for n in store.list_collections() if graph_entities_index(n) == index]
+    names = store.list_collections() if collections is None else collections
+    graphs = [n for n in names if graph_entities_index(n) == index]
     if not graphs:
         return []
     texts = {cid: p.get("text", "") for cid, p in index_chunks(store, base, chunking, embedding).items()}

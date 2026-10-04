@@ -50,19 +50,27 @@ def _base_indexes(store: QdrantStore) -> dict[str, list[dict]]:
     """
     try:
         names = store.list_collections()
-        indexes: dict[str, list[dict]] = {}
-        for name in sorted(names):
-            parsed = parse_collection_name(name)
-            if parsed is None:
-                continue
-            base, chunking, embedding = parsed
-            indexes.setdefault(base, []).append({
-                "chunking": chunking, "embedding": embedding,
-                "graph_extractors": current_extractors(store, base, chunking, embedding),
-            })
     except Exception:  # noqa: BLE001
         return {}
+    indexes: dict[str, list[dict]] = {}
+    for name in sorted(names):
+        parsed = parse_collection_name(name)
+        if parsed is None:
+            continue
+        base, chunking, embedding = parsed
+        indexes.setdefault(base, []).append({
+            "chunking": chunking, "embedding": embedding,
+            "graph_extractors": _graph_extractors(store, base, chunking, embedding, names),
+        })
     return dict(sorted(indexes.items()))
+
+
+def _graph_extractors(store: QdrantStore, base, chunking, embedding, names) -> list[str]:
+    """The Índice's current Grafos' LLM extratores; none if the store fails mid-way."""
+    try:
+        return current_extractors(store, base, chunking, embedding, collections=names)
+    except Exception:  # noqa: BLE001  an outage must not break the form pages
+        return []
 
 
 @router.get("/options")

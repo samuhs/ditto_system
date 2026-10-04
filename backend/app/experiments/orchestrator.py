@@ -52,8 +52,6 @@ ERROR_PREFIX = "[ERRO: "
 # and the background task share this module-level state.
 _pause_requests: set[int] = set()
 
-# One experiment (or Grafo build) at a time: queued ones stay "pending" ("Na fila").
-_run_slot = work_slot
 
 
 def request_pause(experiment_id: int) -> None:
@@ -246,7 +244,8 @@ def run_experiment(
     """Run the experiment once the single experiment slot is free."""
     if config.eval_embedding is None:
         config = config.model_copy(update={"eval_embedding": get_eval_embedding()})
-    with _run_slot:
+    # One experiment (or Grafo build) at a time: queued ones stay "pending" ("Na fila").
+    with work_slot:
         _run_experiment(experiment_id, config, questions, deps)
 
 

@@ -259,3 +259,14 @@ def test_with_grafos_from_two_extractors_the_experiment_names_one(client):
 
     unknown = _experiment(client, ["graph"], graph_extractor="nenhum:llm")
     assert unknown.status_code == 422 and "nenhum:llm" in unknown.json()["detail"]
+
+
+def test_grafos_without_a_common_extractor_are_named_as_such(client):
+    _ingest(client, embeddings="gemini,e5")
+    client.post("/graph-builds", json={"base": "viagem", "extractor": _EXTRACTOR,
+                                       "indexes": [{"chunking": "recursive", "embedding": "gemini"}]})
+    client.post("/graph-builds", json={"base": "viagem", "extractor": "qwen3:1.7b",
+                                       "indexes": [{"chunking": "recursive", "embedding": "e5"}]})
+    response = _experiment(client, ["graph"], embeddings=["gemini", "e5"])
+    assert response.status_code == 422
+    assert "LLMs extratores diferentes" in response.json()["detail"]

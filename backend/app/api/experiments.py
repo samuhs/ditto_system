@@ -239,6 +239,8 @@ def _check_graphs(config: ExperimentConfig, store: QdrantStore) -> None:
     Fills in config.graph_extractor when it is not given and exactly one LLM
     extrator has a current Grafo on every chosen Índice; clears it without GraphRAG.
     """
+    if config.graph_extractor is not None:
+        config.graph_extractor = config.graph_extractor.strip() or None
     graph_rags = [
         r for r in config.rags if r in rag_registry.names() and rag_registry.get(r).uses_graph
     ]
@@ -246,7 +248,11 @@ def _check_graphs(config: ExperimentConfig, store: QdrantStore) -> None:
         config.graph_extractor = None
         return
     pairs = list(dict.fromkeys(index_pairs(config)))
-    available = {pair: set(current_extractors(store, config.base, *pair)) for pair in pairs}
+    collections = store.list_collections()
+    available = {
+        pair: set(current_extractors(store, config.base, *pair, collections=collections))
+        for pair in pairs
+    }
     techniques = " e ".join(graph_rags)
     if config.graph_extractor is None:
         common = set.intersection(*available.values()) if available else set()
@@ -258,6 +264,12 @@ def _check_graphs(config: ExperimentConfig, store: QdrantStore) -> None:
                 f"Os Índices escolhidos têm Grafos de conhecimento de mais de um LLM extrator "
                 f"({', '.join(sorted(common))}): escolha qual {techniques} vai consultar."
             ))
+        if all(available.values()):
+            raise HTTPException(status_code=422, detail=(
+                f"Os Índices escolhidos têm Grafos de conhecimento, mas de LLMs extratores "
+                f"diferentes: {techniques} precisa de um LLM extrator com Grafo em todos eles. "
+                f"Gere o Grafo que falta ou desmarque Índices."
+            ))
     missing = [
         f"{chunking} × {embedding}"
         for (chunking, embedding), extractors in available.items()
@@ -268,7 +280,7 @@ def _check_graphs(config: ExperimentConfig, store: QdrantStore) -> None:
         raise HTTPException(status_code=422, detail=(
             f"{techniques} só consulta Índices que já têm Grafo de conhecimento{by}, e estes "
             f"não têm (ou o Grafo está desatualizado): {', '.join(missing)}. Gere o Grafo na "
-            f"ingestão ou na tela de Bases, ou desmarque esses Índices."
+            f"ingestão ou desmarque esses Índices."
         ))
 
 
