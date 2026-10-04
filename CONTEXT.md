@@ -37,6 +37,37 @@ _Avoid_: método, pipeline
 **GraphRAG**:
 Técnica RAG que responde a partir do Grafo de conhecimento de um Índice.
 
+### Experimentos
+
+**Experimento**:
+Uma comparação, sobre uma Base e um conjunto de perguntas, de todas as Combinações escolhidas; cada pergunta respondida por cada Combinação vira um resultado avaliado por métricas.
+_Avoid_: job, execução
+
+**Combinação**:
+Um par chunking × embedding (o Índice) com uma Técnica RAG, um Retriever e um LLM de resposta, dentro de um Experimento.
+_Avoid_: run, pipeline, composição
+
+**Pausa**:
+Estado de um Experimento parado antes de terminar, com tudo o que já foi respondido preservado, à espera de Retomada. Toda Pausa tem um motivo: manual, Travamento, falhas consecutivas ou Interrupção.
+
+**Travamento**:
+Um Experimento em andamento que passa do tempo limite (10 min por padrão) sem gravar nenhum progresso; causa uma Pausa automática.
+_Avoid_: timeout, hang
+
+**Falhas consecutivas**:
+Perguntas seguidas que falham depois de todas as tentativas (3 por padrão), em qualquer Combinação; um sucesso zera a contagem. Causam uma Pausa automática, porque indicam que o LLM ou o servidor caiu. Erros previstos de uma Combinação (ex.: GraphRAG sem Grafo atual) não contam.
+
+**Interrupção**:
+Pausa registrada quando a API reinicia com Experimentos em andamento ou na fila; eles nunca retomam sozinhos.
+
+**Retomada**:
+Continuar um Experimento em Pausa (ou que falhou) de onde parou: só as perguntas sem resposta válida rodam de novo, as que deram erro inclusive; respostas válidas nunca são refeitas. A configuração não muda, exceto a concorrência, e é bloqueada se um Índice ou Grafo usado mudou desde a Pausa.
+_Avoid_: restart, reexecução
+
+**Registro de pausa**:
+O histórico de Pausas de um Experimento: quando, motivo, etapa, perguntas em andamento, último erro, memória naquele momento e quando foi retomado.
+_Avoid_: log de erro
+
 ### Perguntas
 
 **Tipo de pergunta**:
