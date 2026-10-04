@@ -1111,3 +1111,93 @@ def test_failed_experiment_records_a_failed_pause_entry(session_factory):
     assert "Traceback" in entry["last_error"]["traceback"]
     check.close()
 
+
+# #19: Pausa automática por Falhas consecutivas. A single counter over the order
+# results are persisted, across any Combinação; a success resets it; the
+# "no Grafo" predicted error (test_experiment_graph.py) never reaches it because
+# it is written straight to RunResult without going through _run_questions.
+
+def test_consecutive_failures_pause_without_scoring(session_factory, monkeypatch):
+    """A question that fails after every retry, 3 times in a row, pauses at once."""
+    from app.experiments import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_RETRY_DELAY_S", 0)
+    scored = []
+    monkeypatch.setattr(orchestrator, "_score_results", lambda *a, **kw: scored.append(True))
+
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "always-fails")
+    deps = _staged_deps(store, session_factory, [])
+
+    class _AlwaysFails:
+        def generate(self, prompt: str) -> str:
+            raise RuntimeError("LLM indisponível")
+
+    deps.llm_factory = lambda name, **kw: _AlwaysFails()
+    questions = [QuestionItem(text=f"q{i}") for i in range(5)]
+    run_experiment(experiment_id, _staged_config(), questions, deps)
+
+    status, rows, _ = _results(session_factory, experiment_id)
+    assert status == "paused"
+    assert scored == [], "an automatic pause by Falhas consecutivas must not score"
+    # Only the 3rd failure trips the pause; the rest of the questions never start.
+    assert len(rows) == orchestrator._CONSECUTIVE_FAILURES_LIMIT
+    assert all(r.generated_answer.startswith("[ERRO:") for r in rows)
+
+    check = session_factory()
+    [entry] = check.get(Experiment, experiment_id).pauses
+    check.close()
+    assert entry["reason"] == "consecutive_failures"
+    assert "LLM indisponível" in entry["last_error"]["message"]
+    assert entry["resumed_at"] is None
+
+
+def test_consecutive_failures_counter_is_reset_by_a_success(session_factory, monkeypatch):
+    """A success between failures means 3 in a row never happens: no pause."""
+    from app.experiments import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_RETRY_DELAY_S", 0)
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "flaky")
+    deps = _staged_deps(store, session_factory, [])
+
+    class _AlternatingLLM:
+        """Fails (every retry) for questions whose text has "fail"; succeeds otherwise."""
+
+        def generate(self, prompt: str) -> str:
+            if "fail" in prompt:
+                raise RuntimeError("falha transitória")
+            return "ok"
+
+    deps.llm_factory = lambda name, **kw: _AlternatingLLM()
+    questions = [QuestionItem(text=t) for t in ["fail-a", "ok-a", "fail-b", "ok-b", "fail-c", "ok-c"]]
+    run_experiment(experiment_id, _staged_config(), questions, deps)
+
+    status, rows, _ = _results(session_factory, experiment_id)
+    assert status == "done"
+    assert len(rows) == 6
+    failed = [r for r in rows if r.generated_answer.startswith("[ERRO:")]
+    assert len(failed) == 3
+
+
+def test_graphrag_missing_graph_does_not_count_as_a_consecutive_failure(session_factory):
+    """The predicted "no Grafo atual" error is recorded directly, outside the counter."""
+    from app.experiments import orchestrator
+
+    store = _indexed_store("e5")  # no Grafo built for this Índice
+    experiment_id = _new_experiment(session_factory, "no-grafo-cf")
+    deps = _staged_deps(store, session_factory, [])
+    questions = [QuestionItem(text=f"q{i}") for i in range(orchestrator._CONSECUTIVE_FAILURES_LIMIT)]
+
+    run_experiment(
+        experiment_id,
+        _staged_config(rags=["graph"], retrievers=["similarity"], metrics=["rouge_l"]),
+        questions,
+        deps,
+    )
+
+    status, rows, _ = _results(session_factory, experiment_id)
+    assert status == "done"
+    assert len(rows) == orchestrator._CONSECUTIVE_FAILURES_LIMIT
+    assert all(r.generated_answer.startswith("[ERRO: Grafo:") for r in rows)
+
