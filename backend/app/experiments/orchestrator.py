@@ -46,6 +46,10 @@ logger = logging.getLogger(__name__)
 _MAX_RETRIES = 3
 _RETRY_DELAY_S = 5
 
+# #19: this many question failures in a row (after every retry), in any Combinação,
+# trigger an automatic Pausa por Falhas consecutivas.
+_CONSECUTIVE_FAILURES_LIMIT = 3
+
 # Marks a question that failed after every retry (stored as its answer).
 ERROR_PREFIX = "[ERRO: "
 
@@ -135,6 +139,32 @@ def record_pause(
     session.commit()
 
 
+def recover_interrupted_experiments(session_factory: Callable[[], Session]) -> None:
+    """Mark Experimentos left `running`/`pending` by a crash or restart as paused.
+
+    Called once by the API's `lifespan`, right after `create_all()`. The likeliest
+    cause of an API restart mid-run is an out-of-memory crash, so interrupted
+    Experimentos never resume on their own (ADR 0001) — nothing here is
+    re-enqueued; a researcher decides when to Retomar. Any `ExperimentRun` left
+    `running` becomes `paused` too, so a later Retomada (#17) can reuse it.
+    """
+    session = session_factory()
+    try:
+        stuck = session.query(Experiment).filter(Experiment.status.in_(["running", "pending"])).all()
+        for experiment in stuck:
+            phase = (experiment.config or {}).get("phase")
+            experiment.status = "paused"
+            _set_phase(session, experiment, None)
+            record_pause(session, experiment, reason="interrupted", phase=phase)
+
+        session.query(ExperimentRun).filter(ExperimentRun.status == "running").update(
+            {"status": "paused"}, synchronize_session=False
+        )
+        session.commit()
+    finally:
+        session.close()
+
+
 class _InFlightTracker:
     """Thread-safe registry of questions mid-call, for a pause entry's `in_flight`.
 
@@ -166,6 +196,29 @@ class _InFlightTracker:
         """Combinação + pergunta of everything currently mid-call."""
         with self._lock:
             return list(self._items.values())
+
+
+class _ConsecutiveFailureTracker:
+    """Counts question failures in a row, across every Combinação, for #19.
+
+    One instance per experiment run. `record_failure` returns True once
+    `_CONSECUTIVE_FAILURES_LIMIT` failures have landed with no success between
+    them; `record_success` resets the count to zero. The "no Grafo de
+    conhecimento atual" error the orchestrator records on purpose (a Combinação
+    whose Grafo does not exist) is written straight to `RunResult` without going
+    through `_run_questions`, so it never reaches this tracker.
+    """
+
+    def __init__(self, limit: int = _CONSECUTIVE_FAILURES_LIMIT) -> None:
+        self._limit = limit
+        self._count = 0
+
+    def record_success(self) -> None:
+        self._count = 0
+
+    def record_failure(self) -> bool:
+        self._count += 1
+        return self._count >= self._limit
 
 
 @dataclass
@@ -303,8 +356,9 @@ def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder)
 def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eval_embedder):
     """Try _process_question up to _MAX_RETRIES times with _RETRY_DELAY_S between attempts.
 
-    Returns (answer_text, contexts, scores, latency_ms, tokens, graph_explanation, error_str).
-    On permanent failure error_str is set and the other values are None.
+    Returns (answer_text, contexts, scores, latency_ms, tokens, graph_explanation, error).
+    On permanent failure `error` is the last exception raised (so #19 can record it
+    verbatim in the Registro de pausa) and the other values are None.
     """
     last_exc = None
     for attempt in range(_MAX_RETRIES):
@@ -329,7 +383,7 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
                     _MAX_RETRIES,
                     exc,
                 )
-    return None, None, None, None, None, None, str(last_exc)
+    return None, None, None, None, None, None, last_exc
 
 
 def _run_questions(
@@ -599,6 +653,7 @@ def _run_experiment(
         paused = False
         pause_in_flight: list[dict] = []
         tracker = _InFlightTracker()
+        failures = _ConsecutiveFailureTracker()
         loaded_llm_name, llm = None, None
         with eval_context as eval_embedder, LeaseSwitcher(deps.models) as leases:
             for llm_name, (chunking, embedding), rag_name, retriever_name in _combinations(config):
@@ -715,8 +770,17 @@ def _run_experiment(
 
                     answer_text, contexts, scores, latency_ms, tokens, explanation, error = outcome
                     if error is not None:
-                        session.add(_error_result(run.id, question, error))
+                        session.add(_error_result(run.id, question, str(error)))
+                        if failures.record_failure():
+                            # #19: this question's failure was the 3rd in a row (any
+                            # Combinação) — pause now, without scoring, keeping the
+                            # last exception for the Registro de pausa entry.
+                            request_pause(
+                                experiment_id, "consecutive_failures", score_partial=False,
+                                detail=_error_detail(error),
+                            )
                     else:
+                        failures.record_success()
                         session.add(
                             RunResult(
                                 run_id=run.id,

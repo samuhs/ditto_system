@@ -8,10 +8,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.db.base import Base
-from app.core.db.models import Experiment
+from app.core.db.models import Experiment, ExperimentRun
 from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.orchestrator import (
     ExperimentDeps,
+    recover_interrupted_experiments,
     request_pause,
     resume_experiment,
     run_experiment,
@@ -1113,6 +1114,174 @@ def test_failed_experiment_records_a_failed_pause_entry(session_factory):
     check.close()
 
 
+def test_recover_interrupted_experiments_pauses_running_and_pending(session_factory):
+    """#18: on boot, running/pending Experimentos become paused with an
+    `interrupted` Registro de pausa entry; their running runs become paused too."""
+    session = session_factory()
+    running = Experiment(
+        name="running-exp", status="running", config={"phase": "generating"}
+    )
+    pending = Experiment(name="pending-exp", status="pending", config={})
+    session.add_all([running, pending])
+    session.commit()
+    running_id, pending_id = running.id, pending.id
+
+    run = ExperimentRun(
+        experiment_id=running_id,
+        chunking="recursive", embedding="gemini", rag_technique="naive", retriever="dense",
+        status="running",
+    )
+    session.add(run)
+    session.commit()
+    run_id = run.id
+    session.close()
+
+    recover_interrupted_experiments(session_factory)
+
+    check = session_factory()
+    stored_running = check.get(Experiment, running_id)
+    stored_pending = check.get(Experiment, pending_id)
+    stored_run = check.get(ExperimentRun, run_id)
+
+    assert stored_running.status == "paused"
+    assert stored_pending.status == "paused"
+    assert stored_run.status == "paused"
+
+    [entry] = stored_running.pauses
+    assert entry["reason"] == "interrupted"
+    assert entry["phase"] == "generating"
+    assert entry["resumed_at"] is None
+    assert "phase" not in (stored_running.config or {})
+
+    [pending_entry] = stored_pending.pauses
+    assert pending_entry["reason"] == "interrupted"
+    assert pending_entry["phase"] is None
+    check.close()
+
+
+def test_recover_interrupted_experiments_leaves_finished_statuses_alone(session_factory):
+    """done/failed/paused Experimentos and their runs are untouched, and nothing
+    new is scheduled (no new ExperimentRun or pending work is created)."""
+    session = session_factory()
+    done = Experiment(name="done-exp", status="done", config={})
+    failed = Experiment(name="failed-exp", status="failed", config={"error": "boom"})
+    paused = Experiment(name="paused-exp", status="paused", config={}, pauses=[{"reason": "manual"}])
+    session.add_all([done, failed, paused])
+    session.commit()
+    done_id, failed_id, paused_id = done.id, failed.id, paused.id
+
+    done_run = ExperimentRun(
+        experiment_id=done_id,
+        chunking="recursive", embedding="gemini", rag_technique="naive", retriever="dense",
+        status="done",
+    )
+    session.add(done_run)
+    session.commit()
+    done_run_id = done_run.id
+    session.close()
+
+    recover_interrupted_experiments(session_factory)
+
+    check = session_factory()
+    assert check.get(Experiment, done_id).status == "done"
+    assert check.get(Experiment, failed_id).status == "failed"
+    stored_paused = check.get(Experiment, paused_id)
+    assert stored_paused.status == "paused"
+    assert stored_paused.pauses == [{"reason": "manual"}]  # untouched, no new entry
+    assert check.get(ExperimentRun, done_run_id).status == "done"
+    check.close()
+
+
+# #19: Pausa automática por Falhas consecutivas. A single counter over the order
+# results are persisted, across any Combinação; a success resets it; the
+# "no Grafo" predicted error (test_experiment_graph.py) never reaches it because
+# it is written straight to RunResult without going through _run_questions.
+
+def test_consecutive_failures_pause_without_scoring(session_factory, monkeypatch):
+    """A question that fails after every retry, 3 times in a row, pauses at once."""
+    from app.experiments import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_RETRY_DELAY_S", 0)
+    scored = []
+    monkeypatch.setattr(orchestrator, "_score_results", lambda *a, **kw: scored.append(True))
+
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "always-fails")
+    deps = _staged_deps(store, session_factory, [])
+
+    class _AlwaysFails:
+        def generate(self, prompt: str) -> str:
+            raise RuntimeError("LLM indisponível")
+
+    deps.llm_factory = lambda name, **kw: _AlwaysFails()
+    questions = [QuestionItem(text=f"q{i}") for i in range(5)]
+    run_experiment(experiment_id, _staged_config(), questions, deps)
+
+    status, rows, _ = _results(session_factory, experiment_id)
+    assert status == "paused"
+    assert scored == [], "an automatic pause by Falhas consecutivas must not score"
+    # Only the 3rd failure trips the pause; the rest of the questions never start.
+    assert len(rows) == orchestrator._CONSECUTIVE_FAILURES_LIMIT
+    assert all(r.generated_answer.startswith("[ERRO:") for r in rows)
+
+    check = session_factory()
+    [entry] = check.get(Experiment, experiment_id).pauses
+    check.close()
+    assert entry["reason"] == "consecutive_failures"
+    assert "LLM indisponível" in entry["last_error"]["message"]
+    assert entry["resumed_at"] is None
+
+
+def test_consecutive_failures_counter_is_reset_by_a_success(session_factory, monkeypatch):
+    """A success between failures means 3 in a row never happens: no pause."""
+    from app.experiments import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_RETRY_DELAY_S", 0)
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "flaky")
+    deps = _staged_deps(store, session_factory, [])
+
+    class _AlternatingLLM:
+        """Fails (every retry) for questions whose text has "fail"; succeeds otherwise."""
+
+        def generate(self, prompt: str) -> str:
+            if "fail" in prompt:
+                raise RuntimeError("falha transitória")
+            return "ok"
+
+    deps.llm_factory = lambda name, **kw: _AlternatingLLM()
+    questions = [QuestionItem(text=t) for t in ["fail-a", "ok-a", "fail-b", "ok-b", "fail-c", "ok-c"]]
+    run_experiment(experiment_id, _staged_config(), questions, deps)
+
+    status, rows, _ = _results(session_factory, experiment_id)
+    assert status == "done"
+    assert len(rows) == 6
+    failed = [r for r in rows if r.generated_answer.startswith("[ERRO:")]
+    assert len(failed) == 3
+
+
+def test_graphrag_missing_graph_does_not_count_as_a_consecutive_failure(session_factory):
+    """The predicted "no Grafo atual" error is recorded directly, outside the counter."""
+    from app.experiments import orchestrator
+
+    store = _indexed_store("e5")  # no Grafo built for this Índice
+    experiment_id = _new_experiment(session_factory, "no-grafo-cf")
+    deps = _staged_deps(store, session_factory, [])
+    questions = [QuestionItem(text=f"q{i}") for i in range(orchestrator._CONSECUTIVE_FAILURES_LIMIT)]
+
+    run_experiment(
+        experiment_id,
+        _staged_config(rags=["graph"], retrievers=["similarity"], metrics=["rouge_l"]),
+        questions,
+        deps,
+    )
+
+    status, rows, _ = _results(session_factory, experiment_id)
+    assert status == "done"
+    assert len(rows) == orchestrator._CONSECUTIVE_FAILURES_LIMIT
+    assert all(r.generated_answer.startswith("[ERRO: Grafo:") for r in rows)
+
+
 # ---- Retomada (issue #17): resume_experiment reads config/questions back from the
 # database and reuses _run_experiment's loop (skip done, reuse paused/running, create
 # what never ran).
@@ -1335,4 +1504,3 @@ def test_resume_handles_several_pause_resume_cycles(session_factory):
     assert sorted(r.question for r in run.results) == ["q0", "q1", "q2", "q3"]
     assert all(r.generated_answer == "answer" for r in run.results)
     check.close()
-
