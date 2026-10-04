@@ -98,6 +98,8 @@ describe("BasesPage", () => {
 
     expect(await within(dialog).findByText(reason)).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "viagem" })).toBeInTheDocument();
+    // The list is read again, so its "Em uso agora" note catches up.
+    await waitFor(() => expect(client.listBases).toHaveBeenCalledTimes(2));
   });
 
   it("cancels without deleting", async () => {

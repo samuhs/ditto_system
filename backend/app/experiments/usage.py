@@ -8,34 +8,42 @@ from app.experiments.orchestrator import graph_build_progress
 # Statuses of an experiment that will still read its Base: running or queued.
 _ACTIVE = ("running", "pending")
 
+_WAIT = " Aguarde terminar ou pause o experimento."
+
+
+def _reason(experiment: Experiment, base: str, building: bool) -> str:
+    if building:
+        doing = (
+            f'Um Grafo de conhecimento da base "{base}" está sendo construído pelo '
+            f'experimento "{experiment.name}".'
+        )
+    elif experiment.status == "running":
+        doing = f'O experimento "{experiment.name}" está rodando sobre a base "{base}".'
+    else:
+        doing = f'O experimento "{experiment.name}" está na fila para usar a base "{base}".'
+    return doing + _WAIT
+
 
 def bases_in_use(session: Session) -> dict[str, str]:
     """Base -> why it is in use (PT-BR, shown to the user), for every Base in use now.
 
     A Base is in use while an experiment on it runs or waits in the queue; a
-    Grafo de conhecimento being built for one is named as such.
+    Grafo de conhecimento being built for it is named first. Every build runs
+    inside an experiment today: a build started elsewhere must be added here.
     """
     experiments = session.scalars(
         select(Experiment).where(Experiment.status.in_(_ACTIVE)).order_by(Experiment.id)
     )
     reasons: dict[str, str] = {}
+    building_bases: set[str] = set()
     for experiment in experiments:
         base = (experiment.config or {}).get("base")
-        if not base or base in reasons:
+        if not base or base in building_bases:
             continue
-        if graph_build_progress(experiment.id) is not None:
-            reasons[base] = (
-                f'Um Grafo de conhecimento da base "{base}" está sendo construído pelo '
-                f'experimento "{experiment.name}". Aguarde terminar ou pause o experimento.'
-            )
-        elif experiment.status == "running":
-            reasons[base] = (
-                f'O experimento "{experiment.name}" está rodando sobre a base "{base}". '
-                "Aguarde terminar ou pause o experimento."
-            )
-        else:
-            reasons[base] = (
-                f'O experimento "{experiment.name}" está na fila para usar a base "{base}". '
-                "Aguarde terminar ou pause o experimento."
-            )
+        building = graph_build_progress(experiment.id) is not None
+        if building:
+            building_bases.add(base)
+        elif base in reasons:
+            continue
+        reasons[base] = _reason(experiment, base, building)
     return reasons

@@ -1,5 +1,5 @@
 import { Button, Loader, Modal } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { deleteBase, listBases } from "../api/client";
@@ -31,7 +31,8 @@ function Named({ dimension, value }: { dimension: "chunking" | "embedding"; valu
 }
 
 function BaseSection({ base, onDelete }: { base: BaseSummary; onDelete: () => void }) {
-  const headingId = `base-${base.name}`;
+  // Base names are free text: never fit for an id.
+  const headingId = useId();
   const graphs = base.indexes.flatMap((index) => index.graphs.map((graph) => ({ index, graph })));
   return (
     <section className="ditto-sec" aria-labelledby={headingId}>
@@ -91,7 +92,8 @@ function BaseSection({ base, onDelete }: { base: BaseSummary; onDelete: () => vo
                 {graphs.map(({ index, graph }) => (
                   <tr key={`${index.chunking}__${index.embedding}__${graph.extractor}`}>
                     <td>
-                      {term("chunking", index.chunking).name} · {term("embedding", index.embedding).name}
+                      <Named dimension="chunking" value={index.chunking} /> ·{" "}
+                      <Named dimension="embedding" value={index.embedding} />
                     </td>
                     <td className="ditto-mono">{graph.extractor}</td>
                     <td className="ditto-num">{graph.entities}</td>
@@ -145,6 +147,8 @@ export function BasesPage() {
       refresh();
     } catch (e) {
       setDeleteError(errorText(e));
+      // A refusal means the Base is in use: show it in the list too.
+      refresh();
     } finally {
       setDeleting(false);
     }
@@ -191,7 +195,9 @@ export function BasesPage() {
 
       <Modal
         opened={confirming !== null}
-        onClose={() => setConfirming(null)}
+        onClose={() => {
+          if (!deleting) setConfirming(null);
+        }}
         title={confirming ? `Apagar a base “${confirming.name}”?` : ""}
       >
         {confirming && (
@@ -203,7 +209,7 @@ export function BasesPage() {
             </p>
             {deleteError && <Errata title="A base não foi apagada">{deleteError}</Errata>}
             <div className="ditto-row-actions" style={{ justifyContent: "flex-end" }}>
-              <Button variant="subtle" onClick={() => setConfirming(null)}>
+              <Button variant="subtle" onClick={() => setConfirming(null)} disabled={deleting}>
                 Cancelar
               </Button>
               <Button className="ditto-danger" onClick={confirmDelete} loading={deleting}>
