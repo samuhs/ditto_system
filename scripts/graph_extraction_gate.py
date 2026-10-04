@@ -43,7 +43,7 @@ def _normalize(name: str) -> str:
 
 
 def _section(base_text: str, heading: str) -> str:
-    """The section's text, heading included, up to the next blank line (the gate drops the heading as the build does)."""
+    """The section's text, heading included, up to the next blank line."""
     start = base_text.index(heading)
     end = base_text.find("\n\n", start)
     return base_text[start:end if end != -1 else None].strip()
