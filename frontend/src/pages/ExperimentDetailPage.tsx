@@ -2,7 +2,7 @@ import { Button, Drawer, Loader, MultiSelect, Pagination, SegmentedControl, Sele
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { exportExperimentUrl, getExperiment, pauseExperiment } from "../api/client";
+import { exportExperimentUrl, getExperiment, pauseExperiment, resumeExperiment } from "../api/client";
 import type { ExperimentDetail, ExperimentResultRow, GraphExplanation, PauseEntry } from "../api/types";
 import { DEFAULT_FOCUS, type FocusState } from "../components/charts/aggregate";
 import { ChartsPanel } from "../components/charts/ChartsPanel";
@@ -72,7 +72,9 @@ export function ExperimentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pausing, setPausing] = useState(false);
+  const [resuming, setResuming] = useState(false);
   const timer = useRef<number | null>(null);
+  const pollNow = useRef<() => void>(() => {});
 
   const [tab, setTab] = useState<string>("ranking");
   const [filters, setFilters] = useState<Record<Dim, string[]>>({
@@ -108,6 +110,7 @@ export function ExperimentDetailPage() {
           setLoading(false);
         });
     };
+    pollNow.current = poll;
     poll();
 
     return () => {
@@ -126,6 +129,22 @@ export function ExperimentDetailPage() {
     } catch (e) {
       setError(errorText(e));
       setPausing(false);
+    }
+  }
+
+  const isResumable = detail?.status === "paused" || detail?.status === "failed";
+
+  async function handleResume() {
+    if (!id) return;
+    setResuming(true);
+    try {
+      await resumeExperiment(Number(id));
+      if (timer.current) window.clearTimeout(timer.current);
+      pollNow.current();
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setResuming(false);
     }
   }
 
@@ -326,6 +345,11 @@ export function ExperimentDetailPage() {
                   {pausing || detail.pause_requested ? "Pausando…" : "Pausar"}
                 </Button>
               </>
+            )}
+            {isResumable && (
+              <Button size="sm" variant="default" loading={resuming} disabled={resuming} onClick={handleResume}>
+                {resuming ? "Retomando…" : "Retomar"}
+              </Button>
             )}
             <Button
               component="a"

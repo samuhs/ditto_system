@@ -26,6 +26,7 @@ from app.experiments.orchestrator import (
     ExperimentDeps,
     _pause_requested,
     request_pause,
+    resume_experiment,
     run_experiment,
 )
 from app.experiments.preflight import memory_warnings
@@ -365,6 +366,40 @@ def pause_experiment(
     return {"id": experiment_id, "status": "pausing"}
 
 
+def _resumable_reason(experiment: Experiment) -> str | None:
+    """Why POST /resume would fail right now (409); None when it would succeed (200)."""
+    if experiment.status not in ("paused", "failed"):
+        return f"Experimento com status '{experiment.status}' não pode ser retomado."
+    if not experiment.questions:
+        return (
+            "Experimento sem perguntas gravadas (criado antes desta função) não pode ser retomado."
+        )
+    return None
+
+
+@router.post("/experiments/{experiment_id}/resume")
+def resume_experiment_route(
+    experiment_id: int,
+    background_tasks: BackgroundTasks,
+    deps: ExperimentDeps = Depends(get_experiment_deps),
+) -> dict:
+    """Retomada: resume a paused or failed experiment, queued through the usual work slot."""
+    session = deps.session_factory()
+    try:
+        experiment = session.get(Experiment, experiment_id)
+        if experiment is None:
+            raise HTTPException(status_code=404, detail="experiment not found")
+        reason = _resumable_reason(experiment)
+        if reason is not None:
+            raise HTTPException(status_code=409, detail=reason)
+        experiment.status = "pending"
+        session.commit()
+    finally:
+        session.close()
+    background_tasks.add_task(resume_experiment, experiment_id, deps)
+    return {"id": experiment_id, "status": "pending"}
+
+
 @router.get("/experiments")
 def list_experiments(
     page: int = Query(1, ge=1),
@@ -406,6 +441,7 @@ def get_experiment(
         cfg = experiment.config or {}
         total_combos = _total_combinations(cfg)
         completed_combos = sum(1 for run in experiment.runs if run.status == "done")
+        resumable_reason = _resumable_reason(experiment)
         return {
             "id": experiment.id,
             "name": experiment.name,
@@ -415,6 +451,9 @@ def get_experiment(
             "pause_requested": _pause_requested(experiment_id),
             # Registro de pausa: every Pausa this experiment has had, oldest first.
             "pauses": experiment.pauses or [],
+            # Whether POST /resume would currently succeed, and why not when it would not.
+            "resumable": resumable_reason is None,
+            "resumable_reason": resumable_reason,
             "error": cfg.get("error") or None,
             "eval_embedding": cfg.get("eval_embedding"),
             # The LLM extrator whose Grafos graph/graph_mix queried; None without them.

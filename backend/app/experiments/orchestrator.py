@@ -4,7 +4,7 @@ import threading
 import time
 import traceback
 from collections.abc import Callable, Iterator
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as _FutureTimeoutError
 from contextlib import nullcontext
 from dataclasses import dataclass
@@ -47,6 +47,10 @@ logger = logging.getLogger(__name__)
 
 _MAX_RETRIES = 3
 _RETRY_DELAY_S = 5
+
+# #19: this many question failures in a row (after every retry), in any Combinação,
+# trigger an automatic Pausa por Falhas consecutivas.
+_CONSECUTIVE_FAILURES_LIMIT = 3
 
 # Marks a question that failed after every retry (stored as its answer).
 ERROR_PREFIX = "[ERRO: "
@@ -137,6 +141,32 @@ def record_pause(
     session.commit()
 
 
+def recover_interrupted_experiments(session_factory: Callable[[], Session]) -> None:
+    """Mark Experimentos left `running`/`pending` by a crash or restart as paused.
+
+    Called once by the API's `lifespan`, right after `create_all()`. The likeliest
+    cause of an API restart mid-run is an out-of-memory crash, so interrupted
+    Experimentos never resume on their own (ADR 0001) — nothing here is
+    re-enqueued; a researcher decides when to Retomar. Any `ExperimentRun` left
+    `running` becomes `paused` too, so a later Retomada (#17) can reuse it.
+    """
+    session = session_factory()
+    try:
+        stuck = session.query(Experiment).filter(Experiment.status.in_(["running", "pending"])).all()
+        for experiment in stuck:
+            phase = (experiment.config or {}).get("phase")
+            experiment.status = "paused"
+            _set_phase(session, experiment, None)
+            record_pause(session, experiment, reason="interrupted", phase=phase)
+
+        session.query(ExperimentRun).filter(ExperimentRun.status == "running").update(
+            {"status": "paused"}, synchronize_session=False
+        )
+        session.commit()
+    finally:
+        session.close()
+
+
 class _InFlightTracker:
     """Thread-safe registry of questions mid-call, for a pause entry's `in_flight`.
 
@@ -168,6 +198,29 @@ class _InFlightTracker:
         """Combinação + pergunta of everything currently mid-call."""
         with self._lock:
             return list(self._items.values())
+
+
+class _ConsecutiveFailureTracker:
+    """Counts question failures in a row, across every Combinação, for #19.
+
+    One instance per experiment run. `record_failure` returns True once
+    `_CONSECUTIVE_FAILURES_LIMIT` failures have landed with no success between
+    them; `record_success` resets the count to zero. The "no Grafo de
+    conhecimento atual" error the orchestrator records on purpose (a Combinação
+    whose Grafo does not exist) is written straight to `RunResult` without going
+    through `_run_questions`, so it never reaches this tracker.
+    """
+
+    def __init__(self, limit: int = _CONSECUTIVE_FAILURES_LIMIT) -> None:
+        self._limit = limit
+        self._count = 0
+
+    def record_success(self) -> None:
+        self._count = 0
+
+    def record_failure(self) -> bool:
+        self._count += 1
+        return self._count >= self._limit
 
 
 @dataclass
@@ -244,6 +297,21 @@ def _uses_graph(rag_name: str) -> bool:
     return technique is not None and technique.uses_graph
 
 
+def _existing_run(
+    session: Session, experiment_id: int,
+    chunking: str, embedding: str, rag_name: str, retriever_name: str, llm_name: str,
+) -> ExperimentRun | None:
+    """The ExperimentRun already recorded for this combination, if any (a Retomada's state)."""
+    return (
+        session.query(ExperimentRun)
+        .filter_by(
+            experiment_id=experiment_id, chunking=chunking, embedding=embedding,
+            rag_technique=rag_name, retriever=retriever_name, llm=llm_name,
+        )
+        .one_or_none()
+    )
+
+
 def _error_result(run_id: int, question: QuestionItem, error: str) -> RunResult:
     """The stored row of a question that could not be answered."""
     return RunResult(
@@ -292,8 +360,9 @@ def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder)
 def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eval_embedder):
     """Try _process_question up to _MAX_RETRIES times with _RETRY_DELAY_S between attempts.
 
-    Returns (answer_text, contexts, scores, latency_ms, tokens, graph_explanation, error_str).
-    On permanent failure error_str is set and the other values are None.
+    Returns (answer_text, contexts, scores, latency_ms, tokens, graph_explanation, error).
+    On permanent failure `error` is the last exception raised (so #19 can record it
+    verbatim in the Registro de pausa) and the other values are None.
     """
     last_exc = None
     for attempt in range(_MAX_RETRIES):
@@ -318,7 +387,7 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
                     _MAX_RETRIES,
                     exc,
                 )
-    return None, None, None, None, None, None, str(last_exc)
+    return None, None, None, None, None, None, last_exc
 
 
 # How often a question's future is polled for a stall signal while waiting on it.
@@ -341,6 +410,16 @@ def _run_questions(
     Nothing here ever reads a future's result once it has been abandoned, so a
     late answer — the call unblocking well after the fact — is never recorded.
 
+    Questions are submitted in a sliding window of at most `concurrency`, one
+    at a time, each only once the caller has consumed an earlier outcome (not
+    eagerly, all at once): a pause requested while processing that outcome —
+    manual, Falhas consecutivas, or Travamento — is visible to `work()`'s own
+    check before the next question starts. Submitting every question up front
+    (as `ThreadPoolExecutor.map` would) loses that ordering at concurrency 1,
+    where the loop used to run `work()` inline on its own thread: nothing would
+    then stop a second, third, ... question from starting before the result
+    that should have paused them was even recorded.
+
     Each question is registered on `tracker` for the span of its call, so a
     pause entry recorded while it runs (or stuck) can show it under `in_flight`.
     """
@@ -355,10 +434,20 @@ def _run_questions(
             tracker.finish(token)
 
     pool = ThreadPoolExecutor(max_workers=max(concurrency, 1))
+    window = max(concurrency, 1)
+    pending = list(questions)
+    in_flight: list[tuple[QuestionItem, Future]] = []
     abandoned = False
+
+    def _fill_window() -> None:
+        while pending and len(in_flight) < window:
+            question = pending.pop(0)
+            in_flight.append((question, pool.submit(work, question)))
+
     try:
-        futures = [pool.submit(work, question) for question in questions]
-        for question, future in zip(questions, futures):
+        _fill_window()
+        while in_flight:
+            question, future = in_flight.pop(0)
             if abandoned:
                 yield question, None
                 continue
@@ -372,6 +461,12 @@ def _run_questions(
                         abandoned = True
                         break
             yield question, outcome
+            if not abandoned:
+                _fill_window()  # only now: after the caller has seen this outcome
+        # Never submitted (the window stopped filling once abandoned): still one
+        # yield per question, same as a pause caught before it started.
+        for question in pending:
+            yield question, None
     finally:
         # A stalled call is abandoned, not awaited (ADR 0001: Python cannot kill a
         # thread). shutdown(wait=True) here would block on the very thread this
@@ -392,6 +487,33 @@ def run_experiment(
     # One experiment (or Grafo build) at a time: queued ones stay "pending" ("Na fila").
     with work_slot:
         _run_experiment(experiment_id, config, questions, deps)
+
+
+def resume_experiment(experiment_id: int, deps: ExperimentDeps) -> None:
+    """Retomada: run a paused (or failed) experiment again, continuing from the database.
+
+    Sibling of `run_experiment`, scheduled by `POST /experiments/{id}/resume`. The
+    config and questions were recorded with the experiment at creation (#16) instead of
+    living only in the background task's memory, so a Retomada can read them back even
+    after an API restart. It then runs through the very same `_run_experiment` loop and
+    work slot: a Combinação with a `done` `ExperimentRun` is skipped, one `paused` or
+    `running` is reused (its `[ERRO]` rows are deleted and only unanswered questions
+    run), and one with no `ExperimentRun` yet is created — see `_existing_run`. The most
+    recent Registro de pausa entry gets `resumed_at` before the run starts.
+    """
+    session = deps.session_factory()
+    try:
+        experiment = session.get(Experiment, experiment_id)
+        config = ExperimentConfig(**(experiment.config or {}))
+        questions = [QuestionItem(**d) for d in (experiment.questions or [])]
+        if experiment.pauses:
+            pauses = list(experiment.pauses)
+            pauses[-1] = {**pauses[-1], "resumed_at": datetime.now(UTC).isoformat()}
+            experiment.pauses = pauses
+            session.commit()
+    finally:
+        session.close()
+    run_experiment(experiment_id, config, questions, deps)
 
 
 def _set_phase(session: Session, experiment: Experiment, phase: str | None) -> None:
@@ -610,6 +732,7 @@ def _run_experiment(
         paused = False
         pause_in_flight: list[dict] = []
         tracker = _InFlightTracker()
+        failures = _ConsecutiveFailureTracker()
         loaded_llm_name, llm = None, None
         with eval_context as eval_embedder, LeaseSwitcher(deps.models) as leases:
             for llm_name, (chunking, embedding), rag_name, retriever_name in _combinations(config):
@@ -618,16 +741,36 @@ def _run_experiment(
                     paused = True
                     break
 
-                run = ExperimentRun(
-                    experiment_id=experiment_id,
-                    chunking=chunking,
-                    embedding=embedding,
-                    rag_technique=rag_name,
-                    retriever=retriever_name,
-                    llm=llm_name,
-                    status="running",
+                # Retomada (#17): a Combinação already `done` is skipped; one `paused`
+                # or `running` is reused (its [ERRO] rows redone, valid ones kept); one
+                # with no ExperimentRun yet is created, exactly as on a first run.
+                run = _existing_run(
+                    session, experiment_id, chunking, embedding, rag_name, retriever_name, llm_name,
                 )
-                session.add(run)
+                if run is not None and run.status == "done":
+                    continue
+                if run is None:
+                    run = ExperimentRun(
+                        experiment_id=experiment_id,
+                        chunking=chunking,
+                        embedding=embedding,
+                        rag_technique=rag_name,
+                        retriever=retriever_name,
+                        llm=llm_name,
+                        status="running",
+                    )
+                    session.add(run)
+                    answered: set[str] = set()
+                else:
+                    run.status = "running"
+                    existing_results = list(run.results)
+                    answered = {
+                        r.question for r in existing_results
+                        if not r.generated_answer.startswith(ERROR_PREFIX)
+                    }
+                    for result in existing_results:
+                        if result.generated_answer.startswith(ERROR_PREFIX):
+                            session.delete(result)
                 session.commit()
                 watchdog.heartbeat()  # a Combinação just started
 
@@ -664,6 +807,8 @@ def _run_experiment(
                         # (re-ingested Índice, edited prompt) while the run waits.
                         logger.error("no current Grafo for run %d", run.id)
                         for question in questions:
+                            if question.text in answered:
+                                continue  # a Retomada never redoes a valid answer
                             session.add(_error_result(run.id, question, (
                                 f"Grafo: não há Grafo de conhecimento atual do LLM extrator "
                                 f"{config.graph_extractor} para {chunking} × {embedding}"
@@ -682,6 +827,9 @@ def _run_experiment(
                     if getattr(rag, "uses_evidence", False)
                     else questions
                 )
+                # Retomada: a question already answered (not [ERRO]) never runs again.
+                if answered:
+                    run_questions = [q for q in run_questions if q.text not in answered]
                 combo = {
                     "chunking": chunking, "embedding": embedding,
                     "rag": rag_name, "retriever": retriever_name, "llm": llm_name,
@@ -704,8 +852,17 @@ def _run_experiment(
 
                     answer_text, contexts, scores, latency_ms, tokens, explanation, error = outcome
                     if error is not None:
-                        session.add(_error_result(run.id, question, error))
+                        session.add(_error_result(run.id, question, str(error)))
+                        if failures.record_failure():
+                            # #19: this question's failure was the 3rd in a row (any
+                            # Combinação) — pause now, without scoring, keeping the
+                            # last exception for the Registro de pausa entry.
+                            request_pause(
+                                experiment_id, "consecutive_failures", score_partial=False,
+                                detail=_error_detail(error),
+                            )
                     else:
+                        failures.record_success()
                         session.add(
                             RunResult(
                                 run_id=run.id,

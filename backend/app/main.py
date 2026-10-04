@@ -23,13 +23,15 @@ from app.api import (
     system,
 )
 from app.core.db import models  # noqa: F401  registers models on Base.metadata
-from app.core.db.base import create_all
+from app.core.db.base import SessionLocal, create_all
+from app.experiments.orchestrator import recover_interrupted_experiments
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Create database tables on startup."""
+    """Create database tables, then recover Experimentos interrupted by a restart."""
     create_all()
+    recover_interrupted_experiments(SessionLocal)
     yield
 
 
