@@ -66,6 +66,29 @@ describe("BasesPage", () => {
     expect(within(graph).getByText("01/10/2026")).toBeInTheDocument();
   });
 
+  it("shows a Grafo build in progress with its chunks extracted", async () => {
+    vi.mocked(client.listBases).mockResolvedValue([{
+      ...VIAGEM,
+      in_use: "Um Grafo de conhecimento da base \"viagem\" está sendo construído.",
+      graph_builds: [{
+        id: 3, base: "viagem", extractor: "qwen3:1.7b", status: "running", pause_requested: false,
+        created_at: "2026-10-04T10:00:00Z", finished_at: null,
+        indexes: [{ chunking: "fixed", embedding: "e5", status: "building", extracted: 5, total: 12,
+                    stats: null, error: null }],
+      }],
+    }]);
+    renderPage();
+    expect(await screen.findByText("Construindo Grafo: 5 / 12 trechos")).toBeInTheDocument();
+  });
+
+  it("says where a missing Grafo comes from", async () => {
+    vi.mocked(client.listBases).mockResolvedValue([{
+      ...VIAGEM, indexes: [{ chunking: "fixed", embedding: "e5", chunks: 12, graphs: [] }],
+    }]);
+    renderPage();
+    expect(await screen.findByText(/gerar grafo de conhecimento/i)).toBeInTheDocument();
+  });
+
   it("teaches the next step when there is no Base yet", async () => {
     vi.mocked(client.listBases).mockResolvedValue([]);
     renderPage();

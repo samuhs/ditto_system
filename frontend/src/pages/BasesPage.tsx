@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { deleteBase, listBases } from "../api/client";
 import type { BaseSummary } from "../api/types";
+import { GraphBuildList } from "../components/GraphBuildList";
 import { Errata, Note, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon } from "../components/icons";
@@ -48,6 +49,7 @@ function BaseSection({ base, onDelete }: { base: BaseSummary; onDelete: () => vo
       </div>
       <div className="ditto-sec-body">
         {base.in_use && <Note title="Em uso agora">{base.in_use}</Note>}
+        {(base.graph_builds ?? []).length > 0 && <GraphBuildList jobs={base.graph_builds ?? []} />}
         <div className="ditto-table-wrap">
           <table className="ditto-table">
             <caption className="visually-hidden">Índices da base {base.name}</caption>
@@ -71,8 +73,9 @@ function BaseSection({ base, onDelete }: { base: BaseSummary; onDelete: () => vo
         </div>
         {graphs.length === 0 ? (
           <p className="ditto-read">
-            Nenhum Grafo de conhecimento ainda. Ele é montado na primeira vez que um experimento usa
-            a técnica Grafo num índice desta base.
+            Nenhum Grafo de conhecimento ainda. Para criar um, envie os documentos de novo na{" "}
+            <Link to={`/ingest?base=${encodeURIComponent(base.name)}`}>ingestão</Link> marcando
+            “Gerar Grafo de conhecimento”.
           </p>
         ) : (
           <div className="ditto-table-wrap">
