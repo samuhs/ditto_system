@@ -49,15 +49,6 @@ def _validate(names: list[str], available: list[str], kind: str) -> None:
         )
 
 
-@router.delete("/bases/{base}")
-def delete_base(base: str, store: QdrantStore = Depends(get_store)) -> dict:
-    """Delete a Base: its Índices and every Grafo de conhecimento built from them."""
-    deleted = store.delete_base(base)
-    if not deleted:
-        raise HTTPException(status_code=404, detail=f"base not found: {base}")
-    return {"base": base, "deleted": deleted}
-
-
 @router.post("/ingest", response_model=IngestResult)
 async def ingest(
     base: str = Form(...),

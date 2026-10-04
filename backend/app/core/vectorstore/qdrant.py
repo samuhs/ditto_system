@@ -63,6 +63,14 @@ def parse_collection_name(name: str) -> tuple[str, str, str] | None:
     return (parts[0], parts[1], parts[2]) if len(parts) == 3 else None
 
 
+def graph_entities_index(name: str) -> str | None:
+    """The Índice whose Grafo this entities collection holds; None for any other collection."""
+    index, marker, rest = name.partition(_GRAPH_MARKER)
+    if not marker or not rest.startswith("ent__") or parse_collection_name(index) is None:
+        return None
+    return index
+
+
 def collection_base(name: str) -> str | None:
     """The Base an Índice's or Grafo's collection belongs to; None for any other collection.
 

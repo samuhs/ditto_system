@@ -12,6 +12,7 @@ import operator
 import threading
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from datetime import datetime, timezone
 from contextlib import AbstractContextManager, nullcontext
 from typing import Annotated, TypedDict
 
@@ -195,6 +196,7 @@ class LLMGraphBuilder(GraphBuilder):
                 "extractor": extractor, "prompt": prompt, "stats": state["stats"],
                 "prompt_version": prompt_version(prompt),
                 "chunks_fingerprint": chunks_fingerprint(state["chunks"]),
+                "built_at": datetime.now(timezone.utc).isoformat(),
             }
             # The Índice's embedder is leased only here (memory profile): it links
             # synonyms, then embeds the entities and relations.
