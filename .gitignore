@@ -2,6 +2,9 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+# Also when they are symlinks (agent worktrees link them), which a trailing / misses.
+.venv
+node_modules
 .env
 .DS_Store
 .pytest_cache/
@@ -31,3 +34,6 @@ certs/*.pem
 # host-built artifacts for the Docker images (scripts/prepare-artifacts.sh)
 backend/wheels/*.whl
 frontend/.host-build
+
+# Isolated git worktrees of background agents.
+.claude/worktrees/
