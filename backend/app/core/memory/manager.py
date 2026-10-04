@@ -89,6 +89,10 @@ class ModelManager:
         """How many local models may stay resident."""
         return self._max_local
 
+    def is_local(self, name: str) -> bool:
+        """Whether the named embedder counts against the local-model limit."""
+        return self._is_local(name)
+
     @contextmanager
     def acquire(
         self, name: str, device: str = "auto", wait_timeout_s: float | None = None

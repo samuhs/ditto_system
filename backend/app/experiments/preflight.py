@@ -1,8 +1,11 @@
-"""Memory checks run before an experiment starts; they warn, never block."""
+"""Checks run before an experiment starts; they warn, never block."""
 from collections.abc import Callable
 
+from app.core.graph.build import current_graph
 from app.core.memory.manager import is_local_embedding
 from app.core.memory.profile import MemoryProfile
+from app.core.rag.base import technique_class
+from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.schemas import ExperimentConfig, index_pairs
 
 
@@ -28,3 +31,26 @@ def memory_warnings(
             f"{profile.name}; o experimento vai rodar com {profile.max_concurrency}."
         )
     return warnings
+
+
+def graphs_to_build(
+    store: QdrantStore,
+    base: str,
+    indexes: list[tuple[str, str]],
+    rags: list[str],
+    llms: list[str],
+    prompt: str | None = None,
+) -> list[dict[str, str]]:
+    """The Grafos de conhecimento the experiment would build: Índice x LLM extrator.
+
+    Only when a technique answers from the graph; a cached, current graph is not
+    counted (the LLM de resposta is the LLM extrator, for now).
+    """
+    if not any(getattr(technique_class(r), "uses_graph", False) for r in rags):
+        return []
+    return [
+        {"chunking": chunking, "embedding": embedding, "llm": llm}
+        for llm in dict.fromkeys(llms)
+        for chunking, embedding in dict.fromkeys(indexes)
+        if current_graph(store, base, chunking, embedding, llm, prompt) is None
+    ]

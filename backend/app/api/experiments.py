@@ -6,7 +6,7 @@ import unicodedata
 from datetime import timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config.runtime import get_eval_embedding
@@ -21,9 +21,15 @@ from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.difficulty import question_difficulty
 from app.experiments.naming import generate_experiment_name
-from app.experiments.orchestrator import ExperimentDeps, _pause_requested, request_pause, run_experiment
-from app.experiments.preflight import memory_warnings
-from app.experiments.schemas import ExperimentConfig, combination_count, index_pairs
+from app.experiments.orchestrator import (
+    ExperimentDeps,
+    _pause_requested,
+    graph_build_progress,
+    request_pause,
+    run_experiment,
+)
+from app.experiments.preflight import graphs_to_build, memory_warnings
+from app.experiments.schemas import ExperimentConfig, IndexPair, combination_count, index_pairs
 
 router = APIRouter()
 
@@ -280,6 +286,25 @@ async def create_experiment(
     return {"id": experiment_id, "name": name, "status": "pending", "warnings": warnings}
 
 
+class GraphPreflight(BaseModel):
+    """What the experiment form has chosen so far, to count the Grafos to build."""
+
+    base: str
+    indexes: list[IndexPair]
+    rags: list[str]
+    llms: list[str]
+
+
+@router.post("/experiments/preflight")
+def preflight_experiment(
+    body: GraphPreflight,
+    deps: ExperimentDeps = Depends(get_experiment_deps),
+) -> dict:
+    """Before running: the Grafos de conhecimento (Índice x LLM extrator) still to build."""
+    indexes = [(i.chunking, i.embedding) for i in body.indexes]
+    return {"graphs_to_build": graphs_to_build(deps.store, body.base, indexes, body.rags, body.llms)}
+
+
 @router.post("/experiments/{experiment_id}/pause")
 def pause_experiment(
     experiment_id: int,
@@ -355,8 +380,10 @@ def get_experiment(
             "progress": {
                 "completed": completed_combos,
                 "total": total_combos,
-                # Staged runs: "generating", then "evaluating" (scoring the answers).
+                # Staged runs: "generating", then "evaluating" (scoring the answers);
+                # "building_graph" while a Grafo is built, with chunks extracted / total.
                 "phase": cfg.get("phase"),
+                "graph": graph_build_progress(experiment_id),
             },
             "prompts": cfg.get("prompts"),
             "results": results,

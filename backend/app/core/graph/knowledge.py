@@ -131,6 +131,11 @@ class KnowledgeGraph:
         return self._meta["extractor"]
 
     @property
+    def meta(self) -> dict:
+        """What the graph was built with: LLM extrator, prompt version, chunks, stats."""
+        return dict(self._meta)
+
+    @property
     def stats(self) -> dict:
         """Entities, relations, chunks, extraction lines and failures."""
         return dict(self._meta["stats"])
