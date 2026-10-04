@@ -17,8 +17,12 @@ Entidades e relações extraídas dos chunks de um Índice, com cada entidade e 
 _Avoid_: grafo, KG, knowledge graph
 
 **LLM extrator**:
-O LLM que lê os chunks e produz o Grafo de conhecimento. Faz parte da identidade do Grafo; é um papel distinto do LLM de resposta, ainda que hoje os dois sejam o mesmo modelo.
+O LLM que lê os chunks e produz o Grafo de conhecimento. Faz parte da identidade do Grafo (Índice × LLM extrator). É escolhido na ingestão, ao gerar o Grafo, e não coincide com o LLM de resposta: o experimento só consulta Grafos já construídos e escolhe de qual LLM extrator, e todos os seus LLMs de resposta usam o mesmo Grafo.
 _Avoid_: LLM do grafo
+
+**Construção do Grafo**:
+A tarefa em segundo plano que extrai os chunks de Índices de uma Base com um LLM extrator e grava seus Grafos. Pode ser pausada e retomada sem reextrair chunks: cada extração fica em cache por texto do chunk × LLM extrator × prompt.
+_Avoid_: job de grafo, build
 
 **LLM de resposta**:
 O LLM que gera a resposta final de uma Técnica RAG; é a dimensão "LLM" de um experimento.

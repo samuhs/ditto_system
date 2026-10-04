@@ -117,3 +117,22 @@ Este número não substitui o experimento refeito. Ele mede só o `context_hit` 
 1. Refazer o experimento #21 com as correções, depois do ticket da construção na ingestão, e atualizar esta nota.
 2. Consolidação: tirar o sufixo da cidade também depois de " de " ("Encontro de Carros Antigos de Santo Antônio da Alegria"). Na sinonímia, não ligar nomes que diferem só por um número (endereços) e testar `token_set_ratio` ou uma razão calculada sem o sufixo comum, para evitar "Açougues ~ Pousadas de Santo Antônio da Alegria".
 3. Se o `graph` continuar atrás do `naive` em `context_hit`, olhar a ligação pergunta → entidade: o e5 comprime as similaridades numa faixa estreita (0,82 a 0,88 entre as cinco sementes acima), e a nota de um nó depende muito da especificidade.
+
+## Adendo: extração em paralelo no servidor MLX (#13)
+
+Com o #13, o Grafo passou a ser construído na ingestão, num job em segundo plano, e não mais no experimento. Antes de escolher quantos chunks o LLM extrator lê ao mesmo tempo, medi 1 contra 2 extrações simultâneas no Mac de 8 GB (perfil `low`). Servidor MLX local (`http://localhost:11436/v1`), modelo `mlx-community/Qwen2.5-3B-Instruct-4bit`, prompt de extração atual.
+
+A amostra tem 10 chunks reais de `guia_santo_antonio_da_alegria.md`: corte `markdown`, sem o caminho de títulos, só chunks com mais de 200 caracteres, 4.534 caracteres no total. O script de rascunho reaproveita `extract()` e `OllamaLLM` do app e não toca no Qdrant. Houve uma chamada de aquecimento, e as rodadas foram feitas na ordem 1, 2, 1, 2. A memória foi lida pelo `vm_stat` (livre + inativa + especulativa) e pelo `vm.swapusage`, a cada 0,5 s.
+
+| Rodada | Extrações simultâneas | Tempo total (10 chunks) | Por chunk | Latência média por chamada | Registros (falhas) | Menor memória livre | Maior swap |
+|---|---|---|---|---|---|---|---|
+| 1 | 1 | 238,4 s | 23,8 s | 23,8 s | 189 (2) | 821 MB | 3.418 MB |
+| 2 | 2 | 261,7 s | 26,2 s | 52,2 s | 189 (1) | 664 MB | 3.184 MB |
+| 3 | 1 | 300,5 s | 30,1 s | 30,1 s | 189 (2) | 821 MB | 3.136 MB |
+| 4 | 2 | 289,9 s | 29,0 s | 57,9 s | 192 (2) | 701 MB | 3.337 MB |
+
+As rodadas 3 e 4 rodaram enquanto a suíte de testes usava a CPU, por isso ficaram mais lentas. A comparação vale dentro de cada par.
+
+**Leitura.** Com 2 chamadas simultâneas, a latência de cada uma dobra e o tempo total não cai: +10% no primeiro par, −3,5% no segundo, dentro do ruído. O servidor MLX atende uma requisição por vez, e a segunda só espera na fila. A memória livre mínima caiu entre 120 e 160 MB, sem ganho em troca.
+
+**Configuração.** `max_extraction_concurrency` foi para o perfil de memória: **1 no `low`** (medido aqui) e 2 no `standard`, pensando em servidores que processam requisições em lote, como o Ollama com `OLLAMA_NUM_PARALLEL`. O valor do `standard` não foi medido. No ritmo medido, de ~24 a 30 s por chunk, um Índice `markdown` do guia leva perto de uma hora para extrair, como no #21. Isso só se paga uma vez por chunking × LLM extrator. Os outros embeddings e os experimentos reaproveitam o cache.

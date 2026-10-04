@@ -19,16 +19,19 @@ class MemoryProfile:
     # "cpu" always; "auto" lets the device policy pick the GPU when the LLM leaves it free.
     embedding_device: str
     max_concurrency: int
-    # Chunks the LLM extrator reads at once while building a Grafo de conhecimento
-    # (measured on the local MLX server: docs/research/2026-10-04-correcoes-consulta-grafo.md).
+    # Chunks the LLM extrator reads at once while building a Grafo de conhecimento.
+    # On the 8 GB Mac the MLX server answers one request at a time: 2 at once took
+    # as long as 1 and left less memory free, so low extracts one by one
+    # (docs/research/2026-10-04-correcoes-consulta-grafo.md, addendum). standard
+    # allows 2 for servers that batch (Ollama with OLLAMA_NUM_PARALLEL); unmeasured.
     max_extraction_concurrency: int = 1
 
 
 PROFILES: dict[str, MemoryProfile] = {
     "low": MemoryProfile("low", max_local_models=1, embedding_device=CPU, max_concurrency=2,
-                         max_extraction_concurrency=2),
+                         max_extraction_concurrency=1),
     "standard": MemoryProfile("standard", max_local_models=3, embedding_device=AUTO,
-                              max_concurrency=32, max_extraction_concurrency=4),
+                              max_concurrency=32, max_extraction_concurrency=2),
 }
 
 

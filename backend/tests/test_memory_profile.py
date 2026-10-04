@@ -58,3 +58,10 @@ def test_embedding_device_cannot_force_the_gpu(monkeypatch):
     monkeypatch.setenv("EMBEDDING_DEVICE", "cpu")
     get_settings.cache_clear()
     assert active_profile().embedding_device == "cpu"
+
+
+def test_extraction_runs_one_chunk_at_a_time_on_low(monkeypatch):
+    # Measured on the MLX server (8 GB): 2 extractions at once took as long as 1.
+    monkeypatch.setenv("MEMORY_PROFILE", "low")
+    assert active_profile().max_extraction_concurrency == 1
+    assert PROFILES["standard"].max_extraction_concurrency == 2
