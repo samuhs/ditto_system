@@ -1038,7 +1038,10 @@ def test_graph_builds_the_indexes_grafo_once_and_answers_from_its_chunks(session
     assert [c["text"] for c in row.retrieved_context] == chunks
     assert row.scores["context_hit"] == 1.0 and row.scores["context_recall_gold"] == 1.0
     # What the Grafo found and used is kept per result, apart from the chunks.
-    assert [e["name"] for e in row.graph_explanation["entities"]] == ["Praça Central"]
+    # The relation's target has no entity line: consolidation promotes it to an entity.
+    assert sorted(e["name"] for e in row.graph_explanation["entities"]) == [
+        "Igreja Matriz", "Praça Central",
+    ]
     assert row.graph_explanation["facts"] == [
         "Praça Central → Igreja Matriz: A praça fica ao lado da igreja."
     ]

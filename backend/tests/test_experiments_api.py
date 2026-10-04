@@ -554,14 +554,17 @@ def test_graph_rows_explain_what_the_grafo_found_and_used(client):
 
     rows = {row["rag"]: row for row in client.get(f"/experiments/{exp_id}").json()["results"]}
     graph = rows["graph"]
-    assert [e["name"] for e in graph["graph_explanation"]["entities"]] == ["Parque Ecológico"]
+    # "Festa do Peão" only appears as a relation's target: consolidation promotes it.
+    assert sorted(e["name"] for e in graph["graph_explanation"]["entities"]) == [
+        "Festa do Peão", "Parque Ecológico",
+    ]
     assert graph["graph_explanation"]["facts"] == [
         "Parque Ecológico → Festa do Peão: A festa é no parque."
     ]
     # Annotated Entidades-ponte match the Grafo's names ignoring case and accents.
     assert graph["bridges_found"] == [
         {"entity": "parque ecologico", "found": True},
-        {"entity": "Festa do Peão", "found": False},
+        {"entity": "Festa do Peão", "found": True},
         # Part of a name is not the entity.
         {"entity": "Parque", "found": False},
     ]
@@ -570,8 +573,10 @@ def test_graph_rows_explain_what_the_grafo_found_and_used(client):
 
     text = client.get(f"/experiments/{exp_id}/export.csv").content.decode("utf-8")
     by_rag = {row["rag"]: row for row in csv.DictReader(io.StringIO(text.lstrip("﻿")))}
-    assert by_rag["graph"]["grafo_entidades_encontradas"] == "Parque Ecológico"
+    assert sorted(by_rag["graph"]["grafo_entidades_encontradas"].split("|")) == [
+        "Festa do Peão", "Parque Ecológico",
+    ]
     assert by_rag["graph"]["grafo_fatos_usados"] == "Parque Ecológico → Festa do Peão: A festa é no parque."
-    assert by_rag["graph"]["grafo_pontes_encontradas"] == "parque ecologico"
-    assert by_rag["graph"]["grafo_entities"] == "1"
+    assert by_rag["graph"]["grafo_pontes_encontradas"] == "parque ecologico|Festa do Peão"
+    assert by_rag["graph"]["grafo_entities"] == "2"
     assert by_rag["naive"]["grafo_entidades_encontradas"] == ""
