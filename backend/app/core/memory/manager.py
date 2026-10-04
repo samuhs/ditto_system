@@ -231,3 +231,9 @@ def get_model_manager() -> ModelManager:
         if _manager is None:
             _manager = ModelManager(build_embedder, max_local=active_profile().max_local_models)
         return _manager
+
+
+# One heavy task at a time: an experiment or a Grafo de conhecimento build. Each
+# loads an LLM and embedders; two at once would not fit the low profile. Queued
+# tasks wait here (single uvicorn process, so a module-level semaphore is enough).
+work_slot = threading.Semaphore(1)

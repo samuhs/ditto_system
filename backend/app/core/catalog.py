@@ -5,7 +5,8 @@ always reflects what is stored, with no bookkeeping of its own.
 """
 from pydantic import BaseModel
 
-from app.core.graph.knowledge import _META
+from app.core.graph.jobs import GraphBuildJob
+from app.core.graph.knowledge import graph_meta
 from app.core.vectorstore.qdrant import QdrantStore, graph_entities_index, parse_collection_name
 
 
@@ -36,14 +37,15 @@ class BaseSummary(BaseModel):
     name: str
     indexes: list[IndexSummary]
     in_use: str | None = None
+    # Grafo builds of this Base still running, queued or paused, with their progress.
+    graph_builds: list[GraphBuildJob] = []
 
 
 def _graph_summary(store: QdrantStore, entities_name: str) -> GraphSummary | None:
     """The Grafo's summary from its metadata point; None if it was never finished."""
-    points = store.scroll(entities_name, where={"record": _META}, limit=1)
-    if not points:
+    meta = graph_meta(store, entities_name)
+    if meta is None:
         return None
-    meta = points[0]["payload"]
     stats = meta.get("stats", {})
     lines = stats.get("lines", 0)
     failed = stats.get("failed_lines", 0)

@@ -174,6 +174,15 @@ class KnowledgeGraph:
         return list(self.graph.neighbors(key)) if key in self.graph else []
 
 
+def graph_meta(store: QdrantStore, entities_name: str) -> dict | None:
+    """A Grafo's metadata (LLM extrator, versions, stats) from its entities collection.
+
+    None if the Grafo was never finished: the metadata point is written last.
+    """
+    points = store.scroll(entities_name, where={"record": _META}, limit=1)
+    return points[0]["payload"] if points else None
+
+
 def load_graph(
     store: QdrantStore, base: str, chunking: str, embedding: str, extractor: str
 ) -> KnowledgeGraph | None:

@@ -185,31 +185,39 @@ def test_experiment_snapshots_prompts(client):
     assert "{context}" in detail["prompts"]["naive"]["answer"]
 
 
-def test_graph_snapshots_its_extraction_prompt_and_the_naive_answer_prompt(client):
+def _build_grafo(client, llm, extractor="gemini"):
+    """Build the base's Grafo beforehand, as a Grafo build job would: experiments only query."""
+    from contextlib import nullcontext
+
+    from app.core.graph.build import build_graph
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    build_graph(deps.store, "viagem", "recursive", "gemini", extractor, llm,
+                lambda: nullcontext(_FakeEmbedder()))
+
+
+def test_graph_snapshots_only_the_naive_answer_prompt(client):
     from app.core.prompts import load_prompt
 
+    _build_grafo(client, _FakeLLM())
     exp_id = _post_with_metrics(
         client, ["rouge_l"], "pergunta\nOnde?\n", rags=("graph",)
     ).json()["id"]
 
     prompts = client.get(f"/experiments/{exp_id}").json()["prompts"]
-    assert set(prompts) == {"graph"}
-    assert prompts["graph"]["extract"] == load_prompt("graph", "extract")
-    assert prompts["graph"]["answer"] == load_prompt("naive", "answer")
+    assert prompts == {"graph": {"answer": load_prompt("naive", "answer")}}
 
 
 def test_graph_mix_snapshots_the_graphs_prompts_it_shares(client):
     from app.core.prompts import load_prompt
 
+    _build_grafo(client, _FakeLLM())
     exp_id = _post_with_metrics(
         client, ["rouge_l"], "pergunta\nOnde?\n", rags=("graph_mix",)
     ).json()["id"]
 
     prompts = client.get(f"/experiments/{exp_id}").json()["prompts"]
-    # The same Grafo as graph's: same extraction prompt, and the naive answer prompt.
-    assert prompts == {"graph_mix": {
-        "extract": load_prompt("graph", "extract"), "answer": load_prompt("naive", "answer"),
-    }}
+    assert prompts == {"graph_mix": {"answer": load_prompt("naive", "answer")}}
 
 
 def _seed_experiment(client, name="Exp Árvore/1"):
@@ -506,6 +514,7 @@ def test_graph_rows_carry_the_stats_of_their_grafo(client):
     import csv
 
     # The fake LLM never writes the extraction format: every line fails, the row still runs.
+    _build_grafo(client, _FakeLLM())
     exp_id = _post_with_metrics(
         client, ["rouge_l"], "pergunta,resposta_referencia\nOnde?,Ali\n", rags=("naive", "graph")
     ).json()["id"]
@@ -542,9 +551,7 @@ class _ExtractingLLM:
 def test_graph_rows_explain_what_the_grafo_found_and_used(client):
     import csv
 
-    client.app.dependency_overrides[get_experiment_deps]().llm_factory = (
-        lambda name, **kw: _ExtractingLLM()
-    )
+    _build_grafo(client, _ExtractingLLM())
     exp_id = _post_with_metrics(
         client, ["rouge_l"],
         "pergunta,resposta_referencia,tipo,entidades_ponte\n"

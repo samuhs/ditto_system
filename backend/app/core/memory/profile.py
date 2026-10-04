@@ -19,11 +19,16 @@ class MemoryProfile:
     # "cpu" always; "auto" lets the device policy pick the GPU when the LLM leaves it free.
     embedding_device: str
     max_concurrency: int
+    # Chunks the LLM extrator reads at once while building a Grafo de conhecimento
+    # (measured on the local MLX server: docs/research/2026-10-04-correcoes-consulta-grafo.md).
+    max_extraction_concurrency: int = 1
 
 
 PROFILES: dict[str, MemoryProfile] = {
-    "low": MemoryProfile("low", max_local_models=1, embedding_device=CPU, max_concurrency=2),
-    "standard": MemoryProfile("standard", max_local_models=3, embedding_device=AUTO, max_concurrency=32),
+    "low": MemoryProfile("low", max_local_models=1, embedding_device=CPU, max_concurrency=2,
+                         max_extraction_concurrency=2),
+    "standard": MemoryProfile("standard", max_local_models=3, embedding_device=AUTO,
+                              max_concurrency=32, max_extraction_concurrency=4),
 }
 
 

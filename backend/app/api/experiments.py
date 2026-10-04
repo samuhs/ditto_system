@@ -6,13 +6,14 @@ import unicodedata
 from datetime import timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config.runtime import get_eval_embedding
 from app.core.db.base import SessionLocal
 from app.core.db.models import Experiment
 from app.core.evaluation.gold_metrics import ALL_HOPS_METRIC, hops_found
+from app.core.graph.build import current_extractors
 from app.core.memory.manager import get_model_manager
 from app.core.memory.profile import active_profile
 from app.core.prompts import PROMPT_SPECS, load_prompt, load_technique
@@ -24,12 +25,11 @@ from app.experiments.naming import generate_experiment_name
 from app.experiments.orchestrator import (
     ExperimentDeps,
     _pause_requested,
-    graph_build_progress,
     request_pause,
     run_experiment,
 )
-from app.experiments.preflight import graphs_to_build, memory_warnings
-from app.experiments.schemas import ExperimentConfig, IndexPair, combination_count, index_pairs
+from app.experiments.preflight import memory_warnings
+from app.experiments.schemas import ExperimentConfig, combination_count, index_pairs
 
 router = APIRouter()
 
@@ -188,9 +188,9 @@ def _snapshot_prompts(config: ExperimentConfig) -> dict[str, dict[str, str]]:
     snapshot = {t: load_technique(t) for t in techniques if t in PROMPT_SPECS}
     for t in config.rags:
         if t in rag_registry.names() and rag_registry.get(t).uses_graph:
-            # Every GraphRAG shares graph's extraction prompt (one Grafo per Índice x
-            # LLM extrator) and answers with the naive prompt: snapshot both to replay.
-            snapshot[t] = {**load_technique("graph"), "answer": load_prompt("naive", "answer")}
+            # GraphRAG answers with the naive prompt. It never extracts: the Grafo it
+            # queries keeps its own extraction prompt in its metadata.
+            snapshot[t] = {"answer": load_prompt("naive", "answer")}
     return snapshot
 
 
@@ -233,6 +233,45 @@ def _check_evidence_for(config: ExperimentConfig, items: list) -> None:
         )
 
 
+def _check_graphs(config: ExperimentConfig, store: QdrantStore) -> None:
+    """GraphRAG only queries: every chosen Índice needs a current Grafo by one LLM extrator (422).
+
+    Fills in config.graph_extractor when it is not given and exactly one LLM
+    extrator has a current Grafo on every chosen Índice; clears it without GraphRAG.
+    """
+    graph_rags = [
+        r for r in config.rags if r in rag_registry.names() and rag_registry.get(r).uses_graph
+    ]
+    if not graph_rags:
+        config.graph_extractor = None
+        return
+    pairs = list(dict.fromkeys(index_pairs(config)))
+    available = {pair: set(current_extractors(store, config.base, *pair)) for pair in pairs}
+    techniques = " e ".join(graph_rags)
+    if config.graph_extractor is None:
+        common = set.intersection(*available.values()) if available else set()
+        if len(common) == 1:
+            config.graph_extractor = common.pop()
+            return
+        if common:
+            raise HTTPException(status_code=422, detail=(
+                f"Os Índices escolhidos têm Grafos de conhecimento de mais de um LLM extrator "
+                f"({', '.join(sorted(common))}): escolha qual {techniques} vai consultar."
+            ))
+    missing = [
+        f"{chunking} × {embedding}"
+        for (chunking, embedding), extractors in available.items()
+        if config.graph_extractor not in extractors
+    ]
+    if missing:
+        by = f" do LLM extrator {config.graph_extractor}" if config.graph_extractor else ""
+        raise HTTPException(status_code=422, detail=(
+            f"{techniques} só consulta Índices que já têm Grafo de conhecimento{by}, e estes "
+            f"não têm (ou o Grafo está desatualizado): {', '.join(missing)}. Gere o Grafo na "
+            f"ingestão ou na tela de Bases, ou desmarque esses Índices."
+        ))
+
+
 @router.post("/experiments")
 async def create_experiment(
     background_tasks: BackgroundTasks,
@@ -261,6 +300,7 @@ async def create_experiment(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     _check_evidence_for(parsed, items)
+    _check_graphs(parsed, deps.store)
 
     session = deps.session_factory()
     try:
@@ -284,25 +324,6 @@ async def create_experiment(
     background_tasks.add_task(run_experiment, experiment_id, parsed, items, deps)
     warnings = memory_warnings(parsed, active_profile())
     return {"id": experiment_id, "name": name, "status": "pending", "warnings": warnings}
-
-
-class GraphPreflight(BaseModel):
-    """What the experiment form has chosen so far, to count the Grafos to build."""
-
-    base: str
-    indexes: list[IndexPair]
-    rags: list[str]
-    llms: list[str]
-
-
-@router.post("/experiments/preflight")
-def preflight_experiment(
-    body: GraphPreflight,
-    deps: ExperimentDeps = Depends(get_experiment_deps),
-) -> dict:
-    """Before running: the Grafos de conhecimento (Índice x LLM extrator) still to build."""
-    indexes = [(i.chunking, i.embedding) for i in body.indexes]
-    return {"graphs_to_build": graphs_to_build(deps.store, body.base, indexes, body.rags, body.llms)}
 
 
 @router.post("/experiments/{experiment_id}/pause")
@@ -377,13 +398,13 @@ def get_experiment(
             "pause_requested": _pause_requested(experiment_id),
             "error": cfg.get("error") or None,
             "eval_embedding": cfg.get("eval_embedding"),
+            # The LLM extrator whose Grafos graph/graph_mix queried; None without them.
+            "graph_extractor": cfg.get("graph_extractor"),
             "progress": {
                 "completed": completed_combos,
                 "total": total_combos,
-                # Staged runs: "generating", then "evaluating" (scoring the answers);
-                # "building_graph" while a Grafo is built, with chunks extracted / total.
+                # Staged runs: "generating", then "evaluating" (scoring the answers).
                 "phase": cfg.get("phase"),
-                "graph": graph_build_progress(experiment_id),
             },
             "prompts": cfg.get("prompts"),
             "results": results,

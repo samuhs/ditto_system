@@ -1,6 +1,8 @@
 """Pydantic schemas for ingestion."""
 from pydantic import BaseModel
 
+from app.core.graph.jobs import GraphBuildJob
+
 
 class Document(BaseModel):
     """A source document to ingest."""
@@ -22,3 +24,5 @@ class IngestResult(BaseModel):
 
     collections: list[str]
     total_chunks: int
+    # The Grafo de conhecimento build queued after the Índices; None without one.
+    graph_build: GraphBuildJob | None = None

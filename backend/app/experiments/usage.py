@@ -1,49 +1,50 @@
-"""Which Bases are in use now, so they are not deleted from under a run."""
+"""Which Bases are in use now, so they are not deleted from under a run or a build."""
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.db.models import Experiment
-from app.experiments.orchestrator import graph_build_progress
+from app.core.graph.jobs import GraphBuildJob, GraphBuilds, graph_builds
 
 # Statuses of an experiment that will still read its Base: running or queued.
 _ACTIVE = ("running", "pending")
 
-_WAIT = " Aguarde terminar ou pause o experimento."
 
-
-def _reason(experiment: Experiment, base: str, building: bool) -> str:
-    if building:
-        doing = (
-            f'Um Grafo de conhecimento da base "{base}" está sendo construído pelo '
-            f'experimento "{experiment.name}".'
-        )
-    elif experiment.status == "running":
+def _experiment_reason(experiment: Experiment, base: str) -> str:
+    if experiment.status == "running":
         doing = f'O experimento "{experiment.name}" está rodando sobre a base "{base}".'
     else:
         doing = f'O experimento "{experiment.name}" está na fila para usar a base "{base}".'
-    return doing + _WAIT
+    return doing + " Aguarde terminar ou pause o experimento."
 
 
-def bases_in_use(session: Session) -> dict[str, str]:
+def _build_reason(job: GraphBuildJob) -> str:
+    if job.status == "running":
+        doing = (
+            f'Um Grafo de conhecimento da base "{job.base}" está sendo construído '
+            f"(LLM extrator {job.extractor})."
+        )
+    else:
+        doing = (
+            f'Um Grafo de conhecimento da base "{job.base}" está na fila para ser construído '
+            f"(LLM extrator {job.extractor})."
+        )
+    return doing + " Aguarde terminar ou pause a construção."
+
+
+def bases_in_use(session: Session, builds: GraphBuilds = graph_builds) -> dict[str, str]:
     """Base -> why it is in use (PT-BR, shown to the user), for every Base in use now.
 
-    A Base is in use while an experiment on it runs or waits in the queue; a
-    Grafo de conhecimento being built for it is named first. Every build runs
-    inside an experiment today: a build started elsewhere must be added here.
+    A Base is in use while a Grafo de conhecimento build or an experiment on it
+    runs or waits in the queue; a build is named first.
     """
+    reasons: dict[str, str] = {}
+    for job in builds.active():
+        reasons.setdefault(job.base, _build_reason(job))
     experiments = session.scalars(
         select(Experiment).where(Experiment.status.in_(_ACTIVE)).order_by(Experiment.id)
     )
-    reasons: dict[str, str] = {}
-    building_bases: set[str] = set()
     for experiment in experiments:
         base = (experiment.config or {}).get("base")
-        if not base or base in building_bases:
-            continue
-        building = graph_build_progress(experiment.id) is not None
-        if building:
-            building_bases.add(base)
-        elif base in reasons:
-            continue
-        reasons[base] = _reason(experiment, base, building)
+        if base and base not in reasons:
+            reasons[base] = _experiment_reason(experiment, base)
     return reasons

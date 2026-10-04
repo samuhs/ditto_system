@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from app.core.chunking.base import chunking_registry
 from app.core.embedding.base import embedding_registry
 from app.core.evaluation.base import evaluation_registry
+from app.core.graph.build import current_extractors
 from app.core.config.runtime import get_gemini_key
 from app.core.llm.gemini import DEFAULT_GEMINI_MODEL
 from app.core.llm.ollama import list_ollama_models
@@ -40,22 +41,27 @@ def _llm_options(list_ollama: Callable[[], list[str]]) -> list[dict[str, str]]:
     return llms
 
 
-def _base_indexes(store: QdrantStore) -> dict[str, list[dict[str, str]]]:
+def _base_indexes(store: QdrantStore) -> dict[str, list[dict]]:
     """Indexed chunking x embedding pairs per base, read from the collection names.
 
-    Empty if the store is unreachable: a vector-store outage must not break the form pages.
+    Each lists the LLM extratores with a current Grafo de conhecimento of it:
+    graph and graph_mix are offered only for those. Empty if the store is
+    unreachable: a vector-store outage must not break the form pages.
     """
     try:
         names = store.list_collections()
+        indexes: dict[str, list[dict]] = {}
+        for name in sorted(names):
+            parsed = parse_collection_name(name)
+            if parsed is None:
+                continue
+            base, chunking, embedding = parsed
+            indexes.setdefault(base, []).append({
+                "chunking": chunking, "embedding": embedding,
+                "graph_extractors": current_extractors(store, base, chunking, embedding),
+            })
     except Exception:  # noqa: BLE001
         return {}
-    indexes: dict[str, list[dict[str, str]]] = {}
-    for name in sorted(names):
-        parsed = parse_collection_name(name)
-        if parsed is None:
-            continue
-        base, chunking, embedding = parsed
-        indexes.setdefault(base, []).append({"chunking": chunking, "embedding": embedding})
     return dict(sorted(indexes.items()))
 
 

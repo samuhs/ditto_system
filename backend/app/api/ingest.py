@@ -1,36 +1,23 @@
-"""Endpoint to ingest uploaded documents."""
-from collections.abc import Callable
+"""Endpoint to ingest uploaded documents (and, optionally, build their Grafo de conhecimento)."""
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-
+from app.api.deps import (  # noqa: F401  get_embedder_factory: tests override it here
+    get_embedder_factory,
+    get_graph_build_deps,
+    get_graph_builds,
+    get_models,
+    get_store,
+)
+from app.api.graph_builds import check_extractor, start_graph_build
 from app.core.chunking.base import chunking_registry
-from app.core.embedding.base import Embedder, build_embedder, embedding_registry
-from app.core.memory.manager import ModelManager, get_model_manager
-from app.core.memory.profile import active_profile
-from app.core.vectorstore.qdrant import QdrantStore
+from app.core.embedding.base import embedding_registry
+from app.core.graph.jobs import GraphBuildDeps, GraphBuilds
+from app.core.memory.manager import ModelManager
+from app.core.vectorstore.qdrant import QdrantStore, parse_collection_name
 from app.ingestion.pipeline import ingest_documents
 from app.ingestion.schemas import Document, IngestConfig, IngestResult
 
 router = APIRouter()
-
-
-def get_store() -> QdrantStore:
-    """FastAPI dependency providing the vector store."""
-    return QdrantStore()
-
-
-def get_embedder_factory() -> Callable[..., Embedder]:
-    """FastAPI dependency providing the embedder factory."""
-    return build_embedder
-
-
-def get_models(
-    embedder_factory: Callable[..., Embedder] = Depends(get_embedder_factory),
-) -> ModelManager:
-    """The shared model cache; a test-injected factory gets a private one."""
-    if embedder_factory is build_embedder:
-        return get_model_manager()
-    return ModelManager(embedder_factory, max_local=active_profile().max_local_models)
 
 
 def _csv(value: str) -> list[str]:
@@ -51,14 +38,19 @@ def _validate(names: list[str], available: list[str], kind: str) -> None:
 
 @router.post("/ingest", response_model=IngestResult)
 async def ingest(
+    background_tasks: BackgroundTasks,
     base: str = Form(...),
     chunkings: str = Form(...),
     embeddings: str = Form(...),
     files: list[UploadFile] = File(...),
+    # "Gerar Grafo de conhecimento": the LLM extrator; empty creates the Índices only.
+    graph_extractor: str | None = Form(None),
     store: QdrantStore = Depends(get_store),
     models: ModelManager = Depends(get_models),
+    builds: GraphBuilds = Depends(get_graph_builds),
+    graph_deps: GraphBuildDeps = Depends(get_graph_build_deps),
 ) -> IngestResult:
-    """Ingest uploaded documents under the given configuration."""
+    """Create the Índices now; with a graph_extractor, queue their Grafo build after them."""
     documents = []
     for file in files:
         raw = await file.read()
@@ -75,4 +67,13 @@ async def ingest(
     )
     _validate(config.chunkings, chunking_registry.names(), "chunking")
     _validate(config.embeddings, embedding_registry.names(), "embedding")
-    return ingest_documents(documents, config, store, models=models)
+    with_graph = bool(graph_extractor and graph_extractor.strip())
+    if with_graph:  # refused before any Índice is written
+        check_extractor(graph_extractor, graph_deps)
+    result = ingest_documents(documents, config, store, models=models)
+    if with_graph:
+        indexes = [parse_collection_name(name)[1:] for name in result.collections]
+        result.graph_build = start_graph_build(
+            base, graph_extractor, indexes, builds, graph_deps, background_tasks
+        )
+    return result

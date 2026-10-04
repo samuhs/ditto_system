@@ -96,9 +96,9 @@ def test_options_lists_indexes_per_base():
     body = TestClient(app).get("/options").json()
     assert body["bases"] == ["faq", "viagem"]
     assert body["base_indexes"] == {
-        "faq": [{"chunking": "token", "embedding": "e5"}],
+        "faq": [{"chunking": "token", "embedding": "e5", "graph_extractors": []}],
         "viagem": [
-            {"chunking": "fixed", "embedding": "e5"},
-            {"chunking": "recursive", "embedding": "gemini"},
+            {"chunking": "fixed", "embedding": "e5", "graph_extractors": []},
+            {"chunking": "recursive", "embedding": "gemini", "graph_extractors": []},
         ],
     }

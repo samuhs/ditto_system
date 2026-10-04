@@ -1,4 +1,4 @@
-"""Build an Índice's Grafo de conhecimento on demand, as a LangGraph StateGraph.
+"""Build an Índice's Grafo de conhecimento, as a LangGraph StateGraph (run by a build job: jobs.py).
 
     START -> load_chunks -> [Send("extract", chunk) per chunk] -> merge -> write -> END
 
@@ -26,6 +26,7 @@ from app.core.graph.knowledge import (
     GraphEntity,
     GraphRelation,
     KnowledgeGraph,
+    graph_meta,
     index_chunks,
     load_graph,
     write_graph,
@@ -33,7 +34,12 @@ from app.core.graph.knowledge import (
 from app.core.llm.base import LLM
 from app.core.prompts import load_prompt
 from app.core.registry import Registry
-from app.core.vectorstore.qdrant import QdrantStore, graph_collection_names
+from app.core.vectorstore.qdrant import (
+    QdrantStore,
+    collection_name,
+    graph_collection_names,
+    graph_entities_index,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -253,15 +259,40 @@ def current_graph(
     graph = load_graph(store, base, chunking, embedding, extractor)
     if graph is None:
         return None
-    prompt = prompt or load_prompt("graph", "extract")
     texts = {cid: p.get("text", "") for cid, p in graph.chunks.items()}
-    if (
-        graph.meta.get("graph_version") != GRAPH_VERSION
-        or graph.meta.get("prompt_version") != prompt_version(prompt)
-        or graph.meta.get("chunks_fingerprint") != chunks_fingerprint(texts)
-    ):
-        return None
-    return graph
+    return graph if _is_current(graph.meta, chunks_fingerprint(texts), prompt) else None
+
+
+def _is_current(meta: dict, fingerprint: str, prompt: str | None) -> bool:
+    """Whether a Grafo's metadata matches this GRAPH_VERSION, prompt and Índice chunks."""
+    prompt = prompt or load_prompt("graph", "extract")
+    return (
+        meta.get("graph_version") == GRAPH_VERSION
+        and meta.get("prompt_version") == prompt_version(prompt)
+        and meta.get("chunks_fingerprint") == fingerprint
+    )
+
+
+def current_extractors(
+    store: QdrantStore, base: str, chunking: str, embedding: str, prompt: str | None = None,
+) -> list[str]:
+    """The LLM extratores with a current Grafo of this Índice, sorted.
+
+    Cheaper than current_graph: reads each Grafo's metadata point and the
+    Índice's chunk texts, never the entities and relations.
+    """
+    index = collection_name(base, chunking, embedding)
+    graphs = [n for n in store.list_collections() if graph_entities_index(n) == index]
+    if not graphs:
+        return []
+    texts = {cid: p.get("text", "") for cid, p in index_chunks(store, base, chunking, embedding).items()}
+    fingerprint = chunks_fingerprint(texts)
+    found = []
+    for name in graphs:
+        meta = graph_meta(store, name)
+        if meta is not None and _is_current(meta, fingerprint, prompt):
+            found.append(meta["extractor"])
+    return sorted(found)
 
 
 def build_graph(

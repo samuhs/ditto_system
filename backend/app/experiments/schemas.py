@@ -53,6 +53,10 @@ class ExperimentConfig(BaseModel):
     # One model in memory at a time: embed the questions, generate, then score
     # (memory spec 3.4). False runs everything in one pass (escape hatch).
     staged: bool = True
+    # The LLM extrator whose Grafo de conhecimento graph/graph_mix query, one for the
+    # whole experiment (an Índice may have Grafos from several). None: no GraphRAG
+    # technique, or the API fills in the only extrator every chosen Índice has.
+    graph_extractor: str | None = None
 
 
 def index_pairs(config: ExperimentConfig) -> list[tuple[str, str]]:

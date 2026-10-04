@@ -210,29 +210,3 @@ def test_a_finished_experiment_or_one_on_another_base_does_not_block(client, ses
     assert client.delete("/bases/viagem").status_code == 200
 
 
-def test_a_base_whose_grafo_is_being_built_cannot_be_deleted(client, session_factory, monkeypatch):
-    from app.experiments import orchestrator
-
-    _ingest(client, "viagem")
-    experiment_id = _experiment(session_factory, "exp-grafo", "running")
-    monkeypatch.setitem(orchestrator._graph_progress, experiment_id, {"extracted": 2, "total": 5})
-
-    response = client.delete("/bases/viagem")
-
-    assert response.status_code == 409
-    assert "Grafo" in response.json()["detail"]
-
-
-def test_a_grafo_build_is_named_even_behind_a_queued_experiment(
-    client, session_factory, monkeypatch
-):
-    from app.experiments import orchestrator
-
-    _ingest(client, "viagem")
-    _experiment(session_factory, "exp-fila", "pending")
-    building = _experiment(session_factory, "exp-grafo", "running")
-    monkeypatch.setitem(orchestrator._graph_progress, building, {"extracted": 2, "total": 5})
-
-    detail = client.delete("/bases/viagem").json()["detail"]
-
-    assert "Grafo" in detail and "exp-grafo" in detail

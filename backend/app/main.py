@@ -10,7 +10,18 @@ import app.core.evaluation  # noqa: F401  registers evaluation metrics
 import app.core.llm  # noqa: F401  registers LLM providers
 import app.core.rag  # noqa: F401  registers RAG techniques
 import app.core.retrieval  # noqa: F401  registers retrievers
-from app.api import bases, chat, experiments, health, ingest, options, prompts, settings, system
+from app.api import (
+    bases,
+    chat,
+    experiments,
+    graph_builds,
+    health,
+    ingest,
+    options,
+    prompts,
+    settings,
+    system,
+)
 from app.core.db import models  # noqa: F401  registers models on Base.metadata
 from app.core.db.base import create_all
 
@@ -48,6 +59,7 @@ def create_app() -> FastAPI:
     app.include_router(options.router)
     app.include_router(ingest.router)
     app.include_router(bases.router)
+    app.include_router(graph_builds.router)
     app.include_router(experiments.router)
     app.include_router(prompts.router)
     app.include_router(chat.router)

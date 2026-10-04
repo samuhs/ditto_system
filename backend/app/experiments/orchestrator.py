@@ -1,10 +1,9 @@
 """Experiment orchestrator: run the cartesian product and persist results."""
 import logging
-import threading
 import time
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import AbstractContextManager, contextmanager, nullcontext
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -30,11 +29,10 @@ from app.core.llm import ollama
 from app.core.llm.factory import is_local_llm, resolve_llm
 from app.core.memory.device import resolve_embedding_device
 from app.core.memory.leases import CachedQueryEmbedder, LeaseSwitcher
-from app.core.memory.manager import ModelManager
+from app.core.memory.manager import ModelManager, work_slot
 from app.core.memory.profile import active_profile
 from app.core.memory.stats import process_memory_bytes
-from app.core.graph.build import GraphBuildPaused, build_graph, current_graph
-from app.core.graph.cache import ExtractionCache
+from app.core.graph.build import current_graph
 from app.core.prompts import PROMPT_SPECS
 from app.core.rag.base import build_rag, technique_class
 from app.core.retrieval.base import build_retriever
@@ -54,13 +52,8 @@ ERROR_PREFIX = "[ERRO: "
 # and the background task share this module-level state.
 _pause_requests: set[int] = set()
 
-# One experiment at a time: queued ones stay "pending" (shown as "Na fila").
-# Single uvicorn process, so a module-level semaphore is enough.
-_run_slot = threading.Semaphore(1)
-
-# Experiment id -> {"extracted", "total"} chunks of the Grafo being built (same
-# single-process reasoning; extraction threads update it, the API reads it).
-_graph_progress: dict[int, dict[str, int]] = {}
+# One experiment (or Grafo build) at a time: queued ones stay "pending" ("Na fila").
+_run_slot = work_slot
 
 
 def request_pause(experiment_id: int) -> None:
@@ -142,92 +135,6 @@ def _uses_graph(rag_name: str) -> bool:
     """Whether the technique answers from the Índice's Grafo de conhecimento."""
     technique = technique_class(rag_name)
     return technique is not None and technique.uses_graph
-
-
-def graph_build_progress(experiment_id: int) -> dict | None:
-    """Chunks extracted / total of the Grafo being built now, or None if none is."""
-    progress = _graph_progress.get(experiment_id)
-    return dict(progress) if progress is not None else None
-
-
-def _graph_embedder_scope(
-    deps: ExperimentDeps, embedding: str, llm_name: str, device: str
-) -> Callable[[], AbstractContextManager]:
-    """Staged: lease the Índice's embedder only to write the graph, after the extraction.
-
-    Where the profile holds one local model, a local LLM extrator is unloaded
-    first, so the two never share the memory; the embedder leaves before
-    generation (the LLM reloads on its next call).
-    """
-
-    @contextmanager
-    def lease():
-        if (
-            deps.models.max_local < 2
-            and is_local_llm(llm_name)
-            and deps.models.is_local(embedding)
-        ):
-            ollama.unload_local_llm(llm_name)
-        with deps.models.acquire(embedding, device) as embedder:
-            yield embedder
-        deps.models.evict_idle()
-
-    return lease
-
-
-def _run_graph(
-    deps: ExperimentDeps,
-    session: Session,
-    experiment: Experiment,
-    config: ExperimentConfig,
-    chunking: str,
-    embedding: str,
-    llm_name: str,
-    llm,
-    embedder,
-    leases: LeaseSwitcher,
-    prompt: str | None,
-    concurrency: int,
-    device: str,
-    staged: bool,
-):
-    """The run's Grafo de conhecimento: the cached one if current, else built now.
-
-    A build shows as the "building_graph" phase with chunks extracted / total,
-    reuses the extraction cache and raises GraphBuildPaused at a pause.
-    """
-    graph = current_graph(deps.store, config.base, chunking, embedding, llm_name, prompt)
-    if graph is not None:
-        return graph
-    experiment_id = experiment.id
-    if staged:
-        # The LLM extrator gets the memory: no embedder lease (a HyDE or
-        # multi-query fallback of an earlier run) stays loaded next to it.
-        leases.close()
-        deps.models.evict_idle()
-    previous_phase = (experiment.config or {}).get("phase")
-    _graph_progress[experiment_id] = {"extracted": 0, "total": 0}
-    _set_phase(session, experiment, "building_graph")
-
-    def on_progress(extracted: int, total: int) -> None:
-        _graph_progress[experiment_id] = {"extracted": extracted, "total": total}
-
-    try:
-        return build_graph(
-            deps.store, config.base, chunking, embedding, llm_name, llm,
-            embedder_scope=(
-                _graph_embedder_scope(deps, embedding, llm_name, device)
-                if staged
-                else lambda: nullcontext(embedder)
-            ),
-            prompt=prompt, max_concurrency=concurrency,
-            cache=ExtractionCache(deps.session_factory),
-            should_stop=lambda: _pause_requested(experiment_id),
-            on_progress=on_progress,
-        )
-    finally:
-        _graph_progress.pop(experiment_id, None)
-        _set_phase(session, experiment, previous_phase)
 
 
 def _error_result(run_id: int, question: QuestionItem, error: str) -> RunResult:
@@ -579,28 +486,26 @@ def _run_experiment(
                 if rag_name in PROMPT_SPECS or _uses_graph(rag_name):
                     rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
                 if _uses_graph(rag_name):
-                    # The LLM de resposta is, for now, also the LLM extrator.
-                    try:
-                        graph = _run_graph(
-                            deps, session, experiment, config, chunking, embedding,
-                            llm_name, llm, embedder, leases,
-                            prompt=(prompt_snapshot.get(rag_name) or {}).get("extract"),
-                            concurrency=concurrency, device=device, staged=staged,
-                        )
-                    except GraphBuildPaused:
-                        # Extracted chunks are cached: a new run extracts only the rest.
-                        paused = True
-                        run.status = "paused"
-                        session.commit()
-                        break
-                    except Exception as exc:  # noqa: BLE001  the other runs go on
-                        logger.error("graph build failed for run %d: %s", run.id, exc)
+                    # Only queries: the Grafo was built beforehand (ingestion or a
+                    # Grafo build), by the LLM extrator the experiment chose.
+                    graph = (
+                        current_graph(deps.store, config.base, chunking, embedding,
+                                      config.graph_extractor)
+                        if config.graph_extractor else None
+                    )
+                    if graph is None:
+                        # The API checks this up front; the Grafo can still go stale
+                        # (re-ingested Índice, edited prompt) while the run waits.
+                        logger.error("no current Grafo for run %d", run.id)
                         for question in questions:
-                            session.add(_error_result(run.id, question, f"Grafo: {exc}"))
+                            session.add(_error_result(run.id, question, (
+                                f"Grafo: não há Grafo de conhecimento atual do LLM extrator "
+                                f"{config.graph_extractor} para {chunking} × {embedding}"
+                            )))
                         run.status = "done"
                         session.commit()
                         continue
-                    run.graph_stats = graph.stats
+                    run.graph_stats = {**graph.stats, "extractor": graph.extractor}
                     session.commit()
                     rag_kwargs.update(graph=graph, embedder=embedder)
                 rag = deps.rag_factory(rag_name, **rag_kwargs)
