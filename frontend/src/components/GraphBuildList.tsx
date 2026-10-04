@@ -4,6 +4,9 @@ import type { GraphBuildJob, IndexBuild } from "../api/types";
 import { term } from "../glossary";
 import { StatusTag } from "./StatusTag";
 
+/** Still running, queued, or just started: not yet paused or finished. */
+export const isActiveBuild = (job: GraphBuildJob) => job.status === "pending" || job.status === "running";
+
 function indexState(index: IndexBuild): string {
   switch (index.status) {
     case "building":
@@ -35,7 +38,7 @@ export function GraphBuildList({ jobs, onPause, onResume }: GraphBuildListProps)
   return (
     <ul className="ditto-graph-builds" aria-label="Construções de Grafo de conhecimento">
       {jobs.map((job) => {
-        const active = job.status === "pending" || job.status === "running";
+        const active = isActiveBuild(job);
         return (
           <li key={job.id} className="ditto-graph-build">
             <div className="ditto-graph-build-head">

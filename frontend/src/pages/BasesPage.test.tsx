@@ -134,13 +134,10 @@ describe("BasesPage", () => {
     await user.click(await screen.findByRole("option", { name: /qwen3:1\.7b/i }));
     await user.click(within(dialog).getByRole("button", { name: /construir grafo/i }));
 
+    // Every Índice picked: indexes is omitted, per GraphBuildRequest's contract.
     await waitFor(() => expect(client.startGraphBuild).toHaveBeenCalledWith({
       base: "viagem",
       extractor: "qwen3:1.7b",
-      indexes: [
-        { chunking: "fixed", embedding: "e5" },
-        { chunking: "recursive", embedding: "gemini" },
-      ],
     }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
@@ -185,6 +182,8 @@ describe("BasesPage", () => {
     await user.click(within(dialog).getByRole("button", { name: /construir grafo/i }));
 
     expect(await screen.findByText("Construindo Grafo: 5 / 12 trechos")).toBeInTheDocument();
+    // The Base now reports itself in use (by its own build), so the action disables.
+    await waitFor(() => expect(within(base).getByRole("button", { name: /gerar grafo/i })).toBeDisabled());
 
     await user.click(screen.getByRole("button", { name: /pausar/i }));
     expect(client.pauseGraphBuild).toHaveBeenCalledWith(9);

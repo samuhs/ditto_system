@@ -12,7 +12,7 @@ import {
 } from "../api/client";
 import type { BaseSummary, GraphBuildJob, IndexPair, Options } from "../api/types";
 import { ChoiceGroup } from "../components/ChoiceGroup";
-import { GraphBuildList } from "../components/GraphBuildList";
+import { GraphBuildList, isActiveBuild } from "../components/GraphBuildList";
 import { llmSelectData } from "../components/llmOptions";
 import { Errata, Note, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
@@ -24,8 +24,6 @@ const POLL_MS = 2000;
 function indexKey(i: IndexPair): string {
   return `${i.chunking}|${i.embedding}`;
 }
-
-const isActiveBuild = (job: GraphBuildJob) => job.status === "pending" || job.status === "running";
 
 function hasActiveBuild(base: BaseSummary): boolean {
   return (base.graph_builds ?? []).some(isActiveBuild);
@@ -236,7 +234,13 @@ export function BasesPage() {
       const indexes: IndexPair[] = generating.indexes
         .filter((i) => genIndexKeys.includes(indexKey(i)))
         .map((i) => ({ chunking: i.chunking, embedding: i.embedding }));
-      await startGraphBuild({ base: generating.name, extractor, indexes });
+      // Omitted when every Índice is picked, matching GraphBuildRequest's contract.
+      const allPicked = indexes.length === generating.indexes.length;
+      await startGraphBuild({
+        base: generating.name,
+        extractor,
+        ...(allPicked ? {} : { indexes }),
+      });
       setGenerating(null);
       refresh();
     } catch (e) {
@@ -326,7 +330,8 @@ export function BasesPage() {
               legend="Índices"
               choices={generating.indexes.map((i) => ({
                 value: indexKey(i),
-                name: `${term("chunking", i.chunking).name} · ${term("embedding", i.embedding).name}`,
+                name: `${i.chunking} · ${i.embedding}`,
+                description: `${term("chunking", i.chunking).name} + ${term("embedding", i.embedding).name}`,
               }))}
               value={genIndexKeys}
               onChange={setGenIndexKeys}
