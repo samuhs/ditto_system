@@ -17,7 +17,12 @@ def make_engine(url: str) -> Engine:
     pool_pre_ping tests each pooled connection before use, so connections left
     dead by a database restart (e.g. Docker Desktop restarting) are replaced
     instead of failing the request or hanging until a TCP timeout.
+
+    A plain postgresql:// URL is pinned to psycopg2, the driver the project
+    ships: SQLAlchemy 2.1 changed that URL's default to psycopg (v3).
     """
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg2://" + url.removeprefix("postgresql://")
     return create_engine(url, pool_pre_ping=True)
 
 

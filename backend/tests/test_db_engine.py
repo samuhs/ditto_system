@@ -13,3 +13,13 @@ def test_dead_pooled_connection_is_replaced(tmp_path):
     dbapi_connection.close()
     with engine.connect() as conn:
         assert conn.execute(text("select 1")).scalar() == 1
+
+
+def test_a_plain_postgresql_url_uses_the_declared_psycopg2_driver():
+    # SQLAlchemy 2.1 made psycopg (v3) the default for postgresql://; the
+    # project ships psycopg2-binary.
+    assert make_engine("postgresql://u:p@localhost:5432/db").dialect.driver == "psycopg2"
+
+
+def test_an_explicit_driver_in_the_url_is_kept():
+    assert make_engine("sqlite:///:memory:").dialect.driver == "pysqlite"
