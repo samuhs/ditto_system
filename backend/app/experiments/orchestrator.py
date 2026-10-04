@@ -240,6 +240,21 @@ def _uses_graph(rag_name: str) -> bool:
     return technique is not None and technique.uses_graph
 
 
+def _existing_run(
+    session: Session, experiment_id: int,
+    chunking: str, embedding: str, rag_name: str, retriever_name: str, llm_name: str,
+) -> ExperimentRun | None:
+    """The ExperimentRun already recorded for this combination, if any (a Retomada's state)."""
+    return (
+        session.query(ExperimentRun)
+        .filter_by(
+            experiment_id=experiment_id, chunking=chunking, embedding=embedding,
+            rag_technique=rag_name, retriever=retriever_name, llm=llm_name,
+        )
+        .one_or_none()
+    )
+
+
 def _error_result(run_id: int, question: QuestionItem, error: str) -> RunResult:
     """The stored row of a question that could not be answered."""
     return RunResult(
@@ -358,6 +373,33 @@ def run_experiment(
     # One experiment (or Grafo build) at a time: queued ones stay "pending" ("Na fila").
     with work_slot:
         _run_experiment(experiment_id, config, questions, deps)
+
+
+def resume_experiment(experiment_id: int, deps: ExperimentDeps) -> None:
+    """Retomada: run a paused (or failed) experiment again, continuing from the database.
+
+    Sibling of `run_experiment`, scheduled by `POST /experiments/{id}/resume`. The
+    config and questions were recorded with the experiment at creation (#16) instead of
+    living only in the background task's memory, so a Retomada can read them back even
+    after an API restart. It then runs through the very same `_run_experiment` loop and
+    work slot: a Combinação with a `done` `ExperimentRun` is skipped, one `paused` or
+    `running` is reused (its `[ERRO]` rows are deleted and only unanswered questions
+    run), and one with no `ExperimentRun` yet is created — see `_existing_run`. The most
+    recent Registro de pausa entry gets `resumed_at` before the run starts.
+    """
+    session = deps.session_factory()
+    try:
+        experiment = session.get(Experiment, experiment_id)
+        config = ExperimentConfig(**(experiment.config or {}))
+        questions = [QuestionItem(**d) for d in (experiment.questions or [])]
+        if experiment.pauses:
+            pauses = list(experiment.pauses)
+            pauses[-1] = {**pauses[-1], "resumed_at": datetime.now(UTC).isoformat()}
+            experiment.pauses = pauses
+            session.commit()
+    finally:
+        session.close()
+    run_experiment(experiment_id, config, questions, deps)
 
 
 def _set_phase(session: Session, experiment: Experiment, phase: str | None) -> None:
@@ -565,16 +607,36 @@ def _run_experiment(
                     paused = True
                     break
 
-                run = ExperimentRun(
-                    experiment_id=experiment_id,
-                    chunking=chunking,
-                    embedding=embedding,
-                    rag_technique=rag_name,
-                    retriever=retriever_name,
-                    llm=llm_name,
-                    status="running",
+                # Retomada (#17): a Combinação already `done` is skipped; one `paused`
+                # or `running` is reused (its [ERRO] rows redone, valid ones kept); one
+                # with no ExperimentRun yet is created, exactly as on a first run.
+                run = _existing_run(
+                    session, experiment_id, chunking, embedding, rag_name, retriever_name, llm_name,
                 )
-                session.add(run)
+                if run is not None and run.status == "done":
+                    continue
+                if run is None:
+                    run = ExperimentRun(
+                        experiment_id=experiment_id,
+                        chunking=chunking,
+                        embedding=embedding,
+                        rag_technique=rag_name,
+                        retriever=retriever_name,
+                        llm=llm_name,
+                        status="running",
+                    )
+                    session.add(run)
+                    answered: set[str] = set()
+                else:
+                    run.status = "running"
+                    existing_results = list(run.results)
+                    answered = {
+                        r.question for r in existing_results
+                        if not r.generated_answer.startswith(ERROR_PREFIX)
+                    }
+                    for result in existing_results:
+                        if result.generated_answer.startswith(ERROR_PREFIX):
+                            session.delete(result)
                 session.commit()
 
                 if llm_name != loaded_llm_name:
@@ -610,6 +672,8 @@ def _run_experiment(
                         # (re-ingested Índice, edited prompt) while the run waits.
                         logger.error("no current Grafo for run %d", run.id)
                         for question in questions:
+                            if question.text in answered:
+                                continue  # a Retomada never redoes a valid answer
                             session.add(_error_result(run.id, question, (
                                 f"Grafo: não há Grafo de conhecimento atual do LLM extrator "
                                 f"{config.graph_extractor} para {chunking} × {embedding}"
@@ -628,6 +692,9 @@ def _run_experiment(
                     if getattr(rag, "uses_evidence", False)
                     else questions
                 )
+                # Retomada: a question already answered (not [ERRO]) never runs again.
+                if answered:
+                    run_questions = [q for q in run_questions if q.text not in answered]
                 combo = {
                     "chunking": chunking, "embedding": embedding,
                     "rag": rag_name, "retriever": retriever_name, "llm": llm_name,

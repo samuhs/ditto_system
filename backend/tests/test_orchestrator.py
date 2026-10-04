@@ -13,6 +13,7 @@ from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.orchestrator import (
     ExperimentDeps,
     request_pause,
+    resume_experiment,
     run_experiment,
 )
 from app.experiments.schemas import ExperimentConfig, QuestionItem
@@ -1109,5 +1110,229 @@ def test_failed_experiment_records_a_failed_pause_entry(session_factory):
     assert entry["reason"] == "failed"
     assert entry["last_error"]["message"] == "embedder indisponível"
     assert "Traceback" in entry["last_error"]["traceback"]
+    check.close()
+
+
+# ---- Retomada (issue #17): resume_experiment reads config/questions back from the
+# database and reuses _run_experiment's loop (skip done, reuse paused/running, create
+# what never ran).
+
+def _experiment_for_resume(
+    session_factory, name: str, config: ExperimentConfig, questions: list[QuestionItem],
+    status: str = "paused",
+) -> int:
+    """An Experiment row with its config and questions recorded, as #16's API does."""
+    session = session_factory()
+    experiment = Experiment(
+        name=name, status=status,
+        config=config.model_dump(),
+        questions=[q.model_dump() for q in questions],
+    )
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    return experiment_id
+
+
+def test_resume_runs_only_missing_questions_in_the_same_run(session_factory):
+    """A run paused mid-way keeps its valid result and only the missing question runs."""
+    from app.core.db.models import ExperimentRun, RunResult
+
+    store = _seeded_store()
+    config = _single_combo_config(1)
+    questions = [QuestionItem(text="q1"), QuestionItem(text="q2")]
+    experiment_id = _experiment_for_resume(session_factory, "resume-basic", config, questions)
+
+    session = session_factory()
+    run = ExperimentRun(
+        experiment_id=experiment_id, chunking="recursive", embedding="gemini",
+        rag_technique="naive", retriever="similarity", llm="gemini", status="paused",
+    )
+    run.results = [
+        RunResult(question="q1", generated_answer="Resposta antiga.",
+                  scores={"answer_relevancy": 1.0}, latency_ms=5, tokens=3),
+    ]
+    session.add(run)
+    session.commit()
+    session.close()
+
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=_llm_factory, embedder_factory=_embedder_factory,
+    )
+    resume_experiment(experiment_id, deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "done"
+    [run] = stored.runs
+    assert run.status == "done"
+    by_q = {r.question: r for r in run.results}
+    assert set(by_q) == {"q1", "q2"}
+    assert by_q["q1"].generated_answer == "Resposta antiga."  # never reprocessed
+    assert by_q["q2"].generated_answer == "The center is around the main square."
+    check.close()
+
+
+def test_resume_reruns_error_rows_but_keeps_valid_answers(session_factory):
+    """[ERRO] rows are deleted and redone; a valid answer is never redone."""
+    from app.core.db.models import ExperimentRun, RunResult
+
+    store = _seeded_store()
+    config = _single_combo_config(1)
+    questions = [QuestionItem(text="q1"), QuestionItem(text="q2")]
+    experiment_id = _experiment_for_resume(
+        session_factory, "resume-errors", config, questions, status="failed"
+    )
+
+    session = session_factory()
+    run = ExperimentRun(
+        experiment_id=experiment_id, chunking="recursive", embedding="gemini",
+        rag_technique="naive", retriever="similarity", llm="gemini", status="running",
+    )
+    run.results = [
+        RunResult(question="q1", generated_answer="Resposta boa.",
+                  scores={"answer_relevancy": 1.0}, latency_ms=5, tokens=3),
+        RunResult(question="q2", generated_answer="[ERRO: 503 UNAVAILABLE]",
+                  scores={}, latency_ms=0, tokens=0),
+    ]
+    session.add(run)
+    session.commit()
+    session.close()
+
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=_llm_factory, embedder_factory=_embedder_factory,
+    )
+    resume_experiment(experiment_id, deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "done"
+    [run] = stored.runs
+    assert len(run.results) == 2  # one row per question, no duplicates
+    by_q = {r.question: r for r in run.results}
+    assert by_q["q1"].generated_answer == "Resposta boa."
+    assert by_q["q2"].generated_answer == "The center is around the main square."
+    check.close()
+
+
+def test_resume_combination_matrix_done_paused_and_missing(session_factory):
+    """done is skipped untouched; paused is reused; a combination with no run is created."""
+    from app.core.db.models import ExperimentRun, RunResult
+
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="One. Two. Three. Four sentences here.")],
+        IngestConfig(base="viagem", chunkings=["recursive", "token"], embeddings=["gemini"]),
+        store, embedder_factory=_embedder_factory,
+    )
+    config = ExperimentConfig(
+        llms=["gemini"], base="viagem", chunkings=["recursive", "token"], embeddings=["gemini"],
+        rags=["naive"], retrievers=["similarity"], metrics=["answer_relevancy"],
+    )
+    questions = [QuestionItem(text="q1")]
+    experiment_id = _experiment_for_resume(session_factory, "resume-matrix", config, questions)
+
+    session = session_factory()
+    done_run = ExperimentRun(
+        experiment_id=experiment_id, chunking="recursive", embedding="gemini",
+        rag_technique="naive", retriever="similarity", llm="gemini", status="done",
+    )
+    done_run.results = [
+        RunResult(question="q1", generated_answer="Já pronta.",
+                  scores={"answer_relevancy": 1.0}, latency_ms=5, tokens=3),
+    ]
+    session.add(done_run)
+    session.commit()
+    session.close()
+
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=_llm_factory, embedder_factory=_embedder_factory,
+    )
+    resume_experiment(experiment_id, deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "done"
+    runs = {r.chunking: r for r in stored.runs}
+    assert set(runs) == {"recursive", "token"}
+    assert runs["recursive"].status == "done"
+    assert [r.generated_answer for r in runs["recursive"].results] == ["Já pronta."]
+    assert runs["token"].status == "done"
+    assert [r.question for r in runs["token"].results] == ["q1"]
+    check.close()
+
+
+def test_resume_sets_resumed_at_on_the_latest_pause_entry(session_factory):
+    store = _seeded_store()
+    config = _single_combo_config(1)
+    questions = [QuestionItem(text="q1")]
+    experiment_id = _experiment_for_resume(session_factory, "resume-pauses", config, questions)
+
+    session = session_factory()
+    experiment = session.get(Experiment, experiment_id)
+    experiment.pauses = [
+        {"paused_at": "2026-01-01T00:00:00+00:00", "reason": "manual", "phase": "generating",
+         "in_flight": [], "last_error": None, "memory": {"free_mb": 1, "api_mb": 1},
+         "resumed_at": None},
+    ]
+    session.commit()
+    session.close()
+
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=_llm_factory, embedder_factory=_embedder_factory,
+    )
+    resume_experiment(experiment_id, deps)
+
+    check = session_factory()
+    [entry] = check.get(Experiment, experiment_id).pauses
+    assert entry["resumed_at"] is not None
+    check.close()
+
+
+def test_resume_handles_several_pause_resume_cycles(session_factory):
+    """Pausing twice and resuming twice still ends with one row per question."""
+    store = _seeded_store()
+    config = _single_combo_config(1)
+    questions = [QuestionItem(text=f"q{i}") for i in range(4)]
+    experiment_id = _experiment_for_resume(session_factory, "resume-cycles", config, questions)
+
+    calls = {"n": 0}
+    pause_on = {1, 2}
+
+    class _TwicePausingLLM:
+        def generate(self, prompt: str) -> str:
+            calls["n"] += 1
+            if calls["n"] in pause_on:
+                request_pause(experiment_id)
+            return "answer"
+
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=lambda *a, **kw: _TwicePausingLLM(),
+        embedder_factory=_embedder_factory,
+    )
+
+    run_experiment(experiment_id, config, questions, deps)
+    check = session_factory()
+    assert check.get(Experiment, experiment_id).status == "paused"
+    check.close()
+
+    resume_experiment(experiment_id, deps)
+    check = session_factory()
+    assert check.get(Experiment, experiment_id).status == "paused"
+    check.close()
+
+    resume_experiment(experiment_id, deps)
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "done"
+    [run] = stored.runs
+    assert sorted(r.question for r in run.results) == ["q0", "q1", "q2", "q3"]
+    assert all(r.generated_answer == "answer" for r in run.results)
     check.close()
 

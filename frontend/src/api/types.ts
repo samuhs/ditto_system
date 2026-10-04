@@ -205,6 +205,10 @@ export interface ExperimentDetail {
   prompts?: Record<string, Record<string, string>>;
   /** Registro de pausa: every Pausa this experiment has had, oldest first. */
   pauses?: PauseEntry[];
+  /** Whether POST /resume would currently succeed (paused/failed, with questions recorded). */
+  resumable?: boolean;
+  /** Why it is not resumable right now; absent/null when `resumable` is true. */
+  resumable_reason?: string | null;
 }
 
 export interface PromptInfo {

@@ -643,3 +643,106 @@ def test_graph_rows_explain_what_the_grafo_found_and_used(client):
     assert by_rag["graph"]["grafo_pontes_encontradas"] == "parque ecologico|Festa do Peão"
     assert by_rag["graph"]["grafo_entities"] == "2"
     assert by_rag["naive"]["grafo_entidades_encontradas"] == ""
+
+
+# ---- Retomada (issue #17): POST /experiments/{id}/resume and GET's `resumable`.
+
+def _paused_experiment_with_questions(client, name="retomar-me", status="paused"):
+    """An Experiment row with config + questions recorded, as #16's API stores them."""
+    config = {
+        "base": "viagem", "chunkings": ["recursive"], "embeddings": ["gemini"],
+        "rags": ["naive"], "retrievers": ["similarity"], "metrics": ["answer_relevancy"],
+        "llms": ["gemini"],
+    }
+    questions = [{"text": "Onde fica o centro?"}]
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = Experiment(name=name, status=status, config=config, questions=questions)
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+    return exp_id
+
+
+def test_resume_missing_experiment_404(client):
+    assert client.post("/experiments/99999/resume").status_code == 404
+
+
+def test_resume_rejects_status_not_paused_or_failed(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 409
+    assert "done" in response.json()["detail"]
+
+
+def test_resume_rejects_experiment_without_stored_questions(client):
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = Experiment(name="antigo", status="paused", config={}, questions=None)
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 409
+    assert "perguntas" in response.json()["detail"]
+
+
+def test_resume_runs_to_completion(client):
+    exp_id = _paused_experiment_with_questions(client)
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 200
+    assert response.json() == {"id": exp_id, "status": "pending"}
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["status"] == "done"
+    assert len(detail["results"]) == 1
+    assert detail["results"][0]["answer"] == "An answer."
+
+
+def test_resume_allows_a_failed_experiment(client):
+    exp_id = _paused_experiment_with_questions(client, name="falhou", status="failed")
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 200
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["status"] == "done"
+
+
+def test_get_experiment_reports_resumable_when_paused_with_questions(client):
+    exp_id = _paused_experiment_with_questions(client)
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["resumable"] is True
+    assert detail["resumable_reason"] is None
+
+
+def test_get_experiment_reports_not_resumable_without_stored_questions(client):
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = Experiment(name="antigo2", status="paused", config={}, questions=None)
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["resumable"] is False
+    assert "perguntas" in detail["resumable_reason"]
+
+
+def test_get_experiment_reports_not_resumable_when_done(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+
+    detail = client.get(f"/experiments/{exp_id}").json()
+
+    assert detail["resumable"] is False
+    assert detail["resumable_reason"]

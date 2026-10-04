@@ -111,6 +111,11 @@ export async function pauseExperiment(id: number): Promise<{ id: number; status:
   return asJson(await fetch(`${BASE}/experiments/${id}/pause`, { method: "POST" }));
 }
 
+/** Retomada: resume a paused or failed experiment, rerunning only what is missing. */
+export async function resumeExperiment(id: number): Promise<{ id: number; status: string }> {
+  return asJson(await fetch(`${BASE}/experiments/${id}/resume`, { method: "POST" }));
+}
+
 export async function listExperiments(page = 1, pageSize = 20): Promise<ExperimentList> {
   return asJson<ExperimentList>(await fetch(`${BASE}/experiments?page=${page}&page_size=${pageSize}`));
 }

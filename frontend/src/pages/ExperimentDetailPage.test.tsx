@@ -409,6 +409,36 @@ describe("ExperimentDetailPage", () => {
     expect(client.pauseExperiment).toHaveBeenCalledWith(7);
   });
 
+  it.each(["paused", "failed"])(
+    "shows a Retomar button for a %s experiment and calls resumeExperiment",
+    async (status) => {
+      vi.mocked(client.getExperiment).mockResolvedValue({
+        id: 7,
+        name: "kind-ember-89",
+        status,
+        results: [],
+      });
+      vi.mocked(client.resumeExperiment).mockResolvedValue({ id: 7, status: "pending" });
+      renderPage();
+      const user = userEvent.setup();
+      const btn = await screen.findByRole("button", { name: /retomar/i });
+      await user.click(btn);
+      expect(client.resumeExperiment).toHaveBeenCalledWith(7);
+    },
+  );
+
+  it("shows no Retomar button for a running or done experiment", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "kind-ember-89",
+      status: "done",
+      results: [],
+    });
+    renderPage();
+    await screen.findByText("kind-ember-89");
+    expect(screen.queryByRole("button", { name: /retomar/i })).not.toBeInTheDocument();
+  });
+
   it("goes back to the list", async () => {
     renderPage();
     const user = userEvent.setup();
