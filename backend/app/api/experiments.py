@@ -180,9 +180,11 @@ def _snapshot_prompts(config: ExperimentConfig) -> dict[str, dict[str, str]]:
     if "multi_query" in config.retrievers:
         techniques.append("multi_query")
     snapshot = {t: load_technique(t) for t in techniques if t in PROMPT_SPECS}
-    if "graph" in snapshot:
-        # GraphRAG answers with the naive prompt: snapshot it too, so the run replays.
-        snapshot["graph"]["answer"] = load_prompt("naive", "answer")
+    for t in config.rags:
+        if t in rag_registry.names() and rag_registry.get(t).uses_graph:
+            # Every GraphRAG shares graph's extraction prompt (one Grafo per Índice x
+            # LLM extrator) and answers with the naive prompt: snapshot both to replay.
+            snapshot[t] = {**load_technique("graph"), "answer": load_prompt("naive", "answer")}
     return snapshot
 
 

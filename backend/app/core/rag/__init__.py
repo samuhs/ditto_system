@@ -5,6 +5,7 @@ from app.core.rag import (  # noqa: F401  registers the built-ins
     compression,
     crag,
     graph,
+    graph_mix,
     hyde,
     naive,
     oracle,

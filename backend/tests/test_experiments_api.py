@@ -198,6 +198,20 @@ def test_graph_snapshots_its_extraction_prompt_and_the_naive_answer_prompt(clien
     assert prompts["graph"]["answer"] == load_prompt("naive", "answer")
 
 
+def test_graph_mix_snapshots_the_graphs_prompts_it_shares(client):
+    from app.core.prompts import load_prompt
+
+    exp_id = _post_with_metrics(
+        client, ["rouge_l"], "pergunta\nOnde?\n", rags=("graph_mix",)
+    ).json()["id"]
+
+    prompts = client.get(f"/experiments/{exp_id}").json()["prompts"]
+    # The same Grafo as graph's: same extraction prompt, and the naive answer prompt.
+    assert prompts == {"graph_mix": {
+        "extract": load_prompt("graph", "extract"), "answer": load_prompt("naive", "answer"),
+    }}
+
+
 def _seed_experiment(client, name="Exp Árvore/1"):
     """Insert an experiment with two results, one of them missing a metric."""
     from app.core.db.models import Experiment, ExperimentRun, RunResult

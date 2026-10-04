@@ -485,7 +485,7 @@ def _run_experiment(
                     prompts=prompt_snapshot.get("multi_query"),
                 )
                 rag_kwargs = {"retriever": retriever, "llm": llm}
-                if rag_name in PROMPT_SPECS:
+                if rag_name in PROMPT_SPECS or _uses_graph(rag_name):
                     rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
                 if _uses_graph(rag_name):
                     # The LLM de resposta is, for now, also the LLM extrator. A graph

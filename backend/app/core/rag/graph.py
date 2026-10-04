@@ -9,6 +9,7 @@ The query is a LangGraph StateGraph with no LLM call before generation:
 
 The contexts are the Índice's chunks, in the same format as the other techniques.
 """
+from collections.abc import Callable
 from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -119,17 +120,22 @@ class GraphRAG(RAG):
             prompt = answer_prompt.format(context=context, question=state["question"])
             return {"answer": llm.generate(prompt).strip()}
 
+        steps = [
+            ("link", link), ("expand", expand), ("score_chunks", score_chunks),
+            *self._extra_steps(top_k), ("generate", generate),
+        ]
         flow = StateGraph(QueryState)
-        for name, node in [
-            ("link", link), ("expand", expand), ("score_chunks", score_chunks), ("generate", generate)
-        ]:
+        previous = START
+        for name, node in steps:
             flow.add_node(name, node)
-        flow.add_edge(START, "link")
-        flow.add_edge("link", "expand")
-        flow.add_edge("expand", "score_chunks")
-        flow.add_edge("score_chunks", "generate")
-        flow.add_edge("generate", END)
+            flow.add_edge(previous, name)
+            previous = name
+        flow.add_edge(previous, END)
         return flow.compile()
+
+    def _extra_steps(self, top_k: int) -> list[tuple[str, Callable[[QueryState], dict]]]:
+        """Nodes run between score_chunks and generate (graph_mix adds its union)."""
+        return []
 
     def _facts(self, state: QueryState) -> list[str]:
         """The matched relations, then those touching a matched entity, within budget."""

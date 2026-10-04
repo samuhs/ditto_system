@@ -1100,3 +1100,44 @@ def test_a_grafo_that_cannot_be_built_fails_only_its_own_row(session_factory):
     check.close()
     assert answers["graph"].startswith("[ERRO: Grafo:")
     assert answers["naive"] == "Resposta gerada."
+
+
+def test_graph_mix_runs_per_retriever_and_unites_the_grafos_chunks_with_the_retrievers(
+    session_factory,
+):
+    from app.core.vectorstore.qdrant import collection_name
+
+    store = _indexed_store("e5")
+    chunks = [p["payload"]["text"] for p in store.scroll(collection_name("viagem", "recursive", "e5"))]
+    extractions = []
+    deps = _staged_deps(store, session_factory, [])
+    deps.llm_factory = lambda name, **kw: _GraphLLM(extractions)
+    experiment_id = _new_experiment(session_factory, "graph-mix")
+
+    run_experiment(
+        experiment_id,
+        _staged_config(rags=["graph", "graph_mix"], retrievers=["similarity", "mmr"],
+                       metrics=["context_hit"]),
+        [QuestionItem(text="Where?", evidence=["Para one."])],
+        deps,
+    )
+
+    check = session_factory()
+    experiment = check.get(Experiment, experiment_id)
+    assert experiment.status == "done"
+    runs = {(r.rag_technique, r.retriever): r for r in experiment.runs}
+    # graph_mix multiplies by the Retrievers; graph does not.
+    assert sorted(runs) == [
+        ("graph", "similarity"), ("graph_mix", "mmr"), ("graph_mix", "similarity"),
+    ]
+    for key in [("graph_mix", "mmr"), ("graph_mix", "similarity")]:
+        run = runs[key]
+        assert run.graph_stats["entities"] == 2
+        [row] = run.results
+        texts = [c["text"] for c in row.retrieved_context]
+        # Every chunk once: the Grafo's and the Retriever's, united.
+        assert sorted(texts) == sorted(chunks) and len(texts) == len(set(texts))
+        assert row.generated_answer == "Resposta gerada."
+    check.close()
+    # One Grafo for the Índice, shared by graph and graph_mix.
+    assert len(extractions) == len(chunks)
