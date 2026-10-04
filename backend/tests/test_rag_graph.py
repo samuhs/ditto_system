@@ -160,6 +160,76 @@ def test_answer_keeps_the_entities_found_and_the_facts_used_apart_from_the_conte
     assert not any("→" in c["text"] for c in result.contexts)
 
 
+CITY = "Santo Antônio da Alegria"
+# Ten chunks: the city in nine, the event in two, an unrelated creche in one.
+GUIDE = {
+    "Primeira edição do encontro.": ["Encontro de Carros Antigos", CITY],
+    "Segunda edição do encontro.": ["Encontro de Carros Antigos", CITY],
+    "A creche atende crianças.": ["Creche Maria do Carmo", CITY],
+    **{f"Rua número {n} da cidade.": [CITY] for n in "abcdef"},
+    "A igreja fica na praça.": ["Igreja Matriz"],
+}
+EVENT_QUESTION = "Em que mês acontece o Encontro de Carros Antigos?"
+
+
+class _GuideEmbedder:
+    """The event question lies nearest to the event, then the creche, then the city."""
+
+    dimension = 4
+    _AXES = {"Encontro": 0, "Creche": 1, "Santo": 2}
+
+    def embed_query(self, text):
+        if text == EVENT_QUESTION:
+            return [0.9, 0.5, 0.3, 0.0]
+        vector = [0.0, 0.0, 0.0, 0.1]
+        axis = self._AXES.get(text.split()[0])
+        if axis is not None:
+            vector[axis] = 1.0
+        return vector
+
+    def embed_documents(self, texts):
+        return [self.embed_query(t) for t in texts]
+
+
+class _GuideExtractorLLM:
+    def generate(self, prompt):
+        body = next(b for b in GUIDE if b in prompt)
+        return "".join(f"entidade<|>{name}<|>lugar<|>Citado.\n" for name in GUIDE[body]) + "<|FIM|>"
+
+
+def _guide_graph():
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    text = "\n\n".join(f"# Seção {i}\n{body}" for i, body in enumerate(GUIDE))
+    ingest_documents(
+        [Document(name="guia.md", text=text)],
+        IngestConfig(base="guia", chunkings=["markdown"], embeddings=["kw"]),
+        store, embedder_factory=lambda name, **kw: _GuideEmbedder(),
+    )
+    return ensure_graph(
+        store, base="guia", chunking="markdown", embedding="kw", extractor="qwen",
+        llm=_GuideExtractorLLM(), embedder=_GuideEmbedder(),
+    )
+
+
+def test_specificity_is_a_soft_idf_so_an_entity_in_two_chunks_is_not_halved():
+    graph = _guide_graph()
+    assert len(graph.chunks) == 10
+
+    # The city, in nine chunks of ten, counts for almost nothing; one chunk counts fully.
+    assert graph.specificity(CITY.casefold()) < 0.1
+    assert graph.specificity("creche maria do carmo") == 1.0
+    assert 0.5 < graph.specificity("encontro de carros antigos") < 1.0
+
+    rag = build_rag(
+        "graph", retriever=None, llm=_AnswerLLM(), graph=graph, embedder=_GuideEmbedder(),
+        top_k_entities=3, top_k_relations=1, top_k=1,
+    )
+    # The event is nearer the question than the creche: with 1/n its two chunks
+    # would halve it below the creche's one; with the soft IDF it comes first.
+    [context] = rag.answer(EVENT_QUESTION).contexts
+    assert "edição do encontro" in context["text"]
+
+
 def test_techniques_without_a_grafo_have_no_graph_explanation():
     from app.core.rag.base import RAGResult
 

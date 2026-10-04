@@ -5,6 +5,8 @@ with the ids of the chunks they came from. The entities collection also holds on
 metadata point (LLM extrator, prompt, stats), written last: a graph without it was
 never finished.
 """
+import math
+
 import networkx as nx
 from pydantic import BaseModel
 
@@ -153,9 +155,19 @@ class KnowledgeGraph:
         return [(GraphRelation.model_validate(h["payload"]), h["score"]) for h in hits]
 
     def specificity(self, key: str) -> float:
-        """1 / the number of chunks the entity appears in (HippoRAG's node specificity)."""
+        """A soft IDF, log(N/n) / log(N), of the entity over the Índice's N chunks.
+
+        1 for an entity in one chunk, near 0 for one in almost every chunk (the
+        city). HippoRAG's 1/n halved an entity named in two chunks, so a nearer
+        entity lost to any one-chunk entity (experiment #21).
+        """
         entity = self.entities.get(key)
-        return 1.0 / max(len(entity.chunk_ids), 1) if entity else 0.0
+        if entity is None:
+            return 0.0
+        total = max(len(self.chunks), len(entity.chunk_ids))
+        if total <= 1:
+            return 1.0
+        return math.log(total / max(len(entity.chunk_ids), 1)) / math.log(total)
 
     def neighbours(self, key: str) -> list[str]:
         """Entity keys one hop away."""
