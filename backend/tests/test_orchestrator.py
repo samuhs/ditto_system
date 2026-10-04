@@ -8,10 +8,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.db.base import Base
-from app.core.db.models import Experiment
+from app.core.db.models import Experiment, ExperimentRun
 from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.orchestrator import (
     ExperimentDeps,
+    recover_interrupted_experiments,
     request_pause,
     run_experiment,
 )
@@ -1109,5 +1110,83 @@ def test_failed_experiment_records_a_failed_pause_entry(session_factory):
     assert entry["reason"] == "failed"
     assert entry["last_error"]["message"] == "embedder indisponível"
     assert "Traceback" in entry["last_error"]["traceback"]
+    check.close()
+
+
+def test_recover_interrupted_experiments_pauses_running_and_pending(session_factory):
+    """#18: on boot, running/pending Experimentos become paused with an
+    `interrupted` Registro de pausa entry; their running runs become paused too."""
+    session = session_factory()
+    running = Experiment(
+        name="running-exp", status="running", config={"phase": "generating"}
+    )
+    pending = Experiment(name="pending-exp", status="pending", config={})
+    session.add_all([running, pending])
+    session.commit()
+    running_id, pending_id = running.id, pending.id
+
+    run = ExperimentRun(
+        experiment_id=running_id,
+        chunking="recursive", embedding="gemini", rag_technique="naive", retriever="dense",
+        status="running",
+    )
+    session.add(run)
+    session.commit()
+    run_id = run.id
+    session.close()
+
+    recover_interrupted_experiments(session_factory)
+
+    check = session_factory()
+    stored_running = check.get(Experiment, running_id)
+    stored_pending = check.get(Experiment, pending_id)
+    stored_run = check.get(ExperimentRun, run_id)
+
+    assert stored_running.status == "paused"
+    assert stored_pending.status == "paused"
+    assert stored_run.status == "paused"
+
+    [entry] = stored_running.pauses
+    assert entry["reason"] == "interrupted"
+    assert entry["phase"] == "generating"
+    assert entry["resumed_at"] is None
+    assert "phase" not in (stored_running.config or {})
+
+    [pending_entry] = stored_pending.pauses
+    assert pending_entry["reason"] == "interrupted"
+    assert pending_entry["phase"] is None
+    check.close()
+
+
+def test_recover_interrupted_experiments_leaves_finished_statuses_alone(session_factory):
+    """done/failed/paused Experimentos and their runs are untouched, and nothing
+    new is scheduled (no new ExperimentRun or pending work is created)."""
+    session = session_factory()
+    done = Experiment(name="done-exp", status="done", config={})
+    failed = Experiment(name="failed-exp", status="failed", config={"error": "boom"})
+    paused = Experiment(name="paused-exp", status="paused", config={}, pauses=[{"reason": "manual"}])
+    session.add_all([done, failed, paused])
+    session.commit()
+    done_id, failed_id, paused_id = done.id, failed.id, paused.id
+
+    done_run = ExperimentRun(
+        experiment_id=done_id,
+        chunking="recursive", embedding="gemini", rag_technique="naive", retriever="dense",
+        status="done",
+    )
+    session.add(done_run)
+    session.commit()
+    done_run_id = done_run.id
+    session.close()
+
+    recover_interrupted_experiments(session_factory)
+
+    check = session_factory()
+    assert check.get(Experiment, done_id).status == "done"
+    assert check.get(Experiment, failed_id).status == "failed"
+    stored_paused = check.get(Experiment, paused_id)
+    assert stored_paused.status == "paused"
+    assert stored_paused.pauses == [{"reason": "manual"}]  # untouched, no new entry
+    assert check.get(ExperimentRun, done_run_id).status == "done"
     check.close()
 

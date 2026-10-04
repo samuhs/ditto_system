@@ -135,6 +135,32 @@ def record_pause(
     session.commit()
 
 
+def recover_interrupted_experiments(session_factory: Callable[[], Session]) -> None:
+    """Mark Experimentos left `running`/`pending` by a crash or restart as paused.
+
+    Called once by the API's `lifespan`, right after `create_all()`. The likeliest
+    cause of an API restart mid-run is an out-of-memory crash, so interrupted
+    Experimentos never resume on their own (ADR 0001) — nothing here is
+    re-enqueued; a researcher decides when to Retomar. Any `ExperimentRun` left
+    `running` becomes `paused` too, so a later Retomada (#17) can reuse it.
+    """
+    session = session_factory()
+    try:
+        stuck = session.query(Experiment).filter(Experiment.status.in_(["running", "pending"])).all()
+        for experiment in stuck:
+            phase = (experiment.config or {}).get("phase")
+            experiment.status = "paused"
+            _set_phase(session, experiment, None)
+            record_pause(session, experiment, reason="interrupted", phase=phase)
+
+        session.query(ExperimentRun).filter(ExperimentRun.status == "running").update(
+            {"status": "paused"}, synchronize_session=False
+        )
+        session.commit()
+    finally:
+        session.close()
+
+
 class _InFlightTracker:
     """Thread-safe registry of questions mid-call, for a pause entry's `in_flight`.
 
