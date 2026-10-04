@@ -318,7 +318,12 @@ async def create_experiment(
     try:
         config_dump = parsed.model_dump()
         config_dump["prompts"] = _snapshot_prompts(parsed)
-        experiment = Experiment(name=parsed.name, status="pending", config=config_dump)
+        # Recorded with the experiment so a later Retomada (#17) can read them back
+        # from the database instead of depending on the background task's memory.
+        questions_dump = [item.model_dump() for item in items]
+        experiment = Experiment(
+            name=parsed.name, status="pending", config=config_dump, questions=questions_dump,
+        )
         session.add(experiment)
         try:
             session.commit()
@@ -408,6 +413,8 @@ def get_experiment(
             "created_at": _iso_utc(experiment.created_at),
             "finished_at": _iso_utc(experiment.finished_at),
             "pause_requested": _pause_requested(experiment_id),
+            # Registro de pausa: every Pausa this experiment has had, oldest first.
+            "pauses": experiment.pauses or [],
             "error": cfg.get("error") or None,
             "eval_embedding": cfg.get("eval_embedding"),
             # The LLM extrator whose Grafos graph/graph_mix queried; None without them.

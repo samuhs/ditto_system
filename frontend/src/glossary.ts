@@ -215,3 +215,28 @@ const STATUS: Record<string, { label: string; tone: StatusTone }> = {
 export function statusInfo(status: string): { label: string; tone: StatusTone } {
   return STATUS[status] ?? { label: status, tone: "idle" };
 }
+
+/** Why a Pausa happened, for the warning banner and the Registro de pausa section. */
+export const PAUSE_REASONS: Record<string, Term> = {
+  manual: { name: "Manual", description: "Pausado pelo botão Pausar; o parcial foi pontuado." },
+  stall: {
+    name: "Travamento",
+    description: "O experimento ficou tempo demais sem gravar nenhum progresso.",
+  },
+  consecutive_failures: {
+    name: "Falhas consecutivas",
+    description: "Perguntas seguidas falharam depois de todas as tentativas.",
+  },
+  interrupted: {
+    name: "Interrupção",
+    description: "A API reiniciou enquanto o experimento estava em andamento ou na fila.",
+  },
+  failed: {
+    name: "Falhou",
+    description: "Uma exceção interrompeu o experimento.",
+  },
+};
+
+export function pauseReason(key: string): Term {
+  return PAUSE_REASONS[key] ?? { name: key };
+}

@@ -585,6 +585,56 @@ describe("ExperimentDetailPage", () => {
     expect(await screen.findByRole("radio", { name: "Tokens" })).toBeChecked();
   });
 
+  it("warns with the last Pausa's reason and lists the Registro de pausa", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "pausado-travado",
+      status: "paused",
+      results: [],
+      pauses: [
+        {
+          paused_at: "2026-01-01T10:00:00.000Z",
+          reason: "manual",
+          phase: "generating",
+          in_flight: [],
+          last_error: null,
+          memory: { free_mb: 2000, api_mb: 500 },
+          resumed_at: null,
+        },
+        {
+          paused_at: "2026-01-02T10:00:00.000Z",
+          reason: "stall",
+          phase: "generating",
+          in_flight: [
+            {
+              chunking: "recursive", embedding: "e5", rag: "naive",
+              retriever: "similarity", llm: "qwen3:1.7b", question: "Onde fica?",
+            },
+          ],
+          last_error: { message: "Tempo esgotado", traceback: "..." },
+          memory: { free_mb: 800, api_mb: 1200 },
+          resumed_at: null,
+        },
+      ],
+    });
+    renderPage();
+
+    expect(await screen.findByText(/Pausado: Travamento/i)).toBeInTheDocument();
+
+    const section = await screen.findByRole("region", { name: "Pausas" });
+    expect(within(section).getAllByRole("row")).toHaveLength(3); // header + 2 entries
+    expect(within(section).getByText(/Onde fica\?/)).toBeInTheDocument();
+    expect(within(section).getByText("Tempo esgotado")).toBeInTheDocument();
+    expect(within(section).queryByText("Falhas consecutivas")).not.toBeInTheDocument();
+  });
+
+  it("shows no Pausa warning or section when the experiment never paused", async () => {
+    renderPage();
+    await screen.findByRole("region", { name: /melhor combinação/i });
+    expect(screen.queryByText(/^Pausado:/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Pausas" })).not.toBeInTheDocument();
+  });
+
   it("opens the result drawer from the charts matrix", async () => {
     renderPage();
     const user = userEvent.setup();

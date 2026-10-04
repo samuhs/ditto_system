@@ -260,6 +260,14 @@ def test_pause_mid_run_keeps_partial_results(session_factory):
     done_runs = [r for r in stored.runs if r.status == "done"]
     assert len(done_runs) == 1, "first combination should have completed"
     assert len(done_runs[0].results) == 1
+    # Registro de pausa: a manual Pausa records one "manual" entry with the phase
+    # it stopped in and a memory snapshot; nothing was in flight (concurrency 1).
+    [entry] = stored.pauses
+    assert entry["reason"] == "manual"
+    assert entry["phase"] == "generating"
+    assert entry["in_flight"] == []
+    assert entry["resumed_at"] is None
+    assert set(entry["memory"]) == {"free_mb", "api_mb"}
     check.close()
 
 
@@ -606,9 +614,9 @@ def test_concurrency_is_capped_by_the_profile(session_factory, monkeypatch):
     seen = []
     real = orchestrator._run_questions
 
-    def spy(rag, questions, metrics, eval_embedder, concurrency, exp_id):
+    def spy(rag, questions, metrics, eval_embedder, concurrency, exp_id, combo, tracker):
         seen.append(concurrency)
-        return real(rag, questions, metrics, eval_embedder, concurrency, exp_id)
+        return real(rag, questions, metrics, eval_embedder, concurrency, exp_id, combo, tracker)
 
     monkeypatch.setattr(orchestrator, "_run_questions", spy)
     deps = ExperimentDeps(store=store, session_factory=session_factory,
@@ -976,4 +984,130 @@ def test_context_all_hops_equals_context_hit_on_a_single_hop(session_factory, ev
 def test_context_all_hops_is_skipped_when_nothing_is_retrieved(session_factory):
     scores = _all_hops_score(session_factory, ["Para one."], [1], rag="closed_book")
     assert "context_all_hops" not in scores
+
+
+# ---- Registro de pausa (issue #16): the reusable "pause now, with reason and
+# details" primitives #19 (Falhas consecutivas) and #20 (Travamento) will reuse.
+
+def test_in_flight_tracker_tracks_and_clears_questions():
+    from app.experiments.orchestrator import _InFlightTracker
+
+    tracker = _InFlightTracker()
+    combo = {"chunking": "recursive", "embedding": "e5", "rag": "naive",
+             "retriever": "similarity", "llm": "qwen3:1.7b"}
+
+    token_a = tracker.start(combo, "Onde fica?")
+    token_b = tracker.start(combo, "Quando é?")
+    assert {item["question"] for item in tracker.snapshot()} == {"Onde fica?", "Quando é?"}
+
+    tracker.finish(token_a)
+    [remaining] = tracker.snapshot()
+    assert remaining == {**combo, "question": "Quando é?"}
+
+    tracker.finish(token_b)
+    assert tracker.snapshot() == []
+
+
+def test_record_pause_appends_a_registro_entry(session_factory):
+    from app.experiments.orchestrator import record_pause
+
+    session = session_factory()
+    experiment = Experiment(name="rp", status="running", config={"phase": "generating"})
+    session.add(experiment)
+    session.commit()
+
+    record_pause(
+        session, experiment,
+        reason="stall", phase="generating",
+        in_flight=[{"question": "Onde fica?"}],
+        last_error={"message": "timeout", "traceback": "Traceback (most recent call last)..."},
+    )
+
+    assert len(experiment.pauses) == 1
+    entry = experiment.pauses[0]
+    assert entry["reason"] == "stall"
+    assert entry["phase"] == "generating"
+    assert entry["in_flight"] == [{"question": "Onde fica?"}]
+    assert entry["last_error"]["message"] == "timeout"
+    assert entry["resumed_at"] is None
+    assert set(entry["memory"]) == {"free_mb", "api_mb"}
+
+    # A second entry appends, it never replaces the Registro's history.
+    record_pause(session, experiment, reason="manual", phase=None)
+    assert [e["reason"] for e in experiment.pauses] == ["stall", "manual"]
+    session.close()
+
+
+def test_pause_now_path_skips_scoring_and_records_the_given_reason(session_factory, monkeypatch):
+    """The internal 'pause now, without scoring' path #19/#20 will trigger for real.
+
+    Unlike a manual Pausa, this one must not run the scoring (or difficulty-signal)
+    stage at all: the whole point is freeing the machine right away.
+    """
+    from app.experiments import orchestrator
+
+    scored = []
+    monkeypatch.setattr(orchestrator, "_score_results", lambda *a, **kw: scored.append(True))
+
+    events = []
+    store = _indexed_store("e5")
+    experiment_id = _new_experiment(session_factory, "stop-now")
+    deps = _staged_deps(store, session_factory, events)
+
+    class _StallingLLM:
+        """Simulates #19/#20 requesting an immediate, reasoned pause mid-generation."""
+
+        def generate(self, prompt: str) -> str:
+            orchestrator.request_pause(
+                experiment_id, reason="consecutive_failures", score_partial=False,
+                detail={"message": "LLM indisponível", "traceback": "Traceback..."},
+            )
+            return "ok"
+
+    deps.llm_factory = lambda name, **kw: _StallingLLM()
+    run_experiment(
+        experiment_id, _staged_config(),
+        [QuestionItem(text="Where?"), QuestionItem(text="When?")], deps,
+    )
+
+    status, rows, _ = _results(session_factory, experiment_id)
+    assert status == "paused"
+    assert scored == [], "scoring must not run on an immediate, unscored pause"
+    assert len(rows) == 1 and rows[0].scores == {}
+
+    check = session_factory()
+    [entry] = check.get(Experiment, experiment_id).pauses
+    check.close()
+    assert entry["reason"] == "consecutive_failures"
+    assert entry["last_error"]["message"] == "LLM indisponível"
+    assert entry["resumed_at"] is None
+
+
+def test_failed_experiment_records_a_failed_pause_entry(session_factory):
+    """An uncaught exception still keeps config['error'] (compatibility) and now
+    also appends a `failed` entry to the Registro de pausa."""
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "boom")
+
+    def _broken_embedder_factory(name, **kwargs):
+        raise RuntimeError("embedder indisponível")
+
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=_llm_factory,
+        embedder_factory=_broken_embedder_factory,
+    )
+
+    run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "failed"
+    assert stored.config["error"] == "embedder indisponível"
+    [entry] = stored.pauses
+    assert entry["reason"] == "failed"
+    assert entry["last_error"]["message"] == "embedder indisponível"
+    assert "Traceback" in entry["last_error"]["traceback"]
+    check.close()
 

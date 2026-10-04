@@ -160,7 +160,7 @@ def test_get_experiment_reports_pause_requested(client):
     try:
         assert client.get(f"/experiments/{exp_id}").json()["pause_requested"] is True
     finally:
-        _pause_requests.discard(exp_id)
+        _pause_requests.pop(exp_id, None)
 
 
 def test_experiment_snapshots_prompts(client):
@@ -368,6 +368,62 @@ def test_export_adds_difficulty_signal_columns(client):
     assert rows[0][-2:] == ["pergunta_negation", "busca_top_score"]
     assert rows[1][-2:] == ["0.0", "0.9"]
     assert rows[2][-2:] == ["", ""]
+
+
+def test_get_experiment_includes_an_empty_pauses_list_by_default(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    assert client.get(f"/experiments/{exp_id}").json()["pauses"] == []
+
+
+def test_get_experiment_surfaces_the_recorded_registro_de_pausa(client):
+    from app.core.db.models import Experiment
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    entry = {
+        "paused_at": "2026-01-01T00:00:00+00:00", "reason": "stall", "phase": "generating",
+        "in_flight": [{"question": "Onde?"}], "last_error": None,
+        "memory": {"free_mb": 1000, "api_mb": 500}, "resumed_at": None,
+    }
+    experiment = Experiment(name="com-pausa", status="paused", config={}, pauses=[entry])
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    assert client.get(f"/experiments/{exp_id}").json()["pauses"] == [entry]
+
+
+def test_questions_are_recorded_with_the_experiment_and_reconstructable(client):
+    from app.core.db.models import Experiment
+    from app.experiments.schemas import QuestionItem
+
+    files = {
+        "questions": (
+            "q.csv",
+            io.BytesIO(
+                "pergunta,evidencia_referencia,tipo,evidencia_salto,entidades_ponte\n"
+                "Quando é o evento?,Para one|Para two,ponte,1|2,Parque\n".encode()
+            ),
+            "text/csv",
+        )
+    }
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    stored = session.get(Experiment, exp_id)
+    reconstructed = [QuestionItem(**d) for d in stored.questions]
+    session.close()
+
+    assert len(reconstructed) == 1
+    question = reconstructed[0]
+    assert question.text == "Quando é o evento?"
+    assert question.evidence == ["Para one", "Para two"]
+    assert question.question_type == "ponte"
+    assert question.evidence_hops == [1, 2]
+    assert question.bridge_entities == ["Parque"]
 
 
 def test_difficulty_endpoint(client):

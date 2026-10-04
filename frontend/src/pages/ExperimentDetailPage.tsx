@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { exportExperimentUrl, getExperiment, pauseExperiment } from "../api/client";
-import type { ExperimentDetail, ExperimentResultRow, GraphExplanation } from "../api/types";
+import type { ExperimentDetail, ExperimentResultRow, GraphExplanation, PauseEntry } from "../api/types";
 import { DEFAULT_FOCUS, type FocusState } from "../components/charts/aggregate";
 import { ChartsPanel } from "../components/charts/ChartsPanel";
 import { Errata, Note, errorText } from "../components/Notice";
@@ -12,7 +12,7 @@ import { type Combination, ScoreCell, Traits } from "../components/Score";
 import { DifficultyPanel } from "../components/DifficultyPanel";
 import { StatusTag } from "../components/StatusTag";
 import { DownloadIcon, PauseIcon, SortIcon } from "../components/icons";
-import { questionType, techniqueName, term } from "../glossary";
+import { pauseReason, questionType, techniqueName, term } from "../glossary";
 import { graphStatsText } from "../experiments/graphStats";
 import { ALL_TYPES, ofType, typesIn } from "../experiments/questionTypes";
 import { formatDateTime, formatDuration } from "../utils/duration";
@@ -46,6 +46,23 @@ function entityList(explanation: GraphExplanation): string {
 function bridgeList(bridges: NonNullable<ExperimentResultRow["bridges_found"]>, found: boolean): string {
   const picked = bridges.filter((b) => b.found === found).map((b) => b.entity);
   return picked.length ? picked.join(" · ") : "Nenhuma";
+}
+
+const PAUSE_PHASE_LABEL: Record<string, string> = {
+  generating: "Gerando respostas",
+  evaluating: "Pontuando",
+};
+
+/** The Experimento's stage when a Pausa entry was recorded ("—" when none was kept). */
+function pausePhaseLabel(phase?: string | null): string {
+  if (!phase) return "—";
+  return PAUSE_PHASE_LABEL[phase] ?? phase;
+}
+
+/** The questions mid-call when a Pausa entry was recorded ("Nenhuma" if none). */
+function inFlightList(items: PauseEntry["in_flight"]): string {
+  if (!items.length) return "Nenhuma";
+  return items.map((i) => `${i.question} (${techniqueName(i.rag)})`).join(" · ");
 }
 
 export function ExperimentDetailPage() {
@@ -111,6 +128,9 @@ export function ExperimentDetailPage() {
       setPausing(false);
     }
   }
+
+  const pauses = detail?.pauses ?? [];
+  const lastPause = pauses.length > 0 ? pauses[pauses.length - 1] : null;
 
   const allResults = useMemo(() => detail?.results ?? [], [detail]);
   const questionTypes = useMemo(() => typesIn(allResults), [allResults]);
@@ -319,6 +339,50 @@ export function ExperimentDetailPage() {
             </Button>
           </span>
         </div>
+      )}
+
+      {detail && detail.status === "paused" && lastPause && (
+        <Note title={`Pausado: ${pauseReason(lastPause.reason).name}`}>
+          {pauseReason(lastPause.reason).description ?? "Veja o histórico de Pausas abaixo."}
+        </Note>
+      )}
+
+      {pauses.length > 0 && (
+        <section className="ditto-pauses" aria-label="Pausas">
+          <h2 className="ditto-h3">Pausas</h2>
+          <div className="ditto-table-wrap">
+            <table className="ditto-table" data-stack="true">
+              <thead>
+                <tr>
+                  <th>Quando</th>
+                  <th>Motivo</th>
+                  <th>Etapa</th>
+                  <th>Em andamento</th>
+                  <th>Último erro</th>
+                  <th>Memória livre</th>
+                  <th>Retomado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...pauses].reverse().map((p, i) => (
+                  <tr key={i}>
+                    <td data-label="Quando">{formatDateTime(p.paused_at)}</td>
+                    <td data-label="Motivo">{pauseReason(p.reason).name}</td>
+                    <td data-label="Etapa">{pausePhaseLabel(p.phase)}</td>
+                    <td data-label="Em andamento">{inFlightList(p.in_flight)}</td>
+                    <td data-label="Último erro">{p.last_error?.message ?? "—"}</td>
+                    <td data-label="Memória livre">
+                      {p.memory ? `${p.memory.free_mb} MB (API: ${p.memory.api_mb} MB)` : "—"}
+                    </td>
+                    <td data-label="Retomado em">
+                      {p.resumed_at ? formatDateTime(p.resumed_at) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {loading && <Loader aria-label="Carregando experimento" />}

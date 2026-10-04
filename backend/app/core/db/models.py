@@ -18,6 +18,13 @@ class Experiment(Base):
     config: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # The analyzed questions CSV, recorded at creation (text, reference, evidence,
+    # type, hops, bridge entities — one dict per QuestionItem.model_dump()). None on
+    # experiments created before this existed: #17's Retomada refuses those.
+    questions: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    # Registro de pausa: one entry per Pausa (manual, stall, consecutive_failures,
+    # interrupted or failed), oldest first. See orchestrator.record_pause.
+    pauses: Mapped[list] = mapped_column(JSON, default=list)
 
     runs: Mapped[list["ExperimentRun"]] = relationship(
         back_populates="experiment", cascade="all, delete-orphan"

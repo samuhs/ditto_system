@@ -165,6 +165,29 @@ export interface ExperimentProgress {
   phase?: string | null;
 }
 
+/** One Combinação + pergunta that was mid-call when a Pausa entry was recorded. */
+export interface PauseInFlightItem {
+  chunking: string;
+  embedding: string;
+  rag: string;
+  retriever: string;
+  llm: string;
+  question: string;
+}
+
+/** One entry of the Registro de pausa (the experiment's Pausa history). */
+export interface PauseEntry {
+  paused_at: string;
+  /** "manual" | "stall" | "consecutive_failures" | "interrupted" | "failed". */
+  reason: string;
+  phase?: string | null;
+  in_flight: PauseInFlightItem[];
+  last_error?: { message: string; traceback: string } | null;
+  memory: { free_mb: number; api_mb: number };
+  /** Filled in once the experiment resumes (issue #17); null until then. */
+  resumed_at?: string | null;
+}
+
 export interface ExperimentDetail {
   id: number;
   name: string;
@@ -180,6 +203,8 @@ export interface ExperimentDetail {
   progress?: ExperimentProgress;
   results: ExperimentResultRow[];
   prompts?: Record<string, Record<string, string>>;
+  /** Registro de pausa: every Pausa this experiment has had, oldest first. */
+  pauses?: PauseEntry[];
 }
 
 export interface PromptInfo {

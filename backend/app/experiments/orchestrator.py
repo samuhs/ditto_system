@@ -1,6 +1,8 @@
 """Experiment orchestrator: run the cartesian product and persist results."""
 import logging
+import threading
 import time
+import traceback
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
@@ -31,7 +33,7 @@ from app.core.memory.device import resolve_embedding_device
 from app.core.memory.leases import CachedQueryEmbedder, LeaseSwitcher
 from app.core.memory.manager import ModelManager, work_slot
 from app.core.memory.profile import active_profile
-from app.core.memory.stats import process_memory_bytes
+from app.core.memory.stats import available_memory_bytes, process_memory_bytes
 from app.core.graph.build import current_graph
 from app.core.prompts import PROMPT_SPECS
 from app.core.rag.base import build_rag, technique_class
@@ -47,20 +49,123 @@ _RETRY_DELAY_S = 5
 # Marks a question that failed after every retry (stored as its answer).
 ERROR_PREFIX = "[ERRO: "
 
-# In-memory set of experiment ids for which a pause has been requested.
-# Valid because the API runs as a single uvicorn process: the pause endpoint
-# and the background task share this module-level state.
-_pause_requests: set[int] = set()
+
+@dataclass
+class PauseRequest:
+    """A request to stop a running experiment at its next checkpoint, with why.
+
+    `score_partial=True` (the Pausa manual endpoint's default) lets in-flight
+    questions finish and then scores whatever was generated, as a manual Pausa
+    always has. #19 (Falhas consecutivas) and #20 (Travamento) request
+    `score_partial=False`: the run still lets in-flight questions finish and get
+    recorded, but skips the scoring and difficulty-signal stages entirely, to free
+    the machine right away for someone to investigate. `detail` becomes the pause
+    entry's `last_error` (see `record_pause`).
+    """
+
+    reason: str
+    score_partial: bool = True
+    detail: dict | None = None
 
 
+# Pending pause requests, by experiment id. Valid because the API runs as a single
+# uvicorn process: the pause endpoint (or #19/#20, from inside the run itself) and
+# the background task share this module-level state.
+_pause_requests: dict[int, PauseRequest] = {}
 
-def request_pause(experiment_id: int) -> None:
-    """Signal a running experiment to stop at its next checkpoint."""
-    _pause_requests.add(experiment_id)
+
+def request_pause(
+    experiment_id: int, reason: str = "manual", *, score_partial: bool = True, detail: dict | None = None,
+) -> None:
+    """Signal a running experiment to stop at its next checkpoint.
+
+    POST /experiments/{id}/pause calls this with the defaults (a manual Pausa).
+    #19 (Falhas consecutivas) and #20 (Travamento) call it from inside the run with
+    their own `reason` and `score_partial=False`: the "pause now without scoring"
+    path this ticket introduces and covers by test.
+    """
+    _pause_requests[experiment_id] = PauseRequest(reason=reason, score_partial=score_partial, detail=detail)
 
 
 def _pause_requested(experiment_id: int) -> bool:
     return experiment_id in _pause_requests
+
+
+def _memory_snapshot() -> dict:
+    """Free system memory and this API process's own usage (MB), for a pause entry."""
+    return {
+        "free_mb": round(available_memory_bytes() / 1e6),
+        "api_mb": round(process_memory_bytes() / 1e6),
+    }
+
+
+def _error_detail(exc: BaseException, limit: int = 4000) -> dict:
+    """{"message", "traceback"} for an exception, the traceback kept short (last `limit` chars)."""
+    tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    return {"message": str(exc), "traceback": tb[-limit:]}
+
+
+def record_pause(
+    session: Session,
+    experiment: Experiment,
+    *,
+    reason: str,
+    phase: str | None,
+    in_flight: list[dict] | None = None,
+    last_error: dict | None = None,
+) -> None:
+    """Append one entry to the Experimento's Registro de pausa (`experiment.pauses`).
+
+    Called once a pause actually takes effect (never merely when it is requested):
+    manual, `stall` (#20), `consecutive_failures` (#19), `interrupted` (API boot)
+    and `failed` (an uncaught exception) all go through this, so GET
+    /experiments/{id} has one history to read. `resumed_at` starts null; #17's
+    Retomada fills it in when the experiment resumes.
+    """
+    entry = {
+        "paused_at": datetime.now(UTC).isoformat(),
+        "reason": reason,
+        "phase": phase,
+        "in_flight": in_flight or [],
+        "last_error": last_error,
+        "memory": _memory_snapshot(),
+        "resumed_at": None,
+    }
+    experiment.pauses = [*(experiment.pauses or []), entry]
+    session.commit()
+
+
+class _InFlightTracker:
+    """Thread-safe registry of questions mid-call, for a pause entry's `in_flight`.
+
+    One instance per experiment run (created in `_run_experiment`); `concurrency` > 1
+    can have several questions mid-call at once. #19 and #20 read a snapshot the
+    moment they decide to pause, before anything still running gets a chance to
+    finish — that is the whole point of tracking it here instead of only looking at
+    what the main loop has consumed so far.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._items: dict[int, dict] = {}
+        self._next_token = 0
+
+    def start(self, combo: dict, question: str) -> int:
+        """Register one question as mid-call; returns a token for `finish`."""
+        with self._lock:
+            token = self._next_token
+            self._next_token += 1
+            self._items[token] = {**combo, "question": question}
+        return token
+
+    def finish(self, token: int) -> None:
+        with self._lock:
+            self._items.pop(token, None)
+
+    def snapshot(self) -> list[dict]:
+        """Combinação + pergunta of everything currently mid-call."""
+        with self._lock:
+            return list(self._items.values())
 
 
 @dataclass
@@ -214,18 +319,24 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
 
 def _run_questions(
     rag, questions: list[QuestionItem], metrics: list, eval_embedder,
-    concurrency: int, experiment_id: int,
+    concurrency: int, experiment_id: int, combo: dict, tracker: "_InFlightTracker",
 ) -> Iterator[tuple[QuestionItem, tuple | None]]:
     """Yield (question, outcome) in question order, running up to `concurrency` at once.
 
     The outcome is None for a question skipped because a pause was requested
-    before it started; questions already in flight run to completion.
+    before it started; questions already in flight run to completion. Each
+    question is registered on `tracker` for the span of its call, so a pause
+    entry recorded while it runs can show it under `in_flight`.
     """
 
     def work(question: QuestionItem):
         if _pause_requested(experiment_id):
             return None
-        return _process_question_with_retry(rag, question, metrics, eval_embedder)
+        token = tracker.start(combo, question.text)
+        try:
+            return _process_question_with_retry(rag, question, metrics, eval_embedder)
+        finally:
+            tracker.finish(token)
 
     if concurrency <= 1:
         for question in questions:
@@ -444,6 +555,8 @@ def _run_experiment(
         inline_metrics = [] if staged else config.metrics
 
         paused = False
+        pause_in_flight: list[dict] = []
+        tracker = _InFlightTracker()
         loaded_llm_name, llm = None, None
         with eval_context as eval_embedder, LeaseSwitcher(deps.models) as leases:
             for llm_name, (chunking, embedding), rag_name, retriever_name in _combinations(config):
@@ -515,13 +628,22 @@ def _run_experiment(
                     if getattr(rag, "uses_evidence", False)
                     else questions
                 )
+                combo = {
+                    "chunking": chunking, "embedding": embedding,
+                    "rag": rag_name, "retriever": retriever_name, "llm": llm_name,
+                }
                 # DB writes stay on this thread: the Session is not thread-safe.
                 for question, outcome in _run_questions(
                     rag, run_questions, inline_metrics, eval_embedder, concurrency, experiment_id,
+                    combo, tracker,
                 ):
                     # Checkpoint: questions not started before a pause are skipped.
                     if outcome is None:
-                        paused = True
+                        if not paused:
+                            # First detection: snapshot whatever is still mid-call right
+                            # now, before it has a chance to finish and clear itself.
+                            paused = True
+                            pause_in_flight = tracker.snapshot()
                         continue
 
                     answer_text, contexts, scores, latency_ms, tokens, explanation, error = outcome
@@ -556,27 +678,49 @@ def _run_experiment(
                 run.status = "done"
                 session.commit()
 
-        if staged:
-            # Scores what was generated, paused or not.
+        # The phase a pause interrupted, captured before scoring (which would move
+        # it to "evaluating") or the final clear below overwrite it.
+        pause_phase = (experiment.config or {}).get("phase") if paused else None
+        pause_request = _pause_requests.get(experiment_id) if paused else None
+        score_partial = pause_request is None or pause_request.score_partial
+
+        if staged and score_partial:
+            # Scores what was generated, paused or not — unless the pause asked to
+            # skip scoring (#19/#20: free the machine right away).
             _set_phase(session, experiment, "evaluating")
             _score_results(session, experiment_id, config, deps)
-        _store_evidence_distances(
-            session, experiment_id, config, deps, questions,
-            resolve_embedding_device(active_profile()) if staged else device,
-        )
-        _store_perplexities(session, experiment_id, config, deps, questions)
+        if score_partial:
+            _store_evidence_distances(
+                session, experiment_id, config, deps, questions,
+                resolve_embedding_device(active_profile()) if staged else device,
+            )
+            _store_perplexities(session, experiment_id, config, deps, questions)
         experiment.status = "paused" if paused else "done"
         experiment.finished_at = datetime.now(UTC)
         _set_phase(session, experiment, None)
+        if paused:
+            record_pause(
+                session, experiment,
+                reason=pause_request.reason if pause_request else "manual",
+                phase=pause_phase,
+                in_flight=pause_in_flight,
+                last_error=pause_request.detail if pause_request else None,
+            )
     except Exception as exc:  # noqa: BLE001  background task records failure, never raises
         session.rollback()
         experiment = session.get(Experiment, experiment_id)
         if experiment is not None:
             experiment.status = "failed"
             config_without_phase = {k: v for k, v in (experiment.config or {}).items() if k != "phase"}
+            # error kept on config for compatibility; the pauses entry is the new source.
             experiment.config = {**config_without_phase, "error": str(exc)}
             experiment.finished_at = datetime.now(UTC)
             session.commit()
+            record_pause(
+                session, experiment,
+                reason="failed", phase=config_without_phase.get("phase"),
+                last_error=_error_detail(exc),
+            )
     finally:
-        _pause_requests.discard(experiment_id)
+        _pause_requests.pop(experiment_id, None)
         session.close()
