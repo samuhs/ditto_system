@@ -6,7 +6,7 @@ import unicodedata
 from datetime import timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config.runtime import get_eval_embedding
@@ -21,6 +21,7 @@ from app.core.rag.base import rag_registry
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.difficulty import question_difficulty
+from app.experiments.fingerprint import experiment_fingerprint, fingerprint_changes
 from app.experiments.naming import generate_experiment_name
 from app.experiments.orchestrator import (
     ExperimentDeps,
@@ -319,6 +320,8 @@ async def create_experiment(
     try:
         config_dump = parsed.model_dump()
         config_dump["prompts"] = _snapshot_prompts(parsed)
+        # Índice/Grafo fingerprint (#21): the Retomada later blocks if this diverges.
+        config_dump["fingerprint"] = experiment_fingerprint(parsed, deps.store)
         # Recorded with the experiment so a later Retomada (#17) can read them back
         # from the database instead of depending on the background task's memory.
         questions_dump = [item.model_dump() for item in items]
@@ -366,32 +369,79 @@ def pause_experiment(
     return {"id": experiment_id, "status": "pausing"}
 
 
-def _resumable_reason(experiment: Experiment) -> str | None:
-    """Why POST /resume would fail right now (409); None when it would succeed (200)."""
+def _resumable_reason(experiment: Experiment, store: QdrantStore) -> str | None:
+    """Why POST /resume would fail right now (409); None when it would succeed (200).
+
+    An Experimento with a recorded fingerprint (#21) is also blocked when the Índice or
+    Grafo de conhecimento it used has since changed (reingested, rebuilt, gone stale);
+    one created before #21 has no stored fingerprint and is never blocked by this check.
+    """
     if experiment.status not in ("paused", "failed"):
         return f"Experimento com status '{experiment.status}' não pode ser retomado."
     if not experiment.questions:
         return (
             "Experimento sem perguntas gravadas (criado antes desta função) não pode ser retomado."
         )
+    stored_fingerprint = (experiment.config or {}).get("fingerprint")
+    if stored_fingerprint:
+        try:
+            config = ExperimentConfig(**(experiment.config or {}))
+        except ValidationError:
+            return None  # config predates a field this needs to recompute: do not block on it
+        changes = fingerprint_changes(stored_fingerprint, experiment_fingerprint(config, store))
+        if changes:
+            return (
+                "Não é possível retomar: o Índice ou o Grafo de conhecimento usado mudou desde "
+                "a última Pausa (" + "; ".join(changes) + ")."
+            )
     return None
+
+
+class ResumeRequest(BaseModel):
+    """Optional body of POST /experiments/{id}/resume: lower the concorrência before it runs."""
+
+    concurrency: int | None = None
 
 
 @router.post("/experiments/{experiment_id}/resume")
 def resume_experiment_route(
     experiment_id: int,
     background_tasks: BackgroundTasks,
+    payload: ResumeRequest | None = None,
     deps: ExperimentDeps = Depends(get_experiment_deps),
 ) -> dict:
-    """Retomada: resume a paused or failed experiment, queued through the usual work slot."""
+    """Retomada: resume a paused or failed experiment, queued through the usual work slot.
+
+    An optional {"concurrency": int} body lowers the Experimento's concorrência before it
+    runs again (1 <= concurrency <= the config's current value; 422 outside that range).
+    Refreshes the stored Índice/Grafo fingerprint (#21) to the state this Retomada starts
+    from, so the next Pausa/Retomada compares against it instead of the one from creation.
+    """
     session = deps.session_factory()
     try:
         experiment = session.get(Experiment, experiment_id)
         if experiment is None:
             raise HTTPException(status_code=404, detail="experiment not found")
-        reason = _resumable_reason(experiment)
+        reason = _resumable_reason(experiment, deps.store)
         if reason is not None:
             raise HTTPException(status_code=409, detail=reason)
+        config = dict(experiment.config or {})
+        current_concurrency = config.get("concurrency", 1)
+        if payload is not None and payload.concurrency is not None:
+            if not (1 <= payload.concurrency <= current_concurrency):
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        f"concurrency deve ser entre 1 e {current_concurrency} "
+                        "(a concorrência atual do Experimento)"
+                    ),
+                )
+            config["concurrency"] = payload.concurrency
+        try:
+            config["fingerprint"] = experiment_fingerprint(ExperimentConfig(**config), deps.store)
+        except ValidationError:
+            pass  # config predates a field this needs: resume still proceeds, unfingerprinted
+        experiment.config = config
         experiment.status = "pending"
         session.commit()
     finally:
@@ -441,7 +491,7 @@ def get_experiment(
         cfg = experiment.config or {}
         total_combos = _total_combinations(cfg)
         completed_combos = sum(1 for run in experiment.runs if run.status == "done")
-        resumable_reason = _resumable_reason(experiment)
+        resumable_reason = _resumable_reason(experiment, deps.store)
         return {
             "id": experiment.id,
             "name": experiment.name,
@@ -454,6 +504,8 @@ def get_experiment(
             # Whether POST /resume would currently succeed, and why not when it would not.
             "resumable": resumable_reason is None,
             "resumable_reason": resumable_reason,
+            # The config's current concorrência: the UI's Retomar concurrency field's max.
+            "concurrency": cfg.get("concurrency"),
             "error": cfg.get("error") or None,
             "eval_embedding": cfg.get("eval_embedding"),
             # The LLM extrator whose Grafos graph/graph_mix queried; None without them.

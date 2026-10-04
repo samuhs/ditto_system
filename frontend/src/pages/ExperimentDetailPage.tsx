@@ -1,4 +1,6 @@
-import { Button, Drawer, Loader, MultiSelect, Pagination, SegmentedControl, Select, Tabs } from "@mantine/core";
+import {
+  Button, Drawer, Loader, MultiSelect, NumberInput, Pagination, SegmentedControl, Select, Tabs,
+} from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -73,6 +75,7 @@ export function ExperimentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [pausing, setPausing] = useState(false);
   const [resuming, setResuming] = useState(false);
+  const [resumeConcurrency, setResumeConcurrency] = useState<number | "">("");
   const timer = useRef<number | null>(null);
   const pollNow = useRef<() => void>(() => {});
 
@@ -133,12 +136,13 @@ export function ExperimentDetailPage() {
   }
 
   const isResumable = detail?.status === "paused" || detail?.status === "failed";
+  const maxResumeConcurrency = detail?.concurrency ?? undefined;
 
   async function handleResume() {
     if (!id) return;
     setResuming(true);
     try {
-      await resumeExperiment(Number(id));
+      await resumeExperiment(Number(id), resumeConcurrency === "" ? undefined : resumeConcurrency);
       if (timer.current) window.clearTimeout(timer.current);
       pollNow.current();
     } catch (e) {
@@ -347,9 +351,23 @@ export function ExperimentDetailPage() {
               </>
             )}
             {isResumable && (
-              <Button size="sm" variant="default" loading={resuming} disabled={resuming} onClick={handleResume}>
-                {resuming ? "Retomando…" : "Retomar"}
-              </Button>
+              <>
+                <NumberInput
+                  aria-label="Concorrência na Retomada"
+                  placeholder="Concorrência"
+                  size="sm"
+                  w={120}
+                  min={1}
+                  max={maxResumeConcurrency}
+                  allowDecimal={false}
+                  value={resumeConcurrency}
+                  onChange={(v) => setResumeConcurrency(v === "" ? "" : Number(v))}
+                  disabled={resuming}
+                />
+                <Button size="sm" variant="default" loading={resuming} disabled={resuming} onClick={handleResume}>
+                  {resuming ? "Retomando…" : "Retomar"}
+                </Button>
+              </>
             )}
             <Button
               component="a"

@@ -746,3 +746,116 @@ def test_get_experiment_reports_not_resumable_when_done(client):
 
     assert detail["resumable"] is False
     assert detail["resumable_reason"]
+
+
+# ---- Bloqueio por Índice/Grafo alterado e concorrência na Retomada (issue #21).
+
+def _create_and_pause(client, config=None, csv_text=b"pergunta,resposta_referencia\nOnde?,Ali\n"):
+    """Create a real Experimento (recording its Índice/Grafo fingerprint, #21) then force
+    it back to `paused`, as if a Pausa had happened right after it finished generating.
+    """
+    payload = {**json.loads(_config_payload()), **(config or {})}
+    files = {"questions": ("q.csv", io.BytesIO(csv_text), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": json.dumps(payload)}, files=files).json()["id"]
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = session.get(Experiment, exp_id)
+    experiment.status = "paused"
+    session.commit()
+    session.close()
+    return exp_id
+
+
+def test_resume_allows_when_nothing_changed(client):
+    exp_id = _create_and_pause(client)
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 200
+    assert client.get(f"/experiments/{exp_id}").json()["status"] == "done"
+
+
+def test_resume_blocked_when_index_was_reingested(client):
+    exp_id = _create_and_pause(client)
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    ingest_documents(
+        [Document(name="b.txt", text="Mais um trecho novo.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"]),
+        deps.store,
+        embedder_factory=_embedder_factory,
+    )
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 409
+    detail = response.json()["detail"]
+    assert "recursive" in detail and "gemini" in detail and "reingerido" in detail
+    # The GET also reports it as not resumable, with the same reason.
+    get_detail = client.get(f"/experiments/{exp_id}").json()
+    assert get_detail["resumable"] is False
+    assert "reingerido" in get_detail["resumable_reason"]
+
+
+def test_resume_blocked_when_the_graph_changed(client):
+    _build_grafo(client, _FakeLLM())
+    exp_id = _create_and_pause(
+        client, config={"rags": ["graph"]}, csv_text=b"pergunta\nOnde?\n",
+    )
+    # Rebuilding the Grafo (a different LLM extrator's output) replaces its collections and
+    # built_at, even though the Índice itself (and its chunks_fingerprint) did not change.
+    _build_grafo(client, _ExtractingLLM())
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 409
+    assert "Grafo de conhecimento" in response.json()["detail"]
+
+
+def test_resume_not_blocked_without_a_stored_fingerprint(client):
+    """An Experimento created before #21 has no `fingerprint` key and is never blocked."""
+    exp_id = _paused_experiment_with_questions(client, name="sem-fingerprint")
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    ingest_documents(
+        [Document(name="b.txt", text="Mais um trecho novo.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"]),
+        deps.store,
+        embedder_factory=_embedder_factory,
+    )
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 200
+
+
+def test_resume_accepts_a_lower_concurrency(client):
+    exp_id = _create_and_pause(client, config={"concurrency": 2})
+
+    response = client.post(f"/experiments/{exp_id}/resume", json={"concurrency": 1})
+
+    assert response.status_code == 200
+    assert client.get(f"/experiments/{exp_id}").json()["concurrency"] == 1
+
+
+def test_resume_rejects_concurrency_above_the_current_one(client):
+    exp_id = _create_and_pause(client, config={"concurrency": 2})
+
+    response = client.post(f"/experiments/{exp_id}/resume", json={"concurrency": 3})
+
+    assert response.status_code == 422
+
+
+def test_resume_rejects_concurrency_below_one(client):
+    exp_id = _create_and_pause(client, config={"concurrency": 2})
+
+    response = client.post(f"/experiments/{exp_id}/resume", json={"concurrency": 0})
+
+    assert response.status_code == 422
+
+
+def test_resume_without_a_body_keeps_the_configured_concurrency(client):
+    exp_id = _create_and_pause(client, config={"concurrency": 2})
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 200
+    assert client.get(f"/experiments/{exp_id}").json()["concurrency"] == 2

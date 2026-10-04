@@ -423,9 +423,43 @@ describe("ExperimentDetailPage", () => {
       const user = userEvent.setup();
       const btn = await screen.findByRole("button", { name: /retomar/i });
       await user.click(btn);
-      expect(client.resumeExperiment).toHaveBeenCalledWith(7);
+      expect(client.resumeExperiment).toHaveBeenCalledWith(7, undefined);
     },
   );
+
+  it("sends the typed concorrência when retomando", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "kind-ember-89",
+      status: "paused",
+      concurrency: 4,
+      results: [],
+    });
+    vi.mocked(client.resumeExperiment).mockResolvedValue({ id: 7, status: "pending" });
+    renderPage();
+    const user = userEvent.setup();
+    const field = await screen.findByRole("textbox", { name: /concorrência na retomada/i });
+    await user.type(field, "2");
+    await user.click(screen.getByRole("button", { name: /retomar/i }));
+    expect(client.resumeExperiment).toHaveBeenCalledWith(7, 2);
+  });
+
+  it("clamps the concorrência field at the experiment's current concurrency", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 7,
+      name: "kind-ember-89",
+      status: "paused",
+      concurrency: 4,
+      results: [],
+    });
+    vi.mocked(client.resumeExperiment).mockResolvedValue({ id: 7, status: "pending" });
+    renderPage();
+    const user = userEvent.setup();
+    const field = await screen.findByRole("textbox", { name: /concorrência na retomada/i });
+    await user.type(field, "9");
+    await user.click(screen.getByRole("button", { name: /retomar/i }));
+    expect(client.resumeExperiment).toHaveBeenCalledWith(7, 4);
+  });
 
   it("shows no Retomar button for a running or done experiment", async () => {
     vi.mocked(client.getExperiment).mockResolvedValue({

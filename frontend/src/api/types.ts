@@ -209,6 +209,8 @@ export interface ExperimentDetail {
   resumable?: boolean;
   /** Why it is not resumable right now; absent/null when `resumable` is true. */
   resumable_reason?: string | null;
+  /** The config's current concorrência: the max a Retomada's concurrency field accepts. */
+  concurrency?: number | null;
 }
 
 export interface PromptInfo {
