@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 
 from rapidfuzz import fuzz  # noqa: E402
 
-from app.core.graph.extraction import extract  # noqa: E402
+from app.core.graph.extraction import extract, without_headings  # noqa: E402
 from app.core.llm.factory import is_local_llm, resolve_llm  # noqa: E402
 
 DEFAULT_GOLD = ROOT / "database" / "guia_santo_antonio_da_alegria.grafo_gabarito.json"
@@ -43,7 +43,7 @@ def _normalize(name: str) -> str:
 
 
 def _section(base_text: str, heading: str) -> str:
-    """The section's text, heading included, up to the next blank line."""
+    """The section's text, heading included, up to the next blank line (the gate drops the heading as the build does)."""
     start = base_text.index(heading)
     end = base_text.find("\n\n", start)
     return base_text[start:end if end != -1 else None].strip()
@@ -121,7 +121,7 @@ def main() -> int:
     print(f"{'seção':<44} " + " ".join(f"{c:>6}" for c in columns))
     for section in gold["secoes"]:
         start = time.perf_counter()
-        extraction = extract(llm, _section(base_text, section["titulo"]))
+        extraction = extract(llm, without_headings(_section(base_text, section["titulo"])))
         seconds = time.perf_counter() - start
         score = _score_section(section, extraction)
         for name, count in score.items():

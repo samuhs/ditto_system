@@ -2,6 +2,7 @@
 from qdrant_client import QdrantClient
 
 from app.core.graph.build import ensure_graph
+from app.core.graph.knowledge import index_chunks
 from app.core.rag.base import build_rag, rag_registry
 from app.core.vectorstore.qdrant import QdrantStore, collection_name, parse_collection_name
 from app.ingestion.pipeline import ingest_documents
@@ -46,6 +47,11 @@ class _KeywordEmbedder:
         return [self.embed_query(t) for t in texts]
 
 
+def _body(chunk):
+    """The chunk's text after its heading line: what the extractor reads."""
+    return chunk.split("\n", 1)[1]
+
+
 class _ExtractorLLM:
     """Answers the extraction prompt with the canned lines of the chunk it was given."""
 
@@ -54,7 +60,7 @@ class _ExtractorLLM:
 
     def generate(self, prompt):
         self.calls += 1
-        return next(lines for chunk, lines in EXTRACTIONS.items() if chunk in prompt)
+        return next(lines for chunk, lines in EXTRACTIONS.items() if _body(chunk) in prompt)
 
 
 class _AnswerLLM:
@@ -228,6 +234,46 @@ def test_specificity_is_a_soft_idf_so_an_entity_in_two_chunks_is_not_halved():
     # would halve it below the creche's one; with the soft IDF it comes first.
     [context] = rag.answer(EVENT_QUESTION).contexts
     assert "edição do encontro" in context["text"]
+
+
+def test_the_extractor_reads_the_chunk_without_its_heading_path():
+    class _Recording(_GuideExtractorLLM):
+        prompts = []
+
+        def generate(self, prompt):
+            self.prompts.append(prompt)
+            return super().generate(prompt)
+
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    text = "# Guia da cidade\n## Perguntas frequentes\n### O encontro\nPrimeira edição do encontro."
+    ingest_documents(
+        [Document(name="guia.md", text=text)],
+        IngestConfig(base="guia", chunkings=["markdown"], embeddings=["kw"]),
+        store, embedder_factory=lambda name, **kw: _GuideEmbedder(),
+    )
+    llm = _Recording()
+    ensure_graph(store, base="guia", chunking="markdown", embedding="kw", extractor="qwen",
+                 llm=llm, embedder=_GuideEmbedder())
+
+    # The chunk keeps its headings (retrieval and the answer read them)...
+    [chunk] = index_chunks(store, "guia", "markdown", "kw").values()
+    assert chunk["text"].startswith("# Guia da cidade\n")
+    # ...but the extractor gets the body only: headings are no entities.
+    [prompt] = llm.prompts
+    assert prompt.rstrip().endswith("Texto: Primeira edição do encontro.\nSaída:")
+    assert "Guia da cidade" not in prompt and "Perguntas frequentes" not in prompt
+
+
+def test_a_graph_built_by_an_older_version_of_the_build_is_rebuilt(monkeypatch):
+    from app.core.graph import build
+
+    store = _indexed_store()
+    _graph(store)
+    monkeypatch.setattr(build, "GRAPH_VERSION", build.GRAPH_VERSION + 1)
+
+    again = _ExtractorLLM()
+    _graph(store, again)
+    assert again.calls == 3
 
 
 def test_techniques_without_a_grafo_have_no_graph_explanation():

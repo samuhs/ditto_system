@@ -19,6 +19,7 @@ END_MARKER = "<|FIM|>"
 # List markers and numbering models put before a record.
 _LIST_MARKER = re.compile(r"^(?:\d+[.)]|[-*•>])\s*")
 _QUOTES = "`'\" "
+_HEADING = re.compile(r"^#{1,6}\s+\S")
 
 
 class Entity(BaseModel):
@@ -84,6 +85,21 @@ def parse_extraction(reply: str) -> Extraction:
         else:
             result.failed_lines += 1
     return result
+
+
+def without_headings(chunk: str) -> str:
+    """The chunk without the Markdown heading lines it starts with.
+
+    The markdown chunker prefixes each chunk with its heading path ("# Guia de
+    ...", "## Perguntas frequentes ..."): the extractor took those titles for
+    entities, and the guide's title became an entity in 94 chunks (experiment #21).
+    The section's body names its subject again, so nothing is lost.
+    """
+    lines = chunk.splitlines()
+    start = 0
+    while start < len(lines) and (_HEADING.match(lines[start]) or not lines[start].strip()):
+        start += 1
+    return "\n".join(lines[start:]).strip()
 
 
 def extract(llm: LLM, text: str, prompt: str | None = None) -> Extraction:

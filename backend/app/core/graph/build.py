@@ -21,7 +21,7 @@ from langgraph.types import Send
 
 from app.core.graph.cache import ExtractionCache, extraction_key, prompt_version
 from app.core.graph.consolidation import consolidate, link_synonyms
-from app.core.graph.extraction import Extraction, extract
+from app.core.graph.extraction import Extraction, extract, without_headings
 from app.core.graph.knowledge import (
     GraphEntity,
     GraphRelation,
@@ -52,6 +52,10 @@ class GraphBuildPaused(RuntimeError):
 
 # Opens the Índice's embedder for the write step (a lease the caller controls).
 EmbedderScope = Callable[[], AbstractContextManager]
+
+# Bumped when the build changes what a graph holds, so older graphs are rebuilt.
+# 2: extraction without the heading path, synonyms by spelling (experiment #21).
+GRAPH_VERSION = 2
 
 
 def chunks_fingerprint(chunks: dict[int, str]) -> str:
@@ -145,8 +149,12 @@ class LLMGraphBuilder(GraphBuilder):
         def load_chunks(state: BuildState) -> dict:
             chunks = index_chunks(store, base, chunking, embedding)
             texts = {cid: p.get("text", "") for cid, p in chunks.items()}
-            # Chunks some earlier build already extracted (any Índice with this chunking).
-            keys = {cid: extraction_key(text, extractor, prompt) for cid, text in texts.items()}
+            # Chunks some earlier build already extracted (any Índice with this chunking),
+            # keyed by the text the extractor reads: the body, without the heading path.
+            keys = {
+                cid: extraction_key(without_headings(text), extractor, prompt)
+                for cid, text in texts.items()
+            }
             known = cache.get_many(list(keys.values())) if cache else {}
             cached = [
                 {"chunk_id": cid, "extraction": known[key]}
@@ -159,7 +167,7 @@ class LLMGraphBuilder(GraphBuilder):
         def fan_out(state: BuildState) -> list[Send] | str:
             done = {x["chunk_id"] for x in state.get("extractions", [])}
             sends = [
-                Send("extract", {"chunk_id": cid, "text": text})
+                Send("extract", {"chunk_id": cid, "text": without_headings(text)})
                 for cid, text in state["chunks"].items()
                 if cid not in done
             ]
@@ -194,7 +202,7 @@ class LLMGraphBuilder(GraphBuilder):
         def write(state: BuildState) -> dict:
             meta = {
                 "extractor": extractor, "prompt": prompt, "stats": state["stats"],
-                "prompt_version": prompt_version(prompt),
+                "prompt_version": prompt_version(prompt), "graph_version": GRAPH_VERSION,
                 "chunks_fingerprint": chunks_fingerprint(state["chunks"]),
                 "built_at": datetime.now(timezone.utc).isoformat(),
             }
@@ -231,8 +239,9 @@ def current_graph(
 ) -> KnowledgeGraph | None:
     """The Índice's graph for this LLM extrator, or None if it is missing or stale.
 
-    Stale: built with another extraction prompt, or from chunks the Índice no
-    longer has (re-ingested), since its chunk ids would point at the wrong text.
+    Stale: built by an older GRAPH_VERSION or with another extraction prompt, or
+    from chunks the Índice no longer has (re-ingested), since its chunk ids would
+    point at the wrong text.
     """
     graph = load_graph(store, base, chunking, embedding, extractor)
     if graph is None:
@@ -240,7 +249,8 @@ def current_graph(
     prompt = prompt or load_prompt("graph", "extract")
     texts = {cid: p.get("text", "") for cid, p in graph.chunks.items()}
     if (
-        graph.meta.get("prompt_version") != prompt_version(prompt)
+        graph.meta.get("graph_version") != GRAPH_VERSION
+        or graph.meta.get("prompt_version") != prompt_version(prompt)
         or graph.meta.get("chunks_fingerprint") != chunks_fingerprint(texts)
     ):
         return None

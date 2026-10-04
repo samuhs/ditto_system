@@ -85,9 +85,14 @@ class _TrigramEmbedder:
         return [self.embed_query(t) for t in texts]
 
 
+def _body(chunk):
+    """The chunk's text after its heading line: what the extractor reads."""
+    return chunk.split("\n", 1)[1]
+
+
 class _ExtractorLLM:
     def generate(self, prompt):
-        return next(lines for chunk, lines in EXTRACTIONS.items() if chunk in prompt)
+        return next(lines for chunk, lines in EXTRACTIONS.items() if _body(chunk) in prompt)
 
 
 class _AnswerLLM:
