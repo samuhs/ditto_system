@@ -192,3 +192,20 @@ def test_a_relation_endpoint_with_no_entity_line_is_promoted_unless_it_is_a_date
     # The date is no entity, and its relation is gone.
     assert not [k for k in graph.entities if any(ch.isdigit() for ch in k)]
     assert graph.neighbours("cachoeira do adilson") == ["prefeitura"]
+
+
+def test_a_name_with_a_number_is_promoted_but_dates_times_and_values_are_not():
+    from app.core.graph.consolidation import consolidate
+    from app.core.graph.extraction import parse_extraction
+
+    extraction = parse_extraction(
+        "entidade<|>Bar do Hélio<|>estabelecimento<|>Bar na rodovia.\n"
+        "relacao<|>Monumento Biker 23<|>Bar do Hélio<|>vizinhança<|>Fica ao lado do bar.\n"
+        "relacao<|>Bar do Hélio<|>7h às 18h<|>horário<|>Abre das 7h às 18h.\n"
+        "relacao<|>Bar do Hélio<|>R$ 20<|>preço<|>Lanche por R$ 20.\n<|FIM|>"
+    )
+
+    entities, relations = consolidate([{"chunk_id": 0, "extraction": extraction}])
+
+    assert sorted(e.name for e in entities) == ["Bar do Hélio", "Monumento Biker 23"]
+    assert [(r.source, r.target) for r in relations] == [("Monumento Biker 23", "Bar do Hélio")]

@@ -8,8 +8,9 @@
 - Entities merge by normalized name, and a name that is another entity's alias
   joins that entity. Type by majority; descriptions concatenated.
 - Relations follow their endpoints. An endpoint with no entity line of its own is
-  promoted to an entity, unless it holds a digit (a date, time or value, which the
-  extractor should not have named): then the relation is dropped.
+  promoted to an entity, unless it starts with a digit or a currency sign (a date,
+  time or value, which the extractor should not have named): then the relation is
+  dropped. A name holding a number ("Monumento Biker 23") is still an entity.
 - Synonymy: entities whose names' vectors have cosine >= 0.8 are linked, never
   merged ("Serra da Lajinha" and "Serra da Laginha"), as in HippoRAG.
 """
@@ -27,6 +28,8 @@ PROMOTED_TYPE = "outro"
 _NICKNAME = re.compile(r"^(.*\S)\s*\(([^()]+)\)\s*$")
 # Words that join a name to the hub's when the extractor repeats it as a suffix.
 _SUFFIX_JOINERS = {"em", ","}
+# A date, time or value the extractor named as an endpoint: "9 de junho", "19h", "R$ 20".
+_NOT_AN_ENTITY = re.compile(r"^\s*(\d|R\$|\$|€)")
 
 
 def _fold(text: str) -> str:
@@ -36,7 +39,10 @@ def _fold(text: str) -> str:
 
 
 def _split_nicknames(name: str) -> tuple[str, list[str]]:
-    """"Cachoeira do Deosdédi (Cachoeira do Dédi)" -> ("Cachoeira do Deosdédi", ["Cachoeira do Dédi"])."""
+    """A name without its parenthesised nicknames, and the nicknames.
+
+    "Cachoeira do Deosdédi (Cachoeira do Dédi)" -> ("Cachoeira do Deosdédi", ["Cachoeira do Dédi"]).
+    """
     aliases = []
     while match := _NICKNAME.match(name):
         name, nickname = match.group(1), match.group(2).strip()
@@ -136,7 +142,7 @@ def consolidate(extractions: list[dict]) -> tuple[list[GraphEntity], list[GraphR
             if ends[0] == ends[1]:
                 continue  # both names were the same entity
             dangling = [(k, n) for k, n in zip(ends, (r.source, r.target)) if k not in entities]
-            if any(re.search(r"\d", n) for _, n in dangling):
+            if any(_NOT_AN_ENTITY.match(n) for _, n in dangling):
                 continue  # a date, time or value: not an entity
             promoted.extend((x["chunk_id"], n, r.description) for _, n in dangling)
             slot = relations.setdefault(
