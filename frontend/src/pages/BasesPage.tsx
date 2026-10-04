@@ -1,14 +1,35 @@
-import { Button, Loader, Modal } from "@mantine/core";
-import { useEffect, useId, useState } from "react";
+import { Button, Loader, Modal, Select } from "@mantine/core";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { deleteBase, listBases } from "../api/client";
-import type { BaseSummary } from "../api/types";
+import {
+  deleteBase,
+  getOptions,
+  listBases,
+  pauseGraphBuild,
+  resumeGraphBuild,
+  startGraphBuild,
+} from "../api/client";
+import type { BaseSummary, GraphBuildJob, IndexPair, Options } from "../api/types";
+import { ChoiceGroup } from "../components/ChoiceGroup";
 import { GraphBuildList } from "../components/GraphBuildList";
+import { llmSelectData } from "../components/llmOptions";
 import { Errata, Note, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon } from "../components/icons";
 import { term } from "../glossary";
+
+const POLL_MS = 2000;
+
+function indexKey(i: IndexPair): string {
+  return `${i.chunking}|${i.embedding}`;
+}
+
+const isActiveBuild = (job: GraphBuildJob) => job.status === "pending" || job.status === "running";
+
+function hasActiveBuild(base: BaseSummary): boolean {
+  return (base.graph_builds ?? []).some(isActiveBuild);
+}
 
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -31,7 +52,19 @@ function Named({ dimension, value }: { dimension: "chunking" | "embedding"; valu
   );
 }
 
-function BaseSection({ base, onDelete }: { base: BaseSummary; onDelete: () => void }) {
+function BaseSection({
+  base,
+  onDelete,
+  onGenerate,
+  onPauseBuild,
+  onResumeBuild,
+}: {
+  base: BaseSummary;
+  onDelete: () => void;
+  onGenerate: () => void;
+  onPauseBuild: (job: GraphBuildJob) => void;
+  onResumeBuild: (job: GraphBuildJob) => void;
+}) {
   // Base names are free text: never fit for an id.
   const headingId = useId();
   const graphs = base.indexes.flatMap((index) => index.graphs.map((graph) => ({ index, graph })));
@@ -43,13 +76,26 @@ function BaseSection({ base, onDelete }: { base: BaseSummary; onDelete: () => vo
           {count(base.indexes.length, "índice", "índices")} ·{" "}
           {count(graphCount(base), "Grafo de conhecimento", "Grafos de conhecimento")}
         </p>
-        <Button size="sm" variant="default" onClick={onDelete}>
-          Apagar base
-        </Button>
+        <div className="ditto-row-actions">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={onGenerate}
+            disabled={base.in_use !== null}
+            title={base.in_use ?? undefined}
+          >
+            Gerar Grafo
+          </Button>
+          <Button size="sm" variant="default" onClick={onDelete}>
+            Apagar base
+          </Button>
+        </div>
       </div>
       <div className="ditto-sec-body">
         {base.in_use && <Note title="Em uso agora">{base.in_use}</Note>}
-        {(base.graph_builds ?? []).length > 0 && <GraphBuildList jobs={base.graph_builds ?? []} />}
+        {(base.graph_builds ?? []).length > 0 && (
+          <GraphBuildList jobs={base.graph_builds ?? []} onPause={onPauseBuild} onResume={onResumeBuild} />
+        )}
         <div className="ditto-table-wrap">
           <table className="ditto-table">
             <caption className="visually-hidden">Índices da base {base.name}</caption>
@@ -73,9 +119,8 @@ function BaseSection({ base, onDelete }: { base: BaseSummary; onDelete: () => vo
         </div>
         {graphs.length === 0 ? (
           <p className="ditto-read">
-            Nenhum Grafo de conhecimento ainda. Para criar um, envie os documentos de novo na{" "}
-            <Link to={`/ingest?base=${encodeURIComponent(base.name)}`}>ingestão</Link> marcando
-            “Gerar Grafo de conhecimento”.
+            Nenhum Grafo de conhecimento ainda. Clique em “Gerar Grafo”, acima, para criar o
+            primeiro a partir dos índices desta base.
           </p>
         ) : (
           <div className="ditto-table-wrap">
@@ -122,16 +167,35 @@ export function BasesPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleted, setDeleted] = useState<string | null>(null);
 
-  function refresh() {
+  const [options, setOptions] = useState<Options | null>(null);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState<BaseSummary | null>(null);
+  const [extractor, setExtractor] = useState<string | null>(null);
+  const [genIndexKeys, setGenIndexKeys] = useState<string[]>([]);
+  const [building, setBuilding] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
+
+  const refresh = useCallback(() => {
     listBases()
       .then((list) => {
         setBases(list);
         setError(null);
       })
       .catch((e) => setError(errorText(e)));
-  }
+  }, []);
 
-  useEffect(refresh, []);
+  useEffect(refresh, [refresh]);
+
+  useEffect(() => {
+    getOptions().then(setOptions).catch((e) => setOptionsError(errorText(e)));
+  }, []);
+
+  // Poll while a Grafo build of any Base is still running, queued or just started.
+  useEffect(() => {
+    if (!bases?.some(hasActiveBuild)) return;
+    const timer = window.setTimeout(refresh, POLL_MS);
+    return () => window.clearTimeout(timer);
+  }, [bases, refresh]);
 
   function askDelete(base: BaseSummary) {
     setDeleteError(null);
@@ -155,6 +219,39 @@ export function BasesPage() {
     } finally {
       setDeleting(false);
     }
+  }
+
+  function askGenerate(base: BaseSummary) {
+    setBuildError(null);
+    setExtractor(null);
+    setGenIndexKeys(base.indexes.map(indexKey));
+    setGenerating(base);
+  }
+
+  async function submitGenerate() {
+    if (!generating || !extractor) return;
+    setBuilding(true);
+    setBuildError(null);
+    try {
+      const indexes: IndexPair[] = generating.indexes
+        .filter((i) => genIndexKeys.includes(indexKey(i)))
+        .map((i) => ({ chunking: i.chunking, embedding: i.embedding }));
+      await startGraphBuild({ base: generating.name, extractor, indexes });
+      setGenerating(null);
+      refresh();
+    } catch (e) {
+      setBuildError(errorText(e));
+    } finally {
+      setBuilding(false);
+    }
+  }
+
+  function pauseBuild(job: GraphBuildJob) {
+    pauseGraphBuild(job.id).then(refresh).catch(() => {});
+  }
+
+  function resumeBuild(job: GraphBuildJob) {
+    resumeGraphBuild(job.id).then(refresh).catch(() => {});
   }
 
   return (
@@ -191,10 +288,66 @@ export function BasesPage() {
       {bases !== null && bases.length > 0 && (
         <div className="ditto-form">
           {bases.map((base) => (
-            <BaseSection key={base.name} base={base} onDelete={() => askDelete(base)} />
+            <BaseSection
+              key={base.name}
+              base={base}
+              onDelete={() => askDelete(base)}
+              onGenerate={() => askGenerate(base)}
+              onPauseBuild={pauseBuild}
+              onResumeBuild={resumeBuild}
+            />
           ))}
         </div>
       )}
+
+      <Modal
+        opened={generating !== null}
+        onClose={() => {
+          if (!building) setGenerating(null);
+        }}
+        title={generating ? `Gerar Grafo de conhecimento em “${generating.name}”` : ""}
+      >
+        {generating && (
+          <div style={{ display: "grid", gap: 16 }}>
+            {optionsError && (
+              <Errata title="Não foi possível carregar os LLMs">{optionsError}</Errata>
+            )}
+            <Select
+              label="LLM extrator"
+              description="O modelo que lê os trechos e anota entidades e relações."
+              placeholder="Escolha um modelo"
+              data={llmSelectData(options)}
+              value={extractor}
+              onChange={setExtractor}
+              allowDeselect={false}
+              maw={420}
+            />
+            <ChoiceGroup
+              legend="Índices"
+              choices={generating.indexes.map((i) => ({
+                value: indexKey(i),
+                name: `${term("chunking", i.chunking).name} · ${term("embedding", i.embedding).name}`,
+              }))}
+              value={genIndexKeys}
+              onChange={setGenIndexKeys}
+              empty="Esta base não tem índices."
+            />
+            {buildError && <Errata title="A construção não foi iniciada">{buildError}</Errata>}
+            <div className="ditto-row-actions" style={{ justifyContent: "flex-end" }}>
+              <Button variant="subtle" onClick={() => setGenerating(null)} disabled={building}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={submitGenerate}
+                loading={building}
+                disabled={!extractor || genIndexKeys.length === 0}
+              >
+                Construir Grafo
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         opened={confirming !== null}

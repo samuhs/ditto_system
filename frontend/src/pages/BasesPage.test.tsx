@@ -42,9 +42,40 @@ const VIAGEM: BaseSummary = {
   ],
 };
 
+function job(overrides: Partial<import("../api/types").GraphBuildJob> = {}): import("../api/types").GraphBuildJob {
+  return {
+    id: 9,
+    base: "viagem",
+    extractor: "qwen3:1.7b",
+    status: "pending",
+    pause_requested: false,
+    created_at: "2026-10-04T10:00:00Z",
+    finished_at: null,
+    indexes: [
+      { chunking: "fixed", embedding: "e5", status: "pending", extracted: 0, total: 12, stats: null, error: null },
+    ],
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   vi.mocked(client.listBases).mockResolvedValue([VIAGEM]);
   vi.mocked(client.deleteBase).mockResolvedValue({ base: "viagem", deleted: [] });
+  vi.mocked(client.getOptions).mockResolvedValue({
+    bases: ["viagem"],
+    chunkings: ["fixed", "recursive"],
+    embeddings: ["e5", "gemini"],
+    llm_options: [
+      { value: "qwen3:1.7b", label: "qwen3:1.7b", location: "local" },
+      { value: "gemini", label: "gemini", location: "remote" },
+    ],
+    rags: ["naive"],
+    retrievers: ["similarity"],
+    metrics: ["rouge_l"],
+  });
+  vi.mocked(client.startGraphBuild).mockResolvedValue(job());
+  vi.mocked(client.pauseGraphBuild).mockResolvedValue(job({ status: "paused", pause_requested: true }));
+  vi.mocked(client.resumeGraphBuild).mockResolvedValue(job({ status: "pending" }));
 });
 
 describe("BasesPage", () => {
@@ -86,7 +117,86 @@ describe("BasesPage", () => {
       ...VIAGEM, indexes: [{ chunking: "fixed", embedding: "e5", chunks: 12, graphs: [] }],
     }]);
     renderPage();
-    expect(await screen.findByText(/gerar grafo de conhecimento/i)).toBeInTheDocument();
+    expect(await screen.findByText(/clique em.*gerar grafo/i)).toBeInTheDocument();
+  });
+
+  it("opens the Gerar Grafo form with every Índice picked by default and starts a build", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    const base = await screen.findByRole("region", { name: "viagem" });
+    await user.click(within(base).getByRole("button", { name: /gerar grafo/i }));
+
+    const dialog = await screen.findByRole("dialog");
+    within(dialog).getAllByRole("checkbox").forEach((checkbox) => expect(checkbox).toBeChecked());
+    expect(client.getOptions).toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole("textbox", { name: /llm extrator/i }));
+    await user.click(await screen.findByRole("option", { name: /qwen3:1\.7b/i }));
+    await user.click(within(dialog).getByRole("button", { name: /construir grafo/i }));
+
+    await waitFor(() => expect(client.startGraphBuild).toHaveBeenCalledWith({
+      base: "viagem",
+      extractor: "qwen3:1.7b",
+      indexes: [
+        { chunking: "fixed", embedding: "e5" },
+        { chunking: "recursive", embedding: "gemini" },
+      ],
+    }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("lets the user pick fewer Índices before building", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    const base = await screen.findByRole("region", { name: "viagem" });
+    await user.click(within(base).getByRole("button", { name: /gerar grafo/i }));
+    const dialog = await screen.findByRole("dialog");
+
+    await user.click(within(dialog).getAllByRole("checkbox")[1]);
+    await user.click(within(dialog).getByRole("textbox", { name: /llm extrator/i }));
+    await user.click(await screen.findByRole("option", { name: /qwen3:1\.7b/i }));
+    await user.click(within(dialog).getByRole("button", { name: /construir grafo/i }));
+
+    await waitFor(() => expect(client.startGraphBuild).toHaveBeenCalledWith({
+      base: "viagem",
+      extractor: "qwen3:1.7b",
+      indexes: [{ chunking: "fixed", embedding: "e5" }],
+    }));
+  });
+
+  it("shows a build it just started, with pause and resume", async () => {
+    vi.mocked(client.listBases)
+      .mockResolvedValueOnce([VIAGEM])
+      .mockResolvedValue([{
+        ...VIAGEM,
+        in_use: 'Um Grafo de conhecimento da base "viagem" está sendo construído (LLM extrator qwen3:1.7b).',
+        graph_builds: [job({
+          status: "running",
+          indexes: [{ chunking: "fixed", embedding: "e5", status: "building", extracted: 5, total: 12, stats: null, error: null }],
+        })],
+      }]);
+    renderPage();
+    const user = userEvent.setup();
+    const base = await screen.findByRole("region", { name: "viagem" });
+    await user.click(within(base).getByRole("button", { name: /gerar grafo/i }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("textbox", { name: /llm extrator/i }));
+    await user.click(await screen.findByRole("option", { name: /qwen3:1\.7b/i }));
+    await user.click(within(dialog).getByRole("button", { name: /construir grafo/i }));
+
+    expect(await screen.findByText("Construindo Grafo: 5 / 12 trechos")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /pausar/i }));
+    expect(client.pauseGraphBuild).toHaveBeenCalledWith(9);
+  });
+
+  it("disables Gerar Grafo while the Base is in use", async () => {
+    vi.mocked(client.listBases).mockResolvedValue([{
+      ...VIAGEM, in_use: 'O experimento "exp-1" está na fila.',
+    }]);
+    renderPage();
+    const base = await screen.findByRole("region", { name: "viagem" });
+    expect(within(base).getByRole("button", { name: /gerar grafo/i })).toBeDisabled();
   });
 
   it("teaches the next step when there is no Base yet", async () => {
