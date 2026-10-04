@@ -994,6 +994,20 @@ def test_context_all_hops_is_skipped_when_nothing_is_retrieved(session_factory):
 # ---- Registro de pausa (issue #16): the reusable "pause now, with reason and
 # details" primitives #19 (Falhas consecutivas) and #20 (Travamento) will reuse.
 
+def test_pause_reason_is_a_closed_literal_type():
+    """Code review of #15-#21: `reason` used to be a bare `str` everywhere (`PauseRequest`,
+    `request_pause`, `record_pause`) — `PauseReason` closes it to the five values the
+    Registro de pausa actually uses, in English, as every other identifier in the code.
+    """
+    from typing import get_args
+
+    from app.experiments.orchestrator import PauseReason
+
+    assert set(get_args(PauseReason)) == {
+        "manual", "stall", "consecutive_failures", "interrupted", "failed",
+    }
+
+
 def test_in_flight_tracker_tracks_and_clears_questions():
     from app.experiments.orchestrator import _InFlightTracker
 
@@ -1172,6 +1186,102 @@ def test_stall_watchdog_pauses_without_scoring_and_discards_the_late_result(sess
     check.close()
 
 
+def test_stall_during_question_vectorization_pauses_without_a_run(session_factory):
+    """A blocked embedder call while vectorizing questions (#20 round 2) is abandoned
+    too, not only question generation: the Experimento pauses before any Combinação
+    starts, so no ExperimentRun is ever created, and the stall entry's phase says so.
+    """
+    block = threading.Event()
+
+    class _BlockingEmbedder:
+        def embed_query(self, text):
+            block.wait(5)  # released in teardown; simulates a hung embedder server
+            return [0.0, 0.0, 0.0]
+
+        @property
+        def dimension(self) -> int:
+            return 3
+
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "stall-vectorizing")
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=_llm_factory,
+        embedder_factory=lambda name, **kw: _BlockingEmbedder(),
+        stall_limit_s=0.2,
+    )
+    try:
+        run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+
+        check = session_factory()
+        stored = check.get(Experiment, experiment_id)
+        assert stored.status == "paused"
+        assert stored.runs == [], "no Combinação should ever start"
+        [entry] = stored.pauses
+        assert entry["reason"] == "stall"
+        assert entry["phase"] == "vectorizing"
+        assert entry["in_flight"] == []
+        check.close()
+
+        # The work slot freed up: another experiment can start right away.
+        assert work_slot.acquire(blocking=False), "work_slot should be free after a stall"
+        work_slot.release()
+    finally:
+        block.set()  # let the stuck thread return so it is never left hanging
+        time.sleep(0.05)
+
+
+def test_stall_during_scoring_pauses_without_losing_generated_answers(session_factory):
+    """A blocked eval embedder call while scoring (#20 round 2) is abandoned too: the
+    Experimento pauses, the already generated answer stays recorded (just unscored),
+    and the stall entry's phase is 'evaluating'.
+    """
+    block = threading.Event()
+
+    class _BlockingEvalEmbedder:
+        def embed_query(self, text):
+            block.wait(5)  # released in teardown; simulates a hung embedder server
+            return [0.0, 0.0, 0.0]
+
+        @property
+        def dimension(self) -> int:
+            return 3
+
+    def embedder_factory(name, **kwargs):
+        return _BlockingEvalEmbedder() if name == "eval-embedder" else _FakeEmbedder()
+
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "stall-scoring")
+    config = _single_combo_config(1).model_copy(update={"eval_embedding": "eval-embedder"})
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=_llm_factory,
+        embedder_factory=embedder_factory,
+        stall_limit_s=0.2,
+    )
+    try:
+        run_experiment(experiment_id, config, [QuestionItem(text="q")], deps)
+
+        check = session_factory()
+        stored = check.get(Experiment, experiment_id)
+        assert stored.status == "paused"
+        [result] = stored.runs[0].results
+        assert result.generated_answer == "The center is around the main square."
+        assert result.scores == {}
+        [entry] = stored.pauses
+        assert entry["reason"] == "stall"
+        assert entry["phase"] == "evaluating"
+        check.close()
+
+        assert work_slot.acquire(blocking=False), "work_slot should be free after a stall"
+        work_slot.release()
+    finally:
+        block.set()  # let the stuck thread return so it is never left hanging
+        time.sleep(0.05)
+
+
 def test_llm_factory_receives_half_the_stall_limit_as_a_timeout(session_factory):
     """Each LLM load gets a hard per-call timeout: half the Travamento limit."""
     seen_timeouts = []
@@ -1189,6 +1299,31 @@ def test_llm_factory_receives_half_the_stall_limit_as_a_timeout(session_factory)
     )
     run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
     assert seen_timeouts == [10.0]
+
+
+def test_remote_embedder_factory_receives_half_the_stall_limit_as_a_timeout(session_factory):
+    """The same per-call timeout given to the LLM (#20) also reaches a remote embedder
+    (code review of #15-#21: `GeminiEmbedder` already accepts `timeout`, but nothing
+    passed it through `ModelManager.acquire`). A local embedder is never given the
+    kwarg (it may not accept it): only "gemini" here, never the config's eval
+    embedding default ("paraphrase", local), should ever see one.
+    """
+    seen_timeouts = []
+
+    def _recording_embedder_factory(name, **kwargs):
+        if name == "gemini":
+            seen_timeouts.append(kwargs.get("timeout"))
+        return _FakeEmbedder()
+
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "embedder-timeout")
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=_llm_factory, embedder_factory=_recording_embedder_factory,
+        stall_limit_s=20.0,
+    )
+    run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+    assert seen_timeouts and set(seen_timeouts) == {10.0}
 
 
 def test_timeout_error_is_retried_like_any_other_failure(session_factory):

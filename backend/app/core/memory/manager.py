@@ -73,16 +73,33 @@ class ModelManager:
         wait_timeout_s: float = 30.0,
         is_local: Callable[[str], bool] = is_local_embedding,
         on_evict: Callable[[], None] = release_device_memory,
+        timeout: float | None = None,
     ) -> None:
         self._factory = factory
         self._max_local = max(1, max_local)
         self._wait_timeout_s = wait_timeout_s
         self._is_local = is_local
         self._on_evict = on_evict
+        # Travamento/2 (#20 round 2): a hard per-call timeout passed to remote (never
+        # local — they may not accept the kwarg) embedders when they load, same as the
+        # orchestrator already gives every LLM call. `set_timeout` lets the orchestrator
+        # inject it for the run even when `self` is the shared, process-wide manager.
+        self._timeout = timeout
         self._entries: OrderedDict[tuple[str, str], _Entry] = OrderedDict()  # LRU first
         self._cond = threading.Condition()
         # Leases held per thread: a caller that already holds one must not wait.
         self._held_by: dict[int, int] = {}
+
+    def set_timeout(self, timeout: float | None) -> None:
+        """Set (or clear) the per-call timeout given to remote embedders on load.
+
+        Safe to call on the shared, process-wide manager: the orchestrator sets it for
+        the duration of one experiment run and clears it again once the run ends, so it
+        never outlives the run that requested it (e.g. for an unrelated chat request
+        sharing the same manager).
+        """
+        with self._cond:
+            self._timeout = timeout
 
     @property
     def max_local(self) -> int:
@@ -177,7 +194,12 @@ class ModelManager:
     def _load(self, key: tuple[str, str], local: bool) -> Embedder:
         name, device = key
         logger.info("loading embedder %s on %s", name, device)
-        return self._factory(name, device=device) if local else self._factory(name)
+        if local:
+            return self._factory(name, device=device)
+        with self._cond:
+            timeout = self._timeout
+        kwargs = {} if timeout is None else {"timeout": timeout}
+        return self._factory(name, **kwargs)
 
     def _checkin(self, key: tuple[str, str]) -> None:
         with self._cond:

@@ -1,5 +1,6 @@
 """Ingestion pipeline: chunk, embed, and store documents per combination."""
 from collections.abc import Callable
+from datetime import UTC, datetime
 
 from app.core.chunking.base import Chunker, build_chunker
 from app.core.embedding.base import Embedder, build_embedder
@@ -30,6 +31,12 @@ def ingest_documents(
     Chunks are embedded and stored `batch_size` at a time, so a large document
     never holds all its vectors in memory at once.
     """
+    # Stamped on every point this call writes (#21 review): point ids are sequential
+    # counters that reset to the same values when a Base is deleted and reingested, so
+    # `index_fingerprint` needs a signal besides ids/count that changes on reingestion
+    # even when the documents are byte-identical. One timestamp per call is enough — it
+    # only has to differ between two separate ingestions of the same Índice.
+    ingested_at = datetime.now(UTC).isoformat()
     profile = active_profile()
     models = models or ModelManager(embedder_factory, max_local=profile.max_local_models)
     device = resolve_embedding_device(profile)
@@ -53,6 +60,7 @@ def ingest_documents(
                                 "embedding_model": embedding,
                                 "chunk_index": start + offset,
                                 "text": chunk,
+                                "ingested_at": ingested_at,
                             }
                             for offset, chunk in enumerate(batch)
                         ]

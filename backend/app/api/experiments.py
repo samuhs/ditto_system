@@ -7,6 +7,7 @@ from datetime import timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config.runtime import get_eval_embedding
@@ -416,6 +417,12 @@ def resume_experiment_route(
     runs again (1 <= concurrency <= the config's current value; 422 outside that range).
     Refreshes the stored Índice/Grafo fingerprint (#21) to the state this Retomada starts
     from, so the next Pausa/Retomada compares against it instead of the one from creation.
+
+    The status flip itself is one atomic `UPDATE ... WHERE status IN (...)` (code review
+    of #15-#21): the validations above only decide whether to attempt it, never whether it
+    succeeds — two requests racing each other here can both pass them (both reading the
+    same `paused`/`failed` row), but only one `UPDATE` can match and flip the row; the
+    loser's `rowcount` comes back 0 and gets a 409 instead of scheduling a second Retomada.
     """
     session = deps.session_factory()
     try:
@@ -441,9 +448,20 @@ def resume_experiment_route(
             config["fingerprint"] = experiment_fingerprint(ExperimentConfig(**config), deps.store)
         except ValidationError:
             pass  # config predates a field this needs: resume still proceeds, unfingerprinted
-        experiment.config = config
-        experiment.status = "pending"
+        result = session.execute(
+            update(Experiment)
+            .where(Experiment.id == experiment_id, Experiment.status.in_(("paused", "failed")))
+            .values(status="pending", config=config)
+        )
         session.commit()
+        if result.rowcount != 1:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Não é possível retomar: o Experimento já foi retomado (ou mudou de "
+                    "status) por outra requisição."
+                ),
+            )
     finally:
         session.close()
     background_tasks.add_task(resume_experiment, experiment_id, deps)

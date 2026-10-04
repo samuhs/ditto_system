@@ -51,8 +51,10 @@ function bridgeList(bridges: NonNullable<ExperimentResultRow["bridges_found"]>, 
 }
 
 const PAUSE_PHASE_LABEL: Record<string, string> = {
+  vectorizing: "Vetorizando perguntas",
   generating: "Gerando respostas",
   evaluating: "Pontuando",
+  difficulty_signals: "Calculando sinais de dificuldade",
 };
 
 /** The Experimento's stage when a Pausa entry was recorded ("—" when none was kept). */

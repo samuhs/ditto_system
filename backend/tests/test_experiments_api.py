@@ -796,6 +796,29 @@ def test_resume_blocked_when_index_was_reingested(client):
     assert "reingerido" in get_detail["resumable_reason"]
 
 
+def test_resume_blocked_when_the_base_was_deleted_and_reingested_identically(client):
+    """Deleting the Base and reingesting the exact same documents must be detected
+    too (code review of #21): point ids are sequential counters that reset to the
+    same values on a fresh collection, so point count alone (the only signal the
+    fingerprint used to compare) comes back identical and would wrongly allow the
+    Retomada to mix results from two different ingestions of the same Índice.
+    """
+    exp_id = _create_and_pause(client)
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    deps.store.delete_base("viagem")
+    ingest_documents(
+        [Document(name="a.txt", text="Para one.\n\nPara two.\n\nPara three.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"]),
+        deps.store,
+        embedder_factory=_embedder_factory,
+    )
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 409
+    assert "reingerido" in response.json()["detail"]
+
+
 def test_resume_blocked_when_the_graph_changed(client):
     _build_grafo(client, _FakeLLM())
     exp_id = _create_and_pause(
@@ -859,3 +882,49 @@ def test_resume_without_a_body_keeps_the_configured_concurrency(client):
 
     assert response.status_code == 200
     assert client.get(f"/experiments/{exp_id}").json()["concurrency"] == 2
+
+
+def test_resume_is_atomic_when_another_request_wins_the_race(client, monkeypatch):
+    """The status flip is one atomic `UPDATE ... WHERE status IN (...)` (code review of
+    #15-#21): if another request's Retomada already flipped the row in the gap between
+    this request's read-only validation and its own write, the `UPDATE` matches zero
+    rows and this request gets 409 instead of blindly overwriting it and scheduling a
+    second Retomada of the same Experimento.
+    """
+    from app.api import experiments as experiments_api
+
+    exp_id = _paused_experiment_with_questions(client)
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    real_resumable_reason = experiments_api._resumable_reason
+
+    def _resumable_reason_that_loses_the_race(experiment, store):
+        reason = real_resumable_reason(experiment, store)
+        # Simulates a second request's Retomada winning the race right here, in the
+        # gap between this request's check above and its own write below.
+        session = deps.session_factory()
+        other = session.get(Experiment, exp_id)
+        other.status = "pending"
+        session.commit()
+        session.close()
+        return reason
+
+    monkeypatch.setattr(experiments_api, "_resumable_reason", _resumable_reason_that_loses_the_race)
+    scheduled = []
+    monkeypatch.setattr(experiments_api, "resume_experiment", lambda *a, **kw: scheduled.append(a))
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 409
+    assert scheduled == [], "the loser of the race must never schedule its own Retomada"
+
+
+def test_resume_twice_in_a_row_rejects_the_second_call(client):
+    """Once a Retomada is scheduled, the Experimento is no longer `paused`/`failed`:
+    a second POST /resume right after the first gets 409, and only one Retomada runs."""
+    exp_id = _paused_experiment_with_questions(client)
+
+    first = client.post(f"/experiments/{exp_id}/resume")
+    second = client.post(f"/experiments/{exp_id}/resume")
+
+    assert first.status_code == 200
+    assert second.status_code == 409

@@ -9,6 +9,7 @@ from concurrent.futures import TimeoutError as _FutureTimeoutError
 from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Literal
 
 from sqlalchemy.orm import Session
 
@@ -55,6 +56,13 @@ _CONSECUTIVE_FAILURES_LIMIT = 3
 # Marks a question that failed after every retry (stored as its answer).
 ERROR_PREFIX = "[ERRO: "
 
+# Every reason a Pausa can have, recorded in the Registro de pausa (see CONTEXT.md,
+# "Pausa"): manual (POST /pause), stall (#20, Travamento), consecutive_failures (#19),
+# interrupted (API boot) and failed (an uncaught exception). Shared by `PauseRequest`,
+# `request_pause` and `record_pause` so a typo here is a type error, not a silent typo
+# in the Registro de pausa.
+PauseReason = Literal["manual", "stall", "consecutive_failures", "interrupted", "failed"]
+
 
 @dataclass
 class PauseRequest:
@@ -69,7 +77,7 @@ class PauseRequest:
     entry's `last_error` (see `record_pause`).
     """
 
-    reason: str
+    reason: PauseReason
     score_partial: bool = True
     detail: dict | None = None
 
@@ -81,7 +89,8 @@ _pause_requests: dict[int, PauseRequest] = {}
 
 
 def request_pause(
-    experiment_id: int, reason: str = "manual", *, score_partial: bool = True, detail: dict | None = None,
+    experiment_id: int, reason: PauseReason = "manual", *,
+    score_partial: bool = True, detail: dict | None = None,
 ) -> None:
     """Signal a running experiment to stop at its next checkpoint.
 
@@ -115,7 +124,7 @@ def record_pause(
     session: Session,
     experiment: Experiment,
     *,
-    reason: str,
+    reason: PauseReason,
     phase: str | None,
     in_flight: list[dict] | None = None,
     last_error: dict | None = None,
@@ -395,6 +404,64 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
 _STALL_POLL_S = 0.02
 
 
+class _Abandoned(Exception):
+    """Raised by `_await_or_abandon` when `stall_event` fires before the call returns.
+
+    ADR 0001: Python cannot kill a thread, so whatever was running is left running,
+    unobserved, in the background — its result (if it ever produces one) is never
+    read by anyone. Every blocking stage a Travamento can interrupt (question
+    generation in `_run_questions`, and, since round 2 of #20, question
+    vectorization, scoring and the difficulty-signal stages that used to run
+    straight on the main thread) raises or propagates this the same way, so
+    `_run_experiment` has one single thing to catch.
+    """
+
+
+def _await_or_abandon(
+    future: Future, stall_event: threading.Event | None, poll_s: float = _STALL_POLL_S,
+):
+    """Return `future`'s result, polling every `poll_s`.
+
+    Raises `_Abandoned` the first time `stall_event` is found set, instead of
+    waiting for `future` any further. `stall_event=None` means "no watchdog is
+    running for this call": it then simply blocks until `future` resolves.
+    """
+    while True:
+        try:
+            return future.result(timeout=poll_s)
+        except _FutureTimeoutError:
+            if stall_event is not None and stall_event.is_set():
+                raise _Abandoned from None
+
+
+def _run_abandonable(fn: Callable[[], object], stall_event: threading.Event | None):
+    """Run `fn` on its own worker thread so it can be abandoned mid-call (#20 round 2).
+
+    Lets the blocking stages outside `_run_questions` (question vectorization,
+    scoring, evidence distance, perplexity) be given up on too, the same way a
+    stuck question already was: on its own thread, polled rather than awaited, so
+    a Travamento never leaves the orchestrator's main loop stuck inside a call it
+    cannot interrupt.
+
+    `fn` must never touch the SQLAlchemy Session — it is not thread-safe, and the
+    caller is the only one allowed to use it. `fn` should only compute and return
+    a plain value for the caller to persist once this returns normally. Raises
+    `_Abandoned` (never `fn`'s own late result, read or otherwise) when
+    `stall_event` fires first; the worker thread is then left running, exactly
+    like an abandoned question in `_run_questions`.
+    """
+    pool = ThreadPoolExecutor(max_workers=1)
+    future = pool.submit(fn)
+    abandoned = False
+    try:
+        return _await_or_abandon(future, stall_event)
+    except _Abandoned:
+        abandoned = True
+        raise
+    finally:
+        pool.shutdown(wait=not abandoned, cancel_futures=abandoned)
+
+
 def _run_questions(
     rag, questions: list[QuestionItem], metrics: list, eval_embedder,
     concurrency: int, experiment_id: int, combo: dict, tracker: "_InFlightTracker",
@@ -451,15 +518,11 @@ def _run_questions(
             if abandoned:
                 yield question, None
                 continue
-            outcome = None
-            while True:
-                try:
-                    outcome = future.result(timeout=_STALL_POLL_S)
-                    break
-                except _FutureTimeoutError:
-                    if stall_event is not None and stall_event.is_set():
-                        abandoned = True
-                        break
+            try:
+                outcome = _await_or_abandon(future, stall_event)
+            except _Abandoned:
+                abandoned = True
+                outcome = None
             yield question, outcome
             if not abandoned:
                 _fill_window()  # only now: after the caller has seen this outcome
@@ -541,6 +604,18 @@ def _question_vectors(
     return vectors
 
 
+def _compute_evidence_distances(
+    deps: ExperimentDeps, config: ExperimentConfig, device: str, pending: list[tuple[int, str, str]],
+) -> dict[int, float]:
+    """QuestionProfile id -> GRADE distance for each (id, question, evidence) triple.
+
+    Touches no Session (runs off-thread, under `_run_abandonable`): the caller
+    applies the result to the profiles and commits on the main thread.
+    """
+    with deps.models.acquire(config.eval_embedding, device) as embedder:
+        return {pid: evidence_distance(embedder, question, text) for pid, question, text in pending}
+
+
 def _store_evidence_distances(
     session: Session,
     experiment_id: int,
@@ -548,11 +623,14 @@ def _store_evidence_distances(
     deps: ExperimentDeps,
     questions: list[QuestionItem],
     device: str,
+    stall_event: threading.Event | None = None,
 ) -> None:
     """Add GRADE's question-evidence distance to the profiles, with the eval embedder.
 
-    Runs after generation, when the LLM no longer holds the memory. Optional:
-    a failure is logged and the experiment still finishes.
+    Runs after generation, when the LLM no longer holds the memory, on an
+    abandonable worker thread (#20 round 2). Optional: any failure besides a
+    Travamento (`_Abandoned`, let through so `_run_experiment` can pause) is
+    logged and the experiment still finishes.
     """
     evidence = {q.text: q.evidence for q in questions if q.evidence}
     profiles = [
@@ -562,15 +640,35 @@ def _store_evidence_distances(
     ]
     if not profiles:
         return
+    pending = [(p.id, p.question, evidence[p.question]) for p in profiles]
+    by_id = {p.id: p for p in profiles}
     try:
-        with deps.models.acquire(config.eval_embedding, device) as embedder:
-            for profile in profiles:
-                distance = evidence_distance(embedder, profile.question, evidence[profile.question])
-                profile.signals = {**profile.signals, "evidence_distance": distance}
-        session.commit()
+        distances = _run_abandonable(
+            lambda: _compute_evidence_distances(deps, config, device, pending), stall_event,
+        )
+    except _Abandoned:
+        raise
     except Exception as exc:  # noqa: BLE001
-        session.rollback()
         logger.warning("evidence distance skipped: %s", exc)
+        return
+    for pid, distance in distances.items():
+        profile = by_id[pid]
+        profile.signals = {**profile.signals, "evidence_distance": distance}
+    session.commit()
+
+
+def _compute_perplexities(
+    perplexity_scorer_factory: Callable, llm_name: str, texts: list[str],
+) -> dict[str, float] | None:
+    """Perplexity of every text under `llm_name`, or None when it cannot be scored.
+
+    Touches no Session (runs off-thread, under `_run_abandonable`): may raise
+    `PerplexitySkipped` (not enough memory) same as `cached_perplexities` itself.
+    """
+    scorer = perplexity_scorer_factory(llm_name)
+    if scorer is None:
+        return None
+    return cached_perplexities(scorer, llm_name, texts)
 
 
 def _store_perplexities(
@@ -579,12 +677,15 @@ def _store_perplexities(
     config: ExperimentConfig,
     deps: ExperimentDeps,
     questions: list[QuestionItem],
+    stall_event: threading.Event | None = None,
 ) -> None:
     """Score each distinct question once per local LLM that supports it (perplexity).
 
     The question is the same across every combination, so it is scored once per
-    model, not per run; scores already known to this process are reused.
-    Optional: a failure is logged and the experiment still finishes.
+    model, not per run; scores already known to this process are reused. Each
+    model's scoring runs on an abandonable worker thread (#20 round 2). Optional:
+    any failure besides a Travamento (`_Abandoned`, let through so `_run_experiment`
+    can pause) is logged and the experiment still finishes.
     """
     texts = list(dict.fromkeys(q.text for q in questions))
     skipped: dict[str, dict] = {}
@@ -595,11 +696,13 @@ def _store_perplexities(
     for llm_name in dict.fromkeys(config.llms):
         if not is_local_llm(llm_name):
             continue
-        scorer = deps.perplexity_scorer_factory(llm_name)
-        if scorer is None:
-            continue
         try:
-            scores = cached_perplexities(scorer, llm_name, texts)
+            scores = _run_abandonable(
+                lambda name=llm_name: _compute_perplexities(deps.perplexity_scorer_factory, name, texts),
+                stall_event,
+            )
+        except _Abandoned:
+            raise
         except PerplexitySkipped as exc:
             logger.warning("perplexity skipped for %s: %s", llm_name, exc)
             skipped[llm_name] = {"free_mb": exc.free_mb, "needed_mb": exc.needed_mb}
@@ -607,6 +710,8 @@ def _store_perplexities(
         except Exception as exc:  # noqa: BLE001
             logger.warning("perplexity failed for %s: %s", llm_name, exc)
             skipped[llm_name] = {"error": str(exc)[:300]}
+            continue
+        if scores is None:
             continue
         for text, value in scores.items():
             profile = profiles.get(text)
@@ -636,10 +741,40 @@ def _score_with_retry(sample: EvalSample, metrics: list, eval_embedder) -> dict[
     return {}
 
 
+def _score_pending(
+    deps: ExperimentDeps, config: ExperimentConfig, device: str,
+    pending: list[tuple[int, EvalSample]],
+) -> dict[int, dict[str, float]]:
+    """Score every (RunResult id, EvalSample) pair; touches no Session (runs off-thread).
+
+    The whole point of splitting this out of `_score_results`: it is the part that
+    can block on the eval embedder, so it is the part `_run_abandonable` runs on a
+    worker thread (#20 round 2). Returns run_result_id -> scores for the caller to
+    apply and commit back on the main thread.
+    """
+    eval_context = (
+        deps.models.acquire(config.eval_embedding, device)
+        if metrics_need_embedder(config.metrics)
+        else nullcontext(None)
+    )
+    with eval_context as eval_embedder:
+        return {
+            row_id: _score_with_retry(sample, config.metrics, eval_embedder)
+            for row_id, sample in pending
+        }
+
+
 def _score_results(
-    session: Session, experiment_id: int, config: ExperimentConfig, deps: ExperimentDeps
+    session: Session, experiment_id: int, config: ExperimentConfig, deps: ExperimentDeps,
+    stall_event: threading.Event | None = None,
 ) -> None:
-    """Stage C: free the LLM, load the eval embedder once, score every stored answer."""
+    """Stage C: free the LLM, load the eval embedder once, score every stored answer.
+
+    The scoring itself runs on an abandonable worker thread (#20 round 2), same as
+    question generation: a Travamento here no longer leaves the orchestrator's main
+    loop stuck forever. Only this function's own Session reads/writes (picking the
+    pending rows, then applying their scores) stay on the calling thread.
+    """
     for llm_name in dict.fromkeys(config.llms):
         if is_local_llm(llm_name):
             ollama.unload_local_llm(llm_name)
@@ -653,23 +788,25 @@ def _score_results(
     if not pending:
         return
     device = resolve_embedding_device(active_profile())
-    eval_context = (
-        deps.models.acquire(config.eval_embedding, device)
-        if metrics_need_embedder(config.metrics)
-        else nullcontext(None)
-    )
-    with eval_context as eval_embedder:
-        for row in pending:
-            sample = EvalSample(
+    by_id = {row.id: row for row in pending}
+    samples = [
+        (
+            row.id,
+            EvalSample(
                 question=row.question,
                 answer=row.generated_answer,
                 contexts=[c.get("text", "") for c in row.retrieved_context],
                 reference_answer=row.reference_answer,
                 reference_contexts=row.reference_contexts,
                 reference_hops=row.evidence_hops,
-            )
-            row.scores = _score_with_retry(sample, config.metrics, eval_embedder)
-        session.commit()
+            ),
+        )
+        for row in pending
+    ]
+    scores_by_id = _run_abandonable(lambda: _score_pending(deps, config, device, samples), stall_event)
+    for row_id, scores in scores_by_id.items():
+        by_id[row_id].scores = scores
+    session.commit()
 
 
 def _run_experiment(
@@ -695,6 +832,11 @@ def _run_experiment(
         # Half the Travamento limit: a call that outlasts it fails on its own,
         # entering the usual retry path, well before the watchdog would fire.
         call_timeout_s = stall_limit_s / 2
+        # Same per-call timeout given to every LLM call also reaches remote embedders
+        # (e.g. Gemini), through the ModelManager's own `_load` (never local ones: they
+        # may not accept the kwarg). Cleared in `finally` so it never outlives this run
+        # on `deps.models` when that is the shared, process-wide manager.
+        deps.models.set_timeout(call_timeout_s)
         stall_event = threading.Event()
 
         def _on_stall() -> None:
@@ -718,10 +860,29 @@ def _run_experiment(
                 config.concurrency, concurrency, profile.name,
             )
         staged = config.staged
-        vectors = _question_vectors(deps, config, questions, device) if staged else {}
+        paused = False
+        pause_phase: str | None = None
+        pause_in_flight: list[dict] = []
+        tracker = _InFlightTracker()
+        failures = _ConsecutiveFailureTracker()
+        loaded_llm_name, llm = None, None
+
+        vectors: dict[str, dict[str, list[float]]] = {}
         if staged:
-            _set_phase(session, experiment, "generating")
+            # Stage A: can stall just like any other blocking call (#20 round 2) —
+            # abandoned on its own worker thread, before any Combinação starts.
+            _set_phase(session, experiment, "vectorizing")
             watchdog.heartbeat()
+            try:
+                vectors = _run_abandonable(
+                    lambda: _question_vectors(deps, config, questions, device), stall_event,
+                )
+            except _Abandoned:
+                paused = True
+                pause_phase = "vectorizing"
+            else:
+                _set_phase(session, experiment, "generating")
+                watchdog.heartbeat()
         eval_context = (
             deps.models.acquire(config.eval_embedding, device)
             if not staged and metrics_need_embedder(config.metrics)
@@ -729,172 +890,171 @@ def _run_experiment(
         )
         inline_metrics = [] if staged else config.metrics
 
-        paused = False
-        pause_in_flight: list[dict] = []
-        tracker = _InFlightTracker()
-        failures = _ConsecutiveFailureTracker()
-        loaded_llm_name, llm = None, None
-        with eval_context as eval_embedder, LeaseSwitcher(deps.models) as leases:
-            for llm_name, (chunking, embedding), rag_name, retriever_name in _combinations(config):
-                # Checkpoint: stop before starting a new combination if paused.
-                if _pause_requested(experiment_id):
-                    paused = True
-                    break
+        if not paused:
+            with eval_context as eval_embedder, LeaseSwitcher(deps.models) as leases:
+                for llm_name, (chunking, embedding), rag_name, retriever_name in _combinations(config):
+                    # Checkpoint: stop before starting a new combination if paused.
+                    if _pause_requested(experiment_id):
+                        paused = True
+                        break
 
-                # Retomada (#17): a Combinação already `done` is skipped; one `paused`
-                # or `running` is reused (its [ERRO] rows redone, valid ones kept); one
-                # with no ExperimentRun yet is created, exactly as on a first run.
-                run = _existing_run(
-                    session, experiment_id, chunking, embedding, rag_name, retriever_name, llm_name,
-                )
-                if run is not None and run.status == "done":
-                    continue
-                if run is None:
-                    run = ExperimentRun(
-                        experiment_id=experiment_id,
-                        chunking=chunking,
-                        embedding=embedding,
-                        rag_technique=rag_name,
-                        retriever=retriever_name,
-                        llm=llm_name,
-                        status="running",
+                    # Retomada (#17): a Combinação already `done` is skipped; one `paused`
+                    # or `running` is reused (its [ERRO] rows redone, valid ones kept); one
+                    # with no ExperimentRun yet is created, exactly as on a first run.
+                    run = _existing_run(
+                        session, experiment_id, chunking, embedding, rag_name, retriever_name, llm_name,
                     )
-                    session.add(run)
-                    answered: set[str] = set()
-                else:
-                    run.status = "running"
-                    existing_results = list(run.results)
-                    answered = {
-                        r.question for r in existing_results
-                        if not r.generated_answer.startswith(ERROR_PREFIX)
-                    }
-                    for result in existing_results:
-                        if result.generated_answer.startswith(ERROR_PREFIX):
-                            session.delete(result)
-                session.commit()
-                watchdog.heartbeat()  # a Combinação just started
-
-                if llm_name != loaded_llm_name:
-                    llm, loaded_llm_name = deps.llm_factory(llm_name, timeout=call_timeout_s), llm_name
-                if staged:
-                    cached = vectors[embedding]
-                    embedder = CachedQueryEmbedder(
-                        cached,
-                        # Only text the LLM writes (HyDE, multi-query, rewrites) loads the model.
-                        fallback=lambda name=embedding: leases.get(name, device),
-                        dimension=len(next(iter(cached.values()), [])),
-                    )
-                else:
-                    embedder = leases.get(embedding, device)
-                col = collection_name(config.base, chunking, embedding)
-                retriever = _build_retriever(
-                    deps, retriever_name, col, embedder, llm,
-                    prompts=prompt_snapshot.get("multi_query"),
-                )
-                rag_kwargs = {"retriever": retriever, "llm": llm}
-                if rag_name in PROMPT_SPECS or _uses_graph(rag_name):
-                    rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
-                if _uses_graph(rag_name):
-                    # Only queries: the Grafo was built beforehand (ingestion or a
-                    # Grafo build), by the LLM extrator the experiment chose.
-                    graph = (
-                        current_graph(deps.store, config.base, chunking, embedding,
-                                      config.graph_extractor)
-                        if config.graph_extractor else None
-                    )
-                    if graph is None:
-                        # The API checks this up front; the Grafo can still go stale
-                        # (re-ingested Índice, edited prompt) while the run waits.
-                        logger.error("no current Grafo for run %d", run.id)
-                        for question in questions:
-                            if question.text in answered:
-                                continue  # a Retomada never redoes a valid answer
-                            session.add(_error_result(run.id, question, (
-                                f"Grafo: não há Grafo de conhecimento atual do LLM extrator "
-                                f"{config.graph_extractor} para {chunking} × {embedding}"
-                            )))
-                        run.status = "done"
-                        session.commit()
+                    if run is not None and run.status == "done":
                         continue
-                    run.graph_stats = {**graph.stats, "extractor": graph.extractor}
-                    session.commit()
-                    rag_kwargs.update(graph=graph, embedder=embedder)
-                rag = deps.rag_factory(rag_name, **rag_kwargs)
-
-                # The oracle answers from the reference evidence: only questions with one.
-                run_questions = (
-                    [q for q in questions if q.evidence]
-                    if getattr(rag, "uses_evidence", False)
-                    else questions
-                )
-                # Retomada: a question already answered (not [ERRO]) never runs again.
-                if answered:
-                    run_questions = [q for q in run_questions if q.text not in answered]
-                combo = {
-                    "chunking": chunking, "embedding": embedding,
-                    "rag": rag_name, "retriever": retriever_name, "llm": llm_name,
-                }
-                # DB writes stay on this thread: the Session is not thread-safe.
-                for question, outcome in _run_questions(
-                    rag, run_questions, inline_metrics, eval_embedder, concurrency, experiment_id,
-                    combo, tracker, stall_event=stall_event,
-                ):
-                    # Checkpoint: questions not started before a pause are skipped,
-                    # and so is a question _run_questions gave up waiting on because
-                    # the watchdog fired (abandoned, never recorded — ADR 0001).
-                    if outcome is None:
-                        if not paused:
-                            # First detection: snapshot whatever is still mid-call right
-                            # now, before it has a chance to finish and clear itself.
-                            paused = True
-                            pause_in_flight = tracker.snapshot()
-                        continue
-
-                    answer_text, contexts, scores, latency_ms, tokens, explanation, error = outcome
-                    if error is not None:
-                        session.add(_error_result(run.id, question, str(error)))
-                        if failures.record_failure():
-                            # #19: this question's failure was the 3rd in a row (any
-                            # Combinação) — pause now, without scoring, keeping the
-                            # last exception for the Registro de pausa entry.
-                            request_pause(
-                                experiment_id, "consecutive_failures", score_partial=False,
-                                detail=_error_detail(error),
-                            )
-                    else:
-                        failures.record_success()
-                        session.add(
-                            RunResult(
-                                run_id=run.id,
-                                question=question.text,
-                                reference_answer=question.reference,
-                                reference_contexts=question.evidence,
-                                question_type=question.question_type,
-                                evidence_hops=question.evidence_hops,
-                                bridge_entities=question.bridge_entities,
-                                generated_answer=answer_text,
-                                retrieved_context=contexts,
-                                graph_explanation=explanation,
-                                retrieval_signals=retrieval_profile(contexts),
-                                scores=scores,
-                                latency_ms=latency_ms,
-                                tokens=tokens,
-                            )
+                    if run is None:
+                        run = ExperimentRun(
+                            experiment_id=experiment_id,
+                            chunking=chunking,
+                            embedding=embedding,
+                            rag_technique=rag_name,
+                            retriever=retriever_name,
+                            llm=llm_name,
+                            status="running",
                         )
-                    watchdog.heartbeat()  # a result was just recorded
-                logger.info("run %d finished; API memory %.0f MB", run.id, process_memory_bytes() / 1e6)
-
-                if paused:
-                    run.status = "paused"
+                        session.add(run)
+                        answered: set[str] = set()
+                    else:
+                        run.status = "running"
+                        existing_results = list(run.results)
+                        answered = {
+                            r.question for r in existing_results
+                            if not r.generated_answer.startswith(ERROR_PREFIX)
+                        }
+                        for result in existing_results:
+                            if result.generated_answer.startswith(ERROR_PREFIX):
+                                session.delete(result)
                     session.commit()
-                    break
+                    watchdog.heartbeat()  # a Combinação just started
 
-                run.status = "done"
-                session.commit()
+                    if llm_name != loaded_llm_name:
+                        llm, loaded_llm_name = deps.llm_factory(llm_name, timeout=call_timeout_s), llm_name
+                    if staged:
+                        cached = vectors[embedding]
+                        embedder = CachedQueryEmbedder(
+                            cached,
+                            # Only text the LLM writes (HyDE, multi-query, rewrites) loads the model.
+                            fallback=lambda name=embedding: leases.get(name, device),
+                            dimension=len(next(iter(cached.values()), [])),
+                        )
+                    else:
+                        embedder = leases.get(embedding, device)
+                    col = collection_name(config.base, chunking, embedding)
+                    retriever = _build_retriever(
+                        deps, retriever_name, col, embedder, llm,
+                        prompts=prompt_snapshot.get("multi_query"),
+                    )
+                    rag_kwargs = {"retriever": retriever, "llm": llm}
+                    if rag_name in PROMPT_SPECS or _uses_graph(rag_name):
+                        rag_kwargs["prompts"] = prompt_snapshot.get(rag_name)
+                    if _uses_graph(rag_name):
+                        # Only queries: the Grafo was built beforehand (ingestion or a
+                        # Grafo build), by the LLM extrator the experiment chose.
+                        graph = (
+                            current_graph(deps.store, config.base, chunking, embedding,
+                                          config.graph_extractor)
+                            if config.graph_extractor else None
+                        )
+                        if graph is None:
+                            # The API checks this up front; the Grafo can still go stale
+                            # (re-ingested Índice, edited prompt) while the run waits.
+                            logger.error("no current Grafo for run %d", run.id)
+                            for question in questions:
+                                if question.text in answered:
+                                    continue  # a Retomada never redoes a valid answer
+                                session.add(_error_result(run.id, question, (
+                                    f"Grafo: não há Grafo de conhecimento atual do LLM extrator "
+                                    f"{config.graph_extractor} para {chunking} × {embedding}"
+                                )))
+                            run.status = "done"
+                            session.commit()
+                            continue
+                        run.graph_stats = {**graph.stats, "extractor": graph.extractor}
+                        session.commit()
+                        rag_kwargs.update(graph=graph, embedder=embedder)
+                    rag = deps.rag_factory(rag_name, **rag_kwargs)
+
+                    # The oracle answers from the reference evidence: only questions with one.
+                    run_questions = (
+                        [q for q in questions if q.evidence]
+                        if getattr(rag, "uses_evidence", False)
+                        else questions
+                    )
+                    # Retomada: a question already answered (not [ERRO]) never runs again.
+                    if answered:
+                        run_questions = [q for q in run_questions if q.text not in answered]
+                    combo = {
+                        "chunking": chunking, "embedding": embedding,
+                        "rag": rag_name, "retriever": retriever_name, "llm": llm_name,
+                    }
+                    # DB writes stay on this thread: the Session is not thread-safe.
+                    for question, outcome in _run_questions(
+                        rag, run_questions, inline_metrics, eval_embedder, concurrency, experiment_id,
+                        combo, tracker, stall_event=stall_event,
+                    ):
+                        # Checkpoint: questions not started before a pause are skipped,
+                        # and so is a question _run_questions gave up waiting on because
+                        # the watchdog fired (abandoned, never recorded — ADR 0001).
+                        if outcome is None:
+                            if not paused:
+                                # First detection: snapshot whatever is still mid-call right
+                                # now, before it has a chance to finish and clear itself.
+                                paused = True
+                                pause_in_flight = tracker.snapshot()
+                            continue
+
+                        answer_text, contexts, scores, latency_ms, tokens, explanation, error = outcome
+                        if error is not None:
+                            session.add(_error_result(run.id, question, str(error)))
+                            if failures.record_failure():
+                                # #19: this question's failure was the 3rd in a row (any
+                                # Combinação) — pause now, without scoring, keeping the
+                                # last exception for the Registro de pausa entry.
+                                request_pause(
+                                    experiment_id, reason="consecutive_failures", score_partial=False,
+                                    detail=_error_detail(error),
+                                )
+                        else:
+                            failures.record_success()
+                            session.add(
+                                RunResult(
+                                    run_id=run.id,
+                                    question=question.text,
+                                    reference_answer=question.reference,
+                                    reference_contexts=question.evidence,
+                                    question_type=question.question_type,
+                                    evidence_hops=question.evidence_hops,
+                                    bridge_entities=question.bridge_entities,
+                                    generated_answer=answer_text,
+                                    retrieved_context=contexts,
+                                    graph_explanation=explanation,
+                                    retrieval_signals=retrieval_profile(contexts),
+                                    scores=scores,
+                                    latency_ms=latency_ms,
+                                    tokens=tokens,
+                                )
+                            )
+                        watchdog.heartbeat()  # a result was just recorded
+                    logger.info("run %d finished; API memory %.0f MB", run.id, process_memory_bytes() / 1e6)
+
+                    if paused:
+                        run.status = "paused"
+                        session.commit()
+                        break
+
+                    run.status = "done"
+                    session.commit()
 
         # The phase a pause interrupted, captured before scoring (which would move
-        # it to "evaluating") or the final clear below overwrite it.
-        pause_phase = (experiment.config or {}).get("phase") if paused else None
+        # it to "evaluating") or the final clear below overwrite it. Vectorization's
+        # own abandon already set this; a pause from inside the combinations loop
+        # (checkpoint or a Travamento during generation) has not, so read it now.
+        if paused and pause_phase is None:
+            pause_phase = (experiment.config or {}).get("phase")
         pause_request = _pause_requests.get(experiment_id) if paused else None
         score_partial = pause_request is None or pause_request.score_partial
 
@@ -903,13 +1063,28 @@ def _run_experiment(
             # skip scoring (#19/#20: free the machine right away).
             _set_phase(session, experiment, "evaluating")
             watchdog.heartbeat()
-            _score_results(session, experiment_id, config, deps)
+            try:
+                _score_results(session, experiment_id, config, deps, stall_event)
+            except _Abandoned:
+                paused = True
+                pause_phase = "evaluating"
+                pause_request = _pause_requests.get(experiment_id)
+                score_partial = pause_request is None or pause_request.score_partial
         if score_partial:
-            _store_evidence_distances(
-                session, experiment_id, config, deps, questions,
-                resolve_embedding_device(active_profile()) if staged else device,
-            )
-            _store_perplexities(session, experiment_id, config, deps, questions)
+            _set_phase(session, experiment, "difficulty_signals")
+            watchdog.heartbeat()
+            try:
+                _store_evidence_distances(
+                    session, experiment_id, config, deps, questions,
+                    resolve_embedding_device(active_profile()) if staged else device,
+                    stall_event,
+                )
+                _store_perplexities(session, experiment_id, config, deps, questions, stall_event)
+            except _Abandoned:
+                paused = True
+                pause_phase = "difficulty_signals"
+                pause_request = _pause_requests.get(experiment_id)
+                score_partial = pause_request is None or pause_request.score_partial
         experiment.status = "paused" if paused else "done"
         experiment.finished_at = datetime.now(UTC)
         _set_phase(session, experiment, None)
@@ -939,5 +1114,6 @@ def _run_experiment(
     finally:
         if watchdog is not None:
             watchdog.stop()  # the run is over either way: never fire after this
+        deps.models.set_timeout(None)  # never outlive this run on a shared manager
         _pause_requests.pop(experiment_id, None)
         session.close()

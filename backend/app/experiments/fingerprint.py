@@ -26,13 +26,17 @@ def uses_graph(config: ExperimentConfig) -> bool:
 
 def index_fingerprint(store: QdrantStore, base: str, chunking: str, embedding: str) -> dict:
     """Identity of one Índice's Qdrant collection: whether it exists, its point count, and
-    an ingestion timestamp when its payload carries one.
+    the ingestion timestamp `ingest_documents` stamps on every point it writes.
 
-    No ingestion pipeline stamps a timestamp on its payload today, so `ingested_at` is
-    always None for now; reading it defensively here means a future pipeline that does
-    record one is picked up without changing this fingerprint's shape. Point count alone
-    already catches the common case: reingesting adds rows (ingest never replaces, only
-    appends after `store.count`).
+    Point count alone catches the common case (reingesting adds rows: ingest never
+    replaces, only appends after `store.count`), but not deleting the Base and
+    reingesting the exact same documents (code review of #21): point ids are
+    sequential counters that reset to the same values on a fresh collection, so a
+    byte-identical reingestion comes back with the same count too. `ingested_at`
+    (read from an arbitrary single point — one call's points all share it) catches
+    that case instead: it always differs between two separate ingestions. An
+    Índice fingerprinted before this field existed simply has `ingested_at: None`
+    on both sides, so it never falsely looks changed.
     """
     name = collection_name(base, chunking, embedding)
     if name not in store.list_collections():
