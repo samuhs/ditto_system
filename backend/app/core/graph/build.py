@@ -4,7 +4,7 @@
 
 Each chunk is extracted on its own branch (run in parallel up to max_concurrency)
 and the results accumulate through a reducer, then are consolidated without an LLM
-(names, aliases, synonyms: see consolidation.py).
+(names, aliases, synonyms by spelling: see consolidation.py).
 """
 import hashlib
 import logging
@@ -186,7 +186,7 @@ class LLMGraphBuilder(GraphBuilder):
                 raise GraphBuildError("the LLM extrator failed on every chunk")
             entities, relations = consolidate(extractions)
             return {
-                "entities": entities,
+                "entities": link_synonyms(entities),
                 "relations": relations,
                 "stats": _stats(extractions, entities, relations),
             }
@@ -198,11 +198,10 @@ class LLMGraphBuilder(GraphBuilder):
                 "chunks_fingerprint": chunks_fingerprint(state["chunks"]),
                 "built_at": datetime.now(timezone.utc).isoformat(),
             }
-            # The Índice's embedder is leased only here (memory profile): it links
-            # synonyms, then embeds the entities and relations.
+            # The Índice's embedder is leased only here (memory profile), to embed
+            # the entities and relations.
             with embedder_scope() as embedder:
-                entities = link_synonyms(state["entities"], embedder)
-                write_graph(store, names, entities, state["relations"], embedder, meta)
+                write_graph(store, names, state["entities"], state["relations"], embedder, meta)
             return {}
 
         flow = StateGraph(BuildState)

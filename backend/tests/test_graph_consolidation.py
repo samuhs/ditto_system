@@ -4,7 +4,6 @@ The LLM extrator is canned: each chunk "yields" the lines a small model really
 writes for a city guide (the city's name repeated as a suffix, nicknames between
 parentheses, close spellings), and the graph is built and queried as in a run.
 """
-import math
 import zlib
 
 from qdrant_client import QdrantClient
@@ -86,11 +85,6 @@ class _TrigramEmbedder:
         return [self.embed_query(t) for t in texts]
 
 
-def _cosine(a, b):
-    dot = sum(x * y for x, y in zip(a, b))
-    return dot / math.sqrt(sum(x * x for x in a) * sum(y * y for y in b))
-
-
 class _ExtractorLLM:
     def generate(self, prompt):
         return next(lines for chunk, lines in EXTRACTIONS.items() if chunk in prompt)
@@ -143,11 +137,6 @@ def test_city_suffix_and_parenthesised_nickname_make_one_entity_with_an_alias():
 def test_close_spellings_are_linked_as_synonyms_and_different_entities_stay_apart():
     graph = _graph()
     embedder = _TrigramEmbedder()
-    # The fake embedder puts the pairs on each side of the 0.8 threshold.
-    assert _cosine(embedder.embed_query("Serra da Lajinha"),
-                   embedder.embed_query("Serra da Laginha")) >= 0.8
-    assert _cosine(embedder.embed_query("Cachoeira do Adilson"),
-                   embedder.embed_query("Cachoeira do Deosdédi")) < 0.8
 
     lajinha, laginha = graph.entities["serra da lajinha"], graph.entities["serra da laginha"]
     # Linked both ways, never merged.
@@ -209,3 +198,25 @@ def test_a_name_with_a_number_is_promoted_but_dates_times_and_values_are_not():
 
     assert sorted(e.name for e in entities) == ["Bar do Hélio", "Monumento Biker 23"]
     assert [(r.source, r.target) for r in relations] == [("Monumento Biker 23", "Bar do Hélio")]
+
+
+def test_synonyms_go_by_spelling_not_by_meaning():
+    from app.core.graph.consolidation import link_synonyms
+    from app.core.graph.knowledge import GraphEntity
+
+    def entity(name):
+        return GraphEntity(key=name.casefold(), name=name, type="lugar", description="",
+                           chunk_ids=[0])
+
+    names = ["Serra da Lajinha", "Serra da Laginha", "São Paulo", "Correios",
+             "Cachoeira do Deosdédi", "Cachoeira do Deosdedi", "Cachoeira do Adilson"]
+    linked = {e.key: e.synonyms for e in link_synonyms([entity(n) for n in names])}
+
+    # A one-letter slip, or an accent, is the same name spelled two ways: linked both ways.
+    assert set(linked["serra da lajinha"]) == {"serra da laginha"}
+    assert set(linked["serra da laginha"]) == {"serra da lajinha"}
+    assert set(linked["cachoeira do deosdédi"]) == {"cachoeira do deosdedi"}
+    # Names an embedding puts close (the e5 gave São Paulo ~ Correios 0.8) stay apart.
+    assert not linked["são paulo"] and not linked["correios"]
+    assert not linked["cachoeira do adilson"]
+    assert 0.85 <= linked["serra da lajinha"]["serra da laginha"] <= 1.0

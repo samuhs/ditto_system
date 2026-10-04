@@ -29,7 +29,7 @@ class GraphEntity(BaseModel):
     chunk_ids: list[int]
     # Other names of the same entity (nicknames between parentheses).
     aliases: list[str] = []
-    # Keys of entities with a close name, by cosine; linked, never merged.
+    # Keys of entities spelled alike, with the similarity (0-1); linked, never merged.
     synonyms: dict[str, float] = {}
 
 

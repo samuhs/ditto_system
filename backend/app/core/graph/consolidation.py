@@ -11,18 +11,23 @@
   promoted to an entity, unless it starts with a digit or a currency sign (a date,
   time or value, which the extractor should not have named): then the relation is
   dropped. A name holding a number ("Monumento Biker 23") is still an entity.
-- Synonymy: entities whose names' vectors have cosine >= 0.8 are linked, never
-  merged ("Serra da Lajinha" and "Serra da Laginha"), as in HippoRAG.
+- Synonymy: entities whose names are spelled alike (rapidfuzz ratio >= 85 on the
+  casefolded, accentless names) are linked, never merged ("Serra da Lajinha" and
+  "Serra da Laginha"), as in HippoRAG. By spelling, not by embedding: a sentence
+  embedder puts any two short names close (the e5 gave "São Paulo" ~ "Correios"
+  0.8), and the link is for one name written two ways, not for related concepts.
 """
 import re
 import unicodedata
 from collections import Counter
 
 import numpy as np
+from rapidfuzz import fuzz, process
 
 from app.core.graph.knowledge import GraphEntity, GraphRelation, normalize_name
 
-SYNONYM_COSINE = 0.8
+# Ratio (0-100) of the folded names from which two entities are linked as synonyms.
+SYNONYM_RATIO = 85
 # The type of an entity known only as a relation's endpoint.
 PROMOTED_TYPE = "outro"
 _NICKNAME = re.compile(r"^(.*\S)\s*\(([^()]+)\)\s*$")
@@ -174,19 +179,17 @@ def consolidate(extractions: list[dict]) -> tuple[list[GraphEntity], list[GraphR
     return merged_entities, merged_relations
 
 
-def link_synonyms(entities: list[GraphEntity], embedder) -> list[GraphEntity]:
-    """The entities, each with the keys (and cosine) of those whose names are close."""
+def link_synonyms(entities: list[GraphEntity]) -> list[GraphEntity]:
+    """The entities, each with the keys (and similarity, 0-1) of those spelled alike."""
     if len(entities) < 2:
         return entities
-    vectors = np.array(embedder.embed_documents([e.name for e in entities]), dtype=float)
-    norms = np.linalg.norm(vectors, axis=1, keepdims=True)
-    unit = vectors / np.where(norms == 0, 1.0, norms)
-    cosine = unit @ unit.T
-    np.fill_diagonal(cosine, 0.0)
+    names = [_fold(e.name) for e in entities]
+    ratio = process.cdist(names, names, scorer=fuzz.ratio, dtype=np.float32)
+    np.fill_diagonal(ratio, 0.0)
     return [
         e.model_copy(update={"synonyms": {
-            entities[j].key: round(float(cosine[i, j]), 4)
-            for j in np.flatnonzero(cosine[i] >= SYNONYM_COSINE)
+            entities[j].key: round(float(ratio[i, j]) / 100, 4)
+            for j in np.flatnonzero(ratio[i] >= SYNONYM_RATIO)
         }})
         for i, e in enumerate(entities)
     ]
