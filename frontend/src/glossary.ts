@@ -91,7 +91,7 @@ const TERMS: Record<Dimension, Record<string, Term>> = {
     graph: {
       name: "Grafo (GraphRAG)",
       description:
-        "Acha as entidades da pergunta no Grafo de conhecimento do índice e responde com os trechos delas e das vizinhas. O próprio modelo de resposta monta o Grafo de conhecimento na primeira vez. Não usa a busca.",
+        "Acha as entidades da pergunta no Grafo de conhecimento do índice e responde com os trechos delas e das vizinhas. O Grafo é gerado antes, na ingestão, por um LLM extrator. Não usa a busca.",
     },
     graph_mix: {
       name: "Grafo + busca",
