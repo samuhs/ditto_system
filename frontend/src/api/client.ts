@@ -260,3 +260,11 @@ export async function saveEvalEmbedding(name: string): Promise<{ eval_embedding:
     body: JSON.stringify({ name }),
   }));
 }
+
+export async function saveStallLimit(minutes: number): Promise<{ stall_limit_minutes: number }> {
+  return asJson(await fetch(`${BASE}/settings/stall-limit`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ minutes }),
+  }));
+}

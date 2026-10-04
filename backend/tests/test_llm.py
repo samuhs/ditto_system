@@ -63,7 +63,7 @@ def test_ollama_uses_settings_defaults(monkeypatch):
     captured = {}
 
     class _FakeChatOpenAI:
-        def __init__(self, model, base_url, api_key):
+        def __init__(self, model, base_url, api_key, **kwargs):
             captured["model"] = model
             captured["base_url"] = base_url
             captured["api_key"] = api_key

@@ -11,13 +11,18 @@ class GeminiEmbedder(Embedder):
         model: str = "gemini-embedding-001",
         api_key: str | None = None,
         client=None,
+        timeout: float | None = None,
     ) -> None:
         if client is None:
             from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
+            # Travamento/2 (#20): a hard timeout on the HTTP client, so a stuck
+            # embedding call fails into the usual retry path.
+            client_args = {"timeout": timeout} if timeout is not None else None
             client = GoogleGenerativeAIEmbeddings(
                 model=model,
                 google_api_key=api_key or get_gemini_key(),
+                client_args=client_args,
             )
         self._client = client
         self._dimension: int | None = None

@@ -1,4 +1,6 @@
 """End-to-end test for the experiment orchestrator (no network, no Postgres)."""
+import threading
+import time
 from unittest.mock import patch
 
 import pytest
@@ -9,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.db.base import Base
 from app.core.db.models import Experiment, ExperimentRun
+from app.core.memory.manager import work_slot
 from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.orchestrator import (
     ExperimentDeps,
@@ -616,9 +619,9 @@ def test_concurrency_is_capped_by_the_profile(session_factory, monkeypatch):
     seen = []
     real = orchestrator._run_questions
 
-    def spy(rag, questions, metrics, eval_embedder, concurrency, exp_id, combo, tracker):
+    def spy(rag, questions, metrics, eval_embedder, concurrency, exp_id, combo, tracker, **kw):
         seen.append(concurrency)
-        return real(rag, questions, metrics, eval_embedder, concurrency, exp_id, combo, tracker)
+        return real(rag, questions, metrics, eval_embedder, concurrency, exp_id, combo, tracker, **kw)
 
     monkeypatch.setattr(orchestrator, "_run_questions", spy)
     deps = ExperimentDeps(store=store, session_factory=session_factory,
@@ -1112,6 +1115,134 @@ def test_failed_experiment_records_a_failed_pause_entry(session_factory):
     assert entry["last_error"]["message"] == "embedder indisponível"
     assert "Traceback" in entry["last_error"]["traceback"]
     check.close()
+
+
+# ---- Travamento (#20): the watchdog pauses a run that stops making progress,
+# abandoning whatever call is stuck (ADR 0001), and per-call LLM timeouts.
+
+
+def test_stall_watchdog_pauses_without_scoring_and_discards_the_late_result(session_factory):
+    """A call that never returns is abandoned once the Travamento limit passes."""
+    block = threading.Event()
+
+    class _BlockingLLM:
+        def generate(self, prompt: str) -> str:
+            block.wait(5)  # released in teardown; simulates a hung server call
+            return "late answer, must never be recorded"
+
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "stall")
+    deps = ExperimentDeps(
+        store=store,
+        session_factory=session_factory,
+        llm_factory=lambda *a, **kw: _BlockingLLM(),
+        embedder_factory=_embedder_factory,
+        stall_limit_s=0.2,
+    )
+    try:
+        run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+
+        check = session_factory()
+        stored = check.get(Experiment, experiment_id)
+        assert stored.status == "paused"
+        assert stored.runs[0].results == [], "the stuck question must not be scored"
+        [entry] = stored.pauses
+        assert entry["reason"] == "stall"
+        assert entry["phase"] == "generating"
+        assert entry["in_flight"] == [
+            {
+                "chunking": "recursive", "embedding": "gemini", "rag": "naive",
+                "retriever": "similarity", "llm": "gemini", "question": "q",
+            }
+        ]
+        assert entry["resumed_at"] is None
+        check.close()
+
+        # The work slot freed up: another experiment can start right away.
+        assert work_slot.acquire(blocking=False), "work_slot should be free after a stall"
+        work_slot.release()
+    finally:
+        block.set()  # let the stuck thread return so it is never left hanging
+        time.sleep(0.05)
+
+    # Even after the abandoned call finally returns, nothing late gets recorded.
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.runs[0].results == []
+    check.close()
+
+
+def test_llm_factory_receives_half_the_stall_limit_as_a_timeout(session_factory):
+    """Each LLM load gets a hard per-call timeout: half the Travamento limit."""
+    seen_timeouts = []
+
+    def _recording_llm_factory(name, **kwargs):
+        seen_timeouts.append(kwargs.get("timeout"))
+        return _FakeLLM()
+
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "llm-timeout")
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=_recording_llm_factory, embedder_factory=_embedder_factory,
+        stall_limit_s=20.0,
+    )
+    run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+    assert seen_timeouts == [10.0]
+
+
+def test_timeout_error_is_retried_like_any_other_failure(session_factory):
+    """A call that times out is a common failure: it retries, then records [ERRO]."""
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "timeout-retry")
+    call_count = 0
+
+    class _TimingOutLLM:
+        def generate(self, prompt: str) -> str:
+            nonlocal call_count
+            call_count += 1
+            raise TimeoutError("the call did not finish within the per-call limit")
+
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=lambda *a, **kw: _TimingOutLLM(), embedder_factory=_embedder_factory,
+    )
+    with patch("app.experiments.orchestrator.time.sleep"):
+        run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "done"
+    result = stored.runs[0].results[0]
+    assert result.generated_answer.startswith("[ERRO:")
+    assert call_count == 3
+    check.close()
+
+
+def test_stall_limit_defaults_to_runtime_config(session_factory, monkeypatch, tmp_path):
+    """Without an explicit ExperimentDeps.stall_limit_s, it reads Configurações gerais."""
+    from app.core.config import runtime
+    from app.experiments import orchestrator
+
+    monkeypatch.setenv("APP_CONFIG_DIR", str(tmp_path))
+    runtime.set_stall_limit_s(30.0)
+
+    seen_timeouts = []
+
+    def _recording_llm_factory(name, **kwargs):
+        seen_timeouts.append(kwargs.get("timeout"))
+        return _FakeLLM()
+
+    store = _seeded_store()
+    experiment_id = _new_experiment(session_factory, "default-stall-limit")
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=_recording_llm_factory, embedder_factory=_embedder_factory,
+    )
+    assert deps.stall_limit_s is None  # not injected: falls back to runtime config
+    run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+    assert seen_timeouts == [15.0]
+    assert orchestrator.get_stall_limit_s() == 30.0
 
 
 def test_recover_interrupted_experiments_pauses_running_and_pending(session_factory):

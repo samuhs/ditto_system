@@ -5,8 +5,10 @@ from pydantic import BaseModel
 from app.core.config.runtime import (
     get_eval_embedding,
     get_gemini_key,
+    get_stall_limit_s,
     set_eval_embedding,
     set_gemini_key,
+    set_stall_limit_s,
 )
 from app.core.embedding.base import embedding_registry
 from app.core.evaluation.base import evaluation_registry
@@ -24,12 +26,26 @@ class EvalEmbeddingBody(BaseModel):
     name: str
 
 
+class StallLimitBody(BaseModel):
+    minutes: float
+
+
 @router.get("/settings")
 def get_settings_view() -> dict:
     """Return non-secret settings state for the UI."""
     return {
         "gemini_api_key_set": get_gemini_key() is not None,
+        "stall_limit_minutes": get_stall_limit_s() / 60,
     }
+
+
+@router.put("/settings/stall-limit")
+def update_stall_limit(body: StallLimitBody) -> dict:
+    """Set the Travamento limit (minutes a run may go without a heartbeat)."""
+    if body.minutes <= 0:
+        raise HTTPException(status_code=422, detail="minutes must be positive")
+    set_stall_limit_s(body.minutes * 60)
+    return {"stall_limit_minutes": get_stall_limit_s() / 60}
 
 
 @router.put("/settings/gemini-key")

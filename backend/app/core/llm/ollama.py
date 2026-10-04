@@ -10,7 +10,8 @@ class OllamaLLM(LLM):
     """Generates answers via the local server's OpenAI-compatible chat endpoint."""
 
     def __init__(
-        self, model=None, base_url=None, api_key="ollama", client=None, temperature=None
+        self, model=None, base_url=None, api_key="ollama", client=None, temperature=None,
+        timeout: float | None = None,
     ) -> None:
         if client is None:
             from langchain_openai import ChatOpenAI
@@ -22,6 +23,9 @@ class OllamaLLM(LLM):
                 model=model or settings.ollama_model,
                 base_url=base_url or settings.ollama_base_url,
                 api_key=api_key,
+                # Travamento/2 (#20): a hard timeout so a stuck server call fails
+                # into the usual retry path instead of hanging the worker thread.
+                timeout=timeout,
                 **sampling,
             )
         self._client = client
