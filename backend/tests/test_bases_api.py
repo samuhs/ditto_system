@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 from app.api.bases import get_session_factory
 from app.api.ingest import get_embedder_factory, get_store
 from app.core.db.base import Base
+from app.core.db.models import Experiment
 from app.core.graph.knowledge import GraphEntity, GraphRelation, write_graph
 from app.core.vectorstore.qdrant import QdrantStore, graph_collection_names
 from app.main import create_app
@@ -149,3 +150,74 @@ def test_a_grafo_without_date_shows_none_and_an_unfinished_one_is_left_out(clien
     assert [(g["extractor"], g["failed_pct"], g["built_at"]) for g in index["graphs"]] == [
         ("gemini-2.5-flash-lite", 0.0, None),
     ]
+
+
+def test_deleting_a_base_removes_its_indexes_and_their_grafos_only(client, store):
+    # Names that share "viagem" as a prefix belong to other Bases.
+    for base in ("viagem", "viagem2", "viagem__x"):
+        _ingest(client, base)
+        for name in graph_collection_names(base, "recursive", "gemini", "qwen3:1.7b"):
+            store.ensure_collection(name, 3)
+
+    response = client.delete("/bases/viagem")
+
+    assert response.status_code == 200
+    assert sorted(response.json()["deleted"]) == sorted([
+        "viagem__recursive__gemini",
+        *graph_collection_names("viagem", "recursive", "gemini", "qwen3:1.7b"),
+    ])
+    remaining = set(store.list_collections())
+    assert not any(name.startswith("viagem__recursive") for name in remaining)
+    for base in ("viagem2", "viagem__x"):
+        assert f"{base}__recursive__gemini" in remaining
+        assert set(graph_collection_names(base, "recursive", "gemini", "qwen3:1.7b")) <= remaining
+
+
+def test_deleting_an_unknown_base_is_404(client):
+    _ingest(client, "viagem2")
+    assert client.delete("/bases/viagem").status_code == 404
+
+
+def _experiment(session_factory, name: str, status: str, base: str = "viagem") -> int:
+    session = session_factory()
+    experiment = Experiment(name=name, status=status, config={"base": base})
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    return experiment_id
+
+
+@pytest.mark.parametrize("status", ["running", "pending"])
+def test_a_base_an_active_experiment_uses_cannot_be_deleted(client, store, session_factory, status):
+    _ingest(client, "viagem")
+    _experiment(session_factory, "exp-viagem", status)
+
+    response = client.delete("/bases/viagem")
+
+    assert response.status_code == 409
+    assert "exp-viagem" in response.json()["detail"]
+    assert "viagem__recursive__gemini" in store.list_collections()
+    assert client.get("/bases").json()[0]["in_use"] == response.json()["detail"]
+
+
+def test_a_finished_experiment_or_one_on_another_base_does_not_block(client, session_factory):
+    _ingest(client, "viagem")
+    _experiment(session_factory, "exp-done", "done")
+    _experiment(session_factory, "exp-faq", "running", base="faq")
+
+    assert client.get("/bases").json()[0]["in_use"] is None
+    assert client.delete("/bases/viagem").status_code == 200
+
+
+def test_a_base_whose_grafo_is_being_built_cannot_be_deleted(client, session_factory, monkeypatch):
+    from app.experiments import orchestrator
+
+    _ingest(client, "viagem")
+    experiment_id = _experiment(session_factory, "exp-grafo", "running")
+    monkeypatch.setitem(orchestrator._graph_progress, experiment_id, {"extracted": 2, "total": 5})
+
+    response = client.delete("/bases/viagem")
+
+    assert response.status_code == 409
+    assert "Grafo" in response.json()["detail"]
