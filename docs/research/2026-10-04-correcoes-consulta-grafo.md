@@ -51,7 +51,7 @@ O chunker `markdown` antepõe a cada chunk o caminho de headings ("# Guia de San
 
 1. **Sinonímia por grafia** (`consolidation.link_synonyms`). Os nomes são comparados como texto, sem caixa e sem acentos, com `rapidfuzz.fuzz.ratio` ≥ 85. O peso do vínculo é a razão / 100. A intenção original era "Serra da Lajinha" ~ "Serra da Laginha" (93,75), não conceitos parecidos: "São Paulo" ~ "Correios" dá 23,5 e "Cachoeira do Adilson" ~ "Cachoeira do Deosdédi", 73. A função não recebe mais o embedder, e o vínculo é feito na etapa `merge` da construção, antes de o embedder ser alugado.
 2. **Especificidade em IDF suave** (`KnowledgeGraph.specificity`): log((N+1)/n) / log(N+1), com N = chunks do Índice. Vale 1 para uma entidade em um chunk e perto de 0 para uma em quase todos (a cidade, n = 94 de 104: 0,02). O +1 evita o 0 exato para uma entidade presente em todos os chunks: com 0 ela não passaria nota nenhuma, e uma pergunta cuja única semente fosse ela ficaria sem contexto. Em 2 de 104 chunks a entidade fica com 0,85 em vez de 0,5: o Encontro de Carros Antigos passa de 0,443 para 0,75. Sozinha, a mudança ainda não põe a entidade certa acima de uma de 1 chunk com similaridade 0,81, mas sem a sinonímia espalhando nota e sem as entidades de título essas concorrentes deixam de aparecer; e os 2 chunks do evento entram no top-k de chunks.
-3. **Extração sem o caminho de headings** (`extraction.without_headings`). A construção tira as linhas de heading do início de cada chunk antes de mandá-lo ao extrator; o chunk guardado no Índice (o que a recuperação e a resposta leem) continua com elas. Escolhi isso, e não mudar o prompt, por três motivos: é determinístico; o portão da seção 5 de `2026-10-03-graphrag-estado-da-arte.md` mostrou que regras extras no prompt custam qualidade a modelos pequenos (o prompt v2 do portão piorou); e o corpo de cada seção da base repete o nome do seu assunto (regra de `database/DIRETRIZES.md`), então o heading da própria seção não leva informação que falte. A chave do cache de extração passa a ser o texto sem headings, o que invalida as extrações antigas desses chunks, como esperado.
+3. **Extração sem o caminho de headings** (`extraction.without_headings`). A construção tira as linhas de heading do início de cada chunk antes de mandá-lo ao extrator; o chunk guardado no Índice (o que a recuperação e a resposta leem) continua com elas. Escolhi isso, e não mudar o prompt, por três motivos: é determinístico; regras extras no prompt custam qualidade a modelos pequenos (seção 5.2 de `2026-10-03-graphrag-estado-da-arte.md`; o prompt v2 de `2026-10-03-portao-extracao-grafo.md` piorou); e o corpo de cada seção da base repete o nome do seu assunto (regra de `database/DIRETRIZES.md`), então o heading da própria seção não leva informação que falte. A chave do cache de extração passa a ser o texto sem headings, o que invalida as extrações antigas desses chunks, como esperado.
 
 Grafos construídos antes destas mudanças guardam a sinonímia antiga e entidades de título. O metadado do Grafo ganhou `graph_version` (= 2): um Grafo sem ele, ou com outra versão, é considerado desatualizado e reconstruído pela própria aplicação na próxima vez que for usado.
 
@@ -72,9 +72,48 @@ Tirar o heading não custou recall de entidades; subiu de 0,61 para 0,70, e a pr
 
 ### 4.2 Grafo do guia reconstruído
 
-GRAPH_RESULTS
+O Grafo de `guia-graphrag` (markdown × e5) com o Qwen2.5-3B foi reconstruído contra o Qdrant real. O Grafo antigo, sem `graph_version`, foi dado como desatualizado pela própria aplicação (`current_graph` devolveu `None`) e reconstruído por `build_graph`, sem cache de extração, um chunk por vez: 35,9 min.
+
+| | #21 | reconstruído |
+|---|---|---|
+| Entidades | 251 | 385 |
+| Relações | 297 | 463 |
+| Linhas de extração (com falha) | 1.137 (42) | 1.316 (31) |
+| Chunks perdidos | 0 | 0 |
+| **Pares de sinônimos** | **31.168** | **16** |
+| Entidades "Guia de …" / "Perguntas frequentes …" | sim ("Guia de …" em 94 chunks) | **nenhuma** |
+| Entidade em mais chunks | "Guia de Santo Antônio da Alegria" (94) | "Santo Antônio da Alegria" (72, especificidade 0,08) |
+
+Os 16 pares, por tipo:
+
+- **Grafias da mesma coisa** (o objetivo): Cachoeira do Deosdédi ~ Deusdedi ~ Deusdédi ~ Dédi (6 pares entre as quatro grafias), Parque Ecológico José Jorge Felício ~ Parque Ecológico Municipal José Jorge Felício, Paróquia Santo Antônio da Pádua ~ de Pádua, Delegacia de Polícia ~ Delegacia de Polícia Civil, Ribeirão Pinheirinho ~ Rio Pinheirinho, "Além da Cachoeira do Beto Teixeira" ~ Cachoeira do Beto Teixeira.
+- **Falsos positivos** (5): Casa da Agricultura ~ Casa da Cultura; Açougues ~ Pousadas de Santo Antônio da Alegria (o sufixo longo comum domina a razão); três endereços "Rua Nove de Julho, N, Centro" com números diferentes. Como são vínculos e não fusões, o custo é levar nota a um vizinho errado, ponderado pela razão.
+
+Ainda vale olhar uma coisa da consolidação: "Encontro de Carros Antigos de Santo Antônio da Alegria" ficou separada de "Encontro de Carros Antigos". O sufixo da cidade só é removido depois de " em " ou ",", não depois de " de ".
+
+**A pergunta do diagnóstico, de novo.** "Em que mês e em que parque acontece o Encontro de Carros Antigos?", com os padrões da técnica (5 entidades, 5 relações, 5 chunks):
+
+| Semente | Similaridade | Chunks | Especificidade | Nota |
+|---|---|---|---|---|
+| Encontro de Carros Antigos de Santo Antônio da Alegria | 0,868 | 1 | 1,000 | 0,868 |
+| Encontro de Companhias de Santos Reis | 0,821 | 2 | 0,851 | 0,699 |
+| Encontro de Carros Antigos | 0,884 | 4 | 0,702 | 0,620 |
+| Parque Ecológico José Jorge Felício | 0,873 | 7 | 0,582 | 0,508 |
+| EXPOASA | 0,827 | 7 | 0,582 | 0,481 |
+
+As cinco sementes agora têm a ver com a pergunta: a creche e "Perguntas frequentes de turistas" sumiram. Os 5 chunks recuperados falam do Encontro de Carros Antigos e do parque, incluindo o da evidência ("O Encontro de Carros Antigos de Santo Antônio da Alegria acontece em outubro … no Parque Ecológico José Jorge Felício").
+
+**`context_hit` do `graph` nas 36 perguntas** (só a recuperação, sem gerar resposta; mesma função `evidence_found_in` da métrica, mesmos padrões de top-k):
+
+| | simples | ponte | comparação | agregação | todas |
+|---|---|---|---|---|---|
+| #21 | 0,36 | 0,27 | 0,29 | 0,14 | 0,28 |
+| Grafo reconstruído | 0,73 (8/11) | 0,82 (9/11) | 1,00 (7/7) | 1,00 (7/7) | **0,86** (31/36) |
+
+Este número não substitui o experimento refeito. Ele mede só o `context_hit` e usa as mesmas perguntas que guiaram o diagnóstico, então pode estar otimista. Mas mostra que a recuperação pelo Grafo deixou de ser o gargalo.
 
 ## 5. Próximos passos
 
 1. Refazer o experimento #21 com as correções, depois do ticket da construção na ingestão, e atualizar esta nota.
-2. Se o `graph` continuar atrás do `naive` em `context_hit`, olhar a ligação pergunta → entidade: o e5 comprime as similaridades numa faixa estreita, e a nota de um nó depende quase só da especificidade.
+2. Consolidação: tirar o sufixo da cidade também depois de " de " ("Encontro de Carros Antigos de Santo Antônio da Alegria"). Na sinonímia, não ligar nomes que diferem só por um número (endereços) e testar `token_set_ratio` ou uma razão calculada sem o sufixo comum, para evitar "Açougues ~ Pousadas de Santo Antônio da Alegria".
+3. Se o `graph` continuar atrás do `naive` em `context_hit`, olhar a ligação pergunta → entidade: o e5 comprime as similaridades numa faixa estreita (0,82 a 0,88 entre as cinco sementes acima), e a nota de um nó depende muito da especificidade.
