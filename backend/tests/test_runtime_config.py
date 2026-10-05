@@ -1,4 +1,6 @@
 """Tests for the runtime settings store."""
+import stat
+
 import pytest
 
 from app.core.config import runtime
@@ -50,3 +52,22 @@ def test_stall_limit_rejects_non_positive_values(cfg_dir):
         runtime.set_stall_limit_s(0)
     with pytest.raises(ValueError):
         runtime.set_stall_limit_s(-5)
+
+
+def test_config_file_has_owner_only_permissions(cfg_dir):
+    """The settings file may hold the Gemini key in plain text: restrict it to 600."""
+    runtime.set_gemini_key("super-secret")
+    path = cfg_dir / "app_settings.json"
+    assert path.exists()
+    mode = stat.S_IMODE(path.stat().st_mode)
+    assert mode == 0o600
+
+
+def test_config_file_permissions_fixed_even_if_already_looser(cfg_dir):
+    """An older file saved before this change (default umask) gets locked down too."""
+    runtime.set_eval_embedding("e5")
+    path = cfg_dir / "app_settings.json"
+    path.chmod(0o644)
+    runtime.set_stall_limit_s(300.0)
+    mode = stat.S_IMODE(path.stat().st_mode)
+    assert mode == 0o600

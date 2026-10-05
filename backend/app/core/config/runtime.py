@@ -1,6 +1,7 @@
 """Runtime-editable app settings, backed by a JSON file (env fallback for secrets)."""
 import json
 import os
+import stat
 from pathlib import Path
 
 from app.core.config.settings import get_settings
@@ -39,10 +40,14 @@ def load_config() -> dict:
 
 
 def save_config(data: dict) -> None:
-    """Persist the whole settings dict as pretty JSON."""
+    """Persist the whole settings dict as pretty JSON, owner-only (it may hold the Gemini key)."""
     path = _config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    try:
+        path.chmod(stat.S_IRUSR | stat.S_IWUSR)  # 600: owner read/write, nothing for group/other
+    except OSError:
+        pass  # best-effort (e.g. unsupported on the filesystem)
 
 
 def get_gemini_key() -> str | None:

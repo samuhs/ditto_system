@@ -12,11 +12,24 @@ docker info >/dev/null 2>&1 || fail "O daemon do Docker não está respondendo. 
 ok "$(docker compose version)"
 
 step "Arquivo .env"
+fresh_env=0
 if [ -f .env ]; then
   ok ".env já existe (mantido como está)"
 else
   cp .env.example .env
+  fresh_env=1
   ok ".env criado a partir de .env.example"
+fi
+
+step "Senha do Postgres"
+if [ "$fresh_env" = 1 ]; then
+  env_set POSTGRES_PASSWORD "$(generate_password)"
+  ok "senha aleatória gerada para o Postgres (POSTGRES_PASSWORD no .env)"
+else
+  # Instalação existente: nunca troca a senha aqui. O volume do Postgres já
+  # foi inicializado com a senha atual (ditto, se a variável nunca existiu);
+  # sobrescrever quebraria o login sem recriar o volume.
+  ok "mantendo a senha do Postgres já configurada (instalação existente)"
 fi
 
 current_key=$(sed -n 's/^GEMINI_API_KEY=//p' .env | head -1)

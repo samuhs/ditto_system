@@ -22,6 +22,12 @@ confirm() {
 
 has() { command -v "$1" >/dev/null 2>&1; }
 
+# A random alphanumeric password (24 chars): safe unquoted inside a .env value
+# and inside a postgresql:// URL (no @, :, /, # to escape).
+generate_password() {
+  LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom 2>/dev/null | head -c 24
+}
+
 # .env helpers. env_file_get reads only .env; env_get the environment first.
 env_file_get() {
   [ -f .env ] || return 0

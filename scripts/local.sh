@@ -121,11 +121,12 @@ up() {
       max_concurrency="$(env_get MAX_EXPERIMENT_CONCURRENCY)"
       allow_swap="$(env_get PERPLEXITY_ALLOW_SWAP)"
       max_upload_mb="$(env_get MAX_UPLOAD_SIZE_MB)"
+      pg_password="$(env_get POSTGRES_PASSWORD)"; pg_password="${pg_password:-ditto}"
       cd backend || exit 1
       # Explicit [::1] everywhere: "localhost" may try 127.0.0.1 first.
       env ${CA_ENV[@]+"${CA_ENV[@]}"} \
       ENV_FILE="" \
-      DATABASE_URL="postgresql://ditto:ditto@[::1]:$PG_PORT/ditto" \
+      DATABASE_URL="postgresql://ditto:$pg_password@[::1]:$PG_PORT/ditto" \
       QDRANT_URL="http://[::1]:$QD_PORT" \
       OLLAMA_BASE_URL="$LLM_URL" \
       GEMINI_API_KEY="$gemini_key" \
