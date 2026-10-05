@@ -9,10 +9,11 @@ from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 from app.core.config.runtime import get_eval_embedding
 from app.core.db.base import SessionLocal
-from app.core.db.models import Experiment
+from app.core.db.models import Experiment, ExperimentRun
 from app.core.evaluation.gold_metrics import ALL_HOPS_METRIC, hops_found
 from app.core.graph.build import current_extractors
 from app.core.memory.manager import get_model_manager
@@ -78,6 +79,23 @@ def _bridges_found(result) -> list[dict]:
         for bridge in result.bridge_entities or []
         if _lenient(bridge)
     ]
+
+
+def _get_experiment_with_results(session, experiment_id: int) -> Experiment | None:
+    """Load an Experimento with its runs, results and question profiles eagerly.
+
+    `_result_rows` walks every run's results and the experiment's question
+    profiles; loading them lazily costs one query per Combinação (run) instead
+    of a constant number of queries.
+    """
+    return session.get(
+        Experiment,
+        experiment_id,
+        options=[
+            selectinload(Experiment.runs).selectinload(ExperimentRun.results),
+            selectinload(Experiment.question_profiles),
+        ],
+    )
 
 
 def _result_rows(experiment: Experiment) -> list[dict]:
@@ -502,7 +520,7 @@ def get_experiment(
     """Return an experiment with its per-question results."""
     session = deps.session_factory()
     try:
-        experiment = session.get(Experiment, experiment_id)
+        experiment = _get_experiment_with_results(session, experiment_id)
         if experiment is None:
             raise HTTPException(status_code=404, detail="experiment not found")
         results = _result_rows(experiment)
@@ -566,7 +584,7 @@ def export_experiment_csv(
     """Download every per-question result of an experiment as a CSV file."""
     session = deps.session_factory()
     try:
-        experiment = session.get(Experiment, experiment_id)
+        experiment = _get_experiment_with_results(session, experiment_id)
         if experiment is None:
             raise HTTPException(status_code=404, detail="experiment not found")
         content = "\ufeff" + _results_csv(_result_rows(experiment))

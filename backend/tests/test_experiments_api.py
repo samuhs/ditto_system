@@ -11,12 +11,13 @@ from sqlalchemy.pool import StaticPool
 
 from app.api.experiments import get_experiment_deps
 from app.core.db.base import Base
-from app.core.db.models import Experiment
+from app.core.db.models import Experiment, ExperimentRun, RunResult
 from app.core.vectorstore.qdrant import QdrantStore
 from app.experiments.orchestrator import ExperimentDeps
 from app.ingestion.pipeline import ingest_documents
 from app.ingestion.schemas import Document, IngestConfig
 from app.main import create_app
+from tests.conftest import count_queries
 
 
 class _FakeEmbedder:
@@ -928,3 +929,63 @@ def test_resume_twice_in_a_row_rejects_the_second_call(client):
 
     assert first.status_code == 200
     assert second.status_code == 409
+
+
+def _seed_experiment_with_runs(session_factory, n_runs: int, n_results_per_run: int) -> int:
+    """Insert an Experimento with `n_runs` Combinações, each with its own results."""
+    session = session_factory()
+    try:
+        experiment = Experiment(name=f"exp-{n_runs}x{n_results_per_run}", status="done", config={})
+        for i in range(n_runs):
+            run = ExperimentRun(
+                chunking="recursive", embedding="gemini", rag_technique="naive",
+                retriever="similarity", llm="gemini", status="done",
+            )
+            run.results = [
+                RunResult(question=f"Q{i}-{j}", generated_answer="An answer.")
+                for j in range(n_results_per_run)
+            ]
+            experiment.runs.append(run)
+        session.add(experiment)
+        session.commit()
+        return experiment.id
+    finally:
+        session.close()
+
+
+def test_get_experiment_query_count_does_not_grow_with_combinations():
+    """The Detalhe do Experimento must issue a constant number of queries,
+    regardless of how many Combinações (runs) with results it has (no N+1)."""
+    engine = create_engine(
+        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+    )
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    deps = ExperimentDeps(
+        store=QdrantStore(client=QdrantClient(":memory:")),
+        session_factory=session_factory,
+        llm_factory=_llm_factory,
+        embedder_factory=_embedder_factory,
+    )
+    app = create_app()
+    app.dependency_overrides[get_experiment_deps] = lambda: deps
+    local_client = TestClient(app)
+
+    small_id = _seed_experiment_with_runs(session_factory, n_runs=1, n_results_per_run=2)
+    large_id = _seed_experiment_with_runs(session_factory, n_runs=8, n_results_per_run=2)
+
+    with count_queries(engine) as count:
+        small_response = local_client.get(f"/experiments/{small_id}")
+    small_n_queries = count[0]
+
+    with count_queries(engine) as count:
+        large_response = local_client.get(f"/experiments/{large_id}")
+    large_n_queries = count[0]
+
+    assert small_response.status_code == 200
+    assert large_response.status_code == 200
+    assert len(small_response.json()["results"]) == 2
+    assert len(large_response.json()["results"]) == 16
+    assert large_n_queries == small_n_queries, (
+        f"query count grew with the number of Combinações: {small_n_queries} -> {large_n_queries}"
+    )

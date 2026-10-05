@@ -1,12 +1,33 @@
 """Shared test fixtures."""
+from contextlib import contextmanager
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app.core.db import models  # noqa: F401  registers models on Base.metadata
 from app.core.db.base import Base
 from app.main import create_app
+
+
+@contextmanager
+def count_queries(engine):
+    """Context manager yielding a running count of SQL statements run on `engine`.
+
+    Used to assert an endpoint's query count stays constant (no N+1) regardless
+    of how many rows it loads.
+    """
+    count = [0]
+
+    def _before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        count[0] += 1
+
+    event.listen(engine, "before_cursor_execute", _before_cursor_execute)
+    try:
+        yield count
+    finally:
+        event.remove(engine, "before_cursor_execute", _before_cursor_execute)
 
 
 @pytest.fixture(autouse=True)

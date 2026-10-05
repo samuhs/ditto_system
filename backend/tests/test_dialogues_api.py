@@ -14,6 +14,7 @@ from app.core.db.base import Base
 from app.core.db.models import Dialogue, DialogueMessage
 from app.core.vectorstore.qdrant import QdrantStore
 from app.main import create_app
+from tests.conftest import count_queries
 
 
 @pytest.fixture
@@ -189,3 +190,44 @@ def test_put_rating_out_of_range(env):
 def test_put_rating_404(env):
     client, _ = env
     assert client.put("/dialogues/9999/rating", json={"rating": 5}).status_code == 404
+
+
+def test_list_query_count_does_not_grow_with_page_size():
+    """The dialogue list's preview/count must issue a constant number of queries,
+    regardless of how many messages each dialogue on the page has (no N+1)."""
+    engine = create_engine(
+        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+    )
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    deps = ChatDeps(
+        store=QdrantStore(client=QdrantClient(":memory:")),
+        session_factory=session_factory,
+    )
+    app = create_app()
+    app.dependency_overrides[get_chat_deps] = lambda: deps
+    local_client = TestClient(app)
+
+    for _ in range(2):
+        _seed(session_factory, messages=(("user", "Oi"), ("assistant", "Olá")))
+    for _ in range(10):
+        _seed(
+            session_factory,
+            messages=(("user", "Oi"), ("assistant", "Olá"), ("user", "E então?"), ("assistant", "Isso.")),
+        )
+
+    with count_queries(engine) as count:
+        small_page = local_client.get("/dialogues?page=1&page_size=2")
+    small_n_queries = count[0]
+
+    with count_queries(engine) as count:
+        large_page = local_client.get("/dialogues?page=1&page_size=12")
+    large_n_queries = count[0]
+
+    assert small_page.status_code == 200
+    assert large_page.status_code == 200
+    assert len(small_page.json()["items"]) == 2
+    assert len(large_page.json()["items"]) == 12
+    assert large_n_queries == small_n_queries, (
+        f"query count grew with the page size: {small_n_queries} -> {large_n_queries}"
+    )
