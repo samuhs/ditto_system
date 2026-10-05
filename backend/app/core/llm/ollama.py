@@ -3,7 +3,7 @@
 Model and URL come from settings (OLLAMA_BASE_URL points at whichever server runs).
 """
 from app.core.config.settings import get_settings
-from app.core.llm.base import LLM, llm_registry
+from app.core.llm.base import LLM, llm_registry, sampling_kwargs
 
 
 class OllamaLLM(LLM):
@@ -11,14 +11,14 @@ class OllamaLLM(LLM):
 
     def __init__(
         self, model=None, base_url=None, api_key="ollama", client=None, temperature=None,
-        timeout: float | None = None,
+        max_tokens: int | None = None, timeout: float | None = None,
     ) -> None:
         if client is None:
             from langchain_openai import ChatOpenAI
 
             settings = get_settings()
-            # Without a temperature the server's default sampling applies.
-            sampling = {} if temperature is None else {"temperature": temperature}
+            # Unset sampling (None) falls back to the server's defaults.
+            sampling = sampling_kwargs(temperature=temperature, max_tokens=max_tokens)
             client = ChatOpenAI(
                 model=model or settings.ollama_model,
                 base_url=base_url or settings.ollama_base_url,

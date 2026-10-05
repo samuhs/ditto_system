@@ -97,3 +97,50 @@ def test_ollama_passes_an_explicit_temperature(monkeypatch):
     monkeypatch.setattr(langchain_openai, "ChatOpenAI", _FakeChatOpenAI)
     OllamaLLM(model="m", base_url="http://localhost:11436/v1", temperature=0)
     assert captured["temperature"] == 0
+
+
+def _capture_kwargs(monkeypatch, module, attr):
+    captured = {}
+
+    class _Fake:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(module, attr, _Fake)
+    return captured
+
+
+def test_ollama_passes_max_tokens_and_omits_unset_temperature(monkeypatch):
+    import langchain_openai
+
+    captured = _capture_kwargs(monkeypatch, langchain_openai, "ChatOpenAI")
+    OllamaLLM(model="m", base_url="http://localhost:11436/v1", max_tokens=256)
+    assert captured["max_tokens"] == 256
+    assert "temperature" not in captured  # None: the server's default applies
+
+
+def test_ollama_omits_max_tokens_when_unset(monkeypatch):
+    import langchain_openai
+
+    captured = _capture_kwargs(monkeypatch, langchain_openai, "ChatOpenAI")
+    OllamaLLM(model="m", base_url="http://localhost:11436/v1", temperature=0)
+    assert captured["temperature"] == 0
+    assert "max_tokens" not in captured
+
+
+def test_gemini_passes_temperature_zero_and_max_output_tokens(monkeypatch):
+    import langchain_google_genai
+
+    captured = _capture_kwargs(monkeypatch, langchain_google_genai, "ChatGoogleGenerativeAI")
+    GeminiLLM(model="gemini-2.5-flash-lite", api_key="k", temperature=0, max_tokens=128)
+    assert captured["temperature"] == 0
+    assert captured["max_output_tokens"] == 128
+
+
+def test_gemini_omits_unset_sampling(monkeypatch):
+    import langchain_google_genai
+
+    captured = _capture_kwargs(monkeypatch, langchain_google_genai, "ChatGoogleGenerativeAI")
+    GeminiLLM(model="gemini-2.5-flash-lite", api_key="k")
+    assert "temperature" not in captured
+    assert "max_output_tokens" not in captured

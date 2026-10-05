@@ -1,6 +1,6 @@
 """Gemini LLM provider (via langchain-google-genai)."""
 from app.core.config.runtime import get_gemini_key
-from app.core.llm.base import LLM, llm_registry
+from app.core.llm.base import LLM, llm_registry, sampling_kwargs
 
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
 
@@ -14,6 +14,8 @@ class GeminiLLM(LLM):
         api_key: str | None = None,
         client=None,
         timeout: float | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
     ) -> None:
         if client is None:
             from langchain_google_genai import ChatGoogleGenerativeAI
@@ -24,6 +26,8 @@ class GeminiLLM(LLM):
                 # Travamento/2 (#20): a hard timeout so a stuck call fails into the
                 # usual retry path instead of hanging the worker thread.
                 timeout=timeout,
+                # Unset sampling (None) falls back to the client's defaults.
+                **sampling_kwargs(temperature=temperature, max_output_tokens=max_tokens),
             )
         self._client = client
 
