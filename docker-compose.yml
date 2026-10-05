@@ -11,9 +11,14 @@ services:
       - ./backend/config:/app/config
       - hf_cache:/root/.cache/huggingface
     ports:
-      - "${API_PORT:-8000}:8000"
+      # Loopback only by default (127.0.0.1 and ::1); BIND_ADDR=0.0.0.0 in
+      # .env opens the IPv4 side to the LAN. The IPv6 loopback entry is fixed
+      # so `make up-local`/`make doctor` (which talk to Postgres/Qdrant over
+      # [::1]) keep working regardless of BIND_ADDR.
+      - "${BIND_ADDR:-127.0.0.1}:${API_PORT:-8000}:8000"
+      - "[::1]:${API_PORT:-8000}:8000"
     environment:
-      DATABASE_URL: postgresql://ditto:ditto@postgres:5432/ditto
+      DATABASE_URL: postgresql://ditto:${POSTGRES_PASSWORD:-ditto}@postgres:5432/ditto
       QDRANT_URL: http://qdrant:6333
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       HF_TOKEN: ${HF_TOKEN:-}
@@ -37,10 +42,16 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: ditto
-      POSTGRES_PASSWORD: ditto
+      # Fixed "ditto" default keeps installs from before this change working
+      # (their volume was already initialized with it); `make setup` sets a
+      # random POSTGRES_PASSWORD in .env for brand-new installs only.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ditto}
       POSTGRES_DB: ditto
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # See the api service's ports comment: loopback-only by default, both
+      # IPv4 (BIND_ADDR) and a fixed IPv6 entry for up-local/doctor.
+      - "${BIND_ADDR:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
+      - "[::1]:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -52,7 +63,9 @@ services:
   qdrant:
     image: qdrant/qdrant:v1.19.1
     ports:
-      - "${QDRANT_PORT:-6333}:6333"
+      # See the api service's ports comment.
+      - "${BIND_ADDR:-127.0.0.1}:${QDRANT_PORT:-6333}:6333"
+      - "[::1]:${QDRANT_PORT:-6333}:6333"
     volumes:
       - qdrantdata:/qdrant/storage
 
@@ -67,8 +80,11 @@ services:
       OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-2}
       OLLAMA_KEEP_ALIVE: 30m
     ports:
-      # Host access (bench, curl). 11435 avoids clashing with a host Ollama.
-      - "${OLLAMA_DOCKER_PORT:-11435}:11434"
+      # Host access (bench, curl; also `make up-local` over [::1] when
+      # LLM_SERVER=docker). 11435 avoids clashing with a host Ollama.
+      # Loopback-only by default; see the api service's ports comment.
+      - "${BIND_ADDR:-127.0.0.1}:${OLLAMA_DOCKER_PORT:-11435}:11434"
+      - "[::1]:${OLLAMA_DOCKER_PORT:-11435}:11434"
     volumes:
       # A named volume by default; OLLAMA_MODELS_DIR=$HOME/.ollama/models reuses
       # models pulled on the host when the container cannot download them.
