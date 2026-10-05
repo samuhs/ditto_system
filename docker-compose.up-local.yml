@@ -1,0 +1,17 @@
+# Used by `make up-local` only (scripts/local.sh), on top of docker-compose.yml.
+#
+# The API on the host reaches Postgres/Qdrant over [::1], since some VPNs break
+# 127.0.0.1. Docker Desktop never listens on a "[::1]:" mapping, only on an
+# unpinned one, which binds every interface (IPv4 and IPv6): the loopback-only
+# default of `make up` cannot serve this mode. Set POSTGRES_PASSWORD in .env if the
+# machine sits on a network you do not trust.
+services:
+  postgres:
+    ports: !override
+      - "${POSTGRES_PORT:-5432}:5432"
+  qdrant:
+    ports: !override
+      - "${QDRANT_PORT:-6333}:6333"
+  ollama:
+    ports: !override
+      - "${OLLAMA_DOCKER_PORT:-11435}:11434"

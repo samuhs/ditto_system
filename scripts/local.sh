@@ -85,8 +85,9 @@ up() {
   fi
   services="postgres qdrant"
   [ "$(llm_server)" = docker ] && services="$services ollama"
+  # The override also publishes them on [::1] (see docker-compose.up-local.yml).
   # shellcheck disable=SC2086
-  docker compose up -d $services >/dev/null 2>&1 || fail "não consegui subir $services (docker compose up $services)"
+  docker compose -f docker-compose.yml -f docker-compose.up-local.yml up -d $services >/dev/null 2>&1 || fail "não consegui subir $services (docker compose up $services)"
   for _ in $(seq 1 30); do
     [ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q postgres)" 2>/dev/null)" = healthy ] && break
     sleep 1
