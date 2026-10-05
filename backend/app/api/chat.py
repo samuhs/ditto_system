@@ -1,5 +1,5 @@
 """Endpoints for chat configs, conversation turns, and saving dialogues."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -341,7 +341,10 @@ def set_dialogue_rating(
         if d is None:
             raise HTTPException(status_code=404, detail="dialogue not found")
         d.rating = body.rating
-        d.rated_at = datetime.utcnow()
+        # Naive UTC, like the other DateTime columns (e.g. created_at via func.now()):
+        # datetime.utcnow() is deprecated, but an aware datetime here would get
+        # silently reinterpreted by Postgres' timestamp-without-timezone column.
+        d.rated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         session.commit()
         return {"id": dialogue_id, "rating": body.rating}
     finally:

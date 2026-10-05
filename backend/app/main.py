@@ -4,12 +4,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-import app.core.chunking  # noqa: F401  registers chunking strategies
-import app.core.embedding  # noqa: F401  registers embedding providers
-import app.core.evaluation  # noqa: F401  registers evaluation metrics
-import app.core.llm  # noqa: F401  registers LLM providers
-import app.core.rag  # noqa: F401  registers RAG techniques
-import app.core.retrieval  # noqa: F401  registers retrievers
+from app.core import chunking  # noqa: F401  registers chunking strategies
+from app.core import embedding  # noqa: F401  registers embedding providers
+from app.core import evaluation  # noqa: F401  registers evaluation metrics
+from app.core import llm  # noqa: F401  registers LLM providers
+from app.core import rag  # noqa: F401  registers RAG techniques
+from app.core import retrieval  # noqa: F401  registers retrievers
 from app.api import (
     bases,
     chat,
