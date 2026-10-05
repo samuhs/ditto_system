@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use Ditto in your research, please cite it as below."
+title: "Ditto: a self-hosted RAG experimentation platform"
+type: software
+authors:
+  - family-names: Silva
+    given-names: Samuel Henrique
+repository-code: "https://github.com/samuhs/ditto_system"
+license: MIT
+version: 0.1.0
+date-released: 2026-10-05
+keywords:
+  - retrieval-augmented generation
+  - RAG evaluation
+  - chunking
+  - embeddings
+  - GraphRAG
+  - LLM

@@ -9,7 +9,7 @@ O sistema (Ditto) foi fatiado em **A** (descoberta: ingest → experimento → r
 
 O B1 já persiste diálogos: existem as tabelas `dialogue` (`id`, `config_snapshot` JSON, `created_at`) e `dialogue_message` (`id`, `dialogue_id`, `role`, `content`, `position`), e o endpoint `POST /dialogues` que os grava. Falta o lado de **leitura e avaliação humana** dos diálogos salvos.
 
-Referências: `Doutorado Base architecture.md`, `HANDOFF.md`, `docs/superpowers/specs/2026-07-01-fatia-b1-conversa-design.md`.
+Referências: `docs/proposta-original.md`, `HANDOFF.md`, `docs/superpowers/specs/2026-07-01-fatia-b1-conversa-design.md`.
 
 ## Objetivo
 

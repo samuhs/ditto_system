@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in Ditto doesn't work as documented.
+labels: ["bug", "needs-triage"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. make up-local
+        2. Inserir documentos → ...
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: How do you run Ditto?
+      options:
+        - make up (Docker)
+        - make up-local (API and frontend on the host)
+        - From source, by hand
+    validations:
+      required: true
+  - type: dropdown
+    id: llm
+    attributes:
+      label: LLM server
+      multiple: true
+      options:
+        - MLX
+        - Ollama (native)
+        - Ollama in Docker
+        - Gemini
+        - Custom OpenAI-compatible endpoint
+  - type: input
+    id: env
+    attributes:
+      label: Machine
+      placeholder: macOS 15, M1 8 GB, MEMORY_PROFILE=low
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The relevant lines from `make logs` (or `.tools/local/` for up-local). Remove any API key first.
+      render: shell

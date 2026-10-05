@@ -1,0 +1,37 @@
+name: Feature or new technique
+description: Suggest a feature, or a new chunker, embedder, retriever, RAG technique or metric.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve?
+      description: What you're trying to do with Ditto and what gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How it could work. For a new technique, link the paper or reference implementation.
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Area
+      options:
+        - Chunking
+        - Embedding
+        - Retriever
+        - RAG technique
+        - Metric
+        - LLM provider
+        - Chat agent
+        - UI
+        - Setup / infrastructure
+        - Other
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
