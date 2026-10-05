@@ -1154,7 +1154,11 @@ def test_stall_watchdog_pauses_without_scoring_and_discards_the_late_result(sess
         stall_limit_s=0.2,
     )
     try:
+        start = time.perf_counter()
         run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+        # ADR 0001: the stuck call is abandoned, never waited on — the run must
+        # return well before the 5s the blocked call is still stuck for.
+        assert time.perf_counter() - start < 2.0, "run_experiment must not block on the stuck call"
 
         check = session_factory()
         stored = check.get(Experiment, experiment_id)
@@ -1212,7 +1216,11 @@ def test_stall_during_question_vectorization_pauses_without_a_run(session_factor
         stall_limit_s=0.2,
     )
     try:
+        start = time.perf_counter()
         run_experiment(experiment_id, _single_combo_config(1), [QuestionItem(text="q")], deps)
+        # ADR 0001: the stuck call is abandoned, never waited on — the run must
+        # return well before the 5s the blocked call is still stuck for.
+        assert time.perf_counter() - start < 2.0, "run_experiment must not block on the stuck call"
 
         check = session_factory()
         stored = check.get(Experiment, experiment_id)
@@ -1698,6 +1706,63 @@ def test_resume_combination_matrix_done_paused_and_missing(session_factory):
     assert [r.generated_answer for r in runs["recursive"].results] == ["Já pronta."]
     assert runs["token"].status == "done"
     assert [r.question for r in runs["token"].results] == ["q1"]
+    check.close()
+
+
+def test_pause_requested_before_resume_stops_before_any_combination_starts(session_factory):
+    """A pause requested before a Retomada even starts must stop right away — including
+    before a Combinação that has nothing left to answer (every question already valid),
+    which never reaches `_run_questions`' own per-question checkpoint because it has no
+    question to iterate over. Only the combinations-loop checkpoint in `_run_experiment`
+    (between combinations) catches that case.
+    """
+    from app.core.db.models import ExperimentRun, RunResult
+
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="One. Two. Three. Four sentences here.")],
+        IngestConfig(base="viagem", chunkings=["recursive", "token"], embeddings=["gemini"]),
+        store, embedder_factory=_embedder_factory,
+    )
+    config = ExperimentConfig(
+        llms=["gemini"], base="viagem", chunkings=["recursive", "token"], embeddings=["gemini"],
+        rags=["naive"], retrievers=["similarity"], metrics=["answer_relevancy"],
+    )
+    questions = [QuestionItem(text="q1")]
+    experiment_id = _experiment_for_resume(session_factory, "resume-prepause", config, questions)
+
+    session = session_factory()
+    # "recursive" has nothing left to answer: resuming it would never call `work()`,
+    # so it never hits the per-question pause checkpoint either.
+    answered_run = ExperimentRun(
+        experiment_id=experiment_id, chunking="recursive", embedding="gemini",
+        rag_technique="naive", retriever="similarity", llm="gemini", status="paused",
+    )
+    answered_run.results = [
+        RunResult(question="q1", generated_answer="Resposta antiga.",
+                  scores={"answer_relevancy": 1.0}, latency_ms=5, tokens=3),
+    ]
+    session.add(answered_run)
+    session.commit()
+    session.close()
+
+    deps = ExperimentDeps(
+        store=store, session_factory=session_factory,
+        llm_factory=_llm_factory, embedder_factory=_embedder_factory,
+    )
+    request_pause(experiment_id)
+    resume_experiment(experiment_id, deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "paused"
+    runs = {r.chunking: r for r in stored.runs}
+    # The already-answered combination must stay exactly as it was: never reprocessed,
+    # never flipped to "done".
+    assert runs["recursive"].status == "paused"
+    assert [r.generated_answer for r in runs["recursive"].results] == ["Resposta antiga."]
+    # The pending combination must never even start: no ExperimentRun for it at all.
+    assert "token" not in runs
     check.close()
 
 

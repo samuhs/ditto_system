@@ -207,6 +207,45 @@ def test_get_experiment_reports_pause_requested(client):
         _pause_requests.pop(exp_id, None)
 
 
+# ---- Pausa manual: POST /experiments/{id}/pause.
+
+def test_pause_endpoint_missing_experiment_404(client):
+    assert client.post("/experiments/99999/pause").status_code == 404
+
+
+def test_pause_endpoint_marks_a_running_experiment_for_pausing(client):
+    from app.experiments.orchestrator import _pause_requests
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = Experiment(name="rodando", status="running", config={}, questions=[{"text": "q"}])
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    try:
+        response = client.post(f"/experiments/{exp_id}/pause")
+
+        assert response.status_code == 200
+        assert response.json() == {"id": exp_id, "status": "pausing"}
+        assert client.get(f"/experiments/{exp_id}").json()["pause_requested"] is True
+    finally:
+        _pause_requests.pop(exp_id, None)
+
+
+def test_pause_endpoint_rejects_an_experiment_that_is_not_running(client):
+    """create_experiment's background task runs synchronously under TestClient, so by
+    the time the response comes back the experiment is already 'done', not 'running'."""
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+
+    response = client.post(f"/experiments/{exp_id}/pause")
+
+    assert response.status_code == 409
+    assert "done" in response.json()["detail"]
+
+
 def test_experiment_snapshots_prompts(client):
     config = {
         "base": "viagem",
@@ -901,6 +940,17 @@ def test_resume_accepts_a_lower_concurrency(client):
 
     assert response.status_code == 200
     assert client.get(f"/experiments/{exp_id}").json()["concurrency"] == 1
+
+
+def test_resume_accepts_concurrency_equal_to_the_current_one(client):
+    """The bound is inclusive: the current concorrência itself is a valid choice,
+    not just something strictly lower than it."""
+    exp_id = _create_and_pause(client, config={"concurrency": 2})
+
+    response = client.post(f"/experiments/{exp_id}/resume", json={"concurrency": 2})
+
+    assert response.status_code == 200
+    assert client.get(f"/experiments/{exp_id}").json()["concurrency"] == 2
 
 
 def test_resume_rejects_concurrency_above_the_current_one(client):
