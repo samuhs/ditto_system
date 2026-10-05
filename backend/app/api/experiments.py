@@ -553,6 +553,9 @@ def get_experiment(
             "eval_embedding": cfg.get("eval_embedding"),
             # The LLM extrator whose Grafos graph/graph_mix queried; None without them.
             "graph_extractor": cfg.get("graph_extractor"),
+            # Sampling the experiment's LLMs used; None: the provider's default.
+            "temperature": cfg.get("temperature"),
+            "max_tokens": cfg.get("max_tokens"),
             "progress": {
                 "completed": completed_combos,
                 "total": total_combos,
