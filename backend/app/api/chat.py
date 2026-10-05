@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 from app.core.chat.deps import ChatDeps
 from app.core.chat.schemas import ChatConfigView, ChatMessage
@@ -286,7 +287,12 @@ def list_dialogues(
                 Dialogue.rating.is_(None), Dialogue.rating.desc(), Dialogue.created_at.desc()
             )
 
-        rows = query.offset((page - 1) * page_size).limit(page_size).all()
+        rows = (
+            query.options(selectinload(Dialogue.messages))
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
         return {
             "items": [_dialogue_list_item(d) for d in rows],
             "total": total,
