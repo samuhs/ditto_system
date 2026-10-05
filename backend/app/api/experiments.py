@@ -2,7 +2,6 @@
 import csv
 import io
 import re
-import unicodedata
 from datetime import timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
@@ -20,6 +19,7 @@ from app.core.memory.manager import get_model_manager
 from app.core.memory.profile import active_profile
 from app.core.prompts import PROMPT_SPECS, load_prompt, load_technique
 from app.core.rag.base import rag_registry
+from app.core.text import strip_accents
 from app.core.uploads import read_upload
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
@@ -62,8 +62,8 @@ def _hops_found(result) -> list[dict]:
 
 def _lenient(name: str) -> str:
     """A name casefolded, without accents or punctuation, with single spaces."""
-    plain = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
-    return " ".join(re.sub(r"[^0-9a-z]+", " ", plain.casefold()).split())
+    plain = strip_accents(name.casefold())
+    return " ".join(re.sub(r"[^0-9a-z]+", " ", plain).split())
 
 
 def _bridges_found(result) -> list[dict]:
@@ -151,7 +151,7 @@ def _total_combinations(cfg: dict) -> int:
 
 def _safe_filename(name: str) -> str:
     """Reduce an experiment name to an ASCII-only, filesystem-safe stem."""
-    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    ascii_name = strip_accents(name)
     return re.sub(r"[^A-Za-z0-9._-]+", "_", ascii_name).strip("_") or "experiment"
 
 
