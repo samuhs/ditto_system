@@ -69,6 +69,15 @@ function inFlightList(items: PauseEntry["in_flight"]): string {
   return items.map((i) => `${i.question} (${techniqueName(i.rag)})`).join(" · ");
 }
 
+/** "Temperatura 0 · até 512 tokens", or whichever half was set (0 counts as set). */
+function samplingText(temperature?: number | null, maxTokens?: number | null): string {
+  const parts: string[] = [];
+  if (temperature != null) parts.push(`Temperatura ${temperature}`);
+  if (maxTokens != null) parts.push(`até ${maxTokens} tokens`);
+  const text = parts.join(" · ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export function ExperimentDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -336,6 +345,9 @@ export function ExperimentDetailPage() {
           </span>
           {detail.eval_embedding && <span>Avaliado com {term("embedding", detail.eval_embedding).name}</span>}
           {detail.graph_extractor && <span>Grafo do LLM extrator {detail.graph_extractor}</span>}
+          {(detail.temperature != null || detail.max_tokens != null) && (
+            <span>{samplingText(detail.temperature, detail.max_tokens)}</span>
+          )}
           <span className="ditto-meta-actions">
             {isRunning && (
               <>

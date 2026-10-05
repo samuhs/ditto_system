@@ -211,6 +211,10 @@ export interface ExperimentDetail {
   resumable_reason?: string | null;
   /** The config's current concorrência: the max a Retomada's concurrency field accepts. */
   concurrency?: number | null;
+  /** Sampling temperature the experiment's LLMs used; null/absent: the provider's default. */
+  temperature?: number | null;
+  /** Cap on tokens per generation; null/absent: no explicit cap. */
+  max_tokens?: number | null;
 }
 
 export interface PromptInfo {

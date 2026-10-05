@@ -706,4 +706,23 @@ describe("ExperimentDetailPage", () => {
     await user.click(await screen.findByRole("button", { name: /^Pergunta A · #2:/ }));
     expect(await screen.findByText("Detalhe do resultado")).toBeInTheDocument();
   });
+
+  it("shows temperature 0 and the token cap", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 11, name: "temp-zero", status: "done", temperature: 0, max_tokens: 512,
+      progress: { completed: 1, total: 1, phase: "done" }, results: [],
+    });
+    renderPage();
+    expect(await screen.findByText("Temperatura 0 · até 512 tokens")).toBeInTheDocument();
+  });
+
+  it("shows nothing about sampling on an experiment that predates it", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 12, name: "antigo", status: "done",
+      progress: { completed: 1, total: 1, phase: "done" }, results: [],
+    });
+    renderPage();
+    await screen.findAllByText(/antigo/);
+    expect(screen.queryByText(/temperatura|até \d+ tokens/i)).not.toBeInTheDocument();
+  });
 });
