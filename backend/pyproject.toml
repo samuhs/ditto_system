@@ -33,6 +33,7 @@ dependencies = [
 dev = [
     "pytest>=8.2",
     "httpx>=0.27",
+    "pyflakes>=3.2",
 ]
 local = [
     # >=5: embeddinggemma needs transformers >=4.56, which it pulls in.

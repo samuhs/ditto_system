@@ -6,6 +6,7 @@ embedder, Qdrant :memory:, SQLite: no network, no Postgres.
 """
 import io
 import json
+import logging
 
 import pytest
 from fastapi.testclient import TestClient
@@ -56,6 +57,15 @@ class _LLM:
         if prompt.startswith("Extraia do texto"):
             self._calls.append(prompt)
             return _REPLY
+        return "Resposta gerada."
+
+
+class _FailingLLM:
+    """Raises on every extraction call, like a crashed LLM extrator server."""
+
+    def generate(self, prompt):
+        if prompt.startswith("Extraia do texto"):
+            raise RuntimeError("internal extractor boom: connection reset")
         return "Resposta gerada."
 
 
@@ -199,6 +209,30 @@ def test_a_paused_build_resumes_through_the_api(client, calls, builds):
     assert resumed.status_code == 202
     assert client.get(f"/graph-builds/{job.id}").json()["status"] == "done"
     assert len(calls) == 1
+
+
+def test_a_failed_index_gets_a_friendly_message_and_logs_the_detail(client, builds, caplog):
+    _ingest(client)
+    job = builds.create("viagem", _EXTRACTOR, [("recursive", "gemini")])
+    deps = _job_deps(client)
+    failing_deps = GraphBuildDeps(
+        store=deps.store, session_factory=deps.session_factory, models=deps.models,
+        llm_factory=lambda name, **kw: _FailingLLM(),
+    )
+    with caplog.at_level(logging.ERROR, logger="app.core.graph.jobs"):
+        builds.run(job.id, failing_deps)
+
+    done = client.get(f"/graph-builds/{job.id}").json()
+    assert done["status"] == "failed"
+    [index] = done["indexes"]
+    assert index["status"] == "failed"
+    # The client gets a friendly PT-BR message, never the raw exception text.
+    assert index["error"]
+    assert "internal extractor boom" not in index["error"]
+    assert "the LLM extrator failed on every chunk" not in index["error"]
+    # The raw detail is still available to operators, in the log.
+    logged = "\n".join(r.message for r in caplog.records)
+    assert "internal extractor boom" in logged or "failed on every chunk" in logged
 
 
 def test_a_base_with_a_grafo_build_in_progress_cannot_be_deleted(client, builds):

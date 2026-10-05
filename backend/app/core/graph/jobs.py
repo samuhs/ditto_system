@@ -35,6 +35,10 @@ from app.core.vectorstore.qdrant import QdrantStore
 
 logger = logging.getLogger(__name__)
 
+# Shown to the client in place of the internal exception text (logged separately,
+# with full detail, where it is raised).
+GENERIC_BUILD_ERROR = "Falha ao construir o Grafo deste Índice. Veja o log do servidor para o detalhe."
+
 JobStatus = Literal["pending", "running", "paused", "done", "failed"]
 # A job that will still read its Base.
 ACTIVE: tuple[JobStatus, ...] = ("pending", "running")
@@ -227,17 +231,17 @@ class GraphBuilds:
                     except Exception as exc:  # noqa: BLE001  the other Índices go on
                         logger.error("Grafo build failed for %s × %s: %s",
                                      item.chunking, item.embedding, exc)
-                        self._update(item, status="failed", error=str(exc)[:500])
+                        self._update(item, status="failed", error=GENERIC_BUILD_ERROR)
                         continue
                 total = graph.stats.get("chunks", 0)
                 self._update(item, status="done", stats=graph.stats, extracted=total, total=total)
             failed = any(i.status == "failed" for i in job.indexes)
             self._update(job, status="failed" if failed else "done", finished_at=_now())
-        except Exception as exc:  # noqa: BLE001  a background job records failure, never raises
+        except Exception:  # noqa: BLE001  a background job records failure, never raises
             logger.exception("Grafo build job %d failed", job_id)
             for item in job.indexes:
                 if item.status in ("pending", "building"):
-                    self._update(item, status="failed", error=str(exc)[:500])
+                    self._update(item, status="failed", error=GENERIC_BUILD_ERROR)
             self._update(job, status="failed", finished_at=_now())
         finally:
             # The memory goes back to the experiments: no embedder, no LLM extrator.

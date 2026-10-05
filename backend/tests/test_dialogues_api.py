@@ -1,5 +1,6 @@
 """Tests for the dialogue listing/detail/rating endpoints (hermetic)."""
-from datetime import datetime
+import warnings
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -168,6 +169,33 @@ def test_put_rating_persists(env):
     session = sf()
     try:
         assert session.get(Dialogue, did).rated_at is not None
+    finally:
+        session.close()
+
+
+def test_put_rating_does_not_use_deprecated_utcnow(env):
+    client, sf = env
+    did = _seed(sf)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        resp = client.put(f"/dialogues/{did}/rating", json={"rating": 5})
+    assert resp.status_code == 200
+    assert not any("utcnow" in str(w.message) for w in caught)
+
+
+def test_put_rating_timestamp_is_naive_utc_like_existing_columns(env):
+    client, sf = env
+    did = _seed(sf)
+    client.put(f"/dialogues/{did}/rating", json={"rating": 5})
+    session = sf()
+    try:
+        d = session.get(Dialogue, did)
+        # Same shape as created_at (DateTime column, no tz): naive, but UTC-valued,
+        # so existing rows (stamped by the old datetime.utcnow()) stay comparable.
+        assert d.created_at.tzinfo is None
+        assert d.rated_at.tzinfo is None
+        now_utc_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        assert abs((now_utc_naive - d.rated_at).total_seconds()) < 5
     finally:
         session.close()
 
