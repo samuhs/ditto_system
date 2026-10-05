@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     # The perplexity signal loads a second copy of an MLX model beside the server.
     # Without free memory for it, it is skipped unless swapping is allowed.
     perplexity_allow_swap: bool = False
+    # Upload size limit enforced by the API itself (#25): the nginx proxy enforces
+    # client_max_body_size separately, but `make up-local` exposes uvicorn directly
+    # with no proxy in front of it. Default matches nginx's 50 MB.
+    max_upload_size_mb: int = 50
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -32,6 +36,12 @@ class Settings(BaseSettings):
     def _empty_is_unset(cls, value):
         """Compose passes unset .env keys through as empty strings."""
         return None if value == "" else value
+
+    @field_validator("max_upload_size_mb", mode="before")
+    @classmethod
+    def _empty_keeps_default(cls, value):
+        """An unset .env/compose key arrives as an empty string: keep the default."""
+        return 50 if value == "" else value
 
     @field_validator("perplexity_allow_swap", mode="before")
     @classmethod

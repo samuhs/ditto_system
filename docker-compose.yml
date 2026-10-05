@@ -25,6 +25,7 @@ services:
       MAX_LOCAL_MODELS: ${MAX_LOCAL_MODELS:-}
       EMBEDDING_DEVICE: ${EMBEDDING_DEVICE:-}
       MAX_EXPERIMENT_CONCURRENCY: ${MAX_EXPERIMENT_CONCURRENCY:-}
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

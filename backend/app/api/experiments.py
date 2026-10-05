@@ -20,6 +20,7 @@ from app.core.memory.manager import get_model_manager
 from app.core.memory.profile import active_profile
 from app.core.prompts import PROMPT_SPECS, load_prompt, load_technique
 from app.core.rag.base import rag_registry
+from app.core.uploads import read_upload
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.experiments.csv_loader import parse_questions_csv
 from app.experiments.difficulty import question_difficulty
@@ -323,7 +324,7 @@ async def create_experiment(
         parsed.name = generate_experiment_name()
     if parsed.eval_embedding is None:
         parsed.eval_embedding = get_eval_embedding()
-    raw = await questions.read()
+    raw = await read_upload(questions)
     try:
         csv_text = raw.decode("utf-8")
     except UnicodeDecodeError as exc:

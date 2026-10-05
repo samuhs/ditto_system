@@ -13,6 +13,7 @@ from app.core.chunking.base import chunking_registry
 from app.core.embedding.base import embedding_registry
 from app.core.graph.jobs import GraphBuildDeps, GraphBuilds
 from app.core.memory.manager import ModelManager
+from app.core.uploads import read_upload
 from app.core.vectorstore.qdrant import QdrantStore, parse_collection_name
 from app.ingestion.pipeline import ingest_documents
 from app.ingestion.schemas import Document, IngestConfig, IngestResult
@@ -53,7 +54,7 @@ async def ingest(
     """Create the Índices now; with a graph_extractor, queue their Grafo build after them."""
     documents = []
     for file in files:
-        raw = await file.read()
+        raw = await read_upload(file)
         try:
             text = raw.decode("utf-8")
         except UnicodeDecodeError as exc:

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from qdrant_client import QdrantClient
 
 from app.api.ingest import get_embedder_factory, get_store
+from app.core.config.settings import get_settings
 from app.core.vectorstore.qdrant import QdrantStore
 from app.main import create_app
 
@@ -82,6 +83,35 @@ def test_ingest_rejects_unknown_technique(client):
     response = client.post("/ingest", data=data, files=files)
     assert response.status_code == 422
     assert "chunking" in response.json()["detail"]
+
+
+def test_ingest_accepts_file_at_the_upload_limit(client, monkeypatch):
+    monkeypatch.setenv("MAX_UPLOAD_SIZE_MB", "1")
+    get_settings.cache_clear()
+    try:
+        content = b"a" * (1024 * 1024)  # exactly 1 MB: at the configured limit
+        files = [("files", ("a.txt", io.BytesIO(content), "text/plain"))]
+        data = {"base": "viagem", "chunkings": "recursive", "embeddings": "gemini"}
+        response = client.post("/ingest", data=data, files=files)
+        assert response.status_code == 200
+    finally:
+        get_settings.cache_clear()
+
+
+def test_ingest_rejects_file_over_the_upload_limit(client, monkeypatch):
+    monkeypatch.setenv("MAX_UPLOAD_SIZE_MB", "1")
+    get_settings.cache_clear()
+    try:
+        content = b"a" * (1024 * 1024 + 1)  # 1 byte over the configured limit
+        files = [("files", ("grande.txt", io.BytesIO(content), "text/plain"))]
+        data = {"base": "viagem", "chunkings": "recursive", "embeddings": "gemini"}
+        response = client.post("/ingest", data=data, files=files)
+        assert response.status_code == 413
+        detail = response.json()["detail"]
+        assert "grande.txt" in detail
+        assert "1 MB" in detail
+    finally:
+        get_settings.cache_clear()
 
 
 def test_options_lists_indexes_per_base():

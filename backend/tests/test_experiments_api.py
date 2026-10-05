@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.api.experiments import get_experiment_deps
+from app.core.config.settings import get_settings
 from app.core.db.base import Base
 from app.core.db.models import Experiment, ExperimentRun, RunResult
 from app.core.vectorstore.qdrant import QdrantStore
@@ -97,6 +98,40 @@ def test_create_experiment_runs_and_persists(client):
     assert len(detail["results"]) == 1
     assert detail["results"][0]["answer"] == "An answer."
     assert "answer_relevancy" in detail["results"][0]["scores"]
+
+
+def _questions_csv_padded_to(size: int) -> bytes:
+    """A valid questions CSV padded with trailing blank lines to an exact byte size."""
+    base = b"pergunta,resposta_referencia\nWhere?,\n"
+    assert size >= len(base)
+    return base + b"\n" * (size - len(base))
+
+
+def test_create_experiment_accepts_questions_file_at_the_upload_limit(client, monkeypatch):
+    monkeypatch.setenv("MAX_UPLOAD_SIZE_MB", "1")
+    get_settings.cache_clear()
+    try:
+        content = _questions_csv_padded_to(1024 * 1024)  # exactly at the configured limit
+        files = {"questions": ("q.csv", io.BytesIO(content), "text/csv")}
+        response = client.post("/experiments", data={"config": _config_payload()}, files=files)
+        assert response.status_code == 200
+    finally:
+        get_settings.cache_clear()
+
+
+def test_create_experiment_rejects_questions_file_over_the_upload_limit(client, monkeypatch):
+    monkeypatch.setenv("MAX_UPLOAD_SIZE_MB", "1")
+    get_settings.cache_clear()
+    try:
+        content = _questions_csv_padded_to(1024 * 1024 + 1)  # 1 byte over the limit
+        files = {"questions": ("perguntas.csv", io.BytesIO(content), "text/csv")}
+        response = client.post("/experiments", data={"config": _config_payload()}, files=files)
+        assert response.status_code == 413
+        detail = response.json()["detail"]
+        assert "perguntas.csv" in detail
+        assert "1 MB" in detail
+    finally:
+        get_settings.cache_clear()
 
 
 def test_list_experiments_paginated(client):
