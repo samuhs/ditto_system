@@ -16,7 +16,7 @@ Exposing Ditto to the internet is outside its threat model. Reports are still we
 
 ## Reporting a vulnerability
 
-Please **do not open a public issue**. Email **samuelhs98@gmail.com** with:
+Please **do not open a public issue**. Use GitHub's [private vulnerability reporting](https://github.com/samuhs/ditto_system/security/advisories/new), or email **samuelhs98@gmail.com**. Include:
 
 - what you found and where (file, endpoint, `make` target);
 - steps to reproduce;

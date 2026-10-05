@@ -11,6 +11,8 @@ You feed it your documents and a list of questions. It tries every combination o
 
 I built it for my PhD, but it works fine as a general playground for comparing RAG strategies on your own stuff.
 
+![Ditto's home screen: the four steps (Preparar, Experimentar, Comparar, Conversar), the latest experiment and how many bases, indices and experiments exist](docs/images/home.png)
+
 > The code is in English. The web UI is in Portuguese (PT-BR), so heads up if that's not your language.
 >
 > **Status:** active research software, used daily for a PhD. Expect the API and database schema to change between commits; there are no tagged releases yet.

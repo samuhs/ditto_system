@@ -8,6 +8,7 @@ By taking part you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 - **Bugs:** open an issue with the bug template. Say how you run Ditto (`make up` or `make up-local`), which LLM server (MLX, Ollama, Gemini) and paste the relevant `make logs` lines.
 - **Ideas and new techniques:** open an issue with the feature template first, so we can agree on the shape before you write code.
+- **Questions:** ask in [Discussions](https://github.com/samuhs/ditto_system/discussions).
 - **Security problems:** don't open a public issue. See [SECURITY.md](SECURITY.md).
 - **Small fixes** (typos, docs, an obvious bug): go straight to a pull request.
 
