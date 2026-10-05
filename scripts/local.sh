@@ -120,6 +120,7 @@ up() {
       embedding_device="$(env_get EMBEDDING_DEVICE)"
       max_concurrency="$(env_get MAX_EXPERIMENT_CONCURRENCY)"
       allow_swap="$(env_get PERPLEXITY_ALLOW_SWAP)"
+      max_upload_mb="$(env_get MAX_UPLOAD_SIZE_MB)"
       cd backend || exit 1
       # Explicit [::1] everywhere: "localhost" may try 127.0.0.1 first.
       env ${CA_ENV[@]+"${CA_ENV[@]}"} \
@@ -134,6 +135,7 @@ up() {
       EMBEDDING_DEVICE="$embedding_device" \
       MAX_EXPERIMENT_CONCURRENCY="$max_concurrency" \
       PERPLEXITY_ALLOW_SWAP="$allow_swap" \
+      MAX_UPLOAD_SIZE_MB="$max_upload_mb" \
       APP_CONFIG_DIR="$PWD/config" \
       PROMPTS_DIR="$PWD/prompts" \
       nohup ./.venv/bin/uvicorn app.main:app --host ::1 --port "$API_PORT" \
