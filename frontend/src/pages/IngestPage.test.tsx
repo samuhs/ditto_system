@@ -175,4 +175,19 @@ describe("IngestPage", () => {
     renderPage("/ingest?base=santo%20Antonio");
     expect(await screen.findByDisplayValue("santo Antonio")).toBeInTheDocument();
   });
+
+  it("shows the API's error message in PT-BR when ingest is refused (e.g. invalid base name)", async () => {
+    vi.mocked(client.ingest).mockRejectedValue(
+      new Error('Nome da base não pode conter "__": esse trecho separa base, corte e embedding no nome da coleção.'),
+    );
+    renderPage();
+    const user = userEvent.setup();
+    await fillForm(user);
+    await user.click(screen.getByRole("button", { name: /inserir documentos/i }));
+
+    expect(await screen.findByText(/os documentos não foram enviados/i)).toBeInTheDocument();
+    expect(screen.getByText(/nome da base não pode conter/i)).toBeInTheDocument();
+    // No false "started" message either, since the request actually failed.
+    expect(screen.queryByText(/iniciada/i)).not.toBeInTheDocument();
+  });
 });

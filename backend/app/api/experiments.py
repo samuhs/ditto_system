@@ -298,7 +298,10 @@ async def create_experiment(
     try:
         parsed = ExperimentConfig.model_validate_json(config)
     except ValidationError as exc:
-        raise HTTPException(status_code=422, detail=exc.errors()) from exc
+        # Drop "ctx"/"url": a custom validator's ctx carries the raw exception object,
+        # which json.dumps (Starlette's default JSONResponse) cannot serialize.
+        errors = [{k: v for k, v in e.items() if k not in ("ctx", "url")} for e in exc.errors()]
+        raise HTTPException(status_code=422, detail=errors) from exc
     if parsed.indexes is not None:
         _check_indexes_exist(parsed, deps.store)
     if not parsed.name:

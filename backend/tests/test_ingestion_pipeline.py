@@ -1,11 +1,23 @@
 """Tests for the ingestion pipeline."""
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
 from qdrant_client import QdrantClient
 
 from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.ingestion.pipeline import ingest_documents
 from app.ingestion.schemas import Document, IngestConfig
+
+
+def test_ingest_config_rejects_base_with_reserved_separator():
+    with pytest.raises(ValidationError):
+        IngestConfig(base="cidade__kg_x", chunkings=["recursive"], embeddings=["gemini"])
+
+
+def test_ingest_config_accepts_current_style_base_names():
+    for name in ["viagem", "b", "Santo Antônio da Alegria", "guia-de-viagem"]:
+        assert IngestConfig(base=name, chunkings=["recursive"], embeddings=["gemini"]).base == name
 
 
 class _FakeEmbedder:

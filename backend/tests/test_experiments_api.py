@@ -137,6 +137,14 @@ def test_create_experiment_csv_missing_column_422(client):
     assert response.status_code == 422
 
 
+def test_create_experiment_rejects_base_colliding_with_graph_marker(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    config = json.loads(_config_payload())
+    config["base"] = "viagem__kg_x"
+    response = client.post("/experiments", data={"config": json.dumps(config)}, files=files)
+    assert response.status_code == 422
+
+
 def test_experiment_records_llm_dimension(client):
     files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
     config = json.dumps({

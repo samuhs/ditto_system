@@ -1,7 +1,8 @@
 """Pydantic schemas for ingestion."""
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.core.graph.jobs import GraphBuildJob
+from app.core.vectorstore.qdrant import validate_base_name
 
 
 class Document(BaseModel):
@@ -17,6 +18,12 @@ class IngestConfig(BaseModel):
     base: str
     chunkings: list[str]
     embeddings: list[str]
+
+    @field_validator("base")
+    @classmethod
+    def _valid_base(cls, value: str) -> str:
+        validate_base_name(value)
+        return value
 
 
 class IngestResult(BaseModel):
