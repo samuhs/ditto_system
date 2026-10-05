@@ -1,6 +1,5 @@
 """Endpoint to ingest uploaded documents (and, optionally, build their Grafo de conhecimento)."""
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
-from pydantic import ValidationError
 
 from app.api.deps import (  # noqa: F401  get_embedder_factory: tests override it here
     get_embedder_factory,
@@ -38,11 +37,6 @@ def _validate(names: list[str], available: list[str], kind: str) -> None:
         )
 
 
-def _base_error_message(exc: ValidationError) -> str:
-    """The PT-BR message from IngestConfig's base validator, without pydantic's wrapping."""
-    return exc.errors()[0]["msg"].removeprefix("Value error, ")
-
-
 @router.post("/ingest", response_model=IngestResult)
 async def ingest(
     background_tasks: BackgroundTasks,
@@ -58,12 +52,11 @@ async def ingest(
     graph_deps: GraphBuildDeps = Depends(get_graph_build_deps),
 ) -> IngestResult:
     """Create the Índices now; with a graph_extractor, queue their Grafo build after them."""
-    try:
-        config = IngestConfig(
-            base=base, chunkings=_csv(chunkings), embeddings=_csv(embeddings)
-        )
-    except ValidationError as exc:
-        raise HTTPException(status_code=422, detail=_base_error_message(exc)) from exc
+    try:  # refused before any upload is read
+        store.check_new_base_name(base)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    config = IngestConfig(base=base, chunkings=_csv(chunkings), embeddings=_csv(embeddings))
     documents = []
     for file in files:
         raw = await read_upload(file)

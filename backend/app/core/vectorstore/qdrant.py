@@ -132,6 +132,17 @@ class QdrantStore:
         if self._client.collection_exists(name):
             self._client.delete_collection(name)
 
+    def has_base(self, base: str) -> bool:
+        """Whether any Índice (or Grafo) of the Base is stored."""
+        return any(collection_base(name) == base for name in self.list_collections())
+
+    def check_new_base_name(self, base: str) -> None:
+        """validate_base_name, for a Base not stored yet; an existing Base is accepted
+        under whatever name it was created with, so Bases named before the check stay
+        usable (adding documents, Experimentos, Retomadas)."""
+        if not self.has_base(base):
+            validate_base_name(base)
+
     def delete_base(self, base: str) -> list[str]:
         """Drop every Índice of the Base and the Grafos built from them; return their names."""
         names = [name for name in self.list_collections() if collection_base(name) == base]

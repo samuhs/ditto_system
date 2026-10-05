@@ -190,4 +190,33 @@ describe("IngestPage", () => {
     // No false "started" message either, since the request actually failed.
     expect(screen.queryByText(/iniciada/i)).not.toBeInTheDocument();
   });
+
+  it("disables Inserir while the ingestion is in flight, so a second click sends nothing", async () => {
+    let finish!: (value: Awaited<ReturnType<typeof client.ingest>>) => void;
+    vi.mocked(client.ingest).mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    renderPage();
+    const user = userEvent.setup();
+    await fillForm(user);
+    const button = screen.getByRole("button", { name: /inserir documentos/i });
+    await user.click(button);
+
+    await waitFor(() => expect(button).toBeDisabled());
+    await user.click(button);
+    expect(client.ingest).toHaveBeenCalledTimes(1);
+
+    finish({ collections: ["viagem__recursive__e5"], total_chunks: 1, graph_build: null });
+    expect(await screen.findByText(/ainda falta: os arquivos/i)).toBeInTheDocument();
+    expect(client.ingest).toHaveBeenCalledTimes(1);
+  });
+
+  it("enables Inserir again when the ingestion is refused, to retry after fixing the form", async () => {
+    vi.mocked(client.ingest).mockRejectedValue(new Error("Nome da base inválido."));
+    renderPage();
+    const user = userEvent.setup();
+    await fillForm(user);
+    await user.click(screen.getByRole("button", { name: /inserir documentos/i }));
+
+    expect(await screen.findByText(/os documentos não foram enviados/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /inserir documentos/i })).toBeEnabled();
+  });
 });

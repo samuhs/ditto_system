@@ -121,3 +121,17 @@ def test_validate_base_name_message_is_pt_br_and_mentions_the_separator():
 
     with pytest.raises(ValueError, match="__"):
         validate_base_name("base__kg_x")
+
+
+def test_check_new_base_name_refuses_a_bad_name_for_a_new_base():
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    with pytest.raises(ValueError):
+        store.check_new_base_name("cidade__kg_x")
+    with pytest.raises(ValueError):
+        store.check_new_base_name("faq.v2")
+
+
+def test_check_new_base_name_accepts_an_existing_base_under_its_old_name():
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    store.ensure_collection(collection_name("faq.v2", "recursive", "e5"), 3)
+    store.check_new_base_name("faq.v2")  # no raise

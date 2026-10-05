@@ -12,11 +12,12 @@ services:
       - hf_cache:/root/.cache/huggingface
     ports:
       # Loopback only by default (127.0.0.1 and ::1); BIND_ADDR=0.0.0.0 in
-      # .env opens the IPv4 side to the LAN. The IPv6 loopback entry is fixed
-      # so `make up-local`/`make doctor` (which talk to Postgres/Qdrant over
-      # [::1]) keep working regardless of BIND_ADDR.
+      # .env opens the IPv4 side to the LAN. The IPv6 loopback entry is what
+      # `make up-local`/`make doctor` talk to; on a Docker host without IPv6,
+      # set BIND_ADDR6 to the same value as BIND_ADDR (compose drops the
+      # duplicate mapping) or the daemon cannot bind it and nothing starts.
       - "${BIND_ADDR:-127.0.0.1}:${API_PORT:-8000}:8000"
-      - "[::1]:${API_PORT:-8000}:8000"
+      - "${BIND_ADDR6:-[::1]}:${API_PORT:-8000}:8000"
     environment:
       DATABASE_URL: postgresql://ditto:${POSTGRES_PASSWORD:-ditto}@postgres:5432/ditto
       QDRANT_URL: http://qdrant:6333
@@ -50,9 +51,9 @@ services:
       POSTGRES_DB: ditto
     ports:
       # See the api service's ports comment: loopback-only by default, both
-      # IPv4 (BIND_ADDR) and a fixed IPv6 entry for up-local/doctor.
+      # IPv4 (BIND_ADDR) and IPv6 (BIND_ADDR6) for up-local/doctor.
       - "${BIND_ADDR:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
-      - "[::1]:${POSTGRES_PORT:-5432}:5432"
+      - "${BIND_ADDR6:-[::1]}:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -66,7 +67,7 @@ services:
     ports:
       # See the api service's ports comment.
       - "${BIND_ADDR:-127.0.0.1}:${QDRANT_PORT:-6333}:6333"
-      - "[::1]:${QDRANT_PORT:-6333}:6333"
+      - "${BIND_ADDR6:-[::1]}:${QDRANT_PORT:-6333}:6333"
     volumes:
       - qdrantdata:/qdrant/storage
 
@@ -85,7 +86,7 @@ services:
       # LLM_SERVER=docker). 11435 avoids clashing with a host Ollama.
       # Loopback-only by default; see the api service's ports comment.
       - "${BIND_ADDR:-127.0.0.1}:${OLLAMA_DOCKER_PORT:-11435}:11434"
-      - "[::1]:${OLLAMA_DOCKER_PORT:-11435}:11434"
+      - "${BIND_ADDR6:-[::1]}:${OLLAMA_DOCKER_PORT:-11435}:11434"
     volumes:
       # A named volume by default; OLLAMA_MODELS_DIR=$HOME/.ollama/models reuses
       # models pulled on the host when the container cannot download them.

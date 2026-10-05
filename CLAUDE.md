@@ -21,7 +21,7 @@ make mem-watch                             # memória livre, swap, memória da A
 ```
 - Frontend: http://localhost:3000 · API: http://localhost:8000 (`/health`, `/options`, `/ingest`, `/experiments`)
 - `GEMINI_API_KEY` no `.env` é opcional (gitignored): sem ela o Gemini some das opções e tudo roda com LLM local (MLX/Ollama) e embedders locais. A imagem Docker já traz os embedders locais (`e5`, `paraphrase`, torch CPU).
-- Postgres/Qdrant/API publicam só em loopback por padrão (`127.0.0.1` + `::1`; o frontend continua em todas as interfaces). `BIND_ADDR=0.0.0.0` no `.env` abre o lado IPv4 para a rede local. `POSTGRES_PASSWORD`: `make setup` gera uma senha aleatória ao criar um `.env` novo; instalação existente mantém a senha atual (o volume já foi inicializado com ela).
+- Postgres/Qdrant/API publicam só em loopback por padrão (`127.0.0.1` + `::1`; o frontend continua em todas as interfaces). `BIND_ADDR=0.0.0.0` no `.env` abre o lado IPv4 para a rede local. Docker sem IPv6: `BIND_ADDR6` com o mesmo valor do `BIND_ADDR`. `POSTGRES_PASSWORD`: `make setup` gera uma senha aleatória ao criar um `.env` novo; instalação existente mantém a senha atual (o volume já foi inicializado com ela).
 - A chave Gemini salva pela tela de Configurações fica em `backend/config/app_settings.json`, gravado com permissão `600` (só o dono lê/escreve).
 
 ## Ambiente de desenvolvimento

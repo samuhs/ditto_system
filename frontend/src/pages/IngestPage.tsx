@@ -25,6 +25,8 @@ export function IngestPage() {
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [started, setStarted] = useState<string | null>(null);
+  // The request lasts the whole ingestion (minutes); a second click would ingest twice.
+  const [submitting, setSubmitting] = useState(false);
   const [withGraph, setWithGraph] = useState(false);
   const [extractor, setExtractor] = useState<string | null>(null);
   const builds = useGraphBuilds();
@@ -64,6 +66,7 @@ export function IngestPage() {
 
   async function submit() {
     setSubmitError(null);
+    setSubmitting(true);
     const form = new FormData();
     form.append("base", baseName);
     form.append("chunkings", chunkings.join(","));
@@ -79,6 +82,8 @@ export function IngestPage() {
       setFiles([]);
     } catch (e) {
       setSubmitError(errorText(e));
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -261,7 +266,8 @@ export function IngestPage() {
             className="ditto-strip-action"
             size="md"
             onClick={submit}
-            disabled={missing.length > 0}
+            disabled={missing.length > 0 || submitting}
+            loading={submitting}
             rightSection={<ArrowIcon />}
           >
             Inserir documentos

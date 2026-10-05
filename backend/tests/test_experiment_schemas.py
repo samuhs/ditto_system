@@ -79,17 +79,14 @@ def test_experiment_config_requires_at_least_one_llm():
         ExperimentConfig(**base, llms=[])
 
 
-def test_experiment_config_rejects_base_colliding_with_graph_marker():
-    """A Base named with the Grafo marker could hide an Índice as if it were a Grafo
-    collection (parse_collection_name/collection_base would misread it)."""
-    from pydantic import ValidationError
-
+def test_experiment_config_loads_legacy_base_names():
+    """The Base name is checked once, when a new Base is created (POST /ingest); a
+    stored config must load back whatever its Base is called, or a Retomada of an
+    Experimento over a Base named before that check would crash in the background."""
     base = dict(chunkings=["recursive"], embeddings=["e5"], rags=["naive"],
                 retrievers=["similarity"], metrics=["answer_relevancy"], llms=["qwen3:1.7b"])
-    with pytest.raises(ValidationError):
-        ExperimentConfig(base="cidade__kg_x", **base)
-    with pytest.raises(ValidationError):
-        ExperimentConfig(base="cidade__outraBase", **base)
+    for name in ["faq.v2", "guia (2)", "x" * 80]:
+        assert ExperimentConfig(base=name, **base).base == name
 
 
 def test_experiment_config_accepts_current_style_base_names():

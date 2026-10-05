@@ -152,3 +152,20 @@ def test_options_lists_indexes_per_base():
             {"chunking": "recursive", "embedding": "gemini", "graph_extractors": []},
         ],
     }
+
+
+def test_ingest_adds_documents_to_an_existing_legacy_named_base(client):
+    """A Base created before the name check stays usable: only new Bases are checked."""
+    files = [("files", ("a.txt", io.BytesIO(b"Some text here."), "text/plain"))]
+    store = client.app.dependency_overrides[get_store]()
+    store.ensure_collection("faq.v2__recursive__gemini", 3)
+    data = {"base": "faq.v2", "chunkings": "recursive", "embeddings": "gemini"}
+    response = client.post("/ingest", data=data, files=files)
+    assert response.status_code == 200
+
+
+def test_ingest_rejects_a_new_base_with_a_legacy_style_name(client):
+    files = [("files", ("a.txt", io.BytesIO(b"Some text here."), "text/plain"))]
+    data = {"base": "faq.v2", "chunkings": "recursive", "embeddings": "gemini"}
+    response = client.post("/ingest", data=data, files=files)
+    assert response.status_code == 422

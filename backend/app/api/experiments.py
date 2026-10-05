@@ -321,6 +321,10 @@ async def create_experiment(
         # which json.dumps (Starlette's default JSONResponse) cannot serialize.
         errors = [{k: v for k, v in e.items() if k not in ("ctx", "url")} for e in exc.errors()]
         raise HTTPException(status_code=422, detail=errors) from exc
+    try:
+        deps.store.check_new_base_name(parsed.base)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     if parsed.indexes is not None:
         _check_indexes_exist(parsed, deps.store)
     if not parsed.name:
@@ -405,12 +409,14 @@ def _resumable_reason(experiment: Experiment, store: QdrantStore) -> str | None:
         return (
             "Experimento sem perguntas gravadas (criado antes desta função) não pode ser retomado."
         )
+    try:
+        config = ExperimentConfig(**(experiment.config or {}))
+    except ValidationError:
+        # resume_experiment rebuilds this same config: it would crash in the background
+        # after the status flip, leaving the Experimento stuck with nothing running.
+        return "A configuração gravada deste Experimento não pode mais ser lida; crie um novo."
     stored_fingerprint = (experiment.config or {}).get("fingerprint")
     if stored_fingerprint:
-        try:
-            config = ExperimentConfig(**(experiment.config or {}))
-        except ValidationError:
-            return None  # config predates a field this needs to recompute: do not block on it
         changes = fingerprint_changes(stored_fingerprint, experiment_fingerprint(config, store))
         if changes:
             return (
@@ -466,10 +472,7 @@ def resume_experiment_route(
                     ),
                 )
             config["concurrency"] = payload.concurrency
-        try:
-            config["fingerprint"] = experiment_fingerprint(ExperimentConfig(**config), deps.store)
-        except ValidationError:
-            pass  # config predates a field this needs: resume still proceeds, unfingerprinted
+        config["fingerprint"] = experiment_fingerprint(ExperimentConfig(**config), deps.store)
         result = session.execute(
             update(Experiment)
             .where(Experiment.id == experiment_id, Experiment.status.in_(("paused", "failed")))

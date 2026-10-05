@@ -1082,3 +1082,61 @@ def test_get_experiment_query_count_does_not_grow_with_combinations():
     assert large_n_queries == small_n_queries, (
         f"query count grew with the number of Combinações: {small_n_queries} -> {large_n_queries}"
     )
+
+
+# ---- Bases named before the Base-name check (code review of #26).
+
+def _ingest_legacy_base(client, base):
+    """Write a Base straight to the store, as one created before the name check."""
+    store = client.app.dependency_overrides[get_experiment_deps]().store
+    ingest_documents(
+        [Document(name="a.txt", text="Para one.\n\nPara two.")],
+        IngestConfig(base=base, chunkings=["recursive"], embeddings=["gemini"]),
+        store,
+        embedder_factory=_embedder_factory,
+    )
+
+
+def test_create_experiment_over_an_existing_legacy_named_base(client):
+    _ingest_legacy_base(client, "faq.v2")
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    config = json.loads(_config_payload())
+    config["base"] = "faq.v2"
+    response = client.post("/experiments", data={"config": json.dumps(config)}, files=files)
+    assert response.status_code == 200
+    assert client.get(f"/experiments/{response.json()['id']}").json()["status"] == "done"
+
+
+def test_resume_an_experiment_over_a_legacy_named_base(client):
+    _ingest_legacy_base(client, "faq.v2")
+    exp_id = _paused_experiment_with_questions(client)
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = session.get(Experiment, exp_id)
+    experiment.config = {**experiment.config, "base": "faq.v2"}
+    session.commit()
+    session.close()
+
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 200
+    assert client.get(f"/experiments/{exp_id}").json()["status"] == "done"
+
+
+def test_resume_refuses_a_stored_config_that_no_longer_loads(client):
+    """Accepting it would flip the status and then crash in the background task,
+    leaving the Experimento stuck with nothing running."""
+    exp_id = _paused_experiment_with_questions(client)
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = session.get(Experiment, exp_id)
+    experiment.config = {"base": "viagem"}  # missing every other required field
+    session.commit()
+    session.close()
+
+    assert client.get(f"/experiments/{exp_id}").json()["resumable"] is False
+    response = client.post(f"/experiments/{exp_id}/resume")
+
+    assert response.status_code == 409
+    assert "configuração" in response.json()["detail"]
+    assert client.get(f"/experiments/{exp_id}").json()["status"] == "paused"
