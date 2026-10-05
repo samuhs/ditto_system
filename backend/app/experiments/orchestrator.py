@@ -932,7 +932,11 @@ def _run_experiment(
                     watchdog.heartbeat()  # a Combinação just started
 
                     if llm_name != loaded_llm_name:
-                        llm, loaded_llm_name = deps.llm_factory(llm_name, timeout=call_timeout_s), llm_name
+                        llm = deps.llm_factory(
+                            llm_name, timeout=call_timeout_s,
+                            temperature=config.temperature, max_tokens=config.max_tokens,
+                        )
+                        loaded_llm_name = llm_name
                     if staged:
                         cached = vectors[embedding]
                         embedder = CachedQueryEmbedder(

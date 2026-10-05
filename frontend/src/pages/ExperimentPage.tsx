@@ -19,6 +19,13 @@ const NO_RETRIEVAL_RAGS = ["closed_book", "oracle"];
 const INDEX_ONLY_RAGS = ["graph"];
 // Techniques that query an Índice's Grafo de conhecimento (built at ingestion, never here).
 const GRAPH_RAGS = ["graph", "graph_mix"];
+/** A NumberInput's value as a number, or null when the field is empty or not a number. */
+function optionalNumber(value: number | string): number | null {
+  if (typeof value === "number") return value;
+  const parsed = value.trim() === "" ? NaN : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function ExperimentPage() {
   const { addExperimentTask } = useTasks();
   const [options, setOptions] = useState<Options | null>(null);
@@ -31,6 +38,9 @@ export function ExperimentPage() {
   const [llms, setLlms] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
   const [concurrency, setConcurrency] = useState<number>(1);
+  // Raw field values: Mantine hands mid-typing text ("0.") as a string; "" means unset.
+  const [temperature, setTemperature] = useState<number | string>("");
+  const [maxTokens, setMaxTokens] = useState<number | string>("");
   const [csv, setCsv] = useState<File | null>(null);
   const [questionCount, setQuestionCount] = useState<number | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -145,6 +155,8 @@ export function ExperimentPage() {
         llms,
         metrics,
         concurrency,
+        temperature: optionalNumber(temperature),
+        max_tokens: optionalNumber(maxTokens),
       };
       const form = new FormData();
       form.append("config", JSON.stringify(config));
@@ -349,6 +361,29 @@ export function ExperimentPage() {
               max={32}
               value={concurrency}
               onChange={(v) => setConcurrency(typeof v === "number" && v >= 1 ? v : 1)}
+              w={300}
+            />
+            <NumberInput
+              label="Temperatura"
+              description="Vale para todas as LLMs. Vazio usa o padrão de cada servidor; 0 dá respostas reprodutíveis."
+              placeholder="padrão do servidor"
+              min={0}
+              max={2}
+              step={0.1}
+              decimalScale={2}
+              value={temperature}
+              onChange={setTemperature}
+              w={300}
+            />
+            <NumberInput
+              label="Máximo de tokens da resposta"
+              description="Vazio: sem limite. Muito baixo corta respostas (e o raciocínio de modelos como o qwen3)."
+              placeholder="sem limite"
+              min={1}
+              max={32768}
+              allowDecimal={false}
+              value={maxTokens}
+              onChange={setMaxTokens}
               w={300}
             />
           </div>

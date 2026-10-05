@@ -1140,3 +1140,37 @@ def test_resume_refuses_a_stored_config_that_no_longer_loads(client):
     assert response.status_code == 409
     assert "configuração" in response.json()["detail"]
     assert client.get(f"/experiments/{exp_id}").json()["status"] == "paused"
+
+
+def _create_with(client, **extra):
+    payload = json.loads(_config_payload()) | extra
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    return client.post("/experiments", data={"config": json.dumps(payload)}, files=files)
+
+
+def test_detail_reports_the_generation_params(client):
+    exp_id = _create_with(client, temperature=0, max_tokens=512).json()["id"]
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["temperature"] == 0
+    assert detail["max_tokens"] == 512
+
+
+def test_detail_of_an_old_experiment_has_no_generation_params(client):
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = Experiment(
+        name="antigo", status="done",
+        config={"chunkings": ["recursive"], "embeddings": ["gemini"], "rags": ["naive"],
+                "retrievers": ["similarity"], "llms": ["gemini"]},
+    )
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    detail = client.get(f"/experiments/{experiment_id}").json()
+    assert detail["temperature"] is None
+    assert detail["max_tokens"] is None
+
+
+def test_create_experiment_rejects_an_out_of_range_temperature(client):
+    assert _create_with(client, temperature=3).status_code == 422

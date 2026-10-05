@@ -250,6 +250,40 @@ describe("ExperimentPage", () => {
     expect(config.chunkings).toEqual(["fixed", "recursive"]);
     expect(config.embeddings).toEqual(["e5", "gemini"]);
   });
+
+  it("submits no temperature and no token cap by default", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: /gerar experimento/i }));
+    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    expect(submittedConfig().temperature).toBeNull();
+    expect(submittedConfig().max_tokens).toBeNull();
+  });
+
+  it("submits the temperature and token cap the user typed", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    await user.type(screen.getByLabelText(/temperatura/i), "0.7");
+    await user.type(screen.getByLabelText(/máximo de tokens/i), "512");
+    await user.click(screen.getByRole("button", { name: /gerar experimento/i }));
+    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    expect(submittedConfig().temperature).toBe(0.7);
+    expect(submittedConfig().max_tokens).toBe(512);
+  });
+
+  it("sends a typed-then-cleared temperature as null", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await fillValidForm(user);
+    const temp = screen.getByLabelText(/temperatura/i);
+    await user.type(temp, "0.5");
+    await user.clear(temp);
+    await user.click(screen.getByRole("button", { name: /gerar experimento/i }));
+    await waitFor(() => expect(client.createExperiment).toHaveBeenCalled());
+    expect(submittedConfig().temperature).toBeNull();
+  });
 });
 
 describe("countCsvRecords", () => {
