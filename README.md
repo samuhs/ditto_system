@@ -1,26 +1,40 @@
 # Ditto
 
+[![CI](https://github.com/samuhs/ditto_system/actions/workflows/ci.yml/badge.svg)](https://github.com/samuhs/ditto_system/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB)
+![Node 22](https://img.shields.io/badge/node-22-339933)
+
 Ever tried to pick the "best" RAG setup and realized you're just guessing? Which chunker, which embedder, which retriever, which prompt trick, which model? Ditto runs the whole grid for you.
 
 You feed it your documents and a list of questions. It tries every combination of **chunking × embedding × RAG technique × retriever × LLM**, scores each one on quality metrics, and shows you a ranked table. There's also a chat agent (built on LangGraph) with swappable personas that reuses the same pipelines, so you can actually talk to your data once you've found a setup you like.
 
 I built it for my PhD, but it works fine as a general playground for comparing RAG strategies on your own stuff.
 
+![Ditto's home screen: the four steps (Preparar, Experimentar, Comparar, Conversar), the latest experiment and how many bases, indices and experiments exist](docs/images/home.png)
+
 > The code is in English. The web UI is in Portuguese (PT-BR), so heads up if that's not your language.
+>
+> **Status:** active research software, used daily for a PhD. Expect the API and database schema to change between commits; there are no tagged releases yet.
+
+**Contents:** [What you get](#what-you-get) · [How it fits together](#how-it-fits-together) · [Get it running](#get-it-running-docker) · [Configuring it](#configuring-it) · [Running from source](#running-from-source) · [Security](#one-security-note) · [Contributing](#contributing) · [Citing](#citing-ditto) · [License](#license)
 
 ---
 
 ## What you get
 
-- **The big grid.** 4 chunkers, 3 embedders, 6 RAG techniques, 4 retrievers, and however many LLMs you want, run over a CSV of questions and ranked by metrics.
+- **The big grid.** 5 chunkers, 5 embedders, 10 RAG techniques, 4 retrievers, and however many LLMs you want, run over a CSV of questions and ranked by 12 metrics.
 - **Everything is a plugin.** Each technique sits behind an interface and a registry. Write a class, register it, and it shows up in the UI on its own. No wiring.
-  - Chunking: `fixed`, `recursive`, `token`, `semantic`
-  - Embeddings: `gemini`, plus local `e5` and `paraphrase`
-  - RAG: `naive`, `agentic`, `hyde`, `rerank`, `crag`, `compression`
+  - Chunking: `fixed`, `recursive`, `token`, `semantic`, `markdown`
+  - Embeddings: `gemini`, plus local `e5`, `paraphrase`, `granite` and `embeddinggemma` (gated: needs `HF_TOKEN`)
+  - RAG: `naive`, `agentic`, `hyde`, `rerank`, `crag`, `compression`, GraphRAG (`graph`, `graph_mix`), and two baselines: `closed_book` (no retrieval) and `oracle` (the annotated evidence as context, the LLM's best case)
   - Retrievers: `similarity`, `mmr`, `multi_query`, `parent_document`
-  - LLMs: Gemini (`gemini-2.5-flash-lite`) and every model pulled on your Ollama server, each listed by its real name and tagged `local` or `remoto`. There's also `custom` for any OpenAI-compatible endpoint.
-  - Metrics: `answer_relevancy`, `faithfulness`, `context_precision`, `context_recall`, `answer_correctness`, `rouge_l`
-- **A results table that doesn't fight you.** Sort by any metric, filter by any dimension, paginate.
+  - LLMs: Gemini (`gemini-2.5-flash-lite`) and every model on your local server (MLX or Ollama), each listed by its real name and tagged `local` or `remoto`. Temperature and the answer's token cap are set per experiment.
+  - Metrics with an embedder: `answer_relevancy`, `faithfulness`, `context_precision`, `context_recall`, `answer_correctness`
+  - Metrics with no model at all: `rouge_l`, `token_f1`, `chrf`, and, against annotated evidence, `context_hit`, `context_mrr`, `context_recall_gold`, `context_all_hops`
+- **A results table that doesn't fight you.** Sort by any metric, filter by any dimension, paginate, and chart the results per dimension.
+- **Knowledge graphs.** Build a *Grafo de conhecimento* from any index with an LLM extractor, then query it with the `graph` and `graph_mix` techniques.
+- **Question difficulty.** Each experiment scores every question on cheap signals (IDF, length, negation, multi-hop, retrieval score gaps and more) so you can tell hard questions from bad configurations.
 - **A chat agent.** LangGraph flow (guardrail, triage, RAG, memory, persona) with prompts you can edit and personas you can swap. Save the conversations and rate them 0 to 10.
 - **Prompt control.** See and edit the prompts each technique uses. Every experiment saves a snapshot of the prompts it ran with, so old results stay reproducible.
 - **Run it fully offline.** Pair a local Ollama model with a local embedder and you never touch a paid API.
@@ -37,13 +51,13 @@ I built it for my PhD, but it works fine as a general playground for comparing R
 └───────────┘     └───────────────────────────┘     └──────────┘
                           │
                           ▼  (optional, on your host)
-                      Ollama  ·  local LLM generation
+                 MLX or Ollama  ·  local LLM generation
 ```
 
-- `backend/` is a FastAPI modular monolith. The interesting parts live in `backend/app/core/` (`chunking/`, `embedding/`, `retrieval/`, `rag/`, `llm/`, `evaluation/`, `chat/`, `vectorstore/`), each one a registry of pluggable techniques. HTTP routes sit in `backend/app/api/`.
+- `backend/` is a FastAPI modular monolith. The interesting parts live in `backend/app/core/` (`chunking/`, `embedding/`, `retrieval/`, `rag/`, `llm/`, `evaluation/`, `graph/`, `difficulty/`, `chat/`, `vectorstore/`), each one a registry of pluggable techniques. HTTP routes sit in `backend/app/api/`.
 - `frontend/` is React + Vite + TypeScript + Mantine. nginx proxies `/api/` to the backend.
 - `database/` has a sample document (a travel-guide FAQ) so you can kick the tires right away.
-- `docs/superpowers/` keeps the design specs and plans, if you want to see how it grew.
+- `docs/` holds the design specs and plans (`superpowers/`), architecture decisions (`adr/`), research notes (`research/`) and the original project proposal (`proposta-original.md`), if you want to see how it grew.
 
 ---
 
@@ -63,7 +77,7 @@ make llm-setup   # optional: serve a local LLM with Ollama on your GPU (see belo
 Now open **http://localhost:3000** and walk through it:
 
 1. **Inserir documentos**: upload your files, or use the sample in `database/`.
-2. **Gerar teste**: pick the combinations you want and a questions CSV. The columns are `pergunta,resposta_referencia`.
+2. **Gerar teste**: pick the combinations you want and a questions CSV. Only `pergunta` is required. Add `resposta_referencia` (the reference answer) for the answer metrics and `evidencia_referencia` (the passage that holds it) for the gold retrieval metrics and the `oracle` baseline. Multi-hop sets can also carry `evidencia_salto` and `entidades_ponte`; see `database/perguntas_guia_santo_antonio_da_alegria.csv`.
 3. **Resultados**: see which combinations won, ranked by metric.
 
 A few more commands when you need them:
@@ -83,11 +97,16 @@ Most config comes from `.env` (there's a `.env.example` to copy):
 
 | Variable | What it's for | Docker default |
 |---|---|---|
-| `DATABASE_URL` | Postgres connection | `postgresql://ditto:ditto@postgres:5432/ditto` |
-| `QDRANT_URL` | Qdrant connection | `http://qdrant:6333` |
+| `POSTGRES_PASSWORD` | Postgres password; `make setup` generates a random one for a new `.env` | *(random)* |
 | `GEMINI_API_KEY` | Optional Gemini key (embeddings + Gemini LLM); without it Gemini is not offered | *(empty)* |
+| `HF_TOKEN` | Hugging Face token, only for the gated `embeddinggemma` embedder | *(empty)* |
+| `WEB_PORT`, `API_PORT`, `POSTGRES_PORT`, `QDRANT_PORT` | Host ports, when another project already uses one | `3000`, `8000`, `5432`, `6333` |
+| `BIND_ADDR` | Interface `make up` publishes Postgres, Qdrant and the API on | `127.0.0.1` |
+| `MAX_UPLOAD_SIZE_MB` | Largest upload the API accepts | `50` |
 
-You can also set the **Gemini key** and add **named Ollama models** straight from the **Configurações** screen in the app, no restart needed. Those runtime settings land in `backend/config/app_settings.json`. It's git-ignored and stored in plaintext, so keep it on your own machine.
+`.env.example` documents the rest (memory profile overrides, perplexity signal).
+
+You can also set the **Gemini key** straight from the **Configurações** screen in the app, no restart needed. It lands in `backend/config/app_settings.json`, git-ignored and stored in plaintext (mode `600`), so keep it on your own machine.
 
 ### Going local: MLX or Ollama
 
@@ -171,7 +190,7 @@ On `low`, `make up` recommends `make up-local`: without the API in the Docker VM
 
 ## Running from source
 
-You'll want Python 3.11+ and Node 22. You still need Qdrant and Postgres around, and the easy move is `make up` for just the datastores while you run the app locally.
+You'll want Python 3.11+ (the dev venv uses 3.13) and Node 22. You still need Qdrant and Postgres around, and the easy move is `make up` for just the datastores while you run the app locally.
 
 The quick way is one command. It creates `backend/.venv`, installs the frontend packages, sets up graphify (the code knowledge graph and its git hooks) and fetches the impeccable design engine. It is safe to re-run and works behind corporate VPNs:
 
@@ -216,7 +235,9 @@ That's it. It now shows up in `/options`, the experiment grid, the chat config, 
 
 ## One security note
 
-Ditto has no login and assumes it's running somewhere you trust, for one person. Please don't put it on the open internet. Your secrets (the Gemini key) sit in `.env` and `backend/config/app_settings.json` as plaintext. Both are git-ignored, so keep them local. The default Postgres password (`ditto:ditto`) is fine for your laptop and nothing else, so change it if you ever share the setup.
+Ditto has no login and assumes it's running somewhere you trust, for one person. Please don't put it on the open internet. Your secrets (the Gemini key) sit in `.env` and `backend/config/app_settings.json` as plaintext. Both are git-ignored, so keep them local. `make up` keeps Postgres, Qdrant and the API on `127.0.0.1`, but the frontend listens on every interface, and `make up-local` publishes Postgres and Qdrant on every interface. Firewall the machine if you're on a shared network.
+
+Found a vulnerability? Please report it privately, as described in [SECURITY.md](SECURITY.md).
 
 ---
 
@@ -224,10 +245,16 @@ Ditto has no login and assumes it's running somewhere you trust, for one person.
 
 Pull requests are welcome. Keep the interface-plus-registry pattern for new techniques, add tests (pytest for backend, vitest for frontend), and keep both suites green with `make test` and `make front-test`. English in the code, PT-BR in the UI. For anything big, open an issue first so we can talk it through.
 
+The details are in [CONTRIBUTING.md](CONTRIBUTING.md), and everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md). The domain vocabulary (*Base*, *Índice*, *Grafo de conhecimento*…) is defined in [CONTEXT.md](CONTEXT.md), and architecture decisions live in [docs/adr/](docs/adr/).
+
+---
+
+## Citing Ditto
+
+If Ditto helps your research, please cite it. GitHub's **Cite this repository** button (from [CITATION.cff](CITATION.cff)) gives you APA and BibTeX.
+
 ---
 
 ## License
 
 [MIT](LICENSE), © 2026 Samuel Henrique Silva.
-
-This started as a PhD project. If Ditto helps your work, a shout-out goes a long way.

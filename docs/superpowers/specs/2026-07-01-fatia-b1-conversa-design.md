@@ -7,7 +7,7 @@
 
 O sistema (Ditto) foi fatiado em: **Fatia A** (núcleo de descoberta: ingest → experimento → resultados, **completa**), **Fatia B** (conversacional) e **Fatia C** (fine-tuning). Este spec cobre a **primeira sub-fatia da Fatia B (B1 — Conversa)**. A segunda (B2 — avaliação de diálogo) terá spec/plano próprios depois, pois depende dos diálogos que o B1 gera.
 
-Referências: `Doutorado Base architecture.md` (raiz) e `HANDOFF.md`.
+Referências: `docs/proposta-original.md` e `HANDOFF.md`.
 
 ## Objetivo
 
