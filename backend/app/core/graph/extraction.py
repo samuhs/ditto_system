@@ -7,12 +7,12 @@ Small local models drift from the format, so each line is parsed on its own: a
 malformed line is dropped and counted, never failing the whole chunk.
 """
 import re
-import unicodedata
 
 from pydantic import BaseModel
 
 from app.core.llm.base import LLM
 from app.core.prompts import load_prompt
+from app.core.text import strip_accents
 
 FIELD_SEP = "<|>"
 END_MARKER = "<|FIM|>"
@@ -60,8 +60,7 @@ def _entity_type(raw: str) -> str:
 
     "Organização" -> "organizacao".
     """
-    folded = unicodedata.normalize("NFKD", raw.casefold())
-    return "".join(c for c in folded if not unicodedata.combining(c))
+    return strip_accents(raw.casefold())
 
 
 def parse_extraction(reply: str) -> Extraction:

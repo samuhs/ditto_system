@@ -18,13 +18,13 @@
   0.8), and the link is for one name written two ways, not for related concepts.
 """
 import re
-import unicodedata
 from collections import Counter
 
 import numpy as np
 from rapidfuzz import fuzz, process
 
 from app.core.graph.knowledge import GraphEntity, GraphRelation, normalize_name
+from app.core.text import strip_accents
 
 # Ratio (0-100) of the folded names from which two entities are linked as synonyms.
 SYNONYM_RATIO = 85
@@ -39,8 +39,7 @@ _NOT_AN_ENTITY = re.compile(r"^\s*(\d|R\$|\$|€)")
 
 def _fold(text: str) -> str:
     """Casefolded and without accents, for comparing spellings (the hub, synonyms)."""
-    folded = unicodedata.normalize("NFKD", text.casefold())
-    return "".join(c for c in folded if not unicodedata.combining(c))
+    return strip_accents(text.casefold())
 
 
 def _split_nicknames(name: str) -> tuple[str, list[str]]:
