@@ -81,3 +81,43 @@ def test_add_rejects_mismatched_lengths(store):
     store.ensure_collection("c", dimension=3)
     with pytest.raises(ValueError):
         store.add("c", vectors=[[1.0, 0.0, 0.0]], payloads=[])
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["viagem", "b", "guia-de-viagem", "guia de viagem", "Santo Antônio da Alegria",
+     "a_b", "a" * 64],
+)
+def test_validate_base_name_accepts_current_style_names(name):
+    from app.core.vectorstore.qdrant import validate_base_name
+
+    validate_base_name(name)  # no raise
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "",
+        "a__b",
+        "guia__kg_extra",
+        "viagem__recursive__e5",  # a real collision: looks like an Índice's own name
+        "a/b",
+        "a:b",
+        "a\nb",
+        " viagem",
+        "viagem ",
+        "a" * 65,
+    ],
+)
+def test_validate_base_name_rejects_reserved_separators_and_bad_shapes(name):
+    from app.core.vectorstore.qdrant import validate_base_name
+
+    with pytest.raises(ValueError):
+        validate_base_name(name)
+
+
+def test_validate_base_name_message_is_pt_br_and_mentions_the_separator():
+    from app.core.vectorstore.qdrant import validate_base_name
+
+    with pytest.raises(ValueError, match="__"):
+        validate_base_name("base__kg_x")

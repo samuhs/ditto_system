@@ -1,7 +1,9 @@
 """Pydantic schemas for experiments."""
 import itertools
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from app.core.vectorstore.qdrant import validate_base_name
 
 
 QUESTION_TYPES = ("simples", "ponte", "comparacao", "agregacao")
@@ -57,6 +59,12 @@ class ExperimentConfig(BaseModel):
     # whole experiment (an Índice may have Grafos from several). None: no GraphRAG
     # technique, or the API fills in the only extrator every chosen Índice has.
     graph_extractor: str | None = None
+
+    @field_validator("base")
+    @classmethod
+    def _valid_base(cls, value: str) -> str:
+        validate_base_name(value)
+        return value
 
 
 def index_pairs(config: ExperimentConfig) -> list[tuple[str, str]]:

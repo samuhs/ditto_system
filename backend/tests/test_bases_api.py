@@ -13,7 +13,7 @@ from app.api.ingest import get_embedder_factory, get_store
 from app.core.db.base import Base
 from app.core.db.models import Experiment
 from app.core.graph.knowledge import GraphEntity, GraphRelation, write_graph
-from app.core.vectorstore.qdrant import QdrantStore, graph_collection_names
+from app.core.vectorstore.qdrant import QdrantStore, collection_name, graph_collection_names
 from app.main import create_app
 
 
@@ -154,10 +154,16 @@ def test_a_grafo_without_date_shows_none_and_an_unfinished_one_is_left_out(clien
 
 def test_deleting_a_base_removes_its_indexes_and_their_grafos_only(client, store):
     # Names that share "viagem" as a prefix belong to other Bases.
-    for base in ("viagem", "viagem2", "viagem__x"):
+    for base in ("viagem", "viagem2"):
         _ingest(client, base)
         for name in graph_collection_names(base, "recursive", "gemini", "qwen3:1.7b"):
             store.ensure_collection(name, 3)
+    # "viagem__x" is no longer a valid Base name (validate_base_name refuses "__"),
+    # but collection_base() must still never claim it as "viagem"'s: write its
+    # collections straight to the store, bypassing /ingest's validation.
+    store.ensure_collection(collection_name("viagem__x", "recursive", "gemini"), 3)
+    for name in graph_collection_names("viagem__x", "recursive", "gemini", "qwen3:1.7b"):
+        store.ensure_collection(name, 3)
 
     response = client.delete("/bases/viagem")
 

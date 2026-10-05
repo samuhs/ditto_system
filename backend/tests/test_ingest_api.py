@@ -119,6 +119,21 @@ def test_ingest_rejects_file_over_the_upload_limit(client, monkeypatch):
         get_settings.cache_clear()
 
 
+def test_ingest_rejects_base_colliding_with_graph_marker(client):
+    files = [("files", ("a.txt", io.BytesIO(b"Some text here."), "text/plain"))]
+    data = {"base": "cidade__kg_x", "chunkings": "recursive", "embeddings": "gemini"}
+    response = client.post("/ingest", data=data, files=files)
+    assert response.status_code == 422
+    assert "__" in response.json()["detail"]
+
+
+def test_ingest_rejects_overly_long_base_name(client):
+    files = [("files", ("a.txt", io.BytesIO(b"Some text here."), "text/plain"))]
+    data = {"base": "a" * 65, "chunkings": "recursive", "embeddings": "gemini"}
+    response = client.post("/ingest", data=data, files=files)
+    assert response.status_code == 422
+
+
 def test_options_lists_indexes_per_base():
     from app.api.options import get_store as options_get_store
 

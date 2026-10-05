@@ -23,6 +23,7 @@ export function IngestPage() {
   const [embeddings, setEmbeddings] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [started, setStarted] = useState<string | null>(null);
   const [withGraph, setWithGraph] = useState(false);
   const [extractor, setExtractor] = useState<string | null>(null);
@@ -61,18 +62,24 @@ export function IngestPage() {
     withGraph && !extractor && "o LLM extrator",
   ].filter(Boolean) as string[];
 
-  function submit() {
+  async function submit() {
+    setSubmitError(null);
     const form = new FormData();
     form.append("base", baseName);
     form.append("chunkings", chunkings.join(","));
     form.append("embeddings", embeddings.join(","));
     files.forEach((file) => form.append("files", file));
     if (withGraph && extractor) form.append("graph_extractor", extractor);
-    const result = ingest(form);
-    addIngestTask(baseName || "sem nome", result);
-    result.then((r) => r.graph_build && builds.follow(r.graph_build)).catch(() => {});
-    setStarted(baseName);
-    setFiles([]);
+    try {
+      const result = ingest(form);
+      addIngestTask(baseName || "sem nome", result);
+      const r = await result;
+      if (r.graph_build) builds.follow(r.graph_build);
+      setStarted(baseName);
+      setFiles([]);
+    } catch (e) {
+      setSubmitError(errorText(e));
+    }
   }
 
   return (
@@ -223,6 +230,14 @@ export function IngestPage() {
               <GraphBuildList jobs={builds.shown} onPause={builds.pause} onResume={builds.resume} />
             </div>
           </section>
+        )}
+
+        {submitError && (
+          <div style={{ marginBottom: 16 }}>
+            <Errata title="Os documentos não foram enviados">
+              {submitError}. Revise os campos e tente de novo.
+            </Errata>
+          </div>
         )}
 
         <div className="ditto-strip">

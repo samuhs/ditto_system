@@ -38,6 +38,33 @@ def collection_name(base: str, chunking: str, embedding: str) -> str:
 # Marks the collections of a Grafo de conhecimento, so they never read as an Índice.
 _GRAPH_MARKER = "__kg_"
 
+# A Base name becomes the first segment of every collection_name() (and, through it,
+# every graph_collection_names()). "__" is the separator between segments, so a Base
+# name containing it could split into the wrong (base, chunking, embedding) when
+# parse_collection_name()/collection_base() read it back, or hide a plain Índice as a
+# Grafo collection (or vice versa) if it contains the "__kg_" marker specifically.
+MAX_BASE_NAME_LENGTH = 64
+_BASE_NAME_RE = re.compile(
+    rf"^\w(?:[\w -]{{0,{MAX_BASE_NAME_LENGTH - 2}}}\w)?$", re.UNICODE
+)
+
+
+def validate_base_name(name: str) -> None:
+    """Raise ValueError (message in PT-BR, shown as-is in the UI) if `name` is not a
+    safe Base name: it would collide with, or be misread as, another Base's or a
+    Grafo's Qdrant collection.
+    """
+    if "__" in name:
+        raise ValueError(
+            'Nome da base não pode conter "__": esse trecho separa base, corte e '
+            "embedding (e marca o Grafo de conhecimento) no nome da coleção."
+        )
+    if not _BASE_NAME_RE.fullmatch(name):
+        raise ValueError(
+            f"Nome da base deve ter de 1 a {MAX_BASE_NAME_LENGTH} caracteres (letras, "
+            "números, espaços, hífens ou underscores simples), sem espaços nas pontas."
+        )
+
 
 def graph_collection_names(
     base: str, chunking: str, embedding: str, extractor: str
