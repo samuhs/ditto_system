@@ -115,7 +115,10 @@ def test_ollama_passes_max_tokens_and_omits_unset_temperature(monkeypatch):
 
     captured = _capture_kwargs(monkeypatch, langchain_openai, "ChatOpenAI")
     OllamaLLM(model="m", base_url="http://localhost:11436/v1", max_tokens=256)
-    assert captured["max_tokens"] == 256
+    # In the raw body: langchain-openai renames a typed max_tokens to
+    # max_completion_tokens, which Ollama silently ignores.
+    assert captured["extra_body"] == {"max_tokens": 256}
+    assert "max_tokens" not in captured
     assert "temperature" not in captured  # None: the server's default applies
 
 
@@ -126,6 +129,7 @@ def test_ollama_omits_max_tokens_when_unset(monkeypatch):
     OllamaLLM(model="m", base_url="http://localhost:11436/v1", temperature=0)
     assert captured["temperature"] == 0
     assert "max_tokens" not in captured
+    assert "extra_body" not in captured
 
 
 def test_gemini_passes_temperature_zero_and_max_output_tokens(monkeypatch):

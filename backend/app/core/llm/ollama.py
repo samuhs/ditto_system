@@ -18,7 +18,11 @@ class OllamaLLM(LLM):
 
             settings = get_settings()
             # Unset sampling (None) falls back to the server's defaults.
-            sampling = sampling_kwargs(temperature=temperature, max_tokens=max_tokens)
+            sampling = sampling_kwargs(temperature=temperature)
+            if max_tokens is not None:
+                # Sent in the raw body: langchain-openai renames a typed max_tokens to
+                # max_completion_tokens, which Ollama ignores (MLX reads either).
+                sampling["extra_body"] = {"max_tokens": max_tokens}
             client = ChatOpenAI(
                 model=model or settings.ollama_model,
                 base_url=base_url or settings.ollama_base_url,
