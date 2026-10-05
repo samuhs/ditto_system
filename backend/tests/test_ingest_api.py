@@ -32,8 +32,13 @@ def client():
     return TestClient(app)
 
 
-def test_options_lists_registered_techniques(client):
-    response = client.get("/options")
+def test_options_lists_registered_techniques(client, monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    get_settings.cache_clear()
+    try:
+        response = client.get("/options")
+    finally:
+        get_settings.cache_clear()
     assert response.status_code == 200
     body = response.json()
     assert {"fixed", "recursive", "token", "semantic"} <= set(body["chunkings"])
