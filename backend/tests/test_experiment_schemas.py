@@ -162,3 +162,28 @@ def test_graph_runs_once_per_index_and_llm_without_multiplying_by_retrievers():
         for c in ["recursive", "markdown"]
         for e in ["e5", "gemini"]
     }
+
+
+_MIN_CONFIG = dict(
+    base="viagem", chunkings=["recursive"], embeddings=["gemini"], rags=["naive"],
+    retrievers=["similarity"], metrics=["faithfulness"], llms=["gemini"],
+)
+
+
+def test_generation_params_default_to_unset():
+    config = ExperimentConfig(**_MIN_CONFIG)  # an Experimento saved before this feature
+    assert config.temperature is None
+    assert config.max_tokens is None
+
+
+def test_generation_params_keep_zero_temperature():
+    assert ExperimentConfig(**_MIN_CONFIG, temperature=0).temperature == 0
+
+
+@pytest.mark.parametrize("bad", [{"temperature": -0.1}, {"temperature": 2.1},
+                                 {"max_tokens": 0}, {"max_tokens": 32769}])
+def test_generation_params_out_of_range_are_rejected(bad):
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        ExperimentConfig(**_MIN_CONFIG, **bad)

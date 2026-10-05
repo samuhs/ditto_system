@@ -1835,3 +1835,39 @@ def test_resume_handles_several_pause_resume_cycles(session_factory):
     assert sorted(r.question for r in run.results) == ["q0", "q1", "q2", "q3"]
     assert all(r.generated_answer == "answer" for r in run.results)
     check.close()
+
+
+def _recording_llm_factory(calls):
+    def factory(name, **kwargs):
+        calls.append(kwargs)
+        return _FakeLLM()
+    return factory
+
+
+def test_llm_factory_receives_the_generation_params(session_factory):
+    calls = []
+    config = _single_combo_config(1).model_copy(update={"temperature": 0, "max_tokens": 256})
+    deps = ExperimentDeps(
+        store=_seeded_store(), session_factory=session_factory,
+        llm_factory=_recording_llm_factory(calls), embedder_factory=_embedder_factory,
+    )
+    experiment_id = _new_experiment(session_factory, "temp-zero")
+    run_experiment(experiment_id, config, [QuestionItem(text="Where?")], deps)
+
+    assert calls and all(c["temperature"] == 0 and c["max_tokens"] == 256 for c in calls)
+
+
+def test_resume_keeps_the_generation_params(session_factory):
+    """A Retomada reads temperature/max_tokens back from the recorded config."""
+    calls = []
+    config = _single_combo_config(1).model_copy(update={"temperature": 0.3, "max_tokens": 64})
+    experiment_id = _experiment_for_resume(
+        session_factory, "resume-temp", config, [QuestionItem(text="q1")]
+    )
+    deps = ExperimentDeps(
+        store=_seeded_store(), session_factory=session_factory,
+        llm_factory=_recording_llm_factory(calls), embedder_factory=_embedder_factory,
+    )
+    resume_experiment(experiment_id, deps)
+
+    assert calls and all(c["temperature"] == 0.3 and c["max_tokens"] == 64 for c in calls)

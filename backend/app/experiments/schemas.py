@@ -50,6 +50,12 @@ class ExperimentConfig(BaseModel):
     # when the LLM server serves concurrent requests (e.g. OLLAMA_NUM_PARALLEL);
     # per-question latency then includes time queued on the server.
     concurrency: int = Field(default=1, ge=1, le=32)
+    # Sampling for every LLM in the experiment (answers and the LLM-assisted steps:
+    # HyDE, multi-query, rewrites). None leaves the provider's default, which differs
+    # between servers; 0 makes answers reproducible.
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0)
+    # Cap on tokens per generation. None: no explicit cap.
+    max_tokens: int | None = Field(default=None, ge=1, le=32768)
     # One model in memory at a time: embed the questions, generate, then score
     # (memory spec 3.4). False runs everything in one pass (escape hatch).
     staged: bool = True
