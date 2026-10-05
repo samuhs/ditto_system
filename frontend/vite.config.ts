@@ -23,5 +23,8 @@ export default defineConfig({
     setupFiles: "./src/test/setup.ts",
     css: false,
     clearMocks: true,
+    // An unhandled error (e.g. a render crash not caught by any test assertion)
+    // must fail the run instead of only being logged — see issue #22.
+    dangerouslyIgnoreUnhandledErrors: false,
   },
 });

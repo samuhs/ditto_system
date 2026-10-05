@@ -1,6 +1,7 @@
 import { MantineProvider } from "@mantine/core";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as client from "../api/client";
@@ -11,7 +12,9 @@ vi.mock("../api/client");
 function renderPage() {
   return render(
     <MantineProvider>
-      <ChatPage />
+      <MemoryRouter>
+        <ChatPage />
+      </MemoryRouter>
     </MantineProvider>,
   );
 }
@@ -65,5 +68,7 @@ describe("ChatPage", () => {
       { role: "user", content: "Oi" },
       { role: "assistant", content: "Olá! Sou seu guia." },
     ]));
+    expect(await screen.findByText(/Diálogo salvo/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /dar nota/i })).toHaveAttribute("href", "/dialogues");
   });
 });
