@@ -189,6 +189,58 @@ describe("BasesPage", () => {
     expect(client.pauseGraphBuild).toHaveBeenCalledWith(9);
   });
 
+  it("marks which Índices already have a Grafo", async () => {
+    renderPage();
+    const base = await screen.findByRole("region", { name: "viagem" });
+    const indexes = within(base).getByRole("table", { name: /índices/i });
+    const [fixed, recursive] = within(indexes).getAllByRole("row").slice(1);
+    expect(within(fixed).getByText("Sem Grafo")).toBeInTheDocument();
+    expect(within(recursive).getByText("Com Grafo · qwen3:1.7b")).toBeInTheDocument();
+  });
+
+  it("offers Regerar Grafo on a Base that already has one, Gerar Grafo otherwise", async () => {
+    vi.mocked(client.listBases).mockResolvedValue([
+      VIAGEM,
+      { name: "vazia", in_use: null, indexes: [{ chunking: "fixed", embedding: "e5", chunks: 3, graphs: [] }] },
+    ]);
+    renderPage();
+    const withGraph = await screen.findByRole("region", { name: "viagem" });
+    expect(within(withGraph).getByRole("button", { name: "Regerar Grafo" })).toBeInTheDocument();
+    const without = screen.getByRole("region", { name: "vazia" });
+    expect(within(without).getByRole("button", { name: "Gerar Grafo" })).toBeInTheDocument();
+  });
+
+  it("says in the dialog which Índices already have a Grafo", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    const base = await screen.findByRole("region", { name: "viagem" });
+    await user.click(within(base).getByRole("button", { name: "Regerar Grafo" }));
+    const dialog = await screen.findByRole("dialog", { name: /regerar grafo/i });
+    expect(within(dialog).getByText(/esta base já tem grafo de conhecimento/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/já tem grafo de qwen3:1\.7b \(01\/10\/2026\)/i)).toBeInTheDocument();
+  });
+
+  it("warns that a Grafo of the same extrator is kept unless it is outdated", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    const base = await screen.findByRole("region", { name: "viagem" });
+    await user.click(within(base).getByRole("button", { name: "Regerar Grafo" }));
+    const dialog = await screen.findByRole("dialog");
+    const warning = /só é refeito se estiver desatualizado/i;
+
+    await user.click(within(dialog).getByRole("textbox", { name: /llm extrator/i }));
+    await user.click(await screen.findByRole("option", { name: /^gemini/i }));
+    expect(within(dialog).queryByText(warning)).not.toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("textbox", { name: /llm extrator/i }));
+    await user.click(await screen.findByRole("option", { name: /qwen3:1\.7b/i }));
+    expect(within(dialog).getByText(warning)).toBeInTheDocument();
+
+    // Unpicking the Índice that has it drops the warning.
+    await user.click(within(dialog).getAllByRole("checkbox")[1]);
+    expect(within(dialog).queryByText(warning)).not.toBeInTheDocument();
+  });
+
   it("disables Gerar Grafo while the Base is in use", async () => {
     vi.mocked(client.listBases).mockResolvedValue([{
       ...VIAGEM, in_use: 'O experimento "exp-1" está na fila.',

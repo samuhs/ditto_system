@@ -10,7 +10,7 @@ import {
   resumeGraphBuild,
   startGraphBuild,
 } from "../api/client";
-import type { BaseSummary, GraphBuildJob, IndexPair, Options } from "../api/types";
+import type { BaseSummary, GraphBuildJob, IndexPair, IndexSummary, Options } from "../api/types";
 import { ChoiceGroup } from "../components/ChoiceGroup";
 import { GraphBuildList, isActiveBuild } from "../components/GraphBuildList";
 import { llmSelectData } from "../components/llmOptions";
@@ -18,6 +18,7 @@ import { Errata, Note, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon } from "../components/icons";
 import { term } from "../glossary";
+import { joinPt } from "../utils/text";
 
 const POLL_MS = 2000;
 
@@ -37,6 +38,14 @@ const formatDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateStri
 
 function graphCount(base: BaseSummary): number {
   return base.indexes.reduce((n, index) => n + index.graphs.length, 0);
+}
+
+/** "Regerar" once the Base has any Grafo, so it is clear one already exists. */
+const graphAction = (base: BaseSummary) => (graphCount(base) > 0 ? "Regerar Grafo" : "Gerar Grafo");
+
+/** "qwen3:1.7b (01/10/2026), gemini (—)": the Grafos an Índice already has. */
+function graphList(index: IndexSummary): string {
+  return index.graphs.map((g) => `${g.extractor} (${formatDate(g.built_at)})`).join(", ");
 }
 
 /** A technique's plain name with its registry key in mono beside it. */
@@ -82,7 +91,7 @@ function BaseSection({
             disabled={base.in_use !== null}
             title={base.in_use ?? undefined}
           >
-            Gerar Grafo
+            {graphAction(base)}
           </Button>
           <Button size="sm" variant="default" onClick={onDelete}>
             Apagar base
@@ -102,6 +111,7 @@ function BaseSection({
                 <th>Corte</th>
                 <th>Embedding</th>
                 <th className="ditto-num">Trechos</th>
+                <th>Grafo</th>
               </tr>
             </thead>
             <tbody>
@@ -110,6 +120,11 @@ function BaseSection({
                   <td><Named dimension="chunking" value={index.chunking} /></td>
                   <td><Named dimension="embedding" value={index.embedding} /></td>
                   <td className="ditto-num">{index.chunks}</td>
+                  <td className={index.graphs.length ? undefined : "ditto-muted"}>
+                    {index.graphs.length
+                      ? `Com Grafo · ${index.graphs.map((g) => g.extractor).join(", ")}`
+                      : "Sem Grafo"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -219,6 +234,12 @@ export function BasesPage() {
     }
   }
 
+  // Picked Índices that already have a Grafo of the chosen extrator: a build keeps it
+  // unless it is stale (jobs.py skips a current Grafo).
+  const sameExtractor = (generating?.indexes ?? [])
+    .filter((i) => genIndexKeys.includes(indexKey(i)) && i.graphs.some((g) => g.extractor === extractor))
+    .map((i) => `${i.chunking} · ${i.embedding}`);
+
   function askGenerate(base: BaseSummary) {
     setBuildError(null);
     setExtractor(null);
@@ -309,10 +330,16 @@ export function BasesPage() {
         onClose={() => {
           if (!building) setGenerating(null);
         }}
-        title={generating ? `Gerar Grafo de conhecimento em “${generating.name}”` : ""}
+        title={generating ? `${graphAction(generating)} de conhecimento em “${generating.name}”` : ""}
       >
         {generating && (
           <div style={{ display: "grid", gap: 16 }}>
+            {graphCount(generating) > 0 && (
+              <Note title="Esta base já tem Grafo de conhecimento">
+                Gerar com outro LLM extrator cria mais um Grafo ao lado do atual. Com o mesmo
+                extrator, o Grafo existente é mantido, a não ser que esteja desatualizado.
+              </Note>
+            )}
             {optionsError && (
               <Errata title="Não foi possível carregar os LLMs">{optionsError}</Errata>
             )}
@@ -331,12 +358,20 @@ export function BasesPage() {
               choices={generating.indexes.map((i) => ({
                 value: indexKey(i),
                 name: `${i.chunking} · ${i.embedding}`,
-                description: `${term("chunking", i.chunking).name} + ${term("embedding", i.embedding).name}`,
+                description:
+                  `${term("chunking", i.chunking).name} + ${term("embedding", i.embedding).name}` +
+                  (i.graphs.length ? ` · já tem Grafo de ${graphList(i)}` : ""),
               }))}
               value={genIndexKeys}
               onChange={setGenIndexKeys}
               empty="Esta base não tem índices."
             />
+            {sameExtractor.length > 0 && (
+              <Note title={`Já existe Grafo de ${extractor} em ${joinPt(sameExtractor)}`}>
+                Ele só é refeito se estiver desatualizado (mudou a versão do Grafo, o prompt de
+                extração ou os trechos do índice); senão a construção o mantém como está.
+              </Note>
+            )}
             {buildError && <Errata title="A construção não foi iniciada">{buildError}</Errata>}
             <div className="ditto-row-actions" style={{ justifyContent: "flex-end" }}>
               <Button variant="subtle" onClick={() => setGenerating(null)} disabled={building}>
