@@ -172,6 +172,11 @@ export interface ExperimentProgress {
   total: number;
   /** Staged runs: "generating", then "evaluating" while the answers are scored. */
   phase?: string | null;
+  /** Answers scored so far in the evaluation stage, out of to_score. */
+  scored?: number;
+  to_score?: number;
+  /** Seconds left at the scoring pace so far; null until the first batch. */
+  eta_s?: number | null;
 }
 
 /** One Combinação + pergunta that was mid-call when a Pausa entry was recorded. */

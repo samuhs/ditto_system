@@ -580,6 +580,19 @@ describe("ExperimentDetailPage", () => {
     expect(screen.queryByText(/1 de 1 combinações/)).not.toBeInTheDocument();
   });
 
+  it("counts the scored answers and estimates the time left while evaluating", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 9,
+      name: "avaliando",
+      status: "running",
+      created_at: "2026-07-05T10:00:00.000Z",
+      progress: { completed: 15, total: 15, phase: "evaluating", scored: 180, to_score: 540, eta_s: 1260 },
+      results: [],
+    });
+    renderPage();
+    expect(await screen.findByText("Avaliando 180 de 540 respostas · faltam cerca de 21 min")).toBeInTheDocument();
+  });
+
   it("names the LLM extrator whose Grafo the GraphRAG rows queried", async () => {
     vi.mocked(client.getExperiment).mockResolvedValue({
       id: 9,

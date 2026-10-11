@@ -1203,3 +1203,41 @@ def test_export_csv_lists_the_retrieved_chunks_in_rank_order(client):
     header, row = list(csv.reader(io.StringIO(text)))
     cell = row[header.index("trechos_recuperados")]
     assert cell == "\n".join(f"[{i}] {c['text']}" for i, c in enumerate(contexts, start=1))
+
+
+def test_progress_reports_scoring_and_an_estimate_while_evaluating(client):
+    """10 of 40 answers scored in 100 s: 30 left at the same pace is about 300 s."""
+    from datetime import UTC, datetime, timedelta
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    started = (datetime.now(UTC) - timedelta(seconds=100)).isoformat()
+    experiment = Experiment(
+        name="avaliando", status="running",
+        config={"phase": "evaluating", "scoring": {"scored": 10, "total": 40, "started_at": started}},
+    )
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    progress = client.get(f"/experiments/{exp_id}").json()["progress"]
+    assert progress["scored"] == 10
+    assert progress["to_score"] == 40
+    assert 290 <= progress["eta_s"] <= 310
+
+
+def test_progress_has_no_estimate_before_the_first_batch(client):
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = Experiment(
+        name="comecando", status="running",
+        config={"phase": "evaluating", "scoring": {"scored": 0, "total": 40, "started_at": "2026-10-12T00:00:00+00:00"}},
+    )
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    progress = client.get(f"/experiments/{exp_id}").json()["progress"]
+    assert progress["scored"] == 0 and progress["eta_s"] is None

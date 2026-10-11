@@ -2,7 +2,7 @@
 import csv
 import io
 import re
-from datetime import timezone
+from datetime import UTC, datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
@@ -140,6 +140,17 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                 }
             )
     return rows
+
+
+def _scoring_progress(cfg: dict) -> dict:
+    """Answers scored so far and seconds left at the pace so far (None until known)."""
+    scoring = cfg.get("scoring") or {}
+    scored, total = scoring.get("scored", 0), scoring.get("total", 0)
+    eta_s = None
+    if cfg.get("phase") == "evaluating" and 0 < scored < total and scoring.get("started_at"):
+        elapsed = (datetime.now(UTC) - datetime.fromisoformat(scoring["started_at"])).total_seconds()
+        eta_s = round(elapsed / scored * (total - scored))
+    return {"scored": scored, "to_score": total, "eta_s": eta_s}
 
 
 def _total_combinations(cfg: dict) -> int:
@@ -568,6 +579,7 @@ def get_experiment(
                 "total": total_combos,
                 # Staged runs: "generating", then "evaluating" (scoring the answers).
                 "phase": cfg.get("phase"),
+                **_scoring_progress(cfg),
             },
             "prompts": cfg.get("prompts"),
             # API memory at every phase change (staged runs), oldest first.

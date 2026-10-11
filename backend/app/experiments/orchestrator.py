@@ -818,6 +818,8 @@ def _score_results(
         )
         for row in pending
     ]
+    experiment = session.get(Experiment, experiment_id)
+    _record_scoring(session, experiment, scored=0, total=len(samples))
     for start in range(0, len(samples), _SCORING_BATCH):
         batch = samples[start:start + _SCORING_BATCH]
         scores_by_id = _run_abandonable(
@@ -825,9 +827,20 @@ def _score_results(
         )
         for row_id, scores in scores_by_id.items():
             by_id[row_id].scores = scores
-        session.commit()
+        _record_scoring(session, experiment, scored=start + len(batch), total=len(samples))
         if heartbeat is not None:
             heartbeat()
+
+
+def _record_scoring(session: Session, experiment: Experiment, scored: int, total: int) -> None:
+    """Store scoring progress (and when it started) with the batch's scores, in one commit."""
+    previous = (experiment.config or {}).get("scoring") or {}
+    started_at = previous.get("started_at") if scored else datetime.now(UTC).isoformat()
+    experiment.config = {
+        **(experiment.config or {}),
+        "scoring": {"scored": scored, "total": total, "started_at": started_at},
+    }
+    session.commit()
 
 
 def _run_experiment(

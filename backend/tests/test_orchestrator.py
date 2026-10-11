@@ -776,6 +776,23 @@ def test_staged_run_logs_api_memory_at_every_phase(session_factory):
     assert all(entry["api_mb"] > 0 and entry["free_mb"] > 0 and entry["at"] for entry in log)
 
 
+def test_staged_scoring_records_how_many_answers_it_has_scored(session_factory, monkeypatch):
+    """Scoring stores scored/total (updated after every batch) and when it started,
+    so the UI can show progress and an estimate instead of a frozen counter.
+    """
+    monkeypatch.setattr("app.experiments.orchestrator._SCORING_BATCH", 2)
+    events = []
+    deps = _staged_deps(_indexed_store("e5"), session_factory, events)
+    experiment_id = _new_experiment(session_factory, "staged-progress")
+    questions = [QuestionItem(text=t) for t in ("Where?", "When?", "Who?")]
+    run_experiment(experiment_id, _staged_config(), questions, deps)
+
+    _, _, config = _results(session_factory, experiment_id)
+    assert config["scoring"]["scored"] == 3
+    assert config["scoring"]["total"] == 3
+    assert config["scoring"]["started_at"]
+
+
 def test_multi_slot_manager_keeps_its_cache_after_the_run(session_factory):
     """With room for several models (standard profile) the cache is kept for reuse."""
     events = []
