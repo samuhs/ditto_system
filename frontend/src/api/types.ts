@@ -112,6 +112,13 @@ export interface ExperimentList {
   page_size: number;
 }
 
+export interface RetrievedChunk {
+  text: string;
+  /** Retriever similarity; null for chunks with no score (e.g. a compression extract). */
+  score: number | null;
+  source: string | null;
+}
+
 export interface ExperimentResultRow {
   chunking: string;
   embedding: string;
@@ -120,6 +127,8 @@ export interface ExperimentResultRow {
   llm: string;
   question: string;
   answer: string;
+  /** The chunks the answer was generated from, in rank order; absent on older payloads. */
+  contexts?: RetrievedChunk[];
   scores: Record<string, number>;
   latency_ms: number;
   tokens: number;

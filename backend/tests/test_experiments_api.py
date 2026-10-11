@@ -356,19 +356,19 @@ def test_export_experiment_csv(client):
     rows = list(csv.reader(io.StringIO(text.lstrip("﻿"))))
     assert rows[0] == [
         "chunking", "embedding", "rag", "retriever", "llm",
-        "pergunta", "resposta_referencia", "resposta",
+        "pergunta", "resposta_referencia", "resposta", "trechos_recuperados",
         "tipo", "evidencia_salto", "entidades_ponte",
         "answer_relevancy", "faithfulness", "media", "latency_ms", "tokens",
     ]
     assert len(rows) == 3
     assert rows[1] == [
         "recursive", "gemini", "naive", "similarity", "gemini",
-        "Onde fica?", "Ali", "Lá, perto", "simples", "", "",
+        "Onde fica?", "Ali", "Lá, perto", "", "simples", "", "",
         "1.0", "0.5", "0.75", "120", "42",
     ]
     # missing metric → empty cell; media averages only present scores
     assert rows[2][6] == ""
-    assert rows[2][11:] == ["0.25", "", "0.25", "80", "10"]
+    assert rows[2][12:] == ["0.25", "", "0.25", "80", "10"]
 
 
 def test_export_missing_experiment_404(client):
@@ -1181,3 +1181,25 @@ def test_detail_of_an_old_experiment_has_no_generation_params(client):
 
 def test_create_experiment_rejects_an_out_of_range_temperature(client):
     assert _create_with(client, temperature=3).status_code == 422
+
+
+def test_experiment_results_carry_the_retrieved_contexts(client):
+    """Each answer shows the chunks it was generated from, in rank order."""
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    [row] = client.get(f"/experiments/{exp_id}").json()["results"]
+    assert row["contexts"], "the naive run retrieved something"
+    assert all(isinstance(c["text"], str) and c["text"] for c in row["contexts"])
+    assert all("score" in c for c in row["contexts"])
+
+
+def test_export_csv_lists_the_retrieved_chunks_in_rank_order(client):
+    import csv
+
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    contexts = client.get(f"/experiments/{exp_id}").json()["results"][0]["contexts"]
+    text = client.get(f"/experiments/{exp_id}/export.csv").content.decode("utf-8").lstrip("\ufeff")
+    header, row = list(csv.reader(io.StringIO(text)))
+    cell = row[header.index("trechos_recuperados")]
+    assert cell == "\n".join(f"[{i}] {c['text']}" for i, c in enumerate(contexts, start=1))

@@ -122,6 +122,11 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                     "bridge_entities": result.bridge_entities or [],
                     "hops_found": _hops_found(result) if match_hops else [],
                     "answer": result.generated_answer,
+                    # The chunks the answer was generated from, in rank order.
+                    "contexts": [
+                        {"text": c.get("text", ""), "score": c.get("score"), "source": c.get("source")}
+                        for c in result.retrieved_context or []
+                    ],
                     "scores": result.scores,
                     "latency_ms": result.latency_ms,
                     "tokens": result.tokens,
@@ -166,7 +171,7 @@ def _results_csv(rows: list[dict]) -> str:
     writer = csv.writer(buffer)
     writer.writerow(
         ["chunking", "embedding", "rag", "retriever", "llm",
-         "pergunta", "resposta_referencia", "resposta",
+         "pergunta", "resposta_referencia", "resposta", "trechos_recuperados",
          "tipo", "evidencia_salto", "entidades_ponte",
          *metric_keys, "media", "latency_ms", "tokens",
          *(f"pergunta_{k}" for k in question_keys), *(f"busca_{k}" for k in retrieval_keys),
@@ -179,6 +184,8 @@ def _results_csv(rows: list[dict]) -> str:
         writer.writerow(
             [row["chunking"], row["embedding"], row["rag"], row["retriever"], row["llm"],
              row["question"], row["reference"] or "", row["answer"],
+             # One line per retrieved chunk, "[rank] text", in rank order.
+             "\n".join(f"[{i}] {c['text']}" for i, c in enumerate(row["contexts"], start=1)),
              row["question_type"], "|".join(map(str, row["evidence_hops"])),
              "|".join(row["bridge_entities"]),
              *(scores.get(k, "") for k in metric_keys), mean, row["latency_ms"], row["tokens"],

@@ -826,6 +826,26 @@ export function ExperimentDetailPage() {
                 {openRow.answer}
               </p>
             </div>
+            {(openRow.contexts?.length ?? 0) > 0 && (
+              <div>
+                <h3 className="ditto-h3" id="trechos-recuperados" style={{ marginBottom: 8 }}>
+                  Trechos recuperados
+                </h3>
+                <ol aria-labelledby="trechos-recuperados" className="ditto-chunks">
+                  {openRow.contexts!.map((chunk, i) => (
+                    <li key={i}>
+                      <p className="ditto-read" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                        {chunk.text}
+                      </p>
+                      <span className="ditto-muted" style={{ fontSize: 13 }}>
+                        {chunk.score != null ? `Similaridade ${chunk.score.toFixed(2)}` : "Sem pontuação"}
+                        {chunk.source ? ` · ${chunk.source}` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
             <div>
               <h3 className="ditto-h3" style={{ marginBottom: 8 }}>
                 Métricas
