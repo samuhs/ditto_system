@@ -24,5 +24,7 @@ class IngestResult(BaseModel):
 
     collections: list[str]
     total_chunks: int
+    # Índices that came out degenerate (a long document stored as a single chunk).
+    warnings: list[str] = []
     # The Grafo de conhecimento build queued after the Índices; None without one.
     graph_build: GraphBuildJob | None = None

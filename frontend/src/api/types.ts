@@ -28,6 +28,8 @@ export interface Options {
 export interface IngestResult {
   collections: string[];
   total_chunks: number;
+  /** Índices that came out degenerate (a long document stored as one chunk). */
+  warnings?: string[];
   /** The Grafo de conhecimento build queued after the Índices; null without one. */
   graph_build?: GraphBuildJob | null;
 }

@@ -11,6 +11,10 @@ from app.core.vectorstore.qdrant import QdrantStore, collection_name
 from app.ingestion.schemas import Document, IngestConfig, IngestResult
 
 
+# A document longer than this stored as one chunk is a degenerate Índice, not a short text.
+_ONE_CHUNK_WARNING_CHARS = 2000
+
+
 def _build_chunker_for(chunking: str, embedder: Embedder) -> Chunker:
     """Build a chunker, injecting the embedder only for the semantic strategy."""
     if chunking == "semantic":
@@ -41,6 +45,7 @@ def ingest_documents(
     models = models or ModelManager(embedder_factory, max_local=profile.max_local_models)
     device = resolve_embedding_device(profile)
     collections: list[str] = []
+    warnings: list[str] = []
     total_chunks = 0
     for embedding in config.embeddings:
         with models.acquire(embedding, device) as embedder:
@@ -51,6 +56,11 @@ def ingest_documents(
                 next_id = store.count(name)
                 for document in documents:
                     chunks = chunker.split(document.text)
+                    if len(chunks) == 1 and len(document.text) > _ONE_CHUNK_WARNING_CHARS:
+                        warnings.append(
+                            f"{name}: {document.name} ({len(document.text)} caracteres) virou 1 trecho só; "
+                            "a busca nesse Índice devolve o documento inteiro."
+                        )
                     for start in range(0, len(chunks), batch_size):
                         batch = chunks[start : start + batch_size]
                         payloads = [
@@ -68,4 +78,4 @@ def ingest_documents(
                         next_id += len(batch)
                     total_chunks += len(chunks)
                 collections.append(name)
-    return IngestResult(collections=collections, total_chunks=total_chunks)
+    return IngestResult(collections=collections, total_chunks=total_chunks, warnings=warnings)

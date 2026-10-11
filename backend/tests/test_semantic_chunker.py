@@ -50,3 +50,26 @@ def test_semantic_registered_and_built():
     assert "semantic" in chunking_registry.names()
     chunker = build_chunker("semantic", embedder=_FakeEmbedder())
     assert isinstance(chunker, SemanticChunker)
+
+
+class _HighSimilarityEmbedder(_FakeEmbedder):
+    """Every pair of sentences is close (cosine distance < 0.1), as with e5 or granite,
+    but a topic change is still further apart than sentences on the same topic."""
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [[1.0, 0.05] if t.strip().startswith("A") else [1.0, 0.45] for t in texts]
+
+
+def test_default_split_is_relative_so_close_embedders_still_split():
+    """Campaign 2026-10-10: the fixed 0.5 cut left e5 and granite with one chunk
+    for the whole guide; the default now cuts at the largest distances."""
+    text = "Apples are red. Apples are sweet. Cars are fast. Cars are loud."
+    chunks = SemanticChunker(embedder=_HighSimilarityEmbedder()).split(text)
+    assert chunks == ["Apples are red. Apples are sweet.", "Cars are fast. Cars are loud."]
+
+
+def test_a_fixed_threshold_keeps_the_old_behaviour():
+    """threshold=0.5 reproduces the campaign's semantic indexes."""
+    text = "Apples are red. Apples are sweet. Cars are fast. Cars are loud."
+    chunks = SemanticChunker(embedder=_HighSimilarityEmbedder(), threshold=0.5).split(text)
+    assert chunks == [text]

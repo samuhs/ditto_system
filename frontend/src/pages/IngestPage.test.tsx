@@ -99,6 +99,26 @@ describe("IngestPage", () => {
     );
   });
 
+  it("warns about an Índice that came out as a single chunk", async () => {
+    vi.mocked(client.ingest).mockResolvedValue({
+      collections: ["viagem__semantic__e5"],
+      total_chunks: 1,
+      warnings: ["viagem__semantic__e5: guia.md (17000 caracteres) virou 1 trecho só; a busca nesse Índice devolve o documento inteiro."],
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/nome da base/i), "viagem");
+    await user.upload(
+      document.querySelector('input[type="file"]') as HTMLInputElement,
+      new File(["texto"], "guia.md", { type: "text/markdown" }),
+    );
+    await user.click(await screen.findByRole("button", { name: /preencher tudo/i }));
+    await user.click(screen.getByRole("button", { name: /inserir documentos/i }));
+    const note = await screen.findByText(/virou 1 trecho só/);
+    expect(note).toHaveTextContent("viagem__semantic__e5: guia.md (17000 caracteres)");
+    expect(screen.getByText("Índice com um trecho só")).toBeInTheDocument();
+  });
+
   it("keeps Inserir disabled and says what is missing until the form is complete", async () => {
     renderPage();
     await screen.findByRole("button", { name: /preencher tudo/i });
