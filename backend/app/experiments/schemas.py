@@ -1,7 +1,7 @@
 """Pydantic schemas for experiments."""
 import itertools
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 QUESTION_TYPES = ("simples", "ponte", "comparacao", "agregacao")
@@ -27,6 +27,15 @@ class IndexPair(BaseModel):
 
     chunking: str
     embedding: str
+
+
+class Combo(BaseModel):
+    """One explicit Índice x técnica x Retriever to run (for every LLM)."""
+
+    chunking: str
+    embedding: str
+    rag: str
+    retriever: str
 
 
 class ExperimentConfig(BaseModel):
@@ -63,6 +72,23 @@ class ExperimentConfig(BaseModel):
     # whole experiment (an Índice may have Grafos from several). None: no GraphRAG
     # technique, or the API fills in the only extrator every chosen Índice has.
     graph_extractor: str | None = None
+    # Explicit combinations to run instead of the chunkings x embeddings x rags x
+    # retrievers product (still crossed with every LLM). The lists and `indexes`
+    # are derived from them, so the checks that read the lists keep working.
+    combos: list[Combo] | None = None
+
+    @model_validator(mode="after")
+    def _derive_lists_from_combos(self) -> "ExperimentConfig":
+        if self.combos:
+            self.chunkings = list(dict.fromkeys(c.chunking for c in self.combos))
+            self.embeddings = list(dict.fromkeys(c.embedding for c in self.combos))
+            self.rags = list(dict.fromkeys(c.rag for c in self.combos))
+            self.retrievers = list(dict.fromkeys(c.retriever for c in self.combos))
+            self.indexes = [
+                IndexPair(chunking=ch, embedding=em)
+                for ch, em in dict.fromkeys((c.chunking, c.embedding) for c in self.combos)
+            ]
+        return self
 
 
 def index_pairs(config: ExperimentConfig) -> list[tuple[str, str]]:
@@ -75,12 +101,19 @@ def index_pairs(config: ExperimentConfig) -> list[tuple[str, str]]:
 def combinations(config: ExperimentConfig):
     """Every run as (llm, (chunking, embedding), rag, retriever), in LLM-major order.
 
+    With explicit `combos`, exactly those run, once per LLM, in the order given.
+
     A technique that uses no Retriever runs once per Índice, attached to the first
     retriever (which it ignores); one that reads no Índice either (closed book)
     runs once per LLM, attached to the first index too.
     """
     from app.core.rag.base import technique_class
 
+    if config.combos:
+        for llm in config.llms:
+            for c in config.combos:
+                yield llm, (c.chunking, c.embedding), c.rag, c.retriever
+        return
     pairs = index_pairs(config)
     first_pair = pairs[0] if pairs else None
     first_retriever = config.retrievers[0] if config.retrievers else None

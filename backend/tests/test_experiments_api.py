@@ -1241,3 +1241,34 @@ def test_progress_has_no_estimate_before_the_first_batch(client):
 
     progress = client.get(f"/experiments/{exp_id}").json()["progress"]
     assert progress["scored"] == 0 and progress["eta_s"] is None
+
+
+def _combos_payload(combos):
+    return json.dumps(
+        {
+            "base": "viagem", "chunkings": [], "embeddings": [], "rags": [], "retrievers": [],
+            "combos": combos, "metrics": ["answer_relevancy"], "llms": ["gemini"],
+        }
+    )
+
+
+def test_create_experiment_runs_only_the_listed_combos(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = _combos_payload([
+        {"chunking": "recursive", "embedding": "gemini", "rag": "naive", "retriever": "similarity"},
+        {"chunking": "recursive", "embedding": "gemini", "rag": "naive", "retriever": "mmr"},
+    ])
+    exp_id = client.post("/experiments", data={"config": payload}, files=files).json()["id"]
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["progress"]["total"] == 2
+    assert {(r["rag"], r["retriever"]) for r in detail["results"]} == {("naive", "similarity"), ("naive", "mmr")}
+
+
+def test_create_experiment_rejects_a_combo_on_a_missing_index(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = _combos_payload([
+        {"chunking": "fixed", "embedding": "e5", "rag": "naive", "retriever": "similarity"},
+    ])
+    response = client.post("/experiments", data={"config": payload}, files=files)
+    assert response.status_code == 422
+    assert "fixed" in response.json()["detail"]
