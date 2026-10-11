@@ -31,6 +31,12 @@ mlx_start() {
   cache_bytes="$(env_get MLX_PROMPT_CACHE_BYTES | grep . || profile_value 512M '')"
   local extra=(--prompt-cache-size "$cache_size")
   [ -n "$cache_bytes" ] && extra+=(--prompt-cache-bytes "$cache_bytes")
+  # Chat template args for every model, e.g. {"enable_thinking":false} so models
+  # that think by default (Qwen3.5, SmolLM3) answer directly; templates without
+  # the variable ignore it.
+  local template_args
+  template_args="$(env_get MLX_CHAT_TEMPLATE_ARGS)"
+  [ -n "$template_args" ] && extra+=(--chat-template-args "$template_args")
   # Loopback only (see mlx_host): never exposed to the network.
   nohup "$MLX_DIR/bin/mlx_lm.server" --host "$(mlx_host)" --port "$(mlx_port)" \
     --decode-concurrency "$parallel" "${extra[@]}" --max-tokens 1024 \
