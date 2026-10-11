@@ -580,10 +580,16 @@ def resume_experiment(experiment_id: int, deps: ExperimentDeps) -> None:
 
 
 def _set_phase(session: Session, experiment: Experiment, phase: str | None) -> None:
-    """Record the stage a staged experiment is in (shown by the UI); None clears it."""
+    """Record the stage a staged experiment is in (shown by the UI); None clears it.
+
+    Every change also appends the API's memory to `memory_log` ("end" for None),
+    so a process that keeps growing can be traced to the stage that grew it.
+    """
     config = {k: v for k, v in (experiment.config or {}).items() if k != "phase"}
     if phase is not None:
         config["phase"] = phase
+    entry = {"phase": phase or "end", "at": datetime.now(UTC).isoformat(), **_memory_snapshot()}
+    config["memory_log"] = [*config.get("memory_log", []), entry]
     experiment.config = config
     session.commit()
 
@@ -727,6 +733,11 @@ def _store_perplexities(
         session.commit()
 
 
+# Answers scored per worker call in staged scoring. Each batch is committed and is a
+# heartbeat, so a long scoring stage that keeps progressing is never a Travamento.
+_SCORING_BATCH = 36
+
+
 def _score_with_retry(sample: EvalSample, metrics: list, eval_embedder) -> dict[str, float]:
     """evaluate_sample with the same retry policy as generation; {} if it keeps failing."""
     for attempt in range(_MAX_RETRIES):
@@ -767,13 +778,17 @@ def _score_pending(
 def _score_results(
     session: Session, experiment_id: int, config: ExperimentConfig, deps: ExperimentDeps,
     stall_event: threading.Event | None = None,
+    heartbeat: Callable[[], None] | None = None,
 ) -> None:
-    """Stage C: free the LLM, load the eval embedder once, score every stored answer.
+    """Stage C: free the LLM, then score every stored answer with the eval embedder.
 
     The scoring itself runs on an abandonable worker thread (#20 round 2), same as
     question generation: a Travamento here no longer leaves the orchestrator's main
-    loop stuck forever. Only this function's own Session reads/writes (picking the
-    pending rows, then applying their scores) stay on the calling thread.
+    loop stuck forever. It goes in batches of `_SCORING_BATCH`: each batch's scores
+    are committed and then `heartbeat` is called, so a long stage that keeps
+    progressing is not taken for a Travamento and a pause keeps what was scored.
+    Only this function's own Session reads/writes (picking the pending rows, then
+    applying their scores) stay on the calling thread.
     """
     for llm_name in dict.fromkeys(config.llms):
         if is_local_llm(llm_name):
@@ -803,10 +818,16 @@ def _score_results(
         )
         for row in pending
     ]
-    scores_by_id = _run_abandonable(lambda: _score_pending(deps, config, device, samples), stall_event)
-    for row_id, scores in scores_by_id.items():
-        by_id[row_id].scores = scores
-    session.commit()
+    for start in range(0, len(samples), _SCORING_BATCH):
+        batch = samples[start:start + _SCORING_BATCH]
+        scores_by_id = _run_abandonable(
+            lambda batch=batch: _score_pending(deps, config, device, batch), stall_event,
+        )
+        for row_id, scores in scores_by_id.items():
+            by_id[row_id].scores = scores
+        session.commit()
+        if heartbeat is not None:
+            heartbeat()
 
 
 def _run_experiment(
@@ -1068,7 +1089,9 @@ def _run_experiment(
             _set_phase(session, experiment, "evaluating")
             watchdog.heartbeat()
             try:
-                _score_results(session, experiment_id, config, deps, stall_event)
+                _score_results(
+                    session, experiment_id, config, deps, stall_event, heartbeat=watchdog.heartbeat,
+                )
             except _Abandoned:
                 paused = True
                 pause_phase = "evaluating"
@@ -1119,5 +1142,9 @@ def _run_experiment(
         if watchdog is not None:
             watchdog.stop()  # the run is over either way: never fire after this
         deps.models.set_timeout(None)  # never outlive this run on a shared manager
+        if deps.models.max_local == 1:
+            # Low memory: the eval embedder loaded for scoring would otherwise sit
+            # idle next to the local LLM until the next Experimento.
+            deps.models.evict_idle()
         _pause_requests.pop(experiment_id, None)
         session.close()

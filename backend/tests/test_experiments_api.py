@@ -157,6 +157,13 @@ def test_get_experiment_includes_timestamps(client):
     assert detail["finished_at"].endswith("+00:00")
 
 
+def test_get_experiment_includes_the_memory_log(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert isinstance(detail["memory_log"], list)
+
+
 def test_get_missing_experiment_404(client):
     assert client.get("/experiments/99999").status_code == 404
 

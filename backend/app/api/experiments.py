@@ -563,6 +563,8 @@ def get_experiment(
                 "phase": cfg.get("phase"),
             },
             "prompts": cfg.get("prompts"),
+            # API memory at every phase change (staged runs), oldest first.
+            "memory_log": cfg.get("memory_log", []),
             "results": results,
         }
     finally:

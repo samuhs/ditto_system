@@ -1,7 +1,48 @@
 """Local sentence-transformers embedding providers (multilingual)."""
+import threading
+from contextlib import contextmanager
+
 from app.core.embedding.base import Embedder, embedding_registry
 
 _BATCH_SIZE = 32
+
+# Tokenizers built in this process, by (path, kwargs). Loading one through
+# AutoProcessor leaves native memory behind that is never returned (~100-250 MB
+# for a 250k-vocab tokenizer), so an embedder evicted and loaded again by the
+# ModelManager grew the API on every Experimento. Reusing the built tokenizer
+# bounds that to one load per model.
+_tokenizers: dict[tuple, object] = {}
+_tokenizers_lock = threading.Lock()
+
+
+@contextmanager
+def reuse_tokenizers():
+    """While loading a SentenceTransformer, hand back tokenizers already built.
+
+    A no-op on sentence-transformers versions without this module layout.
+    """
+    try:
+        import sentence_transformers.base.modules.transformer as st_transformer
+    except ImportError:
+        yield
+        return
+
+    with _tokenizers_lock:
+        original = st_transformer.AutoProcessor
+
+        class _CachedProcessor:
+            @staticmethod
+            def from_pretrained(path, **kwargs):
+                key = (str(path), repr(sorted(kwargs.items())))
+                if key not in _tokenizers:
+                    _tokenizers[key] = original.from_pretrained(path, **kwargs)
+                return _tokenizers[key]
+
+        st_transformer.AutoProcessor = _CachedProcessor
+        try:
+            yield
+        finally:
+            st_transformer.AutoProcessor = original
 
 
 def _floats(values):
@@ -24,7 +65,8 @@ class HuggingFaceEmbedder(Embedder):
             from sentence_transformers import SentenceTransformer
 
             # "auto" (or None) lets sentence-transformers pick the device.
-            model = SentenceTransformer(model_name, device=None if device in (None, "auto") else device)
+            with reuse_tokenizers():
+                model = SentenceTransformer(model_name, device=None if device in (None, "auto") else device)
         self._model = model
 
     def _encode(self, texts: list[str], prefix: str) -> list[list[float]]:

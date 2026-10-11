@@ -745,6 +745,47 @@ def test_staged_run_keeps_embedders_out_of_memory_while_generating(session_facto
     assert len(rows) == 2 and all("answer_relevancy" in r.scores for r in rows)
 
 
+def test_single_slot_manager_holds_no_embedder_after_the_run(session_factory):
+    """On a one-model (low memory) manager the eval embedder loaded for scoring is
+    freed when the run ends, instead of sitting idle next to the local LLM until
+    the next Experimento (campaign 2026-10-11: ~600 MB held by the API).
+    """
+    events = []
+    deps = _staged_deps(_indexed_store("e5"), session_factory, events, max_local=1)
+    experiment_id = _new_experiment(session_factory, "staged-free")
+    run_experiment(experiment_id, _staged_config(), [QuestionItem(text="Where?")], deps)
+
+    assert deps.models.loaded() == []
+    assert events[-1] == "evict"
+
+
+def test_staged_run_logs_api_memory_at_every_phase(session_factory):
+    """Each phase change records the API's own memory and the free memory, so a
+    growing process can be traced to the stage that grew it.
+    """
+    events = []
+    deps = _staged_deps(_indexed_store("e5"), session_factory, events)
+    experiment_id = _new_experiment(session_factory, "staged-memlog")
+    run_experiment(experiment_id, _staged_config(), [QuestionItem(text="Where?")], deps)
+
+    _, _, config = _results(session_factory, experiment_id)
+    log = config["memory_log"]
+    assert [entry["phase"] for entry in log] == [
+        "vectorizing", "generating", "evaluating", "difficulty_signals", "end",
+    ]
+    assert all(entry["api_mb"] > 0 and entry["free_mb"] > 0 and entry["at"] for entry in log)
+
+
+def test_multi_slot_manager_keeps_its_cache_after_the_run(session_factory):
+    """With room for several models (standard profile) the cache is kept for reuse."""
+    events = []
+    deps = _staged_deps(_indexed_store("e5"), session_factory, events, max_local=3)
+    experiment_id = _new_experiment(session_factory, "staged-cache")
+    run_experiment(experiment_id, _staged_config(), [QuestionItem(text="Where?")], deps)
+
+    assert [m.name for m in deps.models.loaded()] == ["e5"]
+
+
 def test_staged_hyde_loads_the_embedder_only_for_generated_text(session_factory):
     events = []
     store = _indexed_store("e5")
@@ -1288,6 +1329,40 @@ def test_stall_during_scoring_pauses_without_losing_generated_answers(session_fa
     finally:
         block.set()  # let the stuck thread return so it is never left hanging
         time.sleep(0.05)
+
+
+def test_slow_scoring_that_keeps_progressing_is_not_a_stall(session_factory, monkeypatch):
+    """Scoring many answers takes longer than the stall limit in total, but every
+    batch finishes well within it: each batch is a heartbeat, so the Experimento
+    finishes instead of pausing as a Travamento (campaign 2026-10-10, E1.1).
+    """
+    monkeypatch.setattr("app.experiments.orchestrator._SCORING_BATCH", 1)
+
+    class _SlowEvalEmbedder(_FakeEmbedder):
+        def embed_query(self, text):
+            time.sleep(0.05)
+            return super().embed_query(text)
+
+    def embedder_factory(name, **kwargs):
+        return _SlowEvalEmbedder() if name == "eval-embedder" else _FakeEmbedder()
+
+    experiment_id = _new_experiment(session_factory, "slow-scoring")
+    config = _single_combo_config(1).model_copy(update={"eval_embedding": "eval-embedder"})
+    deps = ExperimentDeps(
+        store=_seeded_store(),
+        session_factory=session_factory,
+        llm_factory=_llm_factory,
+        embedder_factory=embedder_factory,
+        stall_limit_s=0.4,
+    )
+    questions = [QuestionItem(text=f"q{i}") for i in range(8)]  # ~0.8 s of scoring in all
+    run_experiment(experiment_id, config, questions, deps)
+
+    check = session_factory()
+    stored = check.get(Experiment, experiment_id)
+    assert stored.status == "done"
+    assert all(r.scores for r in stored.runs[0].results)
+    check.close()
 
 
 def test_llm_factory_receives_half_the_stall_limit_as_a_timeout(session_factory):
