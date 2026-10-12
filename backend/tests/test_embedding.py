@@ -206,7 +206,8 @@ def test_reloading_a_model_reuses_its_tokenizer(monkeypatch):
     without bound (campaign 2026-10-11). Within a load, the same path and kwargs
     give back the tokenizer already built.
     """
-    import sentence_transformers.base.modules.transformer as st_transformer
+    # Local embedders are optional (LOCAL=1 make setup-dev); CI runs without them.
+    st_transformer = pytest.importorskip("sentence_transformers.base.modules.transformer")
 
     from app.core.embedding import huggingface
 
