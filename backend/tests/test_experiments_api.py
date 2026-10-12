@@ -147,6 +147,30 @@ def test_list_experiments_paginated(client):
     assert item["created_at"].endswith("+00:00")
 
 
+def test_list_experiments_of_one_base(client):
+    """The Comparar picker lists the Experimentos of the chosen Base."""
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    for name, base in (("guia-1", "guia"), ("faq-1", "faq"), ("guia-2", "guia")):
+        session.add(Experiment(name=name, status="done", config={"base": base}))
+    session.commit()
+    session.close()
+
+    body = client.get("/experiments?base=guia").json()
+    assert [i["name"] for i in body["items"]] == ["guia-2", "guia-1"]
+    assert body["total"] == 2
+    assert {i["base"] for i in body["items"]} == {"guia"}
+
+
+def test_get_experiment_lists_its_combinacoes(client):
+    """Each Combinação with its id, so the page can open a Comparação of them."""
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    [run] = client.get(f"/experiments/{exp_id}").json()["runs"]
+    assert set(run) == {"id", "chunking", "embedding", "rag", "retriever", "llm", "status"}
+    assert run["rag"] == "naive" and run["status"] == "done"
+
+
 def test_get_experiment_includes_timestamps(client):
     files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
     exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
@@ -155,6 +179,13 @@ def test_get_experiment_includes_timestamps(client):
     assert detail["created_at"].endswith("+00:00")
     assert detail["finished_at"]  # experiment ran to completion → finished_at set
     assert detail["finished_at"].endswith("+00:00")
+
+
+def test_get_experiment_includes_the_memory_log(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert isinstance(detail["memory_log"], list)
 
 
 def test_get_missing_experiment_404(client):
@@ -349,19 +380,19 @@ def test_export_experiment_csv(client):
     rows = list(csv.reader(io.StringIO(text.lstrip("﻿"))))
     assert rows[0] == [
         "chunking", "embedding", "rag", "retriever", "llm",
-        "pergunta", "resposta_referencia", "resposta",
+        "pergunta", "resposta_referencia", "resposta", "trechos_recuperados",
         "tipo", "evidencia_salto", "entidades_ponte",
         "answer_relevancy", "faithfulness", "media", "latency_ms", "tokens",
     ]
     assert len(rows) == 3
     assert rows[1] == [
         "recursive", "gemini", "naive", "similarity", "gemini",
-        "Onde fica?", "Ali", "Lá, perto", "simples", "", "",
+        "Onde fica?", "Ali", "Lá, perto", "", "simples", "", "",
         "1.0", "0.5", "0.75", "120", "42",
     ]
     # missing metric → empty cell; media averages only present scores
     assert rows[2][6] == ""
-    assert rows[2][11:] == ["0.25", "", "0.25", "80", "10"]
+    assert rows[2][12:] == ["0.25", "", "0.25", "80", "10"]
 
 
 def test_export_missing_experiment_404(client):
@@ -1174,3 +1205,141 @@ def test_detail_of_an_old_experiment_has_no_generation_params(client):
 
 def test_create_experiment_rejects_an_out_of_range_temperature(client):
     assert _create_with(client, temperature=3).status_code == 422
+
+
+def test_experiment_results_carry_the_retrieved_contexts(client):
+    """Each answer shows the chunks it was generated from, in rank order."""
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    [row] = client.get(f"/experiments/{exp_id}").json()["results"]
+    assert row["contexts"], "the naive run retrieved something"
+    assert all(isinstance(c["text"], str) and c["text"] for c in row["contexts"])
+    assert all("score" in c for c in row["contexts"])
+
+
+def test_export_csv_lists_the_retrieved_chunks_in_rank_order(client):
+    import csv
+
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    contexts = client.get(f"/experiments/{exp_id}").json()["results"][0]["contexts"]
+    text = client.get(f"/experiments/{exp_id}/export.csv").content.decode("utf-8").lstrip("\ufeff")
+    header, row = list(csv.reader(io.StringIO(text)))
+    cell = row[header.index("trechos_recuperados")]
+    assert cell == "\n".join(f"[{i}] {c['text']}" for i, c in enumerate(contexts, start=1))
+
+
+def test_progress_reports_scoring_and_an_estimate_while_evaluating(client):
+    """10 of 40 answers scored in 100 s: 30 left at the same pace is about 300 s."""
+    from datetime import UTC, datetime, timedelta
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    started = (datetime.now(UTC) - timedelta(seconds=100)).isoformat()
+    experiment = Experiment(
+        name="avaliando", status="running",
+        config={"phase": "evaluating", "scoring": {"scored": 10, "total": 40, "started_at": started}},
+    )
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    progress = client.get(f"/experiments/{exp_id}").json()["progress"]
+    assert progress["scored"] == 10
+    assert progress["to_score"] == 40
+    assert 290 <= progress["eta_s"] <= 310
+
+
+def test_progress_has_no_estimate_before_the_first_batch(client):
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    experiment = Experiment(
+        name="comecando", status="running",
+        config={"phase": "evaluating", "scoring": {"scored": 0, "total": 40, "started_at": "2026-10-12T00:00:00+00:00"}},
+    )
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    progress = client.get(f"/experiments/{exp_id}").json()["progress"]
+    assert progress["scored"] == 0 and progress["eta_s"] is None
+
+
+def test_estimate_after_a_resume_uses_only_this_pass_pace(client):
+    """20 answers were scored before a pause; 10 more in the 100 s since resuming:
+    the 10 left take about 100 s, not the 33 s that 30 answers in 100 s suggest."""
+    from datetime import UTC, datetime, timedelta
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    started = (datetime.now(UTC) - timedelta(seconds=100)).isoformat()
+    experiment = Experiment(
+        name="retomado", status="running",
+        config={"phase": "evaluating", "scoring": {
+            "scored": 30, "total": 40, "scored_before": 20, "started_at": started,
+        }},
+    )
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    progress = client.get(f"/experiments/{exp_id}").json()["progress"]
+    assert progress["scored"] == 30 and progress["to_score"] == 40
+    assert 90 <= progress["eta_s"] <= 110
+
+
+def _combos_payload(combos):
+    return json.dumps(
+        {
+            "base": "viagem", "chunkings": [], "embeddings": [], "rags": [], "retrievers": [],
+            "combos": combos, "metrics": ["answer_relevancy"], "llms": ["gemini"],
+        }
+    )
+
+
+def test_create_experiment_runs_only_the_listed_combos(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = _combos_payload([
+        {"chunking": "recursive", "embedding": "gemini", "rag": "naive", "retriever": "similarity"},
+        {"chunking": "recursive", "embedding": "gemini", "rag": "naive", "retriever": "mmr"},
+    ])
+    exp_id = client.post("/experiments", data={"config": payload}, files=files).json()["id"]
+    detail = client.get(f"/experiments/{exp_id}").json()
+    assert detail["progress"]["total"] == 2
+    assert {(r["rag"], r["retriever"]) for r in detail["results"]} == {("naive", "similarity"), ("naive", "mmr")}
+
+
+def test_create_experiment_rejects_a_combo_on_a_missing_index(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = _combos_payload([
+        {"chunking": "fixed", "embedding": "e5", "rag": "naive", "retriever": "similarity"},
+    ])
+    response = client.post("/experiments", data={"config": payload}, files=files)
+    assert response.status_code == 422
+    assert "fixed" in response.json()["detail"]
+
+
+def test_create_experiment_accepts_a_closed_book_combo_without_its_index(client):
+    """closed_book reads no Índice: the pair written on its combo is not checked."""
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = _combos_payload([
+        {"chunking": "recursive", "embedding": "gemini", "rag": "naive", "retriever": "similarity"},
+        {"chunking": "fixed", "embedding": "e5", "rag": "closed_book", "retriever": "similarity"},
+    ])
+    response = client.post("/experiments", data={"config": payload}, files=files)
+    assert response.status_code == 200, response.json()
+    detail = client.get(f"/experiments/{response.json()['id']}").json()
+    assert detail["progress"]["total"] == 2
+
+
+def test_create_experiment_rejects_combos_with_conflicting_lists(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = json.loads(_combos_payload([
+        {"chunking": "recursive", "embedding": "gemini", "rag": "naive", "retriever": "similarity"},
+    ]))
+    payload["retrievers"] = ["mmr"]
+    response = client.post("/experiments", data={"config": json.dumps(payload)}, files=files)
+    assert response.status_code == 422

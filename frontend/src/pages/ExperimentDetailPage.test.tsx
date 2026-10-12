@@ -182,6 +182,40 @@ describe("ExperimentDetailPage", () => {
     expect(within(drawer).getByText("Todos os saltos")).toBeInTheDocument();
   });
 
+  describe("an answer with retrieved chunks", () => {
+    beforeEach(async () => {
+      const base = (await client.getExperiment(7)).results[0];
+      vi.mocked(client.getExperiment).mockResolvedValue({
+        id: 7,
+        name: "kind-ember-89",
+        status: "done",
+        results: [
+          {
+            ...base,
+            contexts: [
+              { text: "A praça da Matriz fica no centro.", score: 0.91, source: "guia.md" },
+              { text: "A igreja foi erguida em 1885.", score: 0.72, source: "guia.md" },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("lists the chunks the answer was generated from, in rank order", async () => {
+      renderPage();
+      const user = userEvent.setup();
+      await openAnswers(user);
+      await user.click(await screen.findByText(/Pergunta A/));
+      const drawer = await screen.findByRole("dialog", { name: "Detalhe do resultado" });
+      const chunks = within(drawer).getByRole("list", { name: "Trechos recuperados" });
+      const items = within(chunks).getAllByRole("listitem");
+      expect(items).toHaveLength(2);
+      expect(items[0]).toHaveTextContent("A praça da Matriz fica no centro.");
+      expect(items[0]).toHaveTextContent("0.91");
+      expect(items[1]).toHaveTextContent("A igreja foi erguida em 1885.");
+    });
+  });
+
   describe("a GraphRAG combination", () => {
     beforeEach(async () => {
       const base = (await client.getExperiment(7)).results[0];
@@ -546,6 +580,19 @@ describe("ExperimentDetailPage", () => {
     expect(screen.queryByText(/1 de 1 combinações/)).not.toBeInTheDocument();
   });
 
+  it("counts the scored answers and estimates the time left while evaluating", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      id: 9,
+      name: "avaliando",
+      status: "running",
+      created_at: "2026-07-05T10:00:00.000Z",
+      progress: { completed: 15, total: 15, phase: "evaluating", scored: 180, to_score: 540, eta_s: 1260 },
+      results: [],
+    });
+    renderPage();
+    expect(await screen.findByText("Avaliando 180 de 540 respostas · faltam cerca de 21 min")).toBeInTheDocument();
+  });
+
   it("names the LLM extrator whose Grafo the GraphRAG rows queried", async () => {
     vi.mocked(client.getExperiment).mockResolvedValue({
       id: 9,
@@ -724,5 +771,20 @@ describe("ExperimentDetailPage", () => {
     renderPage();
     await screen.findAllByText(/antigo/);
     expect(screen.queryByText(/temperatura|até \d+ tokens/i)).not.toBeInTheDocument();
+  });
+
+  it("opens a Comparação of its Combinações", async () => {
+    const detail = await client.getExperiment(7);
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      ...detail,
+      runs: [
+        { id: 1, chunking: "recursive", embedding: "gemini", rag: "naive", retriever: "similarity", llm: "gemini", status: "done" },
+        { id: 2, chunking: "token", embedding: "gemini", rag: "agentic", retriever: "mmr", llm: "ollama", status: "done" },
+      ],
+    });
+    renderPage();
+    expect(await screen.findByRole("link", { name: "Comparar" })).toHaveAttribute(
+      "href", "/compare?items=7:1,7:2",
+    );
   });
 });

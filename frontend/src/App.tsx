@@ -7,6 +7,7 @@ import { AgentePage } from "./pages/AgentePage";
 import { AvaliacaoPage } from "./pages/AvaliacaoPage";
 import { BasesPage } from "./pages/BasesPage";
 import { ChatConfigsPage } from "./pages/ChatConfigsPage";
+import { ComparePage } from "./pages/ComparePage";
 import { ChatPage } from "./pages/ChatPage";
 import { DialoguePage } from "./pages/DialoguePage";
 import { DialoguesPage } from "./pages/DialoguesPage";
@@ -43,6 +44,7 @@ export function App() {
                   <Route path="/experiment" element={<ExperimentPage />} />
                   <Route path="/results" element={<ResultsPage />} />
                   <Route path="/results/:id" element={<ExperimentDetailPage />} />
+                  <Route path="/compare" element={<ComparePage />} />
                   <Route path="/prompts" element={<PromptsPage />} />
                   <Route path="/chat-configs" element={<ChatConfigsPage />} />
                   <Route path="/chat" element={<ChatPage />} />

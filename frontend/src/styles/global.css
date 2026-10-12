@@ -845,6 +845,7 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-trait-dim { font-weight: 500; color: var(--ink-2); }
 .ditto-graph-stats { margin-top: 4px; font-size: 12.5px; max-width: 360px; }
 .ditto-graph-facts { margin: 0; padding-left: 18px; }
+.ditto-chunks { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 12px; }
 
 .ditto-rank {
   font-weight: 750;
@@ -1433,3 +1434,10 @@ a { color: inherit; text-underline-offset: 3px; }
 .ditto-graph-build { border-top: 1px solid var(--line); padding-top: 12px; font-size: 14px; color: var(--ink-2); }
 .ditto-graph-build-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; color: var(--ink); }
 .ditto-graph-build-indexes { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-variant-numeric: tabular-nums; }
+
+/* Comparação: difference against the Linha de base, CI in muted ink */
+.ditto-diff { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ditto-diff[data-significant] b { color: var(--ink); }
+.ditto-compare-picker { margin-bottom: 20px; }
+.ditto-compare-runs { display: grid; gap: 8px; margin-top: 12px; }
+.ditto-row-actions { white-space: nowrap; }

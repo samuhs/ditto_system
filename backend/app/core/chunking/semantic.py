@@ -6,14 +6,30 @@ from app.core.embedding.base import Embedder
 from app.core.vector_math import cosine_distance
 
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
+# The cut for a text of two sentences: one distance has no others to rank against.
+_SINGLE_DISTANCE_THRESHOLD = 0.5
 
 
 class SemanticChunker(Chunker):
-    """Groups consecutive sentences while they stay semantically close."""
+    """Groups consecutive sentences while they stay semantically close.
 
-    def __init__(self, embedder: Embedder, threshold: float = 0.5) -> None:
+    By default it cuts where the distance between consecutive sentences is in the
+    top (100 - percentile)% of that text's distances, so it adapts to each
+    embedder's similarity scale. A fixed `threshold` cut misses embedders whose
+    distances all fall below it: with 0.5, e5 and granite put the whole guide in
+    one chunk (campaign 2026-10-10). Pass threshold=0.5 to reproduce those indexes.
+    A text of two sentences has one distance and nothing to rank it against, so
+    the fixed 0.5 decides there.
+    The default 90 gives ~300-token chunks on the town guide, in line with the
+    fixed and recursive chunkers and within e5-small's 512-token input.
+    """
+
+    def __init__(
+        self, embedder: Embedder, threshold: float | None = None, percentile: float = 90.0,
+    ) -> None:
         self._embedder = embedder
         self._threshold = threshold
+        self._percentile = percentile
 
     def split(self, text: str) -> list[str]:
         """Split text at sentence boundaries where topic shifts."""
@@ -24,16 +40,32 @@ class SemanticChunker(Chunker):
         if len(sentences) <= 1:
             return sentences or [stripped]
         vectors = self._embedder.embed_documents(sentences)
+        distances = [cosine_distance(vectors[i - 1], vectors[i]) for i in range(1, len(sentences))]
+        if self._threshold is not None:
+            cut = self._threshold
+        elif len(distances) == 1:
+            cut = _SINGLE_DISTANCE_THRESHOLD
+        else:
+            cut = _percentile(distances, self._percentile)
         chunks: list[str] = []
         current = [sentences[0]]
-        for i in range(1, len(sentences)):
-            if cosine_distance(vectors[i - 1], vectors[i]) > self._threshold:
+        for sentence, distance in zip(sentences[1:], distances):
+            if distance > cut:
                 chunks.append(" ".join(current))
-                current = [sentences[i]]
+                current = [sentence]
             else:
-                current.append(sentences[i])
+                current.append(sentence)
         chunks.append(" ".join(current))
         return chunks
+
+
+def _percentile(values: list[float], q: float) -> float:
+    """The q-th percentile (0-100) of values, linearly interpolated."""
+    ordered = sorted(values)
+    position = (len(ordered) - 1) * q / 100
+    low = int(position)
+    high = min(low + 1, len(ordered) - 1)
+    return ordered[low] + (ordered[high] - ordered[low]) * (position - low)
 
 
 chunking_registry.register("semantic", SemanticChunker)

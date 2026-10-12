@@ -1,0 +1,241 @@
+"""Comparação: Combinações of one or more Experimentos measured against a Linha de base.
+
+Items of the Linha de base's Base are paired by question text, on the questions
+both answered with a valid score in the main metric; each gets the mean paired
+difference with its bootstrap CI (see `app.experiments.stats`).
+"""
+from dataclasses import dataclass
+
+from sqlalchemy.orm import Session, selectinload
+
+from app.core.db.models import Experiment, ExperimentRun
+from app.experiments.orchestrator import ERROR_PREFIX
+from app.experiments.schemas import QUESTION_TYPES
+from app.experiments.stats import friedman, mean_ci, paired_diff_ci
+
+DEFAULT_METRIC = "answer_correctness"
+
+
+class ComparisonError(ValueError):
+    """A request that cannot be answered (unknown Experimento, baseline not among items).
+
+    The message is an API error, in English; why an item is left out of a
+    Comparação is data the page shows, in PT-BR (`excluded[].reason`).
+    """
+
+    def __init__(self, message: str, status: int = 422) -> None:
+        super().__init__(message)
+        self.status = status
+
+
+@dataclass(frozen=True)
+class ItemId:
+    """Experimento × Combinação: the same Combinação may run in several Experimentos."""
+
+    experiment_id: int
+    run_id: int
+
+    @classmethod
+    def parse(cls, text: str) -> "ItemId":
+        try:
+            experiment, run = text.split(":")
+            return cls(int(experiment), int(run))
+        except ValueError as exc:
+            raise ComparisonError(f"invalid item '{text}': expected experiment_id:run_id") from exc
+
+    def __str__(self) -> str:
+        return f"{self.experiment_id}:{self.run_id}"
+
+
+@dataclass
+class _Item:
+    id: ItemId
+    experiment: Experiment
+    run: ExperimentRun
+    # question -> metric -> mean score over that question's valid answers, in answer order.
+    scores: dict[str, dict[str, float]]
+    # question -> Tipo de pergunta (results stored before annotations: "simples").
+    types: dict[str, str]
+
+    @property
+    def base(self) -> str:
+        return (self.experiment.config or {}).get("base", "")
+
+    def values(self, metric: str) -> dict[str, float]:
+        return {q: s[metric] for q, s in self.scores.items() if metric in s}
+
+    def mean(self, metric: str) -> float | None:
+        values = list(self.values(metric).values())
+        return sum(values) / len(values) if values else None
+
+    def metrics(self) -> list[str]:
+        return list(dict.fromkeys(m for s in self.scores.values() for m in s))
+
+
+def _question_scores(run: ExperimentRun) -> dict[str, dict[str, float]]:
+    """Valid scores per question; answers that failed or were never scored are left out."""
+    collected: dict[str, dict[str, list[float]]] = {}
+    for result in sorted(run.results, key=lambda r: r.id):
+        if result.generated_answer.startswith(ERROR_PREFIX):
+            continue
+        for metric, value in (result.scores or {}).items():
+            if isinstance(value, (int, float)):
+                collected.setdefault(result.question, {}).setdefault(metric, []).append(float(value))
+    return {
+        q: {m: sum(vs) / len(vs) for m, vs in by_metric.items()}
+        for q, by_metric in collected.items()
+    }
+
+
+def _load(session: Session, ids: list[ItemId]) -> tuple[list[_Item], list[dict]]:
+    experiments = {
+        e.id: e
+        for e in session.query(Experiment)
+        .filter(Experiment.id.in_({i.experiment_id for i in ids}))
+        .options(selectinload(Experiment.runs).selectinload(ExperimentRun.results))
+    }
+    items, excluded = [], []
+    for item_id in dict.fromkeys(ids):
+        experiment = experiments.get(item_id.experiment_id)
+        if experiment is None:
+            raise ComparisonError(f"experiment {item_id.experiment_id} not found", status=404)
+        run = next((r for r in experiment.runs if r.id == item_id.run_id), None)
+        if run is None:
+            excluded.append({"id": str(item_id), "reason": (
+                f"a Combinação {item_id.run_id} não existe no Experimento {experiment.name}"
+            )})
+            continue
+        types = {r.question: r.question_type or "simples" for r in run.results}
+        items.append(_Item(item_id, experiment, run, _question_scores(run), types))
+    return items, excluded
+
+
+def _default_metric(baseline: _Item) -> str:
+    """answer_correctness when the Linha de base has it, else the first metric it has."""
+    metrics = baseline.metrics()
+    if DEFAULT_METRIC in metrics or not metrics:
+        return DEFAULT_METRIC
+    return metrics[0]
+
+
+def _describe(item: _Item, metrics: list[str]) -> dict:
+    run = item.run
+    return {
+        "id": str(item.id),
+        "experiment_id": item.experiment.id,
+        "experiment_name": item.experiment.name,
+        "run_id": run.id,
+        "base": item.base,
+        "chunking": run.chunking,
+        "embedding": run.embedding,
+        "rag": run.rag_technique,
+        "retriever": run.retriever,
+        "llm": run.llm or "gemini",
+        "partial": item.experiment.status != "done",
+        "means": {m: item.mean(m) for m in metrics},
+    }
+
+
+def _interval(diff, n: int) -> dict:
+    return {"mean": diff.mean, "low": diff.low, "high": diff.high,
+            "significant": diff.significant, "n": n}
+
+
+def _by_type(reference: _Item, items: list[_Item], metric: str) -> dict:
+    """Each item's paired difference per Tipo de pergunta (the Linha de base's annotation)."""
+    reference_values = reference.values(metric)
+    present = set(reference.types[q] for q in reference_values)
+    order = list(QUESTION_TYPES)
+    types = sorted(present, key=lambda t: (order.index(t) if t in order else len(order), t))
+    rows = []
+    for item in items:
+        values = item.values(metric)
+        cells = {}
+        for qtype in types:
+            common = [q for q in reference_values if reference.types[q] == qtype and q in values]
+            cells[qtype] = _interval(
+                paired_diff_ci([values[q] - reference_values[q] for q in common]), len(common),
+            ) if common else None
+        rows.append({"id": str(item.id), "cells": cells})
+    return {"types": types, "rows": rows}
+
+
+def _friedman(items: list[_Item], metric: str) -> dict:
+    """Friedman over the questions every paired item scored, or why it cannot run."""
+    if len(items) < 2:
+        return {"reason": "o teste precisa de ao menos duas Combinações pareadas"}
+    values = [item.values(metric) for item in items]
+    complete = [q for q in values[0] if all(q in v for v in values[1:])]
+    if not complete:
+        return {"reason": "nenhuma pergunta foi respondida por todas as Combinações pareadas"}
+    result = friedman([[v[q] for v in values] for q in complete])
+    return {"chi2": result.chi2, "df": result.df, "p": result.p, "n": result.n}
+
+
+def compare(
+    session: Session, item_ids: list[str], baseline: str | None = None, metric: str | None = None,
+) -> dict:
+    """The Comparação of these items (`experiment:run`) against the Linha de base."""
+    ids = [ItemId.parse(i) for i in item_ids]
+    if not ids:
+        raise ComparisonError("no items to compare")
+    baseline_id = ItemId.parse(baseline) if baseline else ids[0]
+    if baseline_id not in ids:
+        raise ComparisonError(f"baseline {baseline_id} is not one of the items")
+    items, excluded = _load(session, ids)
+    reference = next((i for i in items if i.id == baseline_id), None)
+    if reference is None:
+        raise ComparisonError(f"baseline {baseline_id} not found", status=404)
+    metric = metric or _default_metric(reference)
+    reference_values = reference.values(metric)
+
+    paired: list[tuple[_Item, int, object]] = []
+    unpaired: list[_Item] = []  # another Base: side by side, never paired
+    for item in items:
+        if item is reference:
+            paired.append((item, len(reference_values), None))
+            continue
+        if item.base != reference.base:
+            unpaired.append(item)
+            continue
+        values = item.values(metric)
+        common = [q for q in reference_values if q in values]
+        if not common:
+            excluded.append({"id": str(item.id), "reason": (
+                f"nenhuma pergunta em comum com a Linha de base com nota em {metric}"
+            )})
+            continue
+        diff = paired_diff_ci([values[q] - reference_values[q] for q in common])
+        paired.append((item, len(common), diff))
+
+    metrics = list(dict.fromkeys(m for item, _, _ in paired for m in item.metrics()))
+    rows = []
+    for item, n, diff in paired:
+        row = _describe(item, metrics)
+        row["n"] = n
+        row["diff"] = None if diff is None else {
+            "mean": diff.mean, "low": diff.low, "high": diff.high, "significant": diff.significant,
+        }
+        rows.append(row)
+    other_bases = []
+    for item in unpaired:
+        values = list(item.values(metric).values())
+        if not values:
+            excluded.append({"id": str(item.id), "reason": f"nenhuma resposta com nota em {metric}"})
+            continue
+        ci = mean_ci(values)
+        row = _describe(item, metrics)
+        row["n"] = len(values)
+        row["mean"] = {"mean": ci.mean, "low": ci.low, "high": ci.high}
+        other_bases.append(row)
+    return {
+        "other_bases": other_bases,
+        "friedman": _friedman([item for item, _, _ in paired], metric),
+        "by_type": _by_type(reference, [i for i, _, _ in paired if i is not reference], metric),
+        "baseline": str(baseline_id),
+        "metric": metric,
+        "metrics": metrics,
+        "base": reference.base,
+        "items": rows,
+        "excluded": excluded,
+    }

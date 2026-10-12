@@ -1,4 +1,6 @@
 """Tests for the embedding provider interface and implementations."""
+import pytest
+
 from app.core.embedding.base import Embedder, build_embedder, embedding_registry
 from app.core.embedding.gemini import GeminiEmbedder
 from app.core.embedding.huggingface import E5Embedder, ParaphraseEmbedder
@@ -198,3 +200,37 @@ def test_paraphrase_embeds_text_unprefixed():
     emb.embed_query("b")
     emb.embed_queries(["c"])
     assert model.seen == ["a", "b", "c"]
+
+
+def test_reloading_a_model_reuses_its_tokenizer(monkeypatch):
+    """Every AutoProcessor.from_pretrained leaves native memory behind (~100-250 MB
+    for a 250k-vocab tokenizer), so reloading an evicted embedder grew the API
+    without bound (campaign 2026-10-11). Within a load, the same path and kwargs
+    give back the tokenizer already built.
+    """
+    # Local embedders are optional (LOCAL=1 make setup-dev); CI runs without them.
+    st_transformer = pytest.importorskip("sentence_transformers.base.modules.transformer")
+
+    from app.core.embedding import huggingface
+
+    loads = []
+
+    class _FakeProcessor:
+        @classmethod
+        def from_pretrained(cls, path, **kwargs):
+            loads.append((path, kwargs))
+            return object()
+
+    monkeypatch.setattr(st_transformer, "AutoProcessor", _FakeProcessor)
+    monkeypatch.setattr(huggingface, "_tokenizers", {})
+
+    with huggingface.reuse_tokenizers():
+        first = st_transformer.AutoProcessor.from_pretrained("org/model", model_max_length=512)
+    with huggingface.reuse_tokenizers():
+        again = st_transformer.AutoProcessor.from_pretrained("org/model", model_max_length=512)
+        other = st_transformer.AutoProcessor.from_pretrained("org/model", model_max_length=128)
+
+    assert first is again
+    assert other is not first
+    assert len(loads) == 2
+    assert st_transformer.AutoProcessor is _FakeProcessor  # restored outside the block

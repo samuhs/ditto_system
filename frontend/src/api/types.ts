@@ -28,6 +28,8 @@ export interface Options {
 export interface IngestResult {
   collections: string[];
   total_chunks: number;
+  /** Índices that came out degenerate (a long document stored as one chunk). */
+  warnings?: string[];
   /** The Grafo de conhecimento build queued after the Índices; null without one. */
   graph_build?: GraphBuildJob | null;
 }
@@ -102,7 +104,20 @@ export interface ExperimentSummary {
   id: number;
   name: string;
   status: string;
+  /** The Base it ran on (null on experiments with no recorded config). */
+  base?: string | null;
   created_at: string;
+}
+
+/** One Combinação of an Experimento, with the id a Comparação refers to it by. */
+export interface ExperimentRunRef {
+  id: number;
+  chunking: string;
+  embedding: string;
+  rag: string;
+  retriever: string;
+  llm: string;
+  status: string;
 }
 
 export interface ExperimentList {
@@ -110,6 +125,13 @@ export interface ExperimentList {
   total: number;
   page: number;
   page_size: number;
+}
+
+export interface RetrievedChunk {
+  text: string;
+  /** Retriever similarity; null for chunks with no score (e.g. a compression extract). */
+  score: number | null;
+  source: string | null;
 }
 
 export interface ExperimentResultRow {
@@ -120,6 +142,8 @@ export interface ExperimentResultRow {
   llm: string;
   question: string;
   answer: string;
+  /** The chunks the answer was generated from, in rank order; absent on older payloads. */
+  contexts?: RetrievedChunk[];
   scores: Record<string, number>;
   latency_ms: number;
   tokens: number;
@@ -163,6 +187,11 @@ export interface ExperimentProgress {
   total: number;
   /** Staged runs: "generating", then "evaluating" while the answers are scored. */
   phase?: string | null;
+  /** Answers scored so far in the evaluation stage, out of to_score. */
+  scored?: number;
+  to_score?: number;
+  /** Seconds left at the scoring pace so far; null until the first batch. */
+  eta_s?: number | null;
 }
 
 /** One Combinação + pergunta that was mid-call when a Pausa entry was recorded. */
@@ -192,6 +221,7 @@ export interface ExperimentDetail {
   id: number;
   name: string;
   status: string;
+  runs?: ExperimentRunRef[];
   created_at?: string;
   finished_at?: string;
   pause_requested?: boolean;
@@ -417,4 +447,61 @@ export interface EvaluationSettings {
   eval_embedding: string;
   embeddings: { name: string; local: boolean }[];
   metrics: { name: string; uses_embedding: boolean; requires_reference: boolean }[];
+}
+
+/** Difference of an item against the Linha de base, with its 95% bootstrap CI. */
+export interface ComparisonDiff {
+  mean: number;
+  low: number;
+  high: number;
+  significant: boolean;
+}
+
+/** One Experimento × Combinação in a Comparação. */
+export interface ComparisonItem {
+  id: string;
+  experiment_id: number;
+  experiment_name: string;
+  run_id: number;
+  base: string;
+  chunking: string;
+  embedding: string;
+  rag: string;
+  retriever: string;
+  llm: string;
+  /** Its Experimento has not finished. */
+  partial: boolean;
+  /** Questions paired with the Linha de base (its own valid answers, for the Linha de base). */
+  n: number;
+  means: Record<string, number | null>;
+  /** null for the Linha de base itself. */
+  diff: ComparisonDiff | null;
+}
+
+/** Friedman over the questions every paired item scored, or why it could not run. */
+export type ComparisonFriedman =
+  | { chi2: number; df: number; p: number; n: number; reason?: undefined }
+  | { reason: string };
+
+/** A paired difference in one Tipo de pergunta, with its question count. */
+export interface ComparisonTypeCell extends ComparisonDiff {
+  n: number;
+}
+
+/** An item of another Base: its own mean and CI, never paired with the Linha de base. */
+export interface ComparisonUnpaired extends Omit<ComparisonItem, "diff"> {
+  mean: { mean: number; low: number; high: number };
+}
+
+export interface Comparison {
+  other_bases: ComparisonUnpaired[];
+  friedman: ComparisonFriedman;
+  /** Each non-baseline item's difference per Tipo de pergunta; null where none paired. */
+  by_type: { types: string[]; rows: { id: string; cells: Record<string, ComparisonTypeCell | null> }[] };
+  baseline: string;
+  metric: string;
+  metrics: string[];
+  base: string;
+  items: ComparisonItem[];
+  excluded: { id: string; reason: string }[];
 }

@@ -2,7 +2,7 @@
 import csv
 import io
 import re
-from datetime import timezone
+from datetime import UTC, datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
@@ -122,6 +122,11 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                     "bridge_entities": result.bridge_entities or [],
                     "hops_found": _hops_found(result) if match_hops else [],
                     "answer": result.generated_answer,
+                    # The chunks the answer was generated from, in rank order.
+                    "contexts": [
+                        {"text": c.get("text", ""), "score": c.get("score"), "source": c.get("source")}
+                        for c in result.retrieved_context or []
+                    ],
                     "scores": result.scores,
                     "latency_ms": result.latency_ms,
                     "tokens": result.tokens,
@@ -135,6 +140,22 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                 }
             )
     return rows
+
+
+def _scoring_progress(cfg: dict) -> dict:
+    """Answers scored so far and seconds left at this pass's pace (None until known).
+
+    After a Retomada, `scored_before` answers were scored by the interrupted pass:
+    they count as scored but not toward the pace since `started_at`.
+    """
+    scoring = cfg.get("scoring") or {}
+    scored, total = scoring.get("scored", 0), scoring.get("total", 0)
+    this_pass = scored - scoring.get("scored_before", 0)
+    eta_s = None
+    if cfg.get("phase") == "evaluating" and this_pass > 0 and scored < total and scoring.get("started_at"):
+        elapsed = (datetime.now(UTC) - datetime.fromisoformat(scoring["started_at"])).total_seconds()
+        eta_s = round(elapsed / this_pass * (total - scored))
+    return {"scored": scored, "to_score": total, "eta_s": eta_s}
 
 
 def _total_combinations(cfg: dict) -> int:
@@ -166,7 +187,7 @@ def _results_csv(rows: list[dict]) -> str:
     writer = csv.writer(buffer)
     writer.writerow(
         ["chunking", "embedding", "rag", "retriever", "llm",
-         "pergunta", "resposta_referencia", "resposta",
+         "pergunta", "resposta_referencia", "resposta", "trechos_recuperados",
          "tipo", "evidencia_salto", "entidades_ponte",
          *metric_keys, "media", "latency_ms", "tokens",
          *(f"pergunta_{k}" for k in question_keys), *(f"busca_{k}" for k in retrieval_keys),
@@ -179,6 +200,8 @@ def _results_csv(rows: list[dict]) -> str:
         writer.writerow(
             [row["chunking"], row["embedding"], row["rag"], row["retriever"], row["llm"],
              row["question"], row["reference"] or "", row["answer"],
+             # One line per retrieved chunk, "[rank] text", in rank order.
+             "\n".join(f"[{i}] {c['text']}" for i, c in enumerate(row["contexts"], start=1)),
              row["question_type"], "|".join(map(str, row["evidence_hops"])),
              "|".join(row["bridge_entities"]),
              *(scores.get(k, "") for k in metric_keys), mean, row["latency_ms"], row["tokens"],
@@ -497,19 +520,27 @@ def resume_experiment_route(
 def list_experiments(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    base: str | None = Query(None, description="only the Experimentos of this Base"),
     deps: ExperimentDeps = Depends(get_experiment_deps),
 ) -> dict:
     """List experiments (paginated), most recent first."""
     session = deps.session_factory()
     try:
         query = session.query(Experiment).order_by(Experiment.id.desc())
-        total = query.count()
-        rows = query.offset((page - 1) * page_size).limit(page_size).all()
+        if base is None:
+            total = query.count()
+            rows = query.offset((page - 1) * page_size).limit(page_size).all()
+        else:
+            # The Base lives in the JSON config: filtered here, not portably in SQL.
+            matching = [e for e in query if (e.config or {}).get("base") == base]
+            total = len(matching)
+            rows = matching[(page - 1) * page_size:page * page_size]
         items = [
             {
                 "id": e.id,
                 "name": e.name,
                 "status": e.status,
+                "base": (e.config or {}).get("base"),
                 "created_at": _iso_utc(e.created_at),
             }
             for e in rows
@@ -561,8 +592,20 @@ def get_experiment(
                 "total": total_combos,
                 # Staged runs: "generating", then "evaluating" (scoring the answers).
                 "phase": cfg.get("phase"),
+                **_scoring_progress(cfg),
             },
             "prompts": cfg.get("prompts"),
+            # API memory at every phase change (staged runs), oldest first.
+            "memory_log": cfg.get("memory_log", []),
+            # Each Combinação with its id (the Comparação's `experiment:run` items).
+            "runs": [
+                {
+                    "id": run.id, "chunking": run.chunking, "embedding": run.embedding,
+                    "rag": run.rag_technique, "retriever": run.retriever,
+                    "llm": run.llm or "gemini", "status": run.status,
+                }
+                for run in experiment.runs
+            ],
             "results": results,
         }
     finally:

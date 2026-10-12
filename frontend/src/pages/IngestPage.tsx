@@ -7,7 +7,7 @@ import type { GraphBuildJob, Options } from "../api/types";
 import { ChoiceGroup } from "../components/ChoiceGroup";
 import { GraphBuildList } from "../components/GraphBuildList";
 import { llmSelectData } from "../components/llmOptions";
-import { Errata, Saved, errorText } from "../components/Notice";
+import { Errata, Note, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ArrowIcon, UploadIcon } from "../components/icons";
 import { useTasks } from "../context/TasksContext";
@@ -24,6 +24,7 @@ export function IngestPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [started, setStarted] = useState<string | null>(null);
   // The request lasts the whole ingestion (minutes); a second click would ingest twice.
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +67,7 @@ export function IngestPage() {
 
   async function submit() {
     setSubmitError(null);
+    setWarnings([]);
     setSubmitting(true);
     const form = new FormData();
     form.append("base", baseName);
@@ -78,6 +80,7 @@ export function IngestPage() {
       addIngestTask(baseName || "sem nome", result);
       const r = await result;
       if (r.graph_build) builds.follow(r.graph_build);
+      setWarnings(r.warnings ?? []);
       setStarted(baseName);
       setFiles([]);
     } catch (e) {
@@ -235,6 +238,18 @@ export function IngestPage() {
               <GraphBuildList jobs={builds.shown} onPause={builds.pause} onResume={builds.resume} />
             </div>
           </section>
+        )}
+
+        {warnings.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <Note title={warnings.length === 1 ? "Índice com um trecho só" : "Índices com um trecho só"}>
+              <ul className="ditto-graph-facts">
+                {warnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            </Note>
+          </div>
         )}
 
         {submitError && (

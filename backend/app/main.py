@@ -13,6 +13,7 @@ from app.core import retrieval  # noqa: F401  registers retrievers
 from app.api import (
     bases,
     chat,
+    comparisons,
     experiments,
     graph_builds,
     health,
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
     app.include_router(bases.router)
     app.include_router(graph_builds.router)
     app.include_router(experiments.router)
+    app.include_router(comparisons.router)
     app.include_router(prompts.router)
     app.include_router(chat.router)
     app.include_router(settings.router)

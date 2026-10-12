@@ -2,10 +2,16 @@ import {
   Button, Drawer, Loader, MultiSelect, NumberInput, Pagination, SegmentedControl, Select, Tabs,
 } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { exportExperimentUrl, getExperiment, pauseExperiment, resumeExperiment } from "../api/client";
-import type { ExperimentDetail, ExperimentResultRow, GraphExplanation, PauseEntry } from "../api/types";
+import type {
+  ExperimentDetail,
+  ExperimentProgress,
+  ExperimentResultRow,
+  GraphExplanation,
+  PauseEntry,
+} from "../api/types";
 import { DEFAULT_FOCUS, type FocusState } from "../components/charts/aggregate";
 import { ChartsPanel } from "../components/charts/ChartsPanel";
 import { Errata, Note, errorText } from "../components/Notice";
@@ -58,6 +64,14 @@ const PAUSE_PHASE_LABEL: Record<string, string> = {
 };
 
 /** The Experimento's stage when a Pausa entry was recorded ("—" when none was kept). */
+/** "Avaliando X de Y respostas · faltam cerca de N min" once the stage has a count. */
+function evaluationText(progress: ExperimentProgress): string {
+  if (!progress.to_score) return "Avaliando as respostas";
+  const counted = `Avaliando ${progress.scored ?? 0} de ${progress.to_score} respostas`;
+  if (progress.eta_s == null) return counted;
+  return `${counted} · faltam cerca de ${Math.max(1, Math.round(progress.eta_s / 60))} min`;
+}
+
 function pausePhaseLabel(phase?: string | null): string {
   if (!phase) return "—";
   return PAUSE_PHASE_LABEL[phase] ?? phase;
@@ -327,7 +341,9 @@ export function ExperimentDetailPage() {
       {detail && (
         <div className="ditto-meta">
           <StatusTag status={detail.status} />
-          {isRunning && detail.progress?.phase === "evaluating" && <span>Avaliando as respostas</span>}
+          {isRunning && detail.progress?.phase === "evaluating" && (
+            <span>{evaluationText(detail.progress)}</span>
+          )}
           {isRunning && detail.progress && detail.progress.total > 0 &&
             detail.progress.phase !== "evaluating" && (
             <span>
@@ -382,6 +398,16 @@ export function ExperimentDetailPage() {
                   {resuming ? "Retomando…" : "Retomar"}
                 </Button>
               </>
+            )}
+            {detail.runs && detail.runs.length > 0 && (
+              <Button
+                component={Link}
+                to={`/compare?items=${detail.runs.map((r) => `${detail.id}:${r.id}`).join(",")}`}
+                size="sm"
+                variant="default"
+              >
+                Comparar
+              </Button>
             )}
             <Button
               component="a"
@@ -826,6 +852,26 @@ export function ExperimentDetailPage() {
                 {openRow.answer}
               </p>
             </div>
+            {(openRow.contexts?.length ?? 0) > 0 && (
+              <div>
+                <h3 className="ditto-h3" id="trechos-recuperados" style={{ marginBottom: 8 }}>
+                  Trechos recuperados
+                </h3>
+                <ol aria-labelledby="trechos-recuperados" className="ditto-chunks">
+                  {openRow.contexts!.map((chunk, i) => (
+                    <li key={i}>
+                      <p className="ditto-read" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                        {chunk.text}
+                      </p>
+                      <span className="ditto-muted" style={{ fontSize: 13 }}>
+                        {chunk.score != null ? `Similaridade ${chunk.score.toFixed(2)}` : "Sem pontuação"}
+                        {chunk.source ? ` · ${chunk.source}` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
             <div>
               <h3 className="ditto-h3" style={{ marginBottom: 8 }}>
                 Métricas

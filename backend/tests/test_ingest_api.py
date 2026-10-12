@@ -169,3 +169,22 @@ def test_ingest_rejects_a_new_base_with_a_legacy_style_name(client):
     data = {"base": "faq.v2", "chunkings": "recursive", "embeddings": "gemini"}
     response = client.post("/ingest", data=data, files=files)
     assert response.status_code == 422
+
+
+def test_ingest_warns_when_a_long_document_ends_in_one_chunk(client):
+    """Campaign 2026-10-10: semantic x e5/granite silently stored the whole guide as one
+    chunk. Identical sentences give no topic change, so semantic keeps one chunk here."""
+    text = ("Frase sempre igual aqui. " * 120).encode()
+    files = [("files", ("guia.md", io.BytesIO(text), "text/plain"))]
+    data = {"base": "repetida", "chunkings": "semantic,recursive", "embeddings": "gemini"}
+    body = client.post("/ingest", data=data, files=files).json()
+    assert body["warnings"] == [
+        "repetida__semantic__gemini: guia.md (3000 caracteres) virou 1 trecho só; "
+        "a busca nesse Índice devolve o documento inteiro."
+    ]
+
+
+def test_ingest_has_no_warnings_for_a_short_document(client):
+    files = [("files", ("a.txt", io.BytesIO(b"Para one.\n\nPara two here."), "text/plain"))]
+    data = {"base": "curta", "chunkings": "recursive", "embeddings": "gemini"}
+    assert client.post("/ingest", data=data, files=files).json()["warnings"] == []

@@ -122,7 +122,7 @@ def _indexes(client, base="viagem"):
 def test_ingesting_without_a_grafo_behaves_as_before(client, calls, builds):
     body = _ingest(client)
     assert body == {"collections": ["viagem__recursive__gemini"], "total_chunks": 1,
-                    "graph_build": None}
+                    "graph_build": None, "warnings": []}
     assert calls == [] and builds.list_jobs() == []
     assert _indexes(client) == [
         {"chunking": "recursive", "embedding": "gemini", "graph_extractors": []}

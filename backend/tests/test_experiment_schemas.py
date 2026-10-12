@@ -187,3 +187,119 @@ def test_generation_params_out_of_range_are_rejected(bad):
 
     with pytest.raises(ValidationError):
         ExperimentConfig(**_MIN_CONFIG, **bad)
+
+
+def test_explicit_combos_run_exactly_the_listed_combinations():
+    """Campaign E2.2 needed crag/agentic with similarity and naive with multi_query,
+    without the four crossings nobody asked for."""
+    from app.experiments.schemas import ExperimentConfig, combination_count, combinations
+
+    config = ExperimentConfig(
+        base="guia", chunkings=[], embeddings=[], rags=[], retrievers=[], metrics=["token_f1"],
+        llms=["a", "b"],
+        combos=[
+            {"chunking": "markdown", "embedding": "e5", "rag": "crag", "retriever": "similarity"},
+            {"chunking": "markdown", "embedding": "e5", "rag": "naive", "retriever": "multi_query"},
+        ],
+    )
+    assert list(combinations(config)) == [
+        ("a", ("markdown", "e5"), "crag", "similarity"),
+        ("a", ("markdown", "e5"), "naive", "multi_query"),
+        ("b", ("markdown", "e5"), "crag", "similarity"),
+        ("b", ("markdown", "e5"), "naive", "multi_query"),
+    ]
+    assert combination_count(config) == 4
+
+
+def test_explicit_combos_fill_the_lists_the_checks_read():
+    from app.experiments.schemas import ExperimentConfig, index_pairs
+
+    config = ExperimentConfig(
+        base="guia", chunkings=[], embeddings=[], rags=[], retrievers=[], metrics=["token_f1"],
+        llms=["a"],
+        combos=[
+            {"chunking": "markdown", "embedding": "e5", "rag": "crag", "retriever": "similarity"},
+            {"chunking": "fixed", "embedding": "granite", "rag": "naive", "retriever": "multi_query"},
+        ],
+    )
+    assert config.rags == ["crag", "naive"]
+    assert config.retrievers == ["similarity", "multi_query"]
+    assert index_pairs(config) == [("markdown", "e5"), ("fixed", "granite")]
+
+
+def test_explicit_combos_run_an_index_free_technique_once_per_llm():
+    """closed_book and oracle read no Índice and no Retriever: listing them with
+    several Índices or Retrievers must not repeat the same answers."""
+    from app.experiments.schemas import ExperimentConfig, combinations
+
+    config = ExperimentConfig(
+        base="guia", chunkings=[], embeddings=[], rags=[], retrievers=[], metrics=["token_f1"],
+        llms=["a"],
+        combos=[
+            {"chunking": "markdown", "embedding": "e5", "rag": "naive", "retriever": "similarity"},
+            {"chunking": "markdown", "embedding": "e5", "rag": "closed_book", "retriever": "similarity"},
+            {"chunking": "markdown", "embedding": "e5", "rag": "closed_book", "retriever": "mmr"},
+            {"chunking": "fixed", "embedding": "granite", "rag": "closed_book", "retriever": "similarity"},
+            {"rag": "oracle", "retriever": "similarity"},
+        ],
+    )
+    assert list(combinations(config)) == [
+        ("a", ("markdown", "e5"), "naive", "similarity"),
+        ("a", ("markdown", "e5"), "closed_book", "similarity"),
+        ("a", ("markdown", "e5"), "oracle", "similarity"),
+    ]
+
+
+def test_an_index_free_combo_adds_no_index_to_check():
+    """Only Índices a combo actually reads are checked for existence and fingerprinted."""
+    from app.experiments.schemas import ExperimentConfig, index_pairs
+
+    config = ExperimentConfig(
+        base="guia", chunkings=[], embeddings=[], rags=[], retrievers=[], metrics=["token_f1"],
+        llms=["a"],
+        combos=[
+            {"chunking": "markdown", "embedding": "e5", "rag": "naive", "retriever": "similarity"},
+            {"chunking": "fixed", "embedding": "granite", "rag": "closed_book", "retriever": "similarity"},
+        ],
+    )
+    assert index_pairs(config) == [("markdown", "e5")]
+    assert config.embeddings == ["e5"]
+
+
+def test_combos_need_at_least_one_indice():
+    from pydantic import ValidationError
+
+    from app.experiments.schemas import ExperimentConfig
+
+    with pytest.raises(ValidationError, match="Índice"):
+        ExperimentConfig(
+            base="guia", chunkings=[], embeddings=[], rags=[], retrievers=[], metrics=["token_f1"],
+            llms=["a"], combos=[{"rag": "closed_book", "retriever": "similarity"}],
+        )
+
+
+def test_combos_with_conflicting_lists_are_rejected():
+    """The lists are derived from the combos; a request that also sets them to
+    something else would have them silently overwritten."""
+    from pydantic import ValidationError
+
+    from app.experiments.schemas import ExperimentConfig
+
+    with pytest.raises(ValidationError, match="combos"):
+        ExperimentConfig(
+            base="guia", chunkings=["fixed"], embeddings=[], rags=[], retrievers=[],
+            metrics=["token_f1"], llms=["a"],
+            combos=[{"chunking": "markdown", "embedding": "e5", "rag": "naive", "retriever": "similarity"}],
+        )
+
+
+def test_a_stored_combos_config_parses_again():
+    """GET /experiments/{id} and the Retomada re-parse the stored config, lists included."""
+    from app.experiments.schemas import ExperimentConfig
+
+    config = ExperimentConfig(
+        base="guia", chunkings=[], embeddings=[], rags=[], retrievers=[], metrics=["token_f1"],
+        llms=["a"],
+        combos=[{"chunking": "markdown", "embedding": "e5", "rag": "naive", "retriever": "similarity"}],
+    )
+    assert ExperimentConfig(**config.model_dump()) == config
