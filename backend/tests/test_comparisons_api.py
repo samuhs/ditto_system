@@ -158,3 +158,37 @@ def test_the_baseline_must_be_one_of_the_items(env):
     client, sf = env
     exp, [a] = _experiment(sf, "fora", [("a", "naive", _ac(0.5))])
     assert client.get(f"/comparisons?items={exp}:{a}&baseline={exp}:77").status_code == 422
+
+
+def test_friedman_runs_over_the_questions_every_item_answered(env):
+    """The worked example of the stats tests, as three Combinações: chi2 = 7/6, df 2."""
+    client, sf = env
+    exp, runs = _experiment(sf, "friedman", [
+        ("a", "naive", _ac(1.0, 1.0, 0.5, 0.3)),
+        ("b", "naive", _ac(0.0, 1.0, 0.2)),  # q4 missing: not a complete block
+        ("c", "naive", _ac(0.0, 0.0, 0.9, 0.3)),
+    ])
+    items = ",".join(f"{exp}:{r}" for r in runs)
+    friedman = client.get(f"/comparisons?items={items}").json()["friedman"]
+    assert friedman["chi2"] == pytest.approx(7 / 6)
+    assert friedman["df"] == 2 and friedman["n"] == 3
+    assert friedman["p"] == pytest.approx(0.5580351457700471)
+
+
+def test_friedman_needs_two_paired_items(env):
+    client, sf = env
+    exp, [a] = _experiment(sf, "sozinho", [("a", "naive", _ac(0.5))])
+    friedman = client.get(f"/comparisons?items={exp}:{a}").json()["friedman"]
+    assert "duas" in friedman["reason"] and "chi2" not in friedman
+
+
+def test_friedman_needs_a_question_every_item_answered(env):
+    client, sf = env
+    exp, runs = _experiment(sf, "sem-bloco", [
+        ("a", "naive", {"q1": {"answer_correctness": 0.5}, "q2": {"answer_correctness": 0.5}}),
+        ("b", "naive", {"q1": {"answer_correctness": 0.6}}),
+        ("c", "naive", {"q2": {"answer_correctness": 0.7}}),
+    ])
+    items = ",".join(f"{exp}:{r}" for r in runs)
+    friedman = client.get(f"/comparisons?items={items}").json()["friedman"]
+    assert "todas" in friedman["reason"]

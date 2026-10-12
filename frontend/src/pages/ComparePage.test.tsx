@@ -32,6 +32,7 @@ function item(over: Partial<ComparisonItem>): ComparisonItem {
 }
 
 const comparison: Comparison = {
+  friedman: { chi2: 33.34, df: 7, p: 0.0000229, n: 36 },
   baseline: "25:3",
   metric: "answer_correctness",
   metrics: ["answer_correctness", "context_hit"],
@@ -87,6 +88,22 @@ describe("ComparePage", () => {
     renderPage("/compare");
     expect(await screen.findByText(/nenhuma combinação escolhida/i)).toBeInTheDocument();
     expect(client.getComparison).not.toHaveBeenCalled();
+  });
+
+  it("shows Friedman's test with the questions it used", async () => {
+    renderPage("/compare?items=25:3,37:12");
+    expect(await screen.findByText(/χ² = 33\.34/)).toHaveTextContent(
+      "Friedman: χ² = 33.34, 7 graus de liberdade, p < 0.001, sobre 36 perguntas",
+    );
+    expect(screen.getByText(/sem correção para comparações múltiplas/i)).toBeInTheDocument();
+  });
+
+  it("says why Friedman's test is missing", async () => {
+    vi.mocked(client.getComparison).mockResolvedValue({
+      ...comparison, friedman: { reason: "o teste precisa de ao menos duas Combinações pareadas" },
+    });
+    renderPage("/compare?items=25:3");
+    expect(await screen.findByText(/Friedman não calculado: o teste precisa/)).toBeInTheDocument();
   });
 
   it("shows the API's error", async () => {

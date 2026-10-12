@@ -464,7 +464,13 @@ export interface ComparisonItem {
   diff: ComparisonDiff | null;
 }
 
+/** Friedman over the questions every paired item scored, or why it could not run. */
+export type ComparisonFriedman =
+  | { chi2: number; df: number; p: number; n: number; reason?: undefined }
+  | { reason: string };
+
 export interface Comparison {
+  friedman: ComparisonFriedman;
   baseline: string;
   metric: string;
   metrics: string[];

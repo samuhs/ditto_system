@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.db.models import Experiment, ExperimentRun
 from app.experiments.orchestrator import ERROR_PREFIX
-from app.experiments.stats import paired_diff_ci
+from app.experiments.stats import friedman, paired_diff_ci
 
 DEFAULT_METRIC = "answer_correctness"
 
@@ -128,6 +128,18 @@ def _describe(item: _Item, metrics: list[str]) -> dict:
     }
 
 
+def _friedman(items: list[_Item], metric: str) -> dict:
+    """Friedman over the questions every paired item scored, or why it cannot run."""
+    if len(items) < 2:
+        return {"reason": "o teste precisa de ao menos duas Combinações pareadas"}
+    values = [item.values(metric) for item in items]
+    complete = [q for q in values[0] if all(q in v for v in values[1:])]
+    if not complete:
+        return {"reason": "nenhuma pergunta foi respondida por todas as Combinações pareadas"}
+    result = friedman([[v[q] for v in values] for q in complete])
+    return {"chi2": result.chi2, "df": result.df, "p": result.p, "n": result.n}
+
+
 def compare(
     session: Session, item_ids: list[str], baseline: str | None = None, metric: str | None = None,
 ) -> dict:
@@ -173,6 +185,7 @@ def compare(
         }
         rows.append(row)
     return {
+        "friedman": _friedman([item for item, _, _ in paired], metric),
         "baseline": str(baseline_id),
         "metric": metric,
         "metrics": metrics,

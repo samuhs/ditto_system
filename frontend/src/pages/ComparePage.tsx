@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { getComparison } from "../api/client";
-import type { Comparison, ComparisonDiff } from "../api/types";
+import type { Comparison, ComparisonDiff, ComparisonFriedman } from "../api/types";
 import { Errata, Note, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ScoreCell, Traits } from "../components/Score";
@@ -26,6 +26,24 @@ function DiffCell({ diff }: { diff: ComparisonDiff | null }) {
       {diff.significant && <span aria-label="significativa" title="IC 95% não cruza zero">*</span>}{" "}
       <span className="ditto-muted">[{diff.low.toFixed(3)}, {diff.high.toFixed(3)}]</span>
     </span>
+  );
+}
+
+function pValue(p: number): string {
+  return p < 0.001 ? "p < 0.001" : `p = ${p.toFixed(3)}`;
+}
+
+/** The global test: is there any difference among the paired Combinações? */
+function FriedmanLine({ friedman }: { friedman: ComparisonFriedman }) {
+  if (friedman.reason !== undefined) {
+    return <p className="ditto-muted">Friedman não calculado: {friedman.reason}.</p>;
+  }
+  return (
+    <p>
+      Friedman: χ² = {friedman.chi2.toFixed(2)}, {friedman.df}{" "}
+      {friedman.df === 1 ? "grau" : "graus"} de liberdade, {pValue(friedman.p)}, sobre{" "}
+      {friedman.n} {friedman.n === 1 ? "pergunta" : "perguntas"}
+    </p>
   );
 }
 
@@ -104,6 +122,12 @@ export function ComparePage() {
               </tbody>
             </table>
           </div>
+
+          <FriedmanLine friedman={data.friedman} />
+          <p className="ditto-muted">
+            Sem correção para comparações múltiplas: com muitas combinações, alguma marca * pode
+            ser acaso. O Friedman usa só as perguntas que todas as combinações pareadas responderam.
+          </p>
 
           {data.excluded.length > 0 && (
             <Note title="Fora da comparação">
