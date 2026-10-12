@@ -1,4 +1,6 @@
 """Tests for the embedding provider interface and implementations."""
+import pytest
+
 from app.core.embedding.base import Embedder, build_embedder, embedding_registry
 from app.core.embedding.gemini import GeminiEmbedder
 from app.core.embedding.huggingface import E5Embedder, ParaphraseEmbedder
