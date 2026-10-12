@@ -17,7 +17,11 @@ DEFAULT_METRIC = "answer_correctness"
 
 
 class ComparisonError(ValueError):
-    """A request that cannot be answered (unknown Experimento, baseline not among items)."""
+    """A request that cannot be answered (unknown Experimento, baseline not among items).
+
+    The message is an API error, in English; why an item is left out of a
+    Comparação is data the page shows, in PT-BR (`excluded[].reason`).
+    """
 
     def __init__(self, message: str, status: int = 422) -> None:
         super().__init__(message)
@@ -37,7 +41,7 @@ class ItemId:
             experiment, run = text.split(":")
             return cls(int(experiment), int(run))
         except ValueError as exc:
-            raise ComparisonError(f"item inválido: '{text}' (use experimento:combinação)") from exc
+            raise ComparisonError(f"invalid item '{text}': expected experiment_id:run_id") from exc
 
     def __str__(self) -> str:
         return f"{self.experiment_id}:{self.run_id}"
@@ -94,7 +98,7 @@ def _load(session: Session, ids: list[ItemId]) -> tuple[list[_Item], list[dict]]
     for item_id in dict.fromkeys(ids):
         experiment = experiments.get(item_id.experiment_id)
         if experiment is None:
-            raise ComparisonError(f"Experimento {item_id.experiment_id} não existe", status=404)
+            raise ComparisonError(f"experiment {item_id.experiment_id} not found", status=404)
         run = next((r for r in experiment.runs if r.id == item_id.run_id), None)
         if run is None:
             excluded.append({"id": str(item_id), "reason": (
@@ -107,11 +111,11 @@ def _load(session: Session, ids: list[ItemId]) -> tuple[list[_Item], list[dict]]
 
 
 def _default_metric(baseline: _Item) -> str:
+    """answer_correctness when the Linha de base has it, else the first metric it has."""
     metrics = baseline.metrics()
-    if DEFAULT_METRIC in metrics:
+    if DEFAULT_METRIC in metrics or not metrics:
         return DEFAULT_METRIC
-    configured = (baseline.experiment.config or {}).get("metrics", [])
-    return next((m for m in configured if m in metrics), metrics[0] if metrics else DEFAULT_METRIC)
+    return metrics[0]
 
 
 def _describe(item: _Item, metrics: list[str]) -> dict:
@@ -174,14 +178,14 @@ def compare(
     """The Comparação of these items (`experiment:run`) against the Linha de base."""
     ids = [ItemId.parse(i) for i in item_ids]
     if not ids:
-        raise ComparisonError("escolha ao menos uma Combinação")
+        raise ComparisonError("no items to compare")
     baseline_id = ItemId.parse(baseline) if baseline else ids[0]
     if baseline_id not in ids:
-        raise ComparisonError(f"a Linha de base {baseline_id} não está entre as Combinações")
+        raise ComparisonError(f"baseline {baseline_id} is not one of the items")
     items, excluded = _load(session, ids)
     reference = next((i for i in items if i.id == baseline_id), None)
     if reference is None:
-        raise ComparisonError(f"a Linha de base {baseline_id} não existe", status=404)
+        raise ComparisonError(f"baseline {baseline_id} not found", status=404)
     metric = metric or _default_metric(reference)
     reference_values = reference.values(metric)
 

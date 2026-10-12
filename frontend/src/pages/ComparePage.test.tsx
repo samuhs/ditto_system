@@ -222,6 +222,19 @@ describe("ComparePage", () => {
     );
   });
 
+  it("makes an item of another Base the Linha de base", async () => {
+    const user = userEvent.setup();
+    const { diff: _diff, ...rest } = item({ id: "50:2", experiment_id: 50, base: "faq", llm: "Gemma-4-E2B" });
+    vi.mocked(client.getComparison).mockResolvedValue({
+      ...comparison, other_bases: [{ ...rest, mean: { mean: 0.44, low: 0.38, high: 0.5 } }],
+    });
+    renderPage("/compare?items=25:3,50:2");
+    const table = await screen.findByRole("table", { name: /outras bases/i });
+    const row = within(table).getByText("Gemma-4-E2B").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: /usar como linha de base/i }));
+    await waitFor(() => expect(lastComparisonCall()).toEqual([["25:3", "50:2"], "50:2", null]));
+  });
+
   it("shows the API's error", async () => {
     vi.mocked(client.getComparison).mockRejectedValue(new Error("Experimento 999 não existe"));
     renderPage("/compare?items=999:1");

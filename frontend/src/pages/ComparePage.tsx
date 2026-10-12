@@ -314,6 +314,7 @@ export function ComparePage() {
                       <th>Experimento</th>
                       <th className="ditto-num">Perguntas</th>
                       <th>{term("metric", data.metric).name} [IC 95%]</th>
+                      <th><span className="visually-hidden">Ações</span></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -331,6 +332,14 @@ export function ComparePage() {
                           <span className="ditto-muted">
                             [{it.mean.low.toFixed(3)}, {it.mean.high.toFixed(3)}]
                           </span>
+                        </td>
+                        <td className="ditto-row-actions">
+                          <Button size="xs" variant="subtle" onClick={() => update({ baseline: it.id })}>
+                            Usar como Linha de base
+                          </Button>
+                          <Button size="xs" variant="subtle" onClick={() => toggle(it.id)}>
+                            Remover
+                          </Button>
                         </td>
                       </tr>
                     ))}
