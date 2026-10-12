@@ -1,5 +1,6 @@
 import { MantineProvider } from "@mantine/core";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -66,7 +67,26 @@ async function mainTable() {
 
 beforeEach(() => {
   vi.mocked(client.getComparison).mockResolvedValue(comparison);
+  vi.mocked(client.listBases).mockResolvedValue([
+    { name: "guia", indexes: [], in_use: null }, { name: "faq", indexes: [], in_use: null },
+  ]);
+  vi.mocked(client.listExperiments).mockResolvedValue({
+    items: [{ id: 37, name: "fase-3", status: "done", base: "guia", created_at: "2026-10-10T00:00:00+00:00" }],
+    total: 1, page: 1, page_size: 100,
+  });
+  vi.mocked(client.getExperiment).mockResolvedValue({
+    id: 37, name: "fase-3", status: "done", results: [],
+    runs: [
+      { id: 12, chunking: "markdown", embedding: "e5", rag: "naive", retriever: "similarity", llm: "Qwen3.5-4B", status: "done" },
+      { id: 13, chunking: "markdown", embedding: "e5", rag: "agentic", retriever: "similarity", llm: "Qwen3.5-4B", status: "done" },
+    ],
+  } as Awaited<ReturnType<typeof client.getExperiment>>);
 });
+
+function lastComparisonCall() {
+  const calls = vi.mocked(client.getComparison).mock.calls;
+  return calls[calls.length - 1];
+}
 
 describe("ComparePage", () => {
   it("asks the API for the items, Linha de base and metric in the URL", async () => {
@@ -144,6 +164,48 @@ describe("ComparePage", () => {
     expect(within(row).getByText("faq")).toBeInTheDocument();
     expect(within(row).getByText("[0.380, 0.500]")).toBeInTheDocument();
     expect(within(row).getByText("40")).toBeInTheDocument();
+  });
+
+  it("adds Combinações picked by Base, then Experimento", async () => {
+    const user = userEvent.setup();
+    renderPage("/compare");
+    await user.selectOptions(await screen.findByRole("combobox", { name: "Base" }), "guia");
+    expect(client.listExperiments).toHaveBeenCalledWith(1, 100, "guia");
+    await user.selectOptions(await screen.findByRole("combobox", { name: "Experimento" }), "37");
+    await user.click(await screen.findByRole("checkbox", { name: /Simples.*Qwen3\.5-4B/ }));
+    await waitFor(() => expect(lastComparisonCall()).toEqual([["37:12"], null, null]));
+  });
+
+  it("removes an item", async () => {
+    const user = userEvent.setup();
+    renderPage("/compare?items=25:3,37:12");
+    const row = (await mainTable()).getByText("Qwen3.5-4B").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: /remover/i }));
+    await waitFor(() => expect(lastComparisonCall()).toEqual([["25:3"], null, null]));
+  });
+
+  it("removing the Linha de base falls back to the first item", async () => {
+    const user = userEvent.setup();
+    renderPage("/compare?items=25:3,37:12&baseline=25:3");
+    const row = (await mainTable()).getByText("Qwen2.5-3B").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: /remover/i }));
+    await waitFor(() => expect(lastComparisonCall()).toEqual([["37:12"], null, null]));
+  });
+
+  it("makes any row the Linha de base", async () => {
+    const user = userEvent.setup();
+    renderPage("/compare?items=25:3,37:12");
+    const row = (await mainTable()).getByText("Qwen3.5-4B").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: /usar como linha de base/i }));
+    await waitFor(() => expect(lastComparisonCall()).toEqual([["25:3", "37:12"], "37:12", null]));
+  });
+
+  it("changes the main metric", async () => {
+    const user = userEvent.setup();
+    renderPage("/compare?items=25:3,37:12");
+    await mainTable();
+    await user.selectOptions(screen.getByRole("combobox", { name: /métrica principal/i }), "context_hit");
+    await waitFor(() => expect(lastComparisonCall()).toEqual([["25:3", "37:12"], null, "context_hit"]));
   });
 
   it("shows the API's error", async () => {

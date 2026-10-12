@@ -520,19 +520,27 @@ def resume_experiment_route(
 def list_experiments(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    base: str | None = Query(None, description="only the Experimentos of this Base"),
     deps: ExperimentDeps = Depends(get_experiment_deps),
 ) -> dict:
     """List experiments (paginated), most recent first."""
     session = deps.session_factory()
     try:
         query = session.query(Experiment).order_by(Experiment.id.desc())
-        total = query.count()
-        rows = query.offset((page - 1) * page_size).limit(page_size).all()
+        if base is None:
+            total = query.count()
+            rows = query.offset((page - 1) * page_size).limit(page_size).all()
+        else:
+            # The Base lives in the JSON config: filtered here, not portably in SQL.
+            matching = [e for e in query if (e.config or {}).get("base") == base]
+            total = len(matching)
+            rows = matching[(page - 1) * page_size:page * page_size]
         items = [
             {
                 "id": e.id,
                 "name": e.name,
                 "status": e.status,
+                "base": (e.config or {}).get("base"),
                 "created_at": _iso_utc(e.created_at),
             }
             for e in rows
@@ -589,6 +597,15 @@ def get_experiment(
             "prompts": cfg.get("prompts"),
             # API memory at every phase change (staged runs), oldest first.
             "memory_log": cfg.get("memory_log", []),
+            # Each Combinação with its id (the Comparação's `experiment:run` items).
+            "runs": [
+                {
+                    "id": run.id, "chunking": run.chunking, "embedding": run.embedding,
+                    "rag": run.rag_technique, "retriever": run.retriever,
+                    "llm": run.llm or "gemini", "status": run.status,
+                }
+                for run in experiment.runs
+            ],
             "results": results,
         }
     finally:

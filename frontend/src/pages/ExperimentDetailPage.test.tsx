@@ -772,4 +772,19 @@ describe("ExperimentDetailPage", () => {
     await screen.findAllByText(/antigo/);
     expect(screen.queryByText(/temperatura|até \d+ tokens/i)).not.toBeInTheDocument();
   });
+
+  it("opens a Comparação of its Combinações", async () => {
+    const detail = await client.getExperiment(7);
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      ...detail,
+      runs: [
+        { id: 1, chunking: "recursive", embedding: "gemini", rag: "naive", retriever: "similarity", llm: "gemini", status: "done" },
+        { id: 2, chunking: "token", embedding: "gemini", rag: "agentic", retriever: "mmr", llm: "ollama", status: "done" },
+      ],
+    });
+    renderPage();
+    expect(await screen.findByRole("link", { name: "Comparar" })).toHaveAttribute(
+      "href", "/compare?items=7:1,7:2",
+    );
+  });
 });

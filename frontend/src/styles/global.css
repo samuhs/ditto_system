@@ -1438,3 +1438,6 @@ a { color: inherit; text-underline-offset: 3px; }
 /* Comparação: difference against the Linha de base, CI in muted ink */
 .ditto-diff { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ditto-diff[data-significant] b { color: var(--ink); }
+.ditto-compare-picker { margin-bottom: 20px; }
+.ditto-compare-runs { display: grid; gap: 8px; margin-top: 12px; }
+.ditto-row-actions { white-space: nowrap; }

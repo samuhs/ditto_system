@@ -139,8 +139,9 @@ export async function getComparison(
   return asJson<Comparison>(await fetch(`${BASE}/comparisons?${params}`));
 }
 
-export async function listExperiments(page = 1, pageSize = 20): Promise<ExperimentList> {
-  return asJson<ExperimentList>(await fetch(`${BASE}/experiments?page=${page}&page_size=${pageSize}`));
+export async function listExperiments(page = 1, pageSize = 20, base?: string): Promise<ExperimentList> {
+  const query = base ? `&base=${encodeURIComponent(base)}` : "";
+  return asJson<ExperimentList>(await fetch(`${BASE}/experiments?page=${page}&page_size=${pageSize}${query}`));
 }
 
 export async function getPrompts(): Promise<PromptsResponse> {

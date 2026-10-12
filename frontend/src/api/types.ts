@@ -104,7 +104,20 @@ export interface ExperimentSummary {
   id: number;
   name: string;
   status: string;
+  /** The Base it ran on (null on experiments with no recorded config). */
+  base?: string | null;
   created_at: string;
+}
+
+/** One Combinação of an Experimento, with the id a Comparação refers to it by. */
+export interface ExperimentRunRef {
+  id: number;
+  chunking: string;
+  embedding: string;
+  rag: string;
+  retriever: string;
+  llm: string;
+  status: string;
 }
 
 export interface ExperimentList {
@@ -208,6 +221,7 @@ export interface ExperimentDetail {
   id: number;
   name: string;
   status: string;
+  runs?: ExperimentRunRef[];
   created_at?: string;
   finished_at?: string;
   pause_requested?: boolean;

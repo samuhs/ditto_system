@@ -2,7 +2,7 @@ import {
   Button, Drawer, Loader, MultiSelect, NumberInput, Pagination, SegmentedControl, Select, Tabs,
 } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { exportExperimentUrl, getExperiment, pauseExperiment, resumeExperiment } from "../api/client";
 import type {
@@ -398,6 +398,16 @@ export function ExperimentDetailPage() {
                   {resuming ? "Retomando…" : "Retomar"}
                 </Button>
               </>
+            )}
+            {detail.runs && detail.runs.length > 0 && (
+              <Button
+                component={Link}
+                to={`/compare?items=${detail.runs.map((r) => `${detail.id}:${r.id}`).join(",")}`}
+                size="sm"
+                variant="default"
+              >
+                Comparar
+              </Button>
             )}
             <Button
               component="a"

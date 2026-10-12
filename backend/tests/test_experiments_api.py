@@ -147,6 +147,30 @@ def test_list_experiments_paginated(client):
     assert item["created_at"].endswith("+00:00")
 
 
+def test_list_experiments_of_one_base(client):
+    """The Comparar picker lists the Experimentos of the chosen Base."""
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    for name, base in (("guia-1", "guia"), ("faq-1", "faq"), ("guia-2", "guia")):
+        session.add(Experiment(name=name, status="done", config={"base": base}))
+    session.commit()
+    session.close()
+
+    body = client.get("/experiments?base=guia").json()
+    assert [i["name"] for i in body["items"]] == ["guia-2", "guia-1"]
+    assert body["total"] == 2
+    assert {i["base"] for i in body["items"]} == {"guia"}
+
+
+def test_get_experiment_lists_its_combinacoes(client):
+    """Each Combinação with its id, so the page can open a Comparação of them."""
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]
+    [run] = client.get(f"/experiments/{exp_id}").json()["runs"]
+    assert set(run) == {"id", "chunking", "embedding", "rag", "retriever", "llm", "status"}
+    assert run["rag"] == "naive" and run["status"] == "done"
+
+
 def test_get_experiment_includes_timestamps(client):
     files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
     exp_id = client.post("/experiments", data={"config": _config_payload()}, files=files).json()["id"]

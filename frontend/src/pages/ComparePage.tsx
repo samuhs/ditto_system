@@ -1,9 +1,11 @@
-import { Loader } from "@mantine/core";
+import { Button, Checkbox, Loader, NativeSelect } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { getComparison } from "../api/client";
-import type { Comparison, ComparisonDiff, ComparisonFriedman } from "../api/types";
+import { getComparison, getExperiment, listBases, listExperiments } from "../api/client";
+import type {
+  Comparison, ComparisonDiff, ComparisonFriedman, ExperimentRunRef, ExperimentSummary,
+} from "../api/types";
 import { Errata, Note, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ScoreCell, Traits } from "../components/Score";
@@ -47,8 +49,79 @@ function FriedmanLine({ friedman }: { friedman: ComparisonFriedman }) {
   );
 }
 
+function runLabel(run: ExperimentRunRef): string {
+  const index = run.rag === "closed_book" || run.rag === "oracle"
+    ? "" : ` · ${term("chunking", run.chunking).name} × ${term("embedding", run.embedding).name}`;
+  return `${term("rag", run.rag).name} · ${term("retriever", run.retriever).name} · ${run.llm}${index}`;
+}
+
+/** Base → Experimento → Combinações: ticking a Combinação adds it to the Comparação. */
+function Picker({ items, onToggle }: { items: string[]; onToggle: (id: string) => void }) {
+  const [bases, setBases] = useState<string[]>([]);
+  const [base, setBase] = useState("");
+  const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
+  const [experimentId, setExperimentId] = useState("");
+  const [runs, setRuns] = useState<ExperimentRunRef[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    listBases().then((b) => setBases(b.map((x) => x.name))).catch((e) => setError(errorText(e)));
+  }, []);
+  useEffect(() => {
+    setExperiments([]);
+    setExperimentId("");
+    if (!base) return;
+    listExperiments(1, 100, base).then((l) => setExperiments(l.items)).catch((e) => setError(errorText(e)));
+  }, [base]);
+  useEffect(() => {
+    setRuns([]);
+    if (!experimentId) return;
+    getExperiment(Number(experimentId)).then((d) => setRuns(d.runs ?? [])).catch((e) => setError(errorText(e)));
+  }, [experimentId]);
+
+  return (
+    <section className="ditto-compare-picker" aria-label="Adicionar combinações">
+      <div className="ditto-toolbar">
+        <NativeSelect
+          label="Base"
+          value={base}
+          onChange={(e) => setBase(e.currentTarget.value)}
+          data={[{ value: "", label: "Escolha a Base" }, ...bases.map((b) => ({ value: b, label: b }))]}
+        />
+        {base && (
+          <NativeSelect
+            label="Experimento"
+            value={experimentId}
+            onChange={(e) => setExperimentId(e.currentTarget.value)}
+            data={[
+              { value: "", label: experiments.length ? "Escolha o experimento" : "Nenhum experimento nesta Base" },
+              ...experiments.map((x) => ({ value: String(x.id), label: `${x.name} (#${x.id})` })),
+            ]}
+          />
+        )}
+      </div>
+      {runs.length > 0 && (
+        <div className="ditto-compare-runs">
+          {runs.map((run) => {
+            const id = `${experimentId}:${run.id}`;
+            return (
+              <Checkbox
+                key={id}
+                label={runLabel(run)}
+                checked={items.includes(id)}
+                onChange={() => onToggle(id)}
+              />
+            );
+          })}
+        </div>
+      )}
+      {error && <Errata title="Não foi possível carregar as opções">{error}</Errata>}
+    </section>
+  );
+}
+
 export function ComparePage() {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const items = useMemo(() => itemsOf(params), [params]);
   const baseline = params.get("baseline");
   const metric = params.get("metric");
@@ -66,6 +139,23 @@ export function ComparePage() {
 
   const others = data ? data.metrics.filter((m) => m !== data.metric) : [];
 
+  /** Writes the Comparação back to the URL: the link always reopens what is shown. */
+  function update(next: { items?: string[]; baseline?: string | null; metric?: string | null }) {
+    const nextItems = next.items ?? items;
+    let nextBaseline = next.baseline !== undefined ? next.baseline : baseline;
+    if (nextBaseline && !nextItems.includes(nextBaseline)) nextBaseline = null;
+    const nextMetric = next.metric !== undefined ? next.metric : metric;
+    const query = new URLSearchParams();
+    if (nextItems.length) query.set("items", nextItems.join(","));
+    if (nextBaseline) query.set("baseline", nextBaseline);
+    if (nextMetric) query.set("metric", nextMetric);
+    setParams(query);
+  }
+
+  function toggle(id: string) {
+    update({ items: items.includes(id) ? items.filter((i) => i !== id) : [...items, id] });
+  }
+
   return (
     <div>
       <PageHeader
@@ -73,9 +163,12 @@ export function ComparePage() {
         lede="Combinações de um ou mais experimentos medidas contra uma Linha de base, pergunta a pergunta, com intervalo de confiança de 95%."
       />
 
+      <Picker items={items} onToggle={toggle} />
+
       {items.length === 0 && (
         <Note title="Nenhuma combinação escolhida">
-          Abra um experimento em Resultados e use “Comparar” para começar.
+          Escolha uma Base e um experimento acima, ou abra um experimento em Resultados e use
+          “Comparar”. A primeira combinação marcada é a Linha de base.
         </Note>
       )}
 
@@ -84,6 +177,14 @@ export function ComparePage() {
 
       {data && (
         <section aria-labelledby="comparison-caption">
+          <div className="ditto-toolbar">
+            <NativeSelect
+              label="Métrica principal"
+              value={data.metric}
+              onChange={(e) => update({ metric: e.currentTarget.value })}
+              data={data.metrics.map((m) => ({ value: m, label: term("metric", m).name }))}
+            />
+          </div>
           <p id="comparison-caption" className="ditto-muted">
             Base {data.base} · métrica principal {term("metric", data.metric).name}. Diferença = média
             da combinação menos a da Linha de base nas perguntas que as duas responderam; * quando o
@@ -101,6 +202,7 @@ export function ComparePage() {
                   {others.map((m) => (
                     <th key={m} className="ditto-num">{term("metric", m).name}</th>
                   ))}
+                  <th><span className="visually-hidden">Ações</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -117,6 +219,16 @@ export function ComparePage() {
                     {others.map((m) => (
                       <td key={m} className="ditto-num"><ScoreCell value={it.means[m] ?? null} /></td>
                     ))}
+                    <td className="ditto-row-actions">
+                      {it.diff !== null && (
+                        <Button size="xs" variant="subtle" onClick={() => update({ baseline: it.id })}>
+                          Usar como Linha de base
+                        </Button>
+                      )}
+                      <Button size="xs" variant="subtle" onClick={() => toggle(it.id)}>
+                        Remover
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
