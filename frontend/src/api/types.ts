@@ -474,7 +474,13 @@ export interface ComparisonTypeCell extends ComparisonDiff {
   n: number;
 }
 
+/** An item of another Base: its own mean and CI, never paired with the Linha de base. */
+export interface ComparisonUnpaired extends Omit<ComparisonItem, "diff"> {
+  mean: { mean: number; low: number; high: number };
+}
+
 export interface Comparison {
+  other_bases: ComparisonUnpaired[];
   friedman: ComparisonFriedman;
   /** Each non-baseline item's difference per Tipo de pergunta; null where none paired. */
   by_type: { types: string[]; rows: { id: string; cells: Record<string, ComparisonTypeCell | null> }[] };

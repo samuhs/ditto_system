@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.db.models import Experiment, ExperimentRun
 from app.experiments.orchestrator import ERROR_PREFIX
 from app.experiments.schemas import QUESTION_TYPES
-from app.experiments.stats import friedman, paired_diff_ci
+from app.experiments.stats import friedman, mean_ci, paired_diff_ci
 
 DEFAULT_METRIC = "answer_correctness"
 
@@ -186,12 +186,13 @@ def compare(
     reference_values = reference.values(metric)
 
     paired: list[tuple[_Item, int, object]] = []
+    unpaired: list[_Item] = []  # another Base: side by side, never paired
     for item in items:
         if item is reference:
             paired.append((item, len(reference_values), None))
             continue
         if item.base != reference.base:
-            excluded.append({"id": str(item.id), "reason": f"outra Base ({item.base})"})
+            unpaired.append(item)
             continue
         values = item.values(metric)
         common = [q for q in reference_values if q in values]
@@ -212,7 +213,19 @@ def compare(
             "mean": diff.mean, "low": diff.low, "high": diff.high, "significant": diff.significant,
         }
         rows.append(row)
+    other_bases = []
+    for item in unpaired:
+        values = list(item.values(metric).values())
+        if not values:
+            excluded.append({"id": str(item.id), "reason": f"nenhuma resposta com nota em {metric}"})
+            continue
+        ci = mean_ci(values)
+        row = _describe(item, metrics)
+        row["n"] = len(values)
+        row["mean"] = {"mean": ci.mean, "low": ci.low, "high": ci.high}
+        other_bases.append(row)
     return {
+        "other_bases": other_bases,
         "friedman": _friedman([item for item, _, _ in paired], metric),
         "by_type": _by_type(reference, [i for i, _, _ in paired if i is not reference], metric),
         "baseline": str(baseline_id),

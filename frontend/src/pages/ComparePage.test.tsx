@@ -32,6 +32,7 @@ function item(over: Partial<ComparisonItem>): ComparisonItem {
 }
 
 const comparison: Comparison = {
+  other_bases: [],
   friedman: { chi2: 33.34, df: 7, p: 0.0000229, n: 36 },
   by_type: {
     types: ["simples", "ponte"],
@@ -130,6 +131,19 @@ describe("ComparePage", () => {
     expect(within(row).getByText("+0.120")).toBeInTheDocument();
     expect(within(row).getByText("n = 20")).toBeInTheDocument();
     expect(within(row).getByText("—")).toBeInTheDocument();
+  });
+
+  it("shows items of another Base apart, with their own mean and CI", async () => {
+    const { diff: _diff, ...rest } = item({ id: "50:2", experiment_id: 50, experiment_name: "faq-1", base: "faq", llm: "Gemma-4-E2B", n: 40 });
+    vi.mocked(client.getComparison).mockResolvedValue({
+      ...comparison, other_bases: [{ ...rest, mean: { mean: 0.44, low: 0.38, high: 0.5 } }],
+    });
+    renderPage("/compare?items=25:3,37:12,50:2");
+    const table = await screen.findByRole("table", { name: /outras bases/i });
+    const row = within(table).getByText("Gemma-4-E2B").closest("tr")!;
+    expect(within(row).getByText("faq")).toBeInTheDocument();
+    expect(within(row).getByText("[0.380, 0.500]")).toBeInTheDocument();
+    expect(within(row).getByText("40")).toBeInTheDocument();
   });
 
   it("shows the API's error", async () => {

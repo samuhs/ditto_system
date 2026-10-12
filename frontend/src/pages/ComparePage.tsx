@@ -168,6 +168,50 @@ export function ComparePage() {
             </>
           )}
 
+          {data.other_bases.length > 0 && (
+            <>
+              <h2 className="ditto-h3" id="other-bases-caption">
+                Outras Bases (sem pareamento)
+              </h2>
+              <p className="ditto-muted">
+                Perguntas diferentes não se comparam uma a uma: aqui só a média de cada combinação,
+                com o intervalo de 95% dela.
+              </p>
+              <div className="ditto-table-wrap">
+                <table className="ditto-table" data-stack="true" aria-labelledby="other-bases-caption">
+                  <thead>
+                    <tr>
+                      <th>Combinação</th>
+                      <th>Base</th>
+                      <th>Experimento</th>
+                      <th className="ditto-num">Perguntas</th>
+                      <th>{term("metric", data.metric).name} [IC 95%]</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.other_bases.map((it) => (
+                      <tr key={it.id}>
+                        <td className="ditto-cell-combo"><Traits combo={it} /></td>
+                        <td>{it.base}</td>
+                        <td>
+                          <Link to={`/results/${it.experiment_id}`}>{it.experiment_name}</Link>
+                          {it.partial && <> <span className="ditto-choice-tag">parcial</span></>}
+                        </td>
+                        <td className="ditto-num">{it.n}</td>
+                        <td className="ditto-diff">
+                          <b>{it.mean.mean.toFixed(3)}</b>{" "}
+                          <span className="ditto-muted">
+                            [{it.mean.low.toFixed(3)}, {it.mean.high.toFixed(3)}]
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
           <FriedmanLine friedman={data.friedman} />
           <p className="ditto-muted">
             Sem correção para comparações múltiplas: com muitas combinações, alguma marca * pode

@@ -210,3 +210,27 @@ def test_the_difference_by_tipo_de_pergunta(env):
     assert row["cells"]["simples"]["n"] == 2 and row["cells"]["simples"]["significant"]
     assert row["cells"]["ponte"]["mean"] == pytest.approx(-0.1)
     assert row["cells"]["comparacao"] is None
+
+
+def test_items_of_another_base_are_shown_unpaired(env):
+    client, sf = env
+    guia, [g] = _experiment(sf, "guia", [("a", "naive", _ac(0.5, 0.5))])
+    faq, [f] = _experiment(sf, "faq", [("a", "naive", _ac(0.2, 0.4, 0.6, 0.8))], base="faq")
+
+    body = client.get(f"/comparisons?items={guia}:{g},{faq}:{f}").json()
+    assert [i["id"] for i in body["items"]] == [f"{guia}:{g}"]
+    assert body["excluded"] == []
+    [other] = body["other_bases"]
+    assert other["id"] == f"{faq}:{f}" and other["base"] == "faq" and other["n"] == 4
+    assert other["mean"]["mean"] == pytest.approx(0.5)
+    assert other["mean"]["low"] < 0.5 < other["mean"]["high"]
+    assert "diff" not in other
+
+
+def test_the_linha_de_base_decides_which_base_is_paired(env):
+    client, sf = env
+    guia, [g] = _experiment(sf, "guia", [("a", "naive", _ac(0.5, 0.5))])
+    faq, [f] = _experiment(sf, "faq", [("a", "naive", _ac(0.2, 0.4))], base="faq")
+    body = client.get(f"/comparisons?items={guia}:{g},{faq}:{f}&baseline={faq}:{f}").json()
+    assert body["base"] == "faq"
+    assert [i["id"] for i in body["other_bases"]] == [f"{guia}:{g}"]
