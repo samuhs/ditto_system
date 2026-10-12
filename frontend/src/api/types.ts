@@ -469,8 +469,15 @@ export type ComparisonFriedman =
   | { chi2: number; df: number; p: number; n: number; reason?: undefined }
   | { reason: string };
 
+/** A paired difference in one Tipo de pergunta, with its question count. */
+export interface ComparisonTypeCell extends ComparisonDiff {
+  n: number;
+}
+
 export interface Comparison {
   friedman: ComparisonFriedman;
+  /** Each non-baseline item's difference per Tipo de pergunta; null where none paired. */
+  by_type: { types: string[]; rows: { id: string; cells: Record<string, ComparisonTypeCell | null> }[] };
   baseline: string;
   metric: string;
   metrics: string[];

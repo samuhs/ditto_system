@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.db.models import Experiment, ExperimentRun
 from app.experiments.orchestrator import ERROR_PREFIX
+from app.experiments.schemas import QUESTION_TYPES
 from app.experiments.stats import friedman, paired_diff_ci
 
 DEFAULT_METRIC = "answer_correctness"
@@ -49,6 +50,8 @@ class _Item:
     run: ExperimentRun
     # question -> metric -> mean score over that question's valid answers, in answer order.
     scores: dict[str, dict[str, float]]
+    # question -> Tipo de pergunta (results stored before annotations: "simples").
+    types: dict[str, str]
 
     @property
     def base(self) -> str:
@@ -98,7 +101,8 @@ def _load(session: Session, ids: list[ItemId]) -> tuple[list[_Item], list[dict]]
                 f"a Combinação {item_id.run_id} não existe no Experimento {experiment.name}"
             )})
             continue
-        items.append(_Item(item_id, experiment, run, _question_scores(run)))
+        types = {r.question: r.question_type or "simples" for r in run.results}
+        items.append(_Item(item_id, experiment, run, _question_scores(run), types))
     return items, excluded
 
 
@@ -126,6 +130,30 @@ def _describe(item: _Item, metrics: list[str]) -> dict:
         "partial": item.experiment.status != "done",
         "means": {m: item.mean(m) for m in metrics},
     }
+
+
+def _interval(diff, n: int) -> dict:
+    return {"mean": diff.mean, "low": diff.low, "high": diff.high,
+            "significant": diff.significant, "n": n}
+
+
+def _by_type(reference: _Item, items: list[_Item], metric: str) -> dict:
+    """Each item's paired difference per Tipo de pergunta (the Linha de base's annotation)."""
+    reference_values = reference.values(metric)
+    present = set(reference.types[q] for q in reference_values)
+    order = list(QUESTION_TYPES)
+    types = sorted(present, key=lambda t: (order.index(t) if t in order else len(order), t))
+    rows = []
+    for item in items:
+        values = item.values(metric)
+        cells = {}
+        for qtype in types:
+            common = [q for q in reference_values if reference.types[q] == qtype and q in values]
+            cells[qtype] = _interval(
+                paired_diff_ci([values[q] - reference_values[q] for q in common]), len(common),
+            ) if common else None
+        rows.append({"id": str(item.id), "cells": cells})
+    return {"types": types, "rows": rows}
 
 
 def _friedman(items: list[_Item], metric: str) -> dict:
@@ -186,6 +214,7 @@ def compare(
         rows.append(row)
     return {
         "friedman": _friedman([item for item, _, _ in paired], metric),
+        "by_type": _by_type(reference, [i for i, _, _ in paired if i is not reference], metric),
         "baseline": str(baseline_id),
         "metric": metric,
         "metrics": metrics,

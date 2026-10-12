@@ -44,7 +44,7 @@ def _experiment(session_factory, name, runs, base="guia", status="done",
         run = ExperimentRun(chunking="markdown", embedding="e5", rag_technique=rag,
                             retriever="similarity", llm=llm, status="done")
         for question, value in answers.items():
-            qtype = "ponte" if question.startswith("p") else "simples"
+            qtype = {"p": "ponte", "c": "comparacao"}.get(question[0], "simples")
             if isinstance(value, str):
                 run.results.append(RunResult(question=question, generated_answer=value, scores={},
                                              question_type=qtype))
@@ -192,3 +192,21 @@ def test_friedman_needs_a_question_every_item_answered(env):
     items = ",".join(f"{exp}:{r}" for r in runs)
     friedman = client.get(f"/comparisons?items={items}").json()["friedman"]
     assert "todas" in friedman["reason"]
+
+
+def test_the_difference_by_tipo_de_pergunta(env):
+    """Better on single-passage questions, worse on ponte; comparacao never paired."""
+    client, sf = env
+    ac = lambda v: {"answer_correctness": v}  # noqa: E731
+    exp, [a, b] = _experiment(sf, "por-tipo", [
+        ("a", "naive", {"q1": ac(0.5), "q2": ac(0.5), "p1": ac(0.5), "p2": ac(0.5), "c1": ac(0.5)}),
+        ("b", "agentic", {"q1": ac(0.7), "q2": ac(0.7), "p1": ac(0.4), "p2": ac(0.4)}),
+    ])
+    by_type = client.get(f"/comparisons?items={exp}:{a},{exp}:{b}").json()["by_type"]
+    assert by_type["types"] == ["simples", "ponte", "comparacao"]
+    [row] = by_type["rows"]
+    assert row["id"] == f"{exp}:{b}"
+    assert row["cells"]["simples"]["mean"] == pytest.approx(0.2)
+    assert row["cells"]["simples"]["n"] == 2 and row["cells"]["simples"]["significant"]
+    assert row["cells"]["ponte"]["mean"] == pytest.approx(-0.1)
+    assert row["cells"]["comparacao"] is None

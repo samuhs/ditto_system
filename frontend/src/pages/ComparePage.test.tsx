@@ -33,6 +33,16 @@ function item(over: Partial<ComparisonItem>): ComparisonItem {
 
 const comparison: Comparison = {
   friedman: { chi2: 33.34, df: 7, p: 0.0000229, n: 36 },
+  by_type: {
+    types: ["simples", "ponte"],
+    rows: [{
+      id: "37:12",
+      cells: {
+        simples: { mean: 0.12, low: 0.05, high: 0.2, significant: true, n: 20 },
+        ponte: null,
+      },
+    }],
+  },
   baseline: "25:3",
   metric: "answer_correctness",
   metrics: ["answer_correctness", "context_hit"],
@@ -48,6 +58,11 @@ const comparison: Comparison = {
   excluded: [{ id: "40:1", reason: "nenhuma pergunta em comum com a Linha de base" }],
 };
 
+/** The paired table (the by-type table repeats the Combinações). */
+async function mainTable() {
+  return within(await screen.findByRole("table", { name: /métrica principal/i }));
+}
+
 beforeEach(() => {
   vi.mocked(client.getComparison).mockResolvedValue(comparison);
 });
@@ -55,26 +70,27 @@ beforeEach(() => {
 describe("ComparePage", () => {
   it("asks the API for the items, Linha de base and metric in the URL", async () => {
     renderPage("/compare?items=25:3,37:12&baseline=25:3&metric=answer_correctness");
-    await screen.findByText("Qwen3.5-4B");
+    await mainTable();
     expect(client.getComparison).toHaveBeenCalledWith(["25:3", "37:12"], "25:3", "answer_correctness");
   });
 
   it("shows each item's difference against the Linha de base with its CI", async () => {
     renderPage("/compare?items=25:3,37:12");
-    const row = (await screen.findByText("Qwen3.5-4B")).closest("tr")!;
+    const table = await mainTable();
+    const row = table.getByText("Qwen3.5-4B").closest("tr")!;
     expect(within(row).getByText("+0.089")).toBeInTheDocument();
     expect(within(row).getByText("[0.041, 0.137]")).toBeInTheDocument();
     expect(within(row).getByLabelText("significativa")).toBeInTheDocument();
     expect(within(row).getByText("parcial")).toBeInTheDocument();
     expect(within(row).getByText("34")).toBeInTheDocument();
     expect(within(row).getByRole("link", { name: /fase-3/ })).toHaveAttribute("href", "/results/37");
-    const baseline = screen.getByText("Qwen2.5-3B").closest("tr")!;
+    const baseline = table.getByText("Qwen2.5-3B").closest("tr")!;
     expect(within(baseline).getByText("Linha de base")).toBeInTheDocument();
   });
 
   it("shows a metric an item lacks as missing, not zero", async () => {
     renderPage("/compare?items=25:3,37:12");
-    const row = (await screen.findByText("Qwen3.5-4B")).closest("tr")!;
+    const row = (await mainTable()).getByText("Qwen3.5-4B").closest("tr")!;
     expect(within(row).getAllByText("—").length).toBeGreaterThan(0);
   });
 
@@ -104,6 +120,16 @@ describe("ComparePage", () => {
     });
     renderPage("/compare?items=25:3");
     expect(await screen.findByText(/Friedman não calculado: o teste precisa/)).toBeInTheDocument();
+  });
+
+  it("shows the difference by Tipo de pergunta", async () => {
+    renderPage("/compare?items=25:3,37:12");
+    const table = await screen.findByRole("table", { name: /por tipo de pergunta/i });
+    expect(within(table).getByRole("columnheader", { name: "Um trecho" })).toBeInTheDocument();
+    const row = within(table).getByText("Qwen3.5-4B").closest("tr")!;
+    expect(within(row).getByText("+0.120")).toBeInTheDocument();
+    expect(within(row).getByText("n = 20")).toBeInTheDocument();
+    expect(within(row).getByText("—")).toBeInTheDocument();
   });
 
   it("shows the API's error", async () => {

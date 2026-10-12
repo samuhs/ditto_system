@@ -7,7 +7,7 @@ import type { Comparison, ComparisonDiff, ComparisonFriedman } from "../api/type
 import { Errata, Note, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { ScoreCell, Traits } from "../components/Score";
-import { term } from "../glossary";
+import { questionType, term } from "../glossary";
 
 /** Items of the Comparação in the URL: `?items=25:3,37:12&baseline=25:3&metric=...`. */
 function itemsOf(params: URLSearchParams): string[] {
@@ -122,6 +122,51 @@ export function ComparePage() {
               </tbody>
             </table>
           </div>
+
+          {data.by_type.rows.length > 0 && (
+            <>
+              <h2 className="ditto-h3" id="by-type-caption">
+                Diferença por tipo de pergunta
+              </h2>
+              <div className="ditto-table-wrap">
+                <table className="ditto-table" data-stack="true" aria-labelledby="by-type-caption">
+                  <thead>
+                    <tr>
+                      <th>Combinação</th>
+                      {data.by_type.types.map((t) => (
+                        <th key={t}>{questionType(t).name}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.by_type.rows.map((row) => {
+                      const it = data.items.find((i) => i.id === row.id);
+                      return (
+                        <tr key={row.id}>
+                          <td className="ditto-cell-combo">{it ? <Traits combo={it} /> : row.id}</td>
+                          {data.by_type.types.map((t) => {
+                            const cell = row.cells[t];
+                            return (
+                              <td key={t}>
+                                {cell ? (
+                                  <>
+                                    <DiffCell diff={cell} />{" "}
+                                    <span className="ditto-muted">n = {cell.n}</span>
+                                  </>
+                                ) : (
+                                  <span className="ditto-score-na">—</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           <FriedmanLine friedman={data.friedman} />
           <p className="ditto-muted">
