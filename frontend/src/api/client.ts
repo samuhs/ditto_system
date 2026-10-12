@@ -130,13 +130,24 @@ export async function resumeExperiment(
   return asJson(await fetch(`${BASE}/experiments/${id}/resume`, init));
 }
 
-export async function getComparison(
-  items: string[], baseline?: string | null, metric?: string | null,
-): Promise<Comparison> {
+function comparisonQuery(items: string[], baseline?: string | null, metric?: string | null): string {
   const params = new URLSearchParams({ items: items.join(",") });
   if (baseline) params.set("baseline", baseline);
   if (metric) params.set("metric", metric);
-  return asJson<Comparison>(await fetch(`${BASE}/comparisons?${params}`));
+  return params.toString();
+}
+
+export async function getComparison(
+  items: string[], baseline?: string | null, metric?: string | null,
+): Promise<Comparison> {
+  return asJson<Comparison>(await fetch(`${BASE}/comparisons?${comparisonQuery(items, baseline, metric)}`));
+}
+
+/** Download URL of the Comparação as CSV or LaTeX (the same calculation the page shows). */
+export function comparisonExportUrl(
+  format: "csv" | "tex", items: string[], baseline?: string | null, metric?: string | null,
+): string {
+  return `${BASE}/comparisons/export.${format}?${comparisonQuery(items, baseline, metric)}`;
 }
 
 export async function listExperiments(page = 1, pageSize = 20, base?: string): Promise<ExperimentList> {

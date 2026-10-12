@@ -234,3 +234,48 @@ def test_the_linha_de_base_decides_which_base_is_paired(env):
     body = client.get(f"/comparisons?items={guia}:{g},{faq}:{f}&baseline={faq}:{f}").json()
     assert body["base"] == "faq"
     assert [i["id"] for i in body["other_bases"]] == [f"{guia}:{g}"]
+
+
+def _export_fixture(sf):
+    guia, [a, b] = _experiment(sf, "fase_3", [
+        ("qwen2.5", "naive", _ac(0.5, 0.5, 0.5)),
+        ("qwen3.5", "naive", _ac(0.7, 0.7, 0.7)),
+    ])
+    faq, [f] = _experiment(sf, "faq", [("qwen2.5", "naive", _ac(0.2, 0.4))], base="faq")
+    return f"items={guia}:{a},{guia}:{b},{faq}:{f}", (guia, a, b, faq, f)
+
+
+def test_csv_export_has_one_row_per_item_with_the_page_columns(env):
+    import csv
+    import io
+
+    client, sf = env
+    query, (guia, a, b, faq, f) = _export_fixture(sf)
+    response = client.get(f"/comparisons/export.csv?{query}")
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "attachment" in response.headers["content-disposition"]
+    rows = list(csv.DictReader(io.StringIO(response.content.decode("utf-8").lstrip("﻿"))))
+    assert [r["item"] for r in rows] == [f"{guia}:{a}", f"{guia}:{b}", f"{faq}:{f}"]
+    paired = rows[1]
+    assert paired["llm"] == "qwen3.5" and paired["experimento"] == "fase_3"
+    assert paired["perguntas"] == "3" and paired["linha_de_base"] == "não"
+    assert float(paired["diferenca"]) == pytest.approx(0.2)
+    assert paired["significativa"] == "sim"
+    assert float(paired["answer_correctness"]) == pytest.approx(0.7)
+    assert float(paired["diferenca_simples"]) == pytest.approx(0.2)
+    assert rows[0]["linha_de_base"] == "sim" and rows[0]["diferenca"] == ""
+    other = rows[2]
+    assert other["pareamento"] == "outra Base" and other["diferenca"] == ""
+    assert float(other["ic_inferior"]) <= 0.3 <= float(other["ic_superior"])
+
+
+def test_latex_export_is_a_booktabs_table_in_the_papers_format(env):
+    client, sf = env
+    query, _ = _export_fixture(sf)
+    tex = client.get(f"/comparisons/export.tex?{query}").content.decode("utf-8")
+    assert "\\begin{tabular}" in tex and "\\toprule" in tex and "\\bottomrule" in tex
+    assert tex.count("\\begin{tabular}") == tex.count("\\end{tabular}")
+    assert "+0.200*~[0.200, 0.200]" in tex  # mean, * when significant, CI
+    assert "fase\\_3" in tex and "answer\\_correctness" in tex  # escaped
+    assert "Friedman" in tex and "comparações múltiplas" in tex
+    assert "Outras Bases" in tex

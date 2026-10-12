@@ -208,6 +208,20 @@ describe("ComparePage", () => {
     await waitFor(() => expect(lastComparisonCall()).toEqual([["25:3", "37:12"], null, "context_hit"]));
   });
 
+  it("exports the Comparação it shows as CSV and LaTeX", async () => {
+    vi.mocked(client.comparisonExportUrl).mockImplementation(
+      (format, items, baseline, metric) => `/api/export.${format}?${items.join(",")}|${baseline}|${metric}`,
+    );
+    renderPage("/compare?items=25:3,37:12&baseline=37:12");
+    await mainTable();
+    expect(screen.getByRole("link", { name: /exportar csv/i })).toHaveAttribute(
+      "href", "/api/export.csv?25:3,37:12|37:12|answer_correctness",
+    );
+    expect(screen.getByRole("link", { name: /exportar latex/i })).toHaveAttribute(
+      "href", "/api/export.tex?25:3,37:12|37:12|answer_correctness",
+    );
+  });
+
   it("shows the API's error", async () => {
     vi.mocked(client.getComparison).mockRejectedValue(new Error("Experimento 999 não existe"));
     renderPage("/compare?items=999:1");

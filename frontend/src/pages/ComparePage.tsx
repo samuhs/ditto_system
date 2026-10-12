@@ -2,12 +2,15 @@ import { Button, Checkbox, Loader, NativeSelect } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { getComparison, getExperiment, listBases, listExperiments } from "../api/client";
+import {
+  comparisonExportUrl, getComparison, getExperiment, listBases, listExperiments,
+} from "../api/client";
 import type {
   Comparison, ComparisonDiff, ComparisonFriedman, ExperimentRunRef, ExperimentSummary,
 } from "../api/types";
 import { Errata, Note, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
+import { DownloadIcon } from "../components/icons";
 import { ScoreCell, Traits } from "../components/Score";
 import { questionType, term } from "../glossary";
 
@@ -184,6 +187,19 @@ export function ComparePage() {
               onChange={(e) => update({ metric: e.currentTarget.value })}
               data={data.metrics.map((m) => ({ value: m, label: term("metric", m).name }))}
             />
+            {(["csv", "tex"] as const).map((format) => (
+              <Button
+                key={format}
+                component="a"
+                href={comparisonExportUrl(format, items, baseline, data.metric)}
+                download
+                size="sm"
+                variant="default"
+                leftSection={<DownloadIcon />}
+              >
+                {format === "csv" ? "Exportar CSV" : "Exportar LaTeX"}
+              </Button>
+            ))}
           </div>
           <p id="comparison-caption" className="ditto-muted">
             Base {data.base} · métrica principal {term("metric", data.metric).name}. Diferença = média
