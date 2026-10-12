@@ -1243,6 +1243,30 @@ def test_progress_has_no_estimate_before_the_first_batch(client):
     assert progress["scored"] == 0 and progress["eta_s"] is None
 
 
+def test_estimate_after_a_resume_uses_only_this_pass_pace(client):
+    """20 answers were scored before a pause; 10 more in the 100 s since resuming:
+    the 10 left take about 100 s, not the 33 s that 30 answers in 100 s suggest."""
+    from datetime import UTC, datetime, timedelta
+
+    deps = client.app.dependency_overrides[get_experiment_deps]()
+    session = deps.session_factory()
+    started = (datetime.now(UTC) - timedelta(seconds=100)).isoformat()
+    experiment = Experiment(
+        name="retomado", status="running",
+        config={"phase": "evaluating", "scoring": {
+            "scored": 30, "total": 40, "scored_before": 20, "started_at": started,
+        }},
+    )
+    session.add(experiment)
+    session.commit()
+    exp_id = experiment.id
+    session.close()
+
+    progress = client.get(f"/experiments/{exp_id}").json()["progress"]
+    assert progress["scored"] == 30 and progress["to_score"] == 40
+    assert 90 <= progress["eta_s"] <= 110
+
+
 def _combos_payload(combos):
     return json.dumps(
         {
@@ -1272,3 +1296,26 @@ def test_create_experiment_rejects_a_combo_on_a_missing_index(client):
     response = client.post("/experiments", data={"config": payload}, files=files)
     assert response.status_code == 422
     assert "fixed" in response.json()["detail"]
+
+
+def test_create_experiment_accepts_a_closed_book_combo_without_its_index(client):
+    """closed_book reads no Índice: the pair written on its combo is not checked."""
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = _combos_payload([
+        {"chunking": "recursive", "embedding": "gemini", "rag": "naive", "retriever": "similarity"},
+        {"chunking": "fixed", "embedding": "e5", "rag": "closed_book", "retriever": "similarity"},
+    ])
+    response = client.post("/experiments", data={"config": payload}, files=files)
+    assert response.status_code == 200, response.json()
+    detail = client.get(f"/experiments/{response.json()['id']}").json()
+    assert detail["progress"]["total"] == 2
+
+
+def test_create_experiment_rejects_combos_with_conflicting_lists(client):
+    files = {"questions": ("q.csv", io.BytesIO(b"pergunta,resposta_referencia\nWhere?,\n"), "text/csv")}
+    payload = json.loads(_combos_payload([
+        {"chunking": "recursive", "embedding": "gemini", "rag": "naive", "retriever": "similarity"},
+    ]))
+    payload["retrievers"] = ["mmr"]
+    response = client.post("/experiments", data={"config": json.dumps(payload)}, files=files)
+    assert response.status_code == 422

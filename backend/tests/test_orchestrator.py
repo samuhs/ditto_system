@@ -1963,3 +1963,36 @@ def test_resume_keeps_the_generation_params(session_factory):
     resume_experiment(experiment_id, deps)
 
     assert calls and all(c["temperature"] == 0.3 and c["max_tokens"] == 64 for c in calls)
+
+
+def test_scoring_progress_after_a_resume_counts_every_answer(session_factory):
+    """A pause mid-evaluation left q1 scored and q2 not: the resumed pass reports
+    2 of 2, and that 1 was already scored before it started (for the estimate)."""
+    from app.core.db.models import ExperimentRun, RunResult
+
+    config = _single_combo_config(1)
+    questions = [QuestionItem(text="q1"), QuestionItem(text="q2")]
+    experiment_id = _experiment_for_resume(session_factory, "resume-scoring", config, questions)
+    session = session_factory()
+    run = ExperimentRun(
+        experiment_id=experiment_id, chunking="recursive", embedding="gemini",
+        rag_technique="naive", retriever="similarity", llm="gemini", status="done",
+    )
+    run.results = [
+        RunResult(question="q1", generated_answer="Resposta.", scores={"answer_relevancy": 1.0},
+                  latency_ms=5, tokens=3),
+        RunResult(question="q2", generated_answer="Outra.", scores={}, latency_ms=5, tokens=3),
+    ]
+    session.add(run)
+    session.commit()
+    session.close()
+
+    deps = ExperimentDeps(
+        store=_seeded_store(), session_factory=session_factory,
+        llm_factory=_llm_factory, embedder_factory=_embedder_factory,
+    )
+    resume_experiment(experiment_id, deps)
+
+    _, _, stored = _results(session_factory, experiment_id)
+    scoring = stored["scoring"]
+    assert (scoring["scored"], scoring["total"], scoring["scored_before"]) == (2, 2, 1)

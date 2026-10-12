@@ -143,13 +143,18 @@ def _result_rows(experiment: Experiment) -> list[dict]:
 
 
 def _scoring_progress(cfg: dict) -> dict:
-    """Answers scored so far and seconds left at the pace so far (None until known)."""
+    """Answers scored so far and seconds left at this pass's pace (None until known).
+
+    After a Retomada, `scored_before` answers were scored by the interrupted pass:
+    they count as scored but not toward the pace since `started_at`.
+    """
     scoring = cfg.get("scoring") or {}
     scored, total = scoring.get("scored", 0), scoring.get("total", 0)
+    this_pass = scored - scoring.get("scored_before", 0)
     eta_s = None
-    if cfg.get("phase") == "evaluating" and 0 < scored < total and scoring.get("started_at"):
+    if cfg.get("phase") == "evaluating" and this_pass > 0 and scored < total and scoring.get("started_at"):
         elapsed = (datetime.now(UTC) - datetime.fromisoformat(scoring["started_at"])).total_seconds()
-        eta_s = round(elapsed / scored * (total - scored))
+        eta_s = round(elapsed / this_pass * (total - scored))
     return {"scored": scored, "to_score": total, "eta_s": eta_s}
 
 

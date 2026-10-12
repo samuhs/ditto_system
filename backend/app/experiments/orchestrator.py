@@ -585,11 +585,20 @@ def _set_phase(session: Session, experiment: Experiment, phase: str | None) -> N
     Every change also appends the API's memory to `memory_log` ("end" for None),
     so a process that keeps growing can be traced to the stage that grew it.
     """
-    config = {k: v for k, v in (experiment.config or {}).items() if k != "phase"}
-    if phase is not None:
-        config["phase"] = phase
     entry = {"phase": phase or "end", "at": datetime.now(UTC).isoformat(), **_memory_snapshot()}
-    config["memory_log"] = [*config.get("memory_log", []), entry]
+    memory_log = [*(experiment.config or {}).get("memory_log", []), entry]
+    _update_config(session, experiment, phase=phase, memory_log=memory_log)
+
+
+def _update_config(session: Session, experiment: Experiment, **changes) -> None:
+    """Set these keys on the Experimento's stored config (None removes one) and commit.
+
+    The config is reassigned as a new dict: the JSON column only notices a new value.
+    """
+    config = {**(experiment.config or {}), **changes}
+    for key, value in changes.items():
+        if value is None:
+            del config[key]
     experiment.config = config
     session.commit()
 
@@ -799,9 +808,11 @@ def _score_results(
         .filter(ExperimentRun.experiment_id == experiment_id)
         .all()
     )
-    pending = [r for r in rows if not r.scores and not r.generated_answer.startswith(ERROR_PREFIX)]
+    answered = [r for r in rows if not r.generated_answer.startswith(ERROR_PREFIX)]
+    pending = [r for r in answered if not r.scores]
     if not pending:
         return
+    scored_before = len(answered) - len(pending)  # by a pass a pause interrupted
     device = resolve_embedding_device(active_profile())
     by_id = {row.id: row for row in pending}
     samples = [
@@ -819,7 +830,12 @@ def _score_results(
         for row in pending
     ]
     experiment = session.get(Experiment, experiment_id)
-    _record_scoring(session, experiment, scored=0, total=len(samples))
+    # scored_before and started_at belong to this pass: the estimate is its own pace.
+    scoring = {
+        "scored": scored_before, "total": len(answered),
+        "scored_before": scored_before, "started_at": datetime.now(UTC).isoformat(),
+    }
+    _update_config(session, experiment, scoring=scoring)
     for start in range(0, len(samples), _SCORING_BATCH):
         batch = samples[start:start + _SCORING_BATCH]
         scores_by_id = _run_abandonable(
@@ -827,20 +843,11 @@ def _score_results(
         )
         for row_id, scores in scores_by_id.items():
             by_id[row_id].scores = scores
-        _record_scoring(session, experiment, scored=start + len(batch), total=len(samples))
+        # One commit stores the batch's scores and the progress together.
+        scoring = {**scoring, "scored": scored_before + start + len(batch)}
+        _update_config(session, experiment, scoring=scoring)
         if heartbeat is not None:
             heartbeat()
-
-
-def _record_scoring(session: Session, experiment: Experiment, scored: int, total: int) -> None:
-    """Store scoring progress (and when it started) with the batch's scores, in one commit."""
-    previous = (experiment.config or {}).get("scoring") or {}
-    started_at = previous.get("started_at") if scored else datetime.now(UTC).isoformat()
-    experiment.config = {
-        **(experiment.config or {}),
-        "scoring": {"scored": scored, "total": total, "started_at": started_at},
-    }
-    session.commit()
 
 
 def _run_experiment(

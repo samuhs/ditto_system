@@ -73,3 +73,14 @@ def test_a_fixed_threshold_keeps_the_old_behaviour():
     text = "Apples are red. Apples are sweet. Cars are fast. Cars are loud."
     chunks = SemanticChunker(embedder=_HighSimilarityEmbedder(), threshold=0.5).split(text)
     assert chunks == [text]
+
+
+def test_two_sentences_on_different_topics_split():
+    """One distance has nothing to compare against: the fixed cut decides."""
+    chunks = SemanticChunker(embedder=_FakeEmbedder()).split("Apples are red. Cars are fast.")
+    assert chunks == ["Apples are red.", "Cars are fast."]
+
+
+def test_two_sentences_on_the_same_topic_stay_together():
+    chunks = SemanticChunker(embedder=_FakeEmbedder()).split("Apples are red. Apples are sweet.")
+    assert chunks == ["Apples are red. Apples are sweet."]

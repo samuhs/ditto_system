@@ -6,6 +6,8 @@ from app.core.embedding.base import Embedder
 from app.core.vector_math import cosine_distance
 
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
+# The cut for a text of two sentences: one distance has no others to rank against.
+_SINGLE_DISTANCE_THRESHOLD = 0.5
 
 
 class SemanticChunker(Chunker):
@@ -16,6 +18,8 @@ class SemanticChunker(Chunker):
     embedder's similarity scale. A fixed `threshold` cut misses embedders whose
     distances all fall below it: with 0.5, e5 and granite put the whole guide in
     one chunk (campaign 2026-10-10). Pass threshold=0.5 to reproduce those indexes.
+    A text of two sentences has one distance and nothing to rank it against, so
+    the fixed 0.5 decides there.
     The default 90 gives ~300-token chunks on the town guide, in line with the
     fixed and recursive chunkers and within e5-small's 512-token input.
     """
@@ -37,7 +41,12 @@ class SemanticChunker(Chunker):
             return sentences or [stripped]
         vectors = self._embedder.embed_documents(sentences)
         distances = [cosine_distance(vectors[i - 1], vectors[i]) for i in range(1, len(sentences))]
-        cut = self._threshold if self._threshold is not None else _percentile(distances, self._percentile)
+        if self._threshold is not None:
+            cut = self._threshold
+        elif len(distances) == 1:
+            cut = _SINGLE_DISTANCE_THRESHOLD
+        else:
+            cut = _percentile(distances, self._percentile)
         chunks: list[str] = []
         current = [sentences[0]]
         for sentence, distance in zip(sentences[1:], distances):
