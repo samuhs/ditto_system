@@ -47,6 +47,14 @@ _Avoid_: job, execução
 Um par chunking × embedding (o Índice) com uma Técnica RAG, um Retriever e um LLM de resposta, dentro de um Experimento.
 _Avoid_: run, pipeline, composição
 
+**Comparação**:
+Combinações escolhidas de um ou mais Experimentos, comparadas pergunta a pergunta contra uma Linha de base, para dizer se uma é significativamente melhor que outra. Só se comparam pergunta a pergunta Combinações da mesma Base, e só nas perguntas que têm em comum; as de outra Base aparecem lado a lado, sem pareamento. Cada item é identificado por Experimento × Combinação, porque a mesma Combinação pode ter rodado em Experimentos diferentes. Não é salva: existe enquanto o link existir.
+_Avoid_: benchmark, ranking (o ranking é o de um Experimento só)
+
+**Linha de base**:
+A Combinação da Comparação contra a qual todas as outras são medidas.
+_Avoid_: baseline, referência (referência é a resposta de referência da pergunta)
+
 **Pausa**:
 Estado de um Experimento parado antes de terminar, com tudo o que já foi respondido preservado, à espera de Retomada. Toda Pausa tem um motivo: manual, Travamento, falhas consecutivas ou Interrupção.
 

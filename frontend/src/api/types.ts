@@ -434,3 +434,41 @@ export interface EvaluationSettings {
   embeddings: { name: string; local: boolean }[];
   metrics: { name: string; uses_embedding: boolean; requires_reference: boolean }[];
 }
+
+/** Difference of an item against the Linha de base, with its 95% bootstrap CI. */
+export interface ComparisonDiff {
+  mean: number;
+  low: number;
+  high: number;
+  significant: boolean;
+}
+
+/** One Experimento × Combinação in a Comparação. */
+export interface ComparisonItem {
+  id: string;
+  experiment_id: number;
+  experiment_name: string;
+  run_id: number;
+  base: string;
+  chunking: string;
+  embedding: string;
+  rag: string;
+  retriever: string;
+  llm: string;
+  /** Its Experimento has not finished. */
+  partial: boolean;
+  /** Questions paired with the Linha de base (its own valid answers, for the Linha de base). */
+  n: number;
+  means: Record<string, number | null>;
+  /** null for the Linha de base itself. */
+  diff: ComparisonDiff | null;
+}
+
+export interface Comparison {
+  baseline: string;
+  metric: string;
+  metrics: string[];
+  base: string;
+  items: ComparisonItem[];
+  excluded: { id: string; reason: string }[];
+}

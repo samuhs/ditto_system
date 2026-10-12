@@ -1,5 +1,6 @@
 import type {
   AppSettings,
+  Comparison,
   BaseSummary,
   EvaluationSettings,
   MemoryStatus,
@@ -127,6 +128,15 @@ export async function resumeExperiment(
     init.body = JSON.stringify({ concurrency });
   }
   return asJson(await fetch(`${BASE}/experiments/${id}/resume`, init));
+}
+
+export async function getComparison(
+  items: string[], baseline?: string | null, metric?: string | null,
+): Promise<Comparison> {
+  const params = new URLSearchParams({ items: items.join(",") });
+  if (baseline) params.set("baseline", baseline);
+  if (metric) params.set("metric", metric);
+  return asJson<Comparison>(await fetch(`${BASE}/comparisons?${params}`));
 }
 
 export async function listExperiments(page = 1, pageSize = 20): Promise<ExperimentList> {

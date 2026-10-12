@@ -57,7 +57,10 @@ export const SECTIONS: Section[] = [
     step: 3,
     label: "Comparar",
     purpose: "Veja qual combinação respondeu melhor.",
-    pages: [{ to: "/results", label: "Resultados" }],
+    pages: [
+      { to: "/results", label: "Resultados" },
+      { to: "/compare", label: "Comparar" },
+    ],
   },
   {
     id: "conversar",
