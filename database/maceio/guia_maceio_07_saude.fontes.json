@@ -1,0 +1,762 @@
+{
+  "gerado_em": "2026-10-12",
+  "blocos": [
+    {
+      "secao": "Organização da saúde em Maceió",
+      "cabecalho": "Como é organizada a saúde pública de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/localizacao",
+          "url": "https://maceio.al.gov.br/p/sms/localizacao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:56+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 527
+    },
+    {
+      "secao": "Organização da saúde em Maceió",
+      "cabecalho": "Qual a diferença entre UBS, USF, URS e UPA em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/centro-de-referencia-em-doencas-cronicas",
+          "url": "https://maceio.al.gov.br/p/sms/centro-de-referencia-em-doencas-cronicas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:59+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/terapia-renal",
+          "url": "https://maceio.al.gov.br/p/sms/terapia-renal",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 580
+    },
+    {
+      "secao": "Organização da saúde em Maceió",
+      "cabecalho": "Como pedir consulta com especialista pelo SUS em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/centro-de-referencia-em-doencas-cronicas",
+          "url": "https://maceio.al.gov.br/p/sms/centro-de-referencia-em-doencas-cronicas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:59+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/terapia-renal",
+          "url": "https://maceio.al.gov.br/p/sms/terapia-renal",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 585
+    },
+    {
+      "secao": "Organização da saúde em Maceió",
+      "cabecalho": "Onde saber quais remédios estão disponíveis no SUS em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/onde-encontrar-seus-medicamentos",
+          "url": "https://maceio.al.gov.br/p/sms/onde-encontrar-seus-medicamentos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 260
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde atendem a Ponta da Terra, o Poço e o Centro de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 612
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde atendem o Vergel do Lago, o Trapiche e o Pontal da Barra?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 734
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde atendem o Farol, o Pinheiro e o Ouro Preto?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 669
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde atendem Bebedouro, Fernão Velho e Rio Novo?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 788
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde atendem o Jacintinho, a Serraria e o Feitosa?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 742
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde atendem o Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 716
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde atendem o Clima Bom, a Cidade Universitária e o Tabuleiro?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 792
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde atendem o litoral norte de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 723
+    },
+    {
+      "secao": "Unidades de saúde por região de Maceió",
+      "cabecalho": "Quais unidades de saúde de Maceió abrem até as 21h?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 799
+    },
+    {
+      "secao": "Urgência e emergência em Maceió",
+      "cabecalho": "Onde tem UPA 24 horas em Maceió?",
+      "fontes": [
+        {
+          "fonte": "cnes:937495",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=937495",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2008750",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2008750",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2008769",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2008769",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2008785",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2008785",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:4463129",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=4463129",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:7911238",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=7911238",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:9056971",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=9056971",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:902179",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=902179",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "osm:way/741039216",
+          "url": "https://www.openstreetmap.org/way/741039216",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 613
+    },
+    {
+      "secao": "Urgência e emergência em Maceió",
+      "cabecalho": "Qual é o principal hospital de emergência de Maceió?",
+      "fontes": [
+        {
+          "fonte": "cnes:2006510",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2006510",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "osm:way/265052141",
+          "url": "https://www.openstreetmap.org/way/265052141",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 331
+    },
+    {
+      "secao": "Urgência e emergência em Maceió",
+      "cabecalho": "O que é o Hospital da Cidade, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:especiais/hospital-da-cidade",
+          "url": "https://maceio.al.gov.br/especiais/hospital-da-cidade",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:04+00:00"
+        },
+        {
+          "fonte": "osm:way/493944181",
+          "url": "https://www.openstreetmap.org/way/493944181",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 383
+    },
+    {
+      "secao": "Urgência e emergência em Maceió",
+      "cabecalho": "Quais hospitais públicos estaduais existem em Maceió?",
+      "fontes": [
+        {
+          "fonte": "cnes:136581",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=136581",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:9923837",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=9923837",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2003368",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2003368",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:8549125",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=8549125",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2868628",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2868628",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2720035",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2720035",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2009250",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2009250",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:3397874",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=3397874",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 717
+    },
+    {
+      "secao": "Urgência e emergência em Maceió",
+      "cabecalho": "O que é o Hospital Universitário Professor Alberto Antunes (HUPAA)?",
+      "fontes": [
+        {
+          "fonte": "cnes:2006197",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2006197",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "osm:way/37060473",
+          "url": "https://www.openstreetmap.org/way/37060473",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/centro-de-referencia-em-doencas-cronicas",
+          "url": "https://maceio.al.gov.br/p/sms/centro-de-referencia-em-doencas-cronicas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:59+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 449
+    },
+    {
+      "secao": "Urgência e emergência em Maceió",
+      "cabecalho": "Quais são os hospitais escola da UNCISAL em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Universidade_Estadual_de_Ci%C3%AAncias_da_Sa%C3%BAde_de_Alagoas",
+          "url": "https://pt.wikipedia.org/wiki/Universidade_Estadual_de_Ci%C3%AAncias_da_Sa%C3%BAde_de_Alagoas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "cnes:2720035",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2720035",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2009250",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2009250",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2003368",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2003368",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 589
+    },
+    {
+      "secao": "Urgência e emergência em Maceió",
+      "cabecalho": "Quais hospitais filantrópicos e privados atendem em Maceió?",
+      "fontes": [
+        {
+          "fonte": "cnes:2007037",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2007037",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:7708963",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=7708963",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2006472",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2006472",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2006960",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2006960",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:5253381",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=5253381",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:2006448",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2006448",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:6485960",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=6485960",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:9226702",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=9226702",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 705
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "O que é o PAM Salgadinho?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/centro-de-referencia-em-doencas-cronicas",
+          "url": "https://maceio.al.gov.br/p/sms/centro-de-referencia-em-doencas-cronicas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:59+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "web:https://maceio.al.gov.br/galerias/gp/prefeitura-entrega-entrega-pam-salgadinho-reformado-sede-do-saude-da-gente-especialidades",
+          "url": "https://maceio.al.gov.br/galerias/gp/prefeitura-entrega-entrega-pam-salgadinho-reformado-sede-do-saude-da-gente-especialidades",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T13:00:00+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 465
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "O que é o CEDOHC, centro de doenças crônicas de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/centro-de-referencia-em-doencas-cronicas",
+          "url": "https://maceio.al.gov.br/p/sms/centro-de-referencia-em-doencas-cronicas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:59+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 672
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "Como conseguir hemodiálise pelo SUS em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/terapia-renal",
+          "url": "https://maceio.al.gov.br/p/sms/terapia-renal",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 580
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "O que é o programa Saúde da Gente, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/saude-da-gente",
+          "url": "https://maceio.al.gov.br/p/sms/saude-da-gente",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:43+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 577
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "Que serviços o Saúde da Gente oferece para mulheres e crianças?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/saude-da-gente",
+          "url": "https://maceio.al.gov.br/p/sms/saude-da-gente",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:43+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 578
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "Como funciona a saúde mental na rede municipal de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/saude-da-gente",
+          "url": "https://maceio.al.gov.br/p/sms/saude-da-gente",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:43+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 510
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "O que é o Cerest Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/cerest",
+          "url": "https://maceio.al.gov.br/p/sms/cerest",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:58+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 588
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "Quais telefones da Secretaria de Saúde de Maceió são úteis?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/localizacao",
+          "url": "https://maceio.al.gov.br/p/sms/localizacao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:56+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 445
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "O que é o CAT Praia e que serviços de saúde ele oferece?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sms/saude-da-gente",
+          "url": "https://maceio.al.gov.br/p/sms/saude-da-gente",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:43+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 351
+    },
+    {
+      "secao": "Programas e serviços especializados",
+      "cabecalho": "Onde levar animais para vacinação e castração em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sebema/castramovel",
+          "url": "https://maceio.al.gov.br/p/sebema/castramovel",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:46+00:00"
+        },
+        {
+          "fonte": "pref:p/sebema/feira-de-adocao",
+          "url": "https://maceio.al.gov.br/p/sebema/feira-de-adocao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:47+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/saude-da-gente",
+          "url": "https://maceio.al.gov.br/p/sms/saude-da-gente",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:43+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 661
+    }
+  ],
+  "conflitos": [
+    "Telefone da UBS Maria Tereza Holanda (Ouro Preto): a página \"Rede Básica de Serviços\" dá 3312-5580; a lista de contatos da SMS não traz número. A base usa 3312-5580.",
+    "Telefone da Unidade de Referência Maria da Conceição Fonseca Paranhos (Jacarecica): a lista de contatos dá 3312-5573; a página \"Rede Básica\" dá 3312-5592. A base registra os dois.",
+    "Telefone da UDA Governador Divaldo Suruagy (Barro Duro): a lista de contatos dá 3312-5542; a página \"Rede Básica\" dá 3311-5631. A base registra os dois.",
+    "Esfera administrativa do Hospital Universitário Professor Alberto Antunes no CNES aparece como \"MUNICIPAL\" (gestão); o hospital é da Ufal. A base descreve o hospital como universitário, sem afirmar a esfera."
+  ],
+  "lacunas": [
+    "Telefone do Samu em fonte oficial municipal: não coletado. O telefone do HGE vem do CNES.",
+    "Horário de funcionamento da maioria das USF não informado na página de contatos; a base usa a página \"Rede Básica de Serviços\", que traz horários para parte delas.",
+    "Lista completa das unidades com \"Corujão da Saúde\" (atendimento noturno): a Prefeitura cita 10 psicólogos em unidades com Corujão, sem listar as unidades."
+  ],
+  "documento": "../../maceio/guia_maceio_07_saude.md",
+  "mestre": "mestres/07_saude.anotado.md"
+}

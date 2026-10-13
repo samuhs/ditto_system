@@ -1,0 +1,41 @@
+pergunta,tipo,fatos_chave
+"Quantos metros de altura tem a roda-gigante da orla da Pajuçara, em Maceió?",simples,42 metros
+Quanto custa o almoço no Restaurante Popular de Maceió e a partir de que horas as fichas são vendidas?,simples,R$ 3|10h30
+Onde e em que horário são emprestadas as cadeiras anfíbias do projeto Praia Acessível?,simples,Gerônimo Siqueira|8h|12h
+"Em que data foi inaugurado o Terminal Rosane Collor, no Clima Bom?",simples,11 de agosto de 2014
+Quem esculpiu a estátua de granito de Ganga Zumba na orla de Cruz das Almas?,simples,José Faustino
+"Quais são as trilhas do Parque do Horto, em Maceió?",simples,Trilha Principal|Trilha da Nascente|Trilha das Pedras
+Em que data e em que rua saiu o cortejo do primeiro Festival Internacional de Cultura de Maceió?,simples,25 de setembro de 2026|Sá e Albuquerque
+"Quais são as dimensões da escultura A Mão de Deus, na Nova Orla?",simples,"4,5 metros|2,5 metros"
+"Onde fica o Cerest, o centro de saúde do trabalhador de Maceió?",simples,Alexandre Passos
+Quantos apartamentos do Residencial Parque da Lagoa já foram entregues ou sorteados?,simples,1.474
+"Quando foi criado o programa Saúde da Gente, da Prefeitura de Maceió?",simples,8 de agosto de 2022
+Qual é o telefone da Defesa Civil de Maceió?,simples,199
+Em que avenida fica a UPA do bairro onde está o Mirante da Paz?,ponte,Juca Sampaio
+Em que data nasceu o poeta cuja estátua de bronze fica no Posto 7 da Jatiúca?,ponte,18 de fevereiro de 1924
+Qual é o telefone da unidade de saúde que fica em frente à Praça da Maravilha?,ponte,3312-5499
+Em que ano terminou a construção do teatro onde o homenageado da Praça Moleque Namorador venceu o concurso de frevo de 1937?,ponte,1910
+Onde fica o ecoponto do bairro onde está a Galeria Massayó e em que horário ele funciona?,ponte,Campos Teixeira|476|6h|18h
+Que estação de VLT fica ao lado do mercado inaugurado em 1939 pelo prefeito Eustáquio Gomes de Melo?,ponte,Mercado do Artesanato
+"Quantos habitantes tem o bairro onde fica a Praça Maria Onça dos Santos, segundo a Wikipedia?",ponte,88.084
+Em que data foi desativada a estação de VLT do bairro onde ficava o antigo CT do CSA?,ponte,1º de abril de 2020
+Quando foi inaugurado o cineteatro ao lado da praça onde funciona o CRAS Fernão Velho?,ponte,1º de maio de 1917
+Quantos metros tem o trecho da orla onde acontece a Feira de Adoção de Maceió?,ponte,800 metros
+"Como se chama o terminal rodoviário cuja construção, em 1982, fez crescer a venda de macaxeira numa praça de Maceió?",ponte,João Paulo II
+Que linhas de ônibus operam no terminal do bairro onde fica a Praça Engenheiro Gustavo Lúcio Rodrigues Barbosa?,ponte,065|723|M004
+Qual clube foi fundado primeiro: o CRB ou o CSA?,comparacao,CRB|1912|1913
+Qual terminal de ônibus foi inaugurado primeiro: o Terminal Rosane Collor ou o Terminal do Village Campestre II?,comparacao,Rosane Collor|2014|2015
+Qual parque tem mais trilhas: o Parque Municipal de Maceió ou o Parque do Horto?,comparacao,Parque Municipal|cinco|três
+O que foi inaugurado primeiro: o Mirante de Ipioca ou a Praça Moleque Namorador?,comparacao,Mirante de Ipioca|1949|1961
+"Qual é maior: a Areninha do Bom Parto ou o Parque das Crianças, no Benedito Bentes?",comparacao,Bom Parto|5.900 m²|2.700 m²
+Qual é mais alto: o Farol de Ponta Verde ou a escultura A Mão de Deus?,comparacao,"Farol de Ponta Verde|11 metros|4,5 metros"
+Qual museu foi criado primeiro: o Museu Théo Brandão ou o Museu da Imagem e do Som de Alagoas (MISA)?,comparacao,Théo Brandão|1975|1981
+Quem ficou mais tempo como prefeito de Maceió: Henrique Equelman ou João Henrique Caldas (JHC)?,comparacao,JHC|2021|2026|1970|1971
+Quais foram os pontos de queima de fogos do Réveillon de Todos Nós na virada para 2025?,agregacao,Ponta Verde|Maceió é Massa|Pajuçara|Benedito Bentes
+Onde ficam os Centros Pop de Maceió?,agregacao,Sete de Setembro|Calabar|Benedito Bentes
+Quais são os Centros de Atenção Psicossocial (CAPS) da rede municipal de Maceió?,agregacao,Rostan Silvestre|Everaldo Moreira|Sadi Feitosa|Noraci Pedrosa|Luiz da Rocha Cerqueira
+Quais empresas operam os ônibus de Maceió e em que lotes?,agregacao,Cidade de Maceió|São Francisco|Veleiro|Real Alagoas
+Quais cooperativas fazem a coleta seletiva porta a porta em Maceió?,agregacao,Cooprel Benedito Bentes|Cooprel Antares|Coopvila|Cooplum|Coopmundaú
+Quais bairros de Maceió foram atingidos pelo afundamento do solo causado pela mineração de sal-gema?,agregacao,Pinheiro|Mutange|Bebedouro|Bom Parto|Farol
+Quais grupos estrangeiros participaram do Festival Internacional de Cultura de Maceió em 2026?,agregacao,Caña Flecha|Awiame|Jedinstvo
+"Quais museus e acervos ficam na Rua Sá e Albuquerque, em Jaraguá?",agregacao,Museu da Imagem e do Som|Museu da Tecnologia|Arquivo Público

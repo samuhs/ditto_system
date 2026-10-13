@@ -1,0 +1,25 @@
+<!-- fonte: https://maceio.al.gov.br/p/iplam/mirante-virgem-dos-pobres | coletado_em: 2026-10-12T12:26:44+00:00 -->
+Prefeitura de Maceió | Mirante Virgem dos Pobres
+# Mirante Virgem dos Pobres
+Localizado no bairro de Mangabeiras, em Maceió, o Mirante Virgem dos Pobres tem sua história ligada ao crescimento da devoção mariana na capital alagoana, atraindo, ao longo dos anos, milhares de fiéis movidos pela fé e pela esperança.
+A história da devoção à Virgem dos Pobres em Maceió teve início na década de 1970, com a presença de religiosas belgas da Congregação da Imaculada Conceição no antigo sítio Betânia, área pertencente à Santa Casa de Misericórdia. Inicialmente destinado a retiros espirituais, o espaço passou a ganhar novo significado quando uma das irmãs trouxe consigo uma imagem da Virgem dos Pobres, dando início às primeiras manifestações de fé no local.
+A chegada dessa imagem a Maceió também integra a memória do santuário. Vinda da Bélgica por via marítima, a imagem ficou retida no porto da capital alagoana devido a questões burocráticas. À época, foi necessária a intervenção do então arcebispo D. Adelmo Machado para que a imagem fosse liberada e conduzida ao local onde permanece até hoje, no altar do santuário, tornando-se um dos principais símbolos da devoção.
+A partir das celebrações realizadas no antigo sítio Betânia, a presença de fiéis cresceu gradativamente, impulsionada também pelos relatos de graças alcançadas. Com o tempo, o espaço passou a ser reconhecido como ponto de peregrinação. A subida da ladeira que conduz ao santuário tornou-se um gesto simbólico de fé, associado ao cumprimento de promessas e à expressão de gratidão.
+No interior do santuário, essa relação de fé se materializa por meio de testemunhos deixados pelos devotos. Duas paredes do espaço são dedicadas a placas de agradecimento, onde fiéis registram graças alcançadas por meio da intercessão da Virgem dos Pobres, reforçando a dimensão viva dessa devoção.
+Essa tradição religiosa tem origem europeia. Em 1933, na cidade de Banneux, na Bélgica, a jovem Mariette Beco relatou aparições de Nossa Senhora, que se apresentou como a “Virgem dos Pobres”. Durante essas manifestações, foi indicada uma fonte de água associada a curas e graças espirituais, o que transformou o local em um importante centro de peregrinação. Em 1949, as aparições foram oficialmente reconhecidas pela Igreja Católica, fortalecendo a devoção que se expandiu para outras partes do mundo.
+Em Maceió, essa herança espiritual encontrou forte acolhimento. Atualmente, o santuário recebe milhares de visitantes mensalmente, com destaque para a primeira quarta-feira de cada mês, considerada o principal momento de devoção. Ao longo de todo o dia, desde as primeiras horas da manhã até a noite, são realizadas missas e diversas atividades religiosas, reunindo fiéis em uma intensa vivência de fé.
+Nos últimos anos, o espaço passou por transformações que ampliaram sua função. A implantação do mirante, estrutura recente no santuário, contribuiu para tornar o local ainda mais acolhedor, oferecendo aos visitantes um ambiente propício à oração, à contemplação e à meditação. Ao mesmo tempo, a vista privilegiada da região, marcada pela presença do verde e da paisagem natural, também passou a atrair visitantes, integrando fé e turismo em um mesmo espaço.
+O reconhecimento de sua relevância foi oficialmente ampliado em 2025, quando o local recebeu o título de Santuário Arquidiocesano. A elevação reforça sua importância institucional dentro da Igreja e seu papel como símbolo da fé popular em Alagoas.
+Dessa forma, o Santuário da Virgem dos Pobres permanece como um marco histórico e religioso de Maceió, refletindo a força da devoção mariana e a maneira como a fé se manifesta no cotidiano do povo, perpetuando-se ao longo do tempo. A própria experiência de subida até o santuário carrega um significado simbólico: a vida como um constante caminhar, um peregrinar em direção ao sagrado, representado na colina onde o espaço se encontra, convidando os fiéis a renovarem, diariamente, sua caminhada espiritual.
+Iniciada na gestão do prefeito JHC e entregue pelo prefeito Rodrigo Cunha, o Santuário da Virgem dos Pobres ganhou um mirante, que oferece aos visitantes um espaço para contemplação, missas e eventos, além de áreas de estacionamento. A iniciativa integra fé, turismo e lazer, tornando o local ainda mais acolhedor e acessível para fiéis e visitantes.
+IPTU 2026
+Gira, Maceió quando o Turismo gira
+Ações Estratégicas e Parcerias
+Secretaria Executiva do Gabinete Prefeito
+Secretaria Extraordinária de Indústria, Comércio e Serviços
+Estratégias Disruptivas e Economia Digital
+Mulher, Pessoas com Deficiência, Idosos e Cidadania
+Abastecimento, Agricultura, Pesca e Aquicultura
+Trabalho, Emprego e Economia Solidária
+Inclusão Social e Ações Comunitárias
+Meio Ambiente e Sustentabilidade

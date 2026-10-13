@@ -1,0 +1,49 @@
+{
+  "cidade": "Maceió",
+  "uf": "AL",
+  "ibge": "2704302",
+  "arquivos": [
+    {
+      "arquivo": "ibge_municipio.json",
+      "fonte": "ibge",
+      "url": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/AL/municipios",
+      "licenca": "Dado público (IBGE)",
+      "coletado_em": "2026-10-12T12:22:41+00:00"
+    },
+    {
+      "arquivo": "wikidata.json",
+      "fonte": "wikidata",
+      "url": "https://query.wikidata.org/sparql",
+      "licenca": "CC0 (Wikidata)",
+      "coletado_em": "2026-10-12T12:22:44+00:00"
+    },
+    {
+      "arquivo": "wikipedia_pt.txt",
+      "fonte": "wikipedia",
+      "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+      "licenca": "CC BY-SA 4.0 (Wikipedia)",
+      "coletado_em": "2026-10-12T12:22:45+00:00"
+    },
+    {
+      "arquivo": "wikivoyage_pt.txt",
+      "fonte": "wikivoyage",
+      "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+      "licenca": "CC BY-SA 4.0 (Wikivoyage)",
+      "coletado_em": "2026-10-12T12:22:47+00:00"
+    },
+    {
+      "arquivo": "osm_pois.json",
+      "fonte": "osm",
+      "url": "https://overpass-api.de/api/interpreter",
+      "licenca": "ODbL — © OpenStreetMap contributors",
+      "coletado_em": "2026-10-12T12:23:14+00:00"
+    },
+    {
+      "arquivo": "cnes_estabelecimentos.json",
+      "fonte": "cnes",
+      "url": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos?codigo_municipio=270430",
+      "licenca": "Dado público (CNES/DATASUS)",
+      "coletado_em": "2026-10-12T12:25:41+00:00"
+    }
+  ]
+}

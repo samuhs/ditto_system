@@ -1,0 +1,40 @@
+{
+  "id": 2704302,
+  "nome": "Maceió",
+  "microrregiao": {
+    "id": 27011,
+    "nome": "Maceió",
+    "mesorregiao": {
+      "id": 2703,
+      "nome": "Leste Alagoano",
+      "UF": {
+        "id": 27,
+        "sigla": "AL",
+        "nome": "Alagoas",
+        "regiao": {
+          "id": 2,
+          "sigla": "NE",
+          "nome": "Nordeste"
+        }
+      }
+    }
+  },
+  "regiao-imediata": {
+    "id": 270001,
+    "nome": "Maceió",
+    "regiao-intermediaria": {
+      "id": 2701,
+      "nome": "Maceió",
+      "UF": {
+        "id": 27,
+        "sigla": "AL",
+        "nome": "Alagoas",
+        "regiao": {
+          "id": 2,
+          "sigla": "NE",
+          "nome": "Nordeste"
+        }
+      }
+    }
+  }
+}

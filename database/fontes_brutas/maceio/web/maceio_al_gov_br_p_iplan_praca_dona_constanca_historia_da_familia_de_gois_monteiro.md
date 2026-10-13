@@ -1,0 +1,24 @@
+<!-- fonte: https://maceio.al.gov.br/p/iplan/praca-dona-constanca-historia-da-familia-de-gois-monteiro | coletado_em: 2026-10-12T12:27:37+00:00 -->
+Prefeitura de Maceió | Praça Dona Constança, história da família de…
+Praça Dona Constança, história da família de Góis Monteiro
+# Praça Dona Constança, história da família de Góis Monteiro
+A senhora Constança Cavalcanti de Góis, mulher à frente de seu tempo, cuja vida e legado deixaram uma marca indelével na história de Alagoas. Nascida no final do século XIX, ela pertenceu a uma tradicional família alagoana e desempenhou um papel essencial na formação de uma linhagem que se destacaria tanto na vida militar, quanto na política brasileira.
+Em 24 de fevereiro de 1889, Constança Cavalcanti de Góis casou-se com Pedro Aureliano Monteiro, um médico sanitarista respeitado, que nasceu em Marechal Deodoro, filho do professor Silvestre Antônio Monteiro dos Santos e de Rosa Cândida Martins Monteiro. Este casamento não só uniu duas famílias tradicionais de Alagoas, mas também deu início a uma nova geração que se destacaria em vários campos da sociedade brasileira. Desse casamento nasceram nove filhos: sete homens e duas mulheres. Entre eles, muitos seguiram a carreira militar, o que moldou significativamente os rumos que a família tomaria nas décadas seguintes. Pedro Aurélio de Góis Monteiro, por exemplo, tornou-se uma figura militar proeminente e foi Ministro da Guerra durante o governo de Getúlio Vargas, enquanto Silvestre Péricles de Góis Monteiro entrou na política, tornando-se governador de Alagoas. Esses caminhos foram, em grande parte, influenciados pelos valores que Dona Constança e seu marido incutiram em seus filhos desde cedo: a importância do serviço ao país, a integridade e o dever cívico.
+Dona Constança era conhecida por sua força de caráter, sabedoria e habilidade em gerenciar tanto os assuntos domésticos, quanto o apoio às carreiras de seus filhos. Numa época em que as mulheres tinham papéis limitados na sociedade, ela demonstrou que a liderança feminina nos limites domésticos pode gerar impactos significativos fora dele. Possuía uma habilidade notável para lidar com desafios e um compromisso inabalável com sua família, Dona Constança criou um ambiente que encorajou cada um de seus filhos a seguir suas próprias paixões e vocações, enquanto mantinha um senso de unidade familiar.
+Ela enfrentou problemas de saúde que a mantiveram em sua residência no Rio de Janeiro, e mesmo a distância exerceu o poder unificador da sua família, até seu falecimento em 30 de julho de 1958. Sua morte marcou o fim de uma era para a família Góis Monteiro, mas o legado de amor, dedicação e serviço que ela deixou continuou a inspirar seus descendentes.
+A influência de Dona Constança transcende sua vida. A revitalização da Praça Dona Constança, na Jatiúca, é um tributo ao impacto que ela teve em sua família e na sociedade alagoana. Transformado de um terreno baldio em um espaço vibrante para a comunidade, o nome da praça é uma homenagem à sua memória, o que ela representou durante sua vida.
+Na gestão do prefeito JHC, a área antes abandonada e utilizada como estacionamento deu lugar à Praça Dona Constança, um espaço que homenageia a memória de uma das figuras mais importantes da história de Alagoas. A criação da praça representa a transformação física do local e o resgate de um patrimônio simbólico para a cidade, unindo a preservação da memória histórica com a modernização urbana.
+O espaço, que antes era negligenciado, agora oferece um ambiente acolhedor e bem estruturado para a comunidade. A praça conta com áreas verdes cuidadosamente planejadas, que contribuem para a melhoria da qualidade de vida e o equilíbrio ambiental da região. Além disso, foram instalados um parquinho infantil, proporcionando lazer seguro para as crianças, um quiosque para fomentar a convivência social e um espaço de convivência destinado a todas as idades, incentivando o encontro entre gerações.
+Para garantir mais comodidade aos frequentadores, a praça também dispõe de um estacionamento organizado, facilitando o acesso de quem visita o local. A revitalização da Praça Dona Constança reflete o compromisso da atual gestão em promover o bem-estar da população, valorizando tanto a história de Maceió quanto o uso inteligente e sustentável dos espaços públicos, tornando-os pontos de encontro, lazer e integração para toda a comunidade.
+Praça Dona Constança. Foto: Jéssica Viturino
+IPTU 2026
+Gira, Maceió quando o Turismo gira
+Ações Estratégicas e Parcerias
+Secretaria Executiva do Gabinete Prefeito
+Secretaria Extraordinária de Indústria, Comércio e Serviços
+Estratégias Disruptivas e Economia Digital
+Mulher, Pessoas com Deficiência, Idosos e Cidadania
+Abastecimento, Agricultura, Pesca e Aquicultura
+Trabalho, Emprego e Economia Solidária
+Inclusão Social e Ações Comunitárias
+Meio Ambiente e Sustentabilidade
