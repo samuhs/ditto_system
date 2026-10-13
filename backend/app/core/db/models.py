@@ -170,6 +170,11 @@ class AnnotationRound(Base):
     seed: Mapped[int] = mapped_column(Integer)
     rubric_version: Mapped[int] = mapped_column(Integer)
     experiment_ids: Mapped[list] = mapped_column(JSON, default=list)
+    # A pilot Rodada calibrates the Rubrica and never enters the analysis.
+    pilot: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Sampling design: the dimensions stratified on and how the size is split among strata.
+    strata: Mapped[list] = mapped_column(JSON, default=list)
+    allocation: Mapped[str] = mapped_column(String(20), default="proportional")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     items: Mapped[list["AnnotationItem"]] = relationship(

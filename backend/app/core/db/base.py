@@ -50,6 +50,8 @@ ADDED_COLUMNS = {
     },
     "question_profile": {"model_signals": "JSON", "question_type": "VARCHAR(20)"},
     "experiment_run": {"graph_stats": "JSON"},
+    "annotation_round": {"pilot": "BOOLEAN DEFAULT FALSE", "strata": "JSON",
+                         "allocation": "VARCHAR(20) DEFAULT 'proportional'"},
 }
 
 

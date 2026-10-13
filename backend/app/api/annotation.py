@@ -1,6 +1,8 @@
 """Endpoints of the Anotação humana: Avaliadores, Rodadas de anotação and notes."""
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
@@ -12,6 +14,7 @@ from app.annotation.service import (
     get_annotator,
     get_round,
     list_rounds as list_round_summaries,
+    preview_round,
     queue,
     round_progress,
     round_summary,
@@ -42,12 +45,23 @@ class AnnotatorPatch(BaseModel):
 
 class RoundIn(BaseModel):
     name: str = Field(max_length=120)
-    experiment_id: int
+    # The Combinações to sample from ("experiment:run"), or every run of one Experimento.
+    items: list[str] | None = None
+    experiment_id: int | None = None
     sample_size: int = Field(gt=0)
     seed: int | None = Field(None, ge=0, le=2**31 - 1)  # the column is a 32-bit integer
     description: str = ""
+    strata: list[Literal["question_type", "rag", "llm"]] = []
+    allocation: Literal["proportional", "equal"] = "proportional"
+    pilot: bool = False
 
     _not_blank = field_validator("name")(_clean_name)
+
+    @model_validator(mode="after")
+    def _has_source(self) -> "RoundIn":
+        if not self.items and self.experiment_id is None:
+            raise ValueError("informe as Combinações (items) ou o experiment_id")
+        return self
 
 
 class NoteIn(BaseModel):
@@ -131,9 +145,19 @@ def list_rounds(session: Session = Depends(_session)) -> list[dict]:
 @router.post("/annotation/rounds", status_code=201)
 def post_round(body: RoundIn, session: Session = Depends(_session)) -> dict:
     """Sample answers of an Experimento into a new Rodada (same seed, same sample)."""
-    rnd = _or_http(lambda: create_round(session, body.name, body.experiment_id, body.sample_size,
-                                        body.seed, body.description))
+    rnd = _or_http(lambda: create_round(
+        session, body.name, body.sample_size, items=body.items, experiment_id=body.experiment_id,
+        seed=body.seed, description=body.description, strata=list(body.strata),
+        allocation=body.allocation, pilot=body.pilot,
+    ))
     return round_summary(rnd)
+
+
+@router.post("/annotation/rounds/preview")
+def post_round_preview(body: RoundIn, session: Session = Depends(_session)) -> dict:
+    """What a Rodada with this design would sample, stratum by stratum, without creating it."""
+    return _or_http(lambda: preview_round(session, body.items, body.experiment_id, body.sample_size,
+                                          list(body.strata), body.allocation))
 
 
 @router.get("/annotation/rounds/{round_id}")

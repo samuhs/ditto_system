@@ -34,7 +34,8 @@ const rubric: Rubric = {
 
 const round = {
   id: 5, name: "piloto", description: "", status: "open" as const, seed: 7, rubric_version: 1,
-  experiment_ids: [90], size: 2, created_at: null,
+  experiment_ids: [90], size: 2, pilot: false, strata: [], allocation: "proportional" as const,
+  created_at: null,
 };
 
 function queue(over: Partial<AnnotationQueue> = {}): AnnotationQueue {

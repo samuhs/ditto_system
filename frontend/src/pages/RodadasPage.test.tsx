@@ -11,7 +11,8 @@ vi.mock("../api/client");
 
 const round = {
   id: 5, name: "piloto", description: "", status: "open" as const, seed: 7, rubric_version: 1,
-  experiment_ids: [90], size: 10, created_at: "2026-10-13T03:00:00",
+  experiment_ids: [90], size: 10, pilot: false, strata: [], allocation: "proportional" as const,
+  created_at: "2026-10-13T03:00:00",
 };
 
 function renderAt(url: string) {
@@ -38,6 +39,11 @@ describe("RodadasPage", () => {
       items: [{ id: 90, name: "B2.E3.1-qwen35-4b", status: "done", base: "campanha-b2", created_at: "" }],
       total: 1, page: 1, page_size: 100,
     });
+    vi.mocked(client.listBases).mockResolvedValue([{ name: "campanha-b2", indexes: [] }] as never);
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      runs: [{ id: 7, chunking: "markdown", embedding: "e5", rag: "agentic", retriever: "similarity",
+        llm: "Qwen3.5-4B" }],
+    } as never);
   });
 
   it("lists the Avaliadores and lets the researcher deactivate an active one", async () => {
@@ -52,21 +58,54 @@ describe("RodadasPage", () => {
     expect(within(bruno).getByRole("button", { name: /reativar/i })).toBeInTheDocument();
   });
 
-  it("creates a Rodada from an Experimento with the sample size and the seed", async () => {
+  async function pickCombination() {
+    await userEvent.selectOptions(await screen.findByLabelText("Base"), "campanha-b2");
+    await userEvent.selectOptions(await screen.findByLabelText("Experimento"), "90");
+    const picker = screen.getByRole("region", { name: /adicionar combinações/i });
+    await userEvent.click(await within(picker).findByRole("checkbox"));
+  }
+
+  it("creates a stratified Rodada from the chosen Combinações", async () => {
     vi.mocked(client.createAnnotationRound).mockResolvedValue({ ...round, id: 6, name: "principal" });
     renderAt("/anotacao");
 
     await userEvent.type(await screen.findByLabelText(/nome da rodada/i), "principal");
-    await userEvent.click(screen.getByRole("textbox", { name: /experimento/i }));
-    await userEvent.click(await screen.findByRole("option", { name: /#90 · B2.E3.1-qwen35-4b/ }));
+    await pickCombination();
     await userEvent.clear(screen.getByLabelText(/respostas a sortear/i));
     await userEvent.type(screen.getByLabelText(/respostas a sortear/i), "20");
     await userEvent.type(screen.getByLabelText(/semente/i), "11");
+    await userEvent.click(screen.getByRole("checkbox", { name: /tipo de pergunta/i }));
+    await userEvent.click(screen.getByRole("checkbox", { name: /técnica rag/i }));
+    await userEvent.click(screen.getByRole("radio", { name: /igual por estrato/i }));
+    await userEvent.click(screen.getByRole("checkbox", { name: /rodada piloto/i }));
     await userEvent.click(screen.getByRole("button", { name: /criar rodada/i }));
 
     expect(client.createAnnotationRound).toHaveBeenCalledWith({
-      name: "principal", experiment_id: 90, sample_size: 20, seed: 11,
+      name: "principal", items: ["90:7"], sample_size: 20, seed: 11,
+      strata: ["question_type", "rag"], allocation: "equal", pilot: true,
     });
+  });
+
+  it("previews how many answers each stratum gives and warns about short ones", async () => {
+    vi.mocked(client.previewAnnotationRound).mockResolvedValue({
+      available: 21, size: 6,
+      strata: [
+        { key: { question_type: "ponte" }, available: 1, allocated: 1, short: true },
+        { key: { question_type: "simples" }, available: 20, allocated: 5, short: false },
+      ],
+    });
+    renderAt("/anotacao");
+    await userEvent.type(await screen.findByLabelText(/nome da rodada/i), "x");
+    await pickCombination();
+    await userEvent.click(screen.getByRole("checkbox", { name: /tipo de pergunta/i }));
+
+    await userEvent.click(screen.getByRole("button", { name: /ver prévia/i }));
+
+    const ponte = (await screen.findByText("ponte")).closest("tr")!;
+    expect(within(ponte).getByText("1 de 1")).toBeInTheDocument();
+    expect(within(ponte).getByText(/faltam respostas/i)).toBeInTheDocument();
+    const simples = screen.getByText("simples").closest("tr")!;
+    expect(within(simples).getByText("5 de 20")).toBeInTheDocument();
   });
 
   it("lists the Rodadas with size, status and a link to each one", async () => {
@@ -76,6 +115,14 @@ describe("RodadasPage", () => {
     expect(link).toHaveAttribute("href", "/anotacao/5");
     expect(screen.getByText(/10 respostas/)).toBeInTheDocument();
     expect(screen.getByText(/aberta/i)).toBeInTheDocument();
+  });
+
+  it("marks pilot Rodadas", async () => {
+    vi.mocked(client.listAnnotationRounds).mockResolvedValue([{ ...round, pilot: true }]);
+    renderAt("/anotacao");
+
+    const row = (await screen.findByRole("link", { name: /piloto/i })).closest("tr")!;
+    expect(within(row).getByText(/fora da análise/i)).toBeInTheDocument();
   });
 
   it("points the Avaliadores to the evaluation screen", async () => {

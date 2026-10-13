@@ -1,5 +1,5 @@
-import { Button, NumberInput, Select, TextInput } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { Button, Checkbox, NumberInput, Radio, TextInput } from "@mantine/core";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import {
@@ -7,31 +7,45 @@ import {
   getAnnotationRound,
   listAnnotationRounds,
   listAnnotators,
-  listExperiments,
+  previewAnnotationRound,
   setAnnotatorActive,
 } from "../api/client";
 import type {
   AnnotationRoundDetail,
+  AnnotationRoundInput,
+  AnnotationRoundPreview,
   AnnotationRoundSummary,
+  AnnotationStratumDim,
   Annotator,
-  ExperimentSummary,
 } from "../api/types";
+import { CombinationPicker } from "../components/CombinationPicker";
 import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 
 const STATUS = { open: "Aberta", closed: "Fechada" } as const;
 
+const DIMS: { value: AnnotationStratumDim; label: string }[] = [
+  { value: "question_type", label: "Tipo de pergunta" },
+  { value: "rag", label: "Técnica RAG" },
+  { value: "llm", label: "LLM de resposta" },
+];
+
 /** The researcher's side of the Anotação humana: Avaliadores and Rodadas. */
 export function RodadasPage() {
   const [annotators, setAnnotators] = useState<Annotator[]>([]);
   const [rounds, setRounds] = useState<AnnotationRoundSummary[]>([]);
-  const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [experimentId, setExperimentId] = useState<string | null>(null);
+  const [items, setItems] = useState<string[]>([]);
   const [size, setSize] = useState<number | string>(60);
   const [seed, setSeed] = useState<number | string>("");
+  const [strata, setStrata] = useState<AnnotationStratumDim[]>([]);
+  const [allocation, setAllocation] = useState<"proportional" | "equal">("proportional");
+  const [pilot, setPilot] = useState(false);
+  const [preview, setPreview] = useState<AnnotationRoundPreview | null>(null);
+  // Bumped on every design change, so a preview that answers late for an old design is dropped.
+  const designVersion = useRef(0);
 
   function refresh() {
     listAnnotators().then(setAnnotators).catch((e) => setError(errorText(e)));
@@ -40,9 +54,6 @@ export function RodadasPage() {
 
   useEffect(() => {
     refresh();
-    listExperiments(1, 100)
-      .then((list) => setExperiments(list.items.filter((x) => x.status === "done")))
-      .catch((e) => setError(errorText(e)));
   }, []);
 
   async function toggle(a: Annotator) {
@@ -55,25 +66,55 @@ export function RodadasPage() {
     }
   }
 
+  function design(): AnnotationRoundInput {
+    return {
+      name: name.trim() || "prévia",
+      items,
+      sample_size: Number(size),
+      ...(seed === "" ? {} : { seed: Number(seed) }),
+      strata,
+      allocation,
+      pilot,
+    };
+  }
+
+  function touch<T>(set: (v: T) => void) {
+    return (v: T) => {
+      set(v);
+      designVersion.current += 1;
+      setPreview(null);
+    };
+  }
+
+  async function showPreview() {
+    setError(null);
+    const asked = designVersion.current;
+    try {
+      const result = await previewAnnotationRound(design());
+      if (asked === designVersion.current) setPreview(result);
+    } catch (e) {
+      setError(errorText(e));
+    }
+  }
+
   async function create() {
     setError(null);
     setCreated(null);
     try {
-      const rnd = await createAnnotationRound({
-        name: name.trim(),
-        experiment_id: Number(experimentId),
-        sample_size: Number(size),
-        ...(seed === "" ? {} : { seed: Number(seed) }),
-      });
+      const rnd = await createAnnotationRound(design());
       setCreated(rnd.name);
       setName("");
+      setPreview(null);
       refresh();
     } catch (e) {
       setError(errorText(e));
     }
   }
 
-  const canCreate = name.trim() !== "" && experimentId !== null && Number(size) > 0;
+  const toggleItem = touch((id: string) =>
+    setItems((all) => (all.includes(id) ? all.filter((x) => x !== id) : [...all, id])));
+  const ready = items.length > 0 && Number(size) > 0;
+  const canCreate = name.trim() !== "" && ready;
 
   return (
     <div>
@@ -94,22 +135,45 @@ export function RodadasPage() {
       <section className="ditto-sec">
         <div className="ditto-sec-head">
           <h2 className="ditto-h2">Nova rodada</h2>
-          <p className="ditto-read">Sorteia respostas válidas de um experimento concluído. A mesma semente sorteia as mesmas respostas.</p>
+          <p className="ditto-read">
+            Sorteia respostas válidas das Combinações escolhidas, de uma Base só. A mesma semente sorteia as mesmas
+            respostas. Estratificar garante que cada tipo de pergunta, técnica ou LLM apareça na amostra.
+          </p>
         </div>
         <div className="ditto-sec-body">
           <TextInput label="Nome da rodada" value={name} onChange={(e) => setName(e.currentTarget.value)} maw={420} />
+          <CombinationPicker items={items} onToggle={toggleItem} />
+          {items.length > 0 && <p className="ditto-muted">{items.length} Combinação(ões) escolhida(s): {items.join(", ")}</p>}
           <div className="ditto-filters" style={{ margin: 0 }}>
-            <Select
-              label="Experimento"
-              data={experiments.map((x) => ({ value: String(x.id), label: `#${x.id} · ${x.name}` }))}
-              value={experimentId}
-              onChange={setExperimentId}
-              searchable
-            />
-            <NumberInput label="Respostas a sortear" value={size} onChange={setSize} min={1} maw={200} />
-            <NumberInput label="Semente (opcional)" value={seed} onChange={setSeed} min={0} maw={200} />
+            <NumberInput label="Respostas a sortear" value={size} onChange={touch(setSize)} min={1} maw={200} />
+            <NumberInput label="Semente (opcional)" value={seed} onChange={touch(setSeed)} min={0} maw={200} />
           </div>
-          <Button onClick={create} disabled={!canCreate}>Criar rodada</Button>
+          <fieldset className="ditto-rubric-dim">
+            <legend>Estratificar por</legend>
+            {DIMS.map((d) => (
+              <Checkbox
+                key={d.value}
+                label={d.label}
+                checked={strata.includes(d.value)}
+                onChange={() => touch(setStrata)(strata.includes(d.value)
+                  ? strata.filter((x) => x !== d.value) : [...strata, d.value])}
+              />
+            ))}
+            <Radio.Group value={allocation} onChange={(v) => touch(setAllocation)(v as "proportional" | "equal")}>
+              <Radio value="proportional" label="Proporcional ao tamanho de cada estrato" />
+              <Radio value="equal" label="Igual por estrato" mt={6} />
+            </Radio.Group>
+          </fieldset>
+          <Checkbox
+            label="Rodada piloto (calibra a rubrica; fica fora da análise)"
+            checked={pilot}
+            onChange={(e) => setPilot(e.currentTarget.checked)}
+          />
+          <div className="ditto-annotate-nav">
+            <Button variant="default" onClick={showPreview} disabled={!ready}>Ver prévia</Button>
+            <Button onClick={create} disabled={!canCreate}>Criar rodada</Button>
+          </div>
+          {preview && <PreviewTable preview={preview} />}
           {created && <Saved>Rodada {created} criada.</Saved>}
         </div>
       </section>
@@ -127,7 +191,7 @@ export function RodadasPage() {
                   <tr key={r.id}>
                     <td><Link to={`/anotacao/${r.id}`}>{r.name}</Link></td>
                     <td className="ditto-num">{r.size} respostas</td>
-                    <td>{STATUS[r.status]}</td>
+                    <td>{STATUS[r.status]}{r.pilot && <span className="ditto-muted"> · piloto, fora da análise</span>}</td>
                     <td>{r.experiment_ids.map((id) => `#${id}`).join(", ")}</td>
                   </tr>
                 ))}
@@ -166,6 +230,28 @@ export function RodadasPage() {
   );
 }
 
+function PreviewTable({ preview }: { preview: AnnotationRoundPreview }) {
+  const label = (key: AnnotationRoundPreview["strata"][number]["key"]) =>
+    Object.values(key).join(" · ") || "Todas as respostas";
+  return (
+    <div className="ditto-table-wrap">
+      <table className="ditto-table">
+        <caption>{preview.size} de {preview.available} respostas válidas</caption>
+        <thead><tr><th>Estrato</th><th>Sorteadas</th><th /></tr></thead>
+        <tbody>
+          {preview.strata.map((s) => (
+            <tr key={label(s.key)}>
+              <td>{label(s.key)}</td>
+              <td className="ditto-num">{s.allocated} de {s.available}</td>
+              <td>{s.short && <span className="ditto-muted">Faltam respostas: os outros estratos completam</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function RodadaDetailPage() {
   const { id } = useParams();
   const [round, setRound] = useState<AnnotationRoundDetail | null>(null);
@@ -179,7 +265,7 @@ export function RodadaDetailPage() {
     <div>
       <PageHeader
         title={round ? `Rodada ${round.name}` : "Rodada"}
-        lede={round && `${round.size} respostas · semente ${round.seed} · rubrica v${round.rubric_version} · ${STATUS[round.status]}`}
+        lede={round && `${round.size} respostas · semente ${round.seed} · rubrica v${round.rubric_version} · ${STATUS[round.status]}${round.pilot ? " · piloto, fora da análise" : ""}`}
         back={{ to: "/anotacao", label: "Voltar às rodadas" }}
       />
       {error && <Errata title="Algo não funcionou">{error}</Errata>}

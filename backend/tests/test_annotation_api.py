@@ -326,3 +326,193 @@ def test_invalid_rounds_are_refused(env, body):
     body = {**body, "experiment_id": _experiment(sf)}
 
     assert client.post("/annotation/rounds", json=body).status_code == 422
+
+
+# ---- #48: stratified sampling across Experimentos, pilot Rodadas ----
+
+def _campaign(session_factory, name, base, runs) -> tuple[int, list[int]]:
+    """An Experimento whose runs are (rag, llm, {question_type: how many answers})."""
+    session = session_factory()
+    experiment = Experiment(name=name, status="done", config={"base": base})
+    for rag, llm, per_type in runs:
+        run = ExperimentRun(chunking="markdown", embedding="e5", rag_technique=rag,
+                            retriever="similarity", llm=llm, status="done")
+        for qtype, n in per_type.items():
+            for i in range(n):
+                run.results.append(RunResult(
+                    question=f"{qtype} {i}?", reference_answer="Ref.", question_type=qtype,
+                    generated_answer=f"Resposta {qtype} {i}.", scores={"answer_correctness": 0.6},
+                ))
+        experiment.runs.append(run)
+    session.add(experiment)
+    session.commit()
+    ids = experiment.id, [r.id for r in experiment.runs]
+    session.close()
+    return ids
+
+
+def _strata_body(items, size, **over):
+    return {"name": "estratificada", "items": items, "sample_size": size, "seed": 1, **over}
+
+
+def _sampled(client, sf, round_id) -> list[tuple]:
+    """(rag, llm, question_type) of each Item of a Rodada, read from the database."""
+    from app.core.db.models import AnnotationItem
+    session = sf()
+    rows = session.query(AnnotationItem).filter_by(round_id=round_id).all()
+    out = [(i.combination["rag"], i.combination["llm"], i.question_type) for i in rows]
+    session.close()
+    return out
+
+
+def test_a_round_can_mix_combinations_of_two_experimentos_of_the_same_base(env):
+    client, sf = env
+    e1, [r1] = _campaign(sf, "fase-2", "b2", [("naive", "L0", {"simples": 5})])
+    e2, [r2] = _campaign(sf, "fase-3", "b2", [("agentic", "M1", {"simples": 5})])
+
+    response = client.post("/annotation/rounds", json=_strata_body([f"{e1}:{r1}", f"{e2}:{r2}"], 10))
+
+    assert response.status_code == 201, response.text
+    assert response.json()["experiment_ids"] == [e1, e2]
+    assert sorted({rag for rag, _, _ in _sampled(client, sf, response.json()["id"])}) == ["agentic", "naive"]
+
+
+def test_combinations_of_different_bases_are_refused(env):
+    client, sf = env
+    e1, [r1] = _campaign(sf, "guia", "guia", [("naive", "L0", {"simples": 5})])
+    e2, [r2] = _campaign(sf, "b2", "b2", [("naive", "L0", {"simples": 5})])
+
+    response = client.post("/annotation/rounds", json=_strata_body([f"{e1}:{r1}", f"{e2}:{r2}"], 4))
+
+    assert response.status_code == 422
+    assert "Base" in response.json()["detail"]
+
+
+def test_a_combination_that_does_not_exist_is_404(env):
+    client, sf = env
+    e1, [r1] = _campaign(sf, "fase-2", "b2", [("naive", "L0", {"simples": 5})])
+
+    response = client.post("/annotation/rounds", json=_strata_body([f"{e1}:{r1}", f"{e1}:999"], 2))
+
+    assert response.status_code == 404
+
+
+def test_equal_allocation_gives_each_stratum_the_same_share(env):
+    client, sf = env
+    e, runs = _campaign(sf, "fase-3", "b2", [
+        ("naive", "L0", {"simples": 10, "ponte": 10}),
+        ("agentic", "L0", {"simples": 10, "ponte": 10}),
+    ])
+    items = [f"{e}:{r}" for r in runs]
+
+    response = client.post("/annotation/rounds", json=_strata_body(
+        items, 8, strata=["rag", "question_type"], allocation="equal"))
+
+    counts = {}
+    for rag, _, qtype in _sampled(client, sf, response.json()["id"]):
+        counts[(rag, qtype)] = counts.get((rag, qtype), 0) + 1
+    assert counts == {("naive", "simples"): 2, ("naive", "ponte"): 2,
+                      ("agentic", "simples"): 2, ("agentic", "ponte"): 2}
+
+
+def test_proportional_allocation_follows_the_stratum_sizes(env):
+    client, sf = env
+    e, [r] = _campaign(sf, "fase-2", "b2", [("naive", "L0", {"simples": 30, "ponte": 10})])
+
+    response = client.post("/annotation/rounds", json=_strata_body(
+        [f"{e}:{r}"], 8, strata=["question_type"], allocation="proportional"))
+
+    types = [t for _, _, t in _sampled(client, sf, response.json()["id"])]
+    assert (types.count("simples"), types.count("ponte")) == (6, 2)
+
+
+def test_a_short_stratum_gives_its_shortfall_to_the_others(env):
+    client, sf = env
+    e, [r] = _campaign(sf, "fase-2", "b2", [("naive", "L0", {"simples": 20, "ponte": 1})])
+
+    response = client.post("/annotation/rounds", json=_strata_body(
+        [f"{e}:{r}"], 6, strata=["question_type"], allocation="equal"))
+
+    types = [t for _, _, t in _sampled(client, sf, response.json()["id"])]
+    assert (types.count("simples"), types.count("ponte")) == (5, 1)
+
+
+def test_stratified_sampling_is_reproducible_with_the_seed(env):
+    client, sf = env
+    e, runs = _campaign(sf, "fase-3", "b2", [
+        ("naive", "L0", {"simples": 15, "ponte": 15}), ("agentic", "M1", {"simples": 15, "ponte": 15}),
+    ])
+    body = _strata_body([f"{e}:{r}" for r in runs], 12, strata=["rag", "question_type"])
+
+    def answers():
+        rid = client.post("/annotation/rounds", json=body).json()["id"]
+        q = client.get(f"/annotation/rounds/{rid}/queue", params={"annotator_id": annotator}).json()
+        return sorted(i["generated_answer"] for i in q["items"])
+
+    annotator = _annotator(client)
+    assert answers() == answers()
+
+
+def test_the_preview_counts_each_stratum_and_warns_about_short_ones(env):
+    client, sf = env
+    e, [r] = _campaign(sf, "fase-2", "b2", [("naive", "L0", {"simples": 20, "ponte": 1})])
+
+    preview = client.post("/annotation/rounds/preview", json=_strata_body(
+        [f"{e}:{r}"], 6, strata=["question_type"], allocation="equal")).json()
+
+    by_key = {tuple(s["key"].values()): s for s in preview["strata"]}
+    assert by_key[("ponte",)] == {"key": {"question_type": "ponte"}, "available": 1, "allocated": 1, "short": True}
+    assert by_key[("simples",)]["available"] == 20
+    assert by_key[("simples",)]["allocated"] == 5
+    assert preview["available"] == 21
+    assert preview["size"] == 6
+
+
+def test_unknown_strata_dimensions_are_refused(env):
+    client, sf = env
+    e, [r] = _campaign(sf, "fase-2", "b2", [("naive", "L0", {"simples": 5})])
+
+    response = client.post("/annotation/rounds", json=_strata_body([f"{e}:{r}"], 2, strata=["cor"]))
+
+    assert response.status_code == 422
+
+
+def test_a_pilot_round_is_marked_as_such(env):
+    client, sf = env
+    e, [r] = _campaign(sf, "fase-2", "b2", [("naive", "L0", {"simples": 5})])
+
+    created = client.post("/annotation/rounds", json=_strata_body([f"{e}:{r}"], 2, pilot=True)).json()
+
+    assert created["pilot"] is True
+    assert client.get("/annotation/rounds").json()[0]["pilot"] is True
+    assert created["strata"] == [] and created["allocation"] == "proportional"
+
+
+def test_stratified_items_are_shuffled_not_grouped_by_stratum(env):
+    client, sf = env
+    e, runs = _campaign(sf, "fase-3", "b2", [("naive", "L0", {"simples": 20}), ("agentic", "L0", {"simples": 20})])
+
+    rid = client.post("/annotation/rounds", json=_strata_body(
+        [f"{e}:{r}" for r in runs], 20, strata=["rag"], allocation="equal")).json()["id"]
+
+    from app.core.db.models import AnnotationItem
+    session = sf()
+    order = [i.combination["rag"] for i in session.query(AnnotationItem).filter_by(round_id=rid)
+             .order_by(AnnotationItem.position)]
+    session.close()
+    assert order.count("naive") == order.count("agentic") == 10
+    assert set(order[:10]) == {"naive", "agentic"}
+
+
+def test_a_round_from_an_experimento_still_running_is_refused(env):
+    client, sf = env
+    e, [r] = _campaign(sf, "fase-3", "b2", [("naive", "L0", {"simples": 5})])
+    session = sf()
+    session.get(Experiment, e).status = "running"
+    session.commit()
+    session.close()
+
+    response = client.post("/annotation/rounds", json=_strata_body([f"{e}:{r}"], 2))
+
+    assert response.status_code == 422
+    assert "concluído" in response.json()["detail"]

@@ -3,6 +3,7 @@ import type {
   AnnotationQueue,
   AnnotationRoundDetail,
   AnnotationRoundInput,
+  AnnotationRoundPreview,
   AnnotationRoundSummary,
   Annotator,
   AppSettings,
@@ -327,6 +328,13 @@ export async function listAnnotationRounds(): Promise<AnnotationRoundSummary[]> 
 
 export async function createAnnotationRound(body: AnnotationRoundInput): Promise<AnnotationRoundSummary> {
   return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds`, { method: "POST", ...json(body) }));
+}
+
+/** How many answers each stratum has and would give, without creating the Rodada. */
+export async function previewAnnotationRound(body: AnnotationRoundInput): Promise<AnnotationRoundPreview> {
+  return asJson<AnnotationRoundPreview>(
+    await fetch(`${BASE}/annotation/rounds/preview`, { method: "POST", ...json(body) }),
+  );
 }
 
 export async function getAnnotationRound(id: number): Promise<AnnotationRoundDetail> {

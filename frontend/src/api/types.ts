@@ -541,7 +541,27 @@ export interface AnnotationRoundSummary {
   rubric_version: number;
   experiment_ids: number[];
   size: number;
+  /** A pilot Rodada calibrates the Rubrica and never enters the analysis. */
+  pilot: boolean;
+  strata: AnnotationStratumDim[];
+  allocation: "proportional" | "equal";
   created_at: string | null;
+}
+
+export type AnnotationStratumDim = "question_type" | "rag" | "llm";
+
+export interface AnnotationStratumPreview {
+  key: Partial<Record<AnnotationStratumDim, string>>;
+  available: number;
+  allocated: number;
+  /** The stratum has fewer answers than its share; the others make up the difference. */
+  short: boolean;
+}
+
+export interface AnnotationRoundPreview {
+  available: number;
+  size: number;
+  strata: AnnotationStratumPreview[];
 }
 
 export interface AnnotationProgress {
@@ -583,8 +603,13 @@ export interface AnnotationQueue {
 
 export interface AnnotationRoundInput {
   name: string;
-  experiment_id: number;
+  /** Combinações to sample from, as "experiment:run". */
+  items?: string[];
+  experiment_id?: number;
   sample_size: number;
   seed?: number | null;
   description?: string;
+  strata?: AnnotationStratumDim[];
+  allocation?: "proportional" | "equal";
+  pilot?: boolean;
 }
