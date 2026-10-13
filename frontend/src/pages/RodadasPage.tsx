@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import {
+  closeAnnotationRound,
   createAnnotationRound,
+  getAnnotationAgreement,
   getAnnotationRound,
   listAnnotationRounds,
   listAnnotators,
@@ -12,6 +14,9 @@ import {
   setAnnotatorActive,
 } from "../api/client";
 import type {
+  AgreementValue,
+  AnnotationAgreement,
+  AnnotationNoteValues,
   AnnotationRoundDetail,
   AnnotationRoundInput,
   AnnotationRoundPreview,
@@ -258,9 +263,40 @@ export function RodadaDetailPage() {
   const [round, setRound] = useState<AnnotationRoundDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
+  const [agreement, setAgreement] = useState<AnnotationAgreement | null>(null);
+  const [closing, setClosing] = useState(false);
 
+  const [computing, setComputing] = useState(false);
+
+  function computeAgreement() {
+    setComputing(true);
+    getAnnotationAgreement(Number(id))
+      .then(setAgreement)
+      .catch((e) => setError(errorText(e)))
+      .finally(() => setComputing(false));
+  }
+
+  // A closed Rodada shows its Concordância right away (cached on the server); an open one
+  // computes it on demand, since the bootstrap takes a few seconds and the notes still change.
   function load() {
-    getAnnotationRound(Number(id)).then(setRound).catch((e) => setError(errorText(e)));
+    setAgreement(null);
+    getAnnotationRound(Number(id))
+      .then((r) => {
+        setRound(r);
+        if (r.status === "closed") computeAgreement();
+      })
+      .catch((e) => setError(errorText(e)));
+  }
+
+  async function close() {
+    setError(null);
+    try {
+      await closeAnnotationRound(Number(id));
+      setClosing(false);
+      load();
+    } catch (e) {
+      setError(errorText(e));
+    }
   }
 
   useEffect(load, [id]);
@@ -284,6 +320,18 @@ export function RodadaDetailPage() {
         back={{ to: "/anotacao", label: "Voltar às rodadas" }}
       />
       {error && <Errata title="Algo não funcionou">{error}</Errata>}
+      {round?.status === "open" && (
+        <div className="ditto-annotate-nav" style={{ marginBottom: 16 }}>
+          {closing ? (
+            <>
+              <Button color="red" onClick={close}>Confirmar: fechar e congelar as notas</Button>
+              <Button variant="subtle" onClick={() => setClosing(false)}>Cancelar</Button>
+            </>
+          ) : (
+            <Button variant="default" onClick={() => setClosing(true)}>Fechar rodada</Button>
+          )}
+        </div>
+      )}
       {round && (
         <section className="ditto-sec">
           <h2 className="ditto-h2">Progresso</h2>
@@ -318,6 +366,98 @@ export function RodadaDetailPage() {
           )}
         </section>
       )}
+      {round?.status === "open" && !agreement && (
+        <section className="ditto-sec">
+          <h2 className="ditto-h2">Concordância</h2>
+          <p className="ditto-read">A rodada ainda está aberta: as notas podem mudar.</p>
+          <Button variant="default" onClick={computeAgreement} loading={computing}>Calcular concordância agora</Button>
+        </section>
+      )}
+      {agreement && <AgreementSection agreement={agreement} />}
     </div>
+  );
+}
+
+const DIM_LABEL = { correctness: "Correção", grounding: "Fundamentação" } as const;
+
+const dec = (v: number) => v.toFixed(2).replace(".", ",");
+
+function withCi(v: AgreementValue | null): string {
+  if (!v || v.value === null) return "—";
+  return v.low === null || v.high === null ? dec(v.value) : `${dec(v.value)} [${dec(v.low)}; ${dec(v.high)}]`;
+}
+
+function noteText(n: AnnotationNoteValues): string {
+  if (n.cannot_evaluate) return "não conseguiu avaliar";
+  return `${n.correctness ?? "—"} / ${n.grounding ?? "—"}`;
+}
+
+function AgreementSection({ agreement }: { agreement: AnnotationAgreement }) {
+  const dims = (["correctness", "grounding"] as const).map((k) => [k, agreement.dimensions[k]] as const);
+  return (
+    <section className="ditto-sec">
+      <div className="ditto-sec-head">
+        <h2 className="ditto-h2">Concordância</h2>
+        <p className="ditto-read">
+          α de Krippendorff ordinal e, com dois avaliadores, kappa ponderado (pesos quadráticos), com IC 95% por
+          bootstrap. Respostas sem nota numa dimensão ficam fora dela.
+        </p>
+      </div>
+      {agreement.note && <p className="ditto-empty">{agreement.note}</p>}
+      <div className="ditto-table-wrap">
+        <table className="ditto-table">
+          <thead><tr><th>Dimensão</th><th className="ditto-num">Respostas</th><th>α ordinal</th><th>κ ponderado</th></tr></thead>
+          <tbody>
+            {dims.map(([key, d]) => (
+              <tr key={key}>
+                <td>{DIM_LABEL[key]}</td>
+                <td className="ditto-num">{d.n}</td>
+                <td>{withCi(d.alpha)}</td>
+                <td>{withCi(d.kappa)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {dims.filter(([, d]) => d.confusion).map(([key, d]) => (
+        <div className="ditto-table-wrap" key={key}>
+          <table className="ditto-table" aria-label={`Matriz de confusão · ${DIM_LABEL[key]}`}>
+            <caption>Matriz de confusão · {DIM_LABEL[key]} (linhas: {d.confusion!.avaliadores[0]}; colunas: {d.confusion!.avaliadores[1]})</caption>
+            <thead><tr><th />{d.confusion!.levels.map((l) => <th key={l} className="ditto-num">{l}</th>)}</tr></thead>
+            <tbody>
+              {d.confusion!.matrix.map((row, i) => (
+                <tr key={i}>
+                  <th>{d.confusion!.levels[i]}</th>
+                  {row.map((c, j) => <td key={j} className="ditto-num">{c}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+      <h3 className="ditto-h3">Discordâncias ({agreement.disagreements.length})</h3>
+      {agreement.disagreements.length === 0 ? (
+        <p className="ditto-muted">Nenhuma discordância.</p>
+      ) : (
+        <div className="ditto-table-wrap">
+          <table className="ditto-table">
+            <thead><tr><th>Pergunta</th><th>Resposta avaliada</th><th>Notas (Correção / Fundamentação)</th></tr></thead>
+            <tbody>
+              {agreement.disagreements.map((d) => (
+                <tr key={d.item_id}>
+                  <td>{d.question}</td>
+                  <td>{d.generated_answer}</td>
+                  <td>
+                    {Object.entries(d.notes).map(([name, n]) => (
+                      <div key={name}>{name}: {noteText(n)}{n.comment ? ` (“${n.comment}”)` : ""}</div>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }

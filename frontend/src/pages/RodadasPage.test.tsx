@@ -135,6 +135,13 @@ describe("RodadasPage", () => {
 describe("RodadaDetailPage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue({
+      round, avaliadores: [], note: "sem dados", disagreements: [],
+      dimensions: {
+        correctness: { n: 0, alpha: { value: null, low: null, high: null }, kappa: null, confusion: null },
+        grounding: { n: 0, alpha: { value: null, low: null, high: null }, kappa: null, confusion: null },
+      },
+    });
     vi.mocked(client.getAnnotationRound).mockResolvedValue({
       ...round,
       progress: [
@@ -174,4 +181,85 @@ describe("RodadaDetailPage", () => {
 
     expect(await screen.findByText(/ninguém avaliou/i)).toBeInTheDocument();
   });
+
+  const agreement = {
+    round, avaliadores: ["Ana", "Bruno"], note: null,
+    dimensions: {
+      correctness: {
+        n: 10, alpha: { value: 0.812, low: 0.6, high: 0.93 }, kappa: { value: 0.7, low: 0.5, high: 0.88 },
+        confusion: { avaliadores: ["Ana", "Bruno"], levels: [0, 1, 2], matrix: [[3, 1, 0], [0, 2, 1], [0, 0, 3]] },
+      },
+      grounding: { n: 8, alpha: { value: null, low: null, high: null }, kappa: null, confusion: null },
+    },
+    disagreements: [{
+      item_id: 31, position: 4, question: "Qual é o telefone da Defesa Civil?", generated_answer: "199.",
+      notes: {
+        Ana: { correctness: 2, grounding: 2, cannot_evaluate: false, reason: null, comment: null },
+        Bruno: { correctness: 1, grounding: 2, cannot_evaluate: false, reason: null, comment: "Incompleta" },
+      },
+    }],
+  };
+
+  function closedRound() {
+    vi.mocked(client.getAnnotationRound).mockResolvedValue({
+      ...round, status: "closed", progress: [{ annotator_id: 3, name: "Ana", done: 10, total: 10 }],
+    });
+  }
+
+  it("computes the Concordância of an open Rodada only on demand", async () => {
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    renderAt("/anotacao/5");
+
+    await userEvent.click(await screen.findByRole("button", { name: /calcular concordância/i }));
+
+    expect(client.getAnnotationAgreement).toHaveBeenCalledWith(5);
+    expect(await screen.findByText("0,81 [0,60; 0,93]")).toBeInTheDocument();
+  });
+
+  it("shows the Concordância per dimension with confidence intervals", async () => {
+    closedRound();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    renderAt("/anotacao/5");
+
+    const corr = (await screen.findByText("Correção")).closest("tr")!;
+    expect(within(corr).getByText("0,81 [0,60; 0,93]")).toBeInTheDocument();
+    expect(within(corr).getByText("0,70 [0,50; 0,88]")).toBeInTheDocument();
+    expect(within(corr).getByText("10")).toBeInTheDocument();
+    const grounding = screen.getByText("Fundamentação").closest("tr")!;
+    expect(within(grounding).getAllByText("—").length).toBe(2);
+  });
+
+  it("shows the confusion matrix and the disagreements to adjudicate", async () => {
+    closedRound();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    renderAt("/anotacao/5");
+
+    expect(await screen.findByRole("table", { name: /matriz de confusão · correção/i })).toBeInTheDocument();
+    const row = screen.getByText("Qual é o telefone da Defesa Civil?").closest("tr")!;
+    expect(within(row).getByText(/Ana: 2 \/ 2/)).toBeInTheDocument();
+    expect(within(row).getByText(/Bruno: 1 \/ 2/)).toBeInTheDocument();
+  });
+
+  it("closes the Rodada only after confirming", async () => {
+    vi.mocked(client.closeAnnotationRound).mockResolvedValue({ ...round, status: "closed" });
+    renderAt("/anotacao/5");
+
+    await userEvent.click(await screen.findByRole("button", { name: /fechar rodada/i }));
+    expect(client.closeAnnotationRound).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: /confirmar: fechar/i }));
+
+    expect(client.closeAnnotationRound).toHaveBeenCalledWith(5);
+  });
+
+  it("explains when there is no Concordância yet", async () => {
+    closedRound();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue({
+      ...agreement, avaliadores: ["Ana"], disagreements: [],
+      note: "A Concordância precisa de pelo menos dois avaliadores nas mesmas respostas (ou de uma rodada de reteste).",
+    });
+    renderAt("/anotacao/5");
+
+    expect(await screen.findByText(/precisa de pelo menos dois avaliadores/i)).toBeInTheDocument();
+  });
 });
+

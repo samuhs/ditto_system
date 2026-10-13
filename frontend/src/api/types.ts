@@ -620,3 +620,29 @@ export interface AnnotationRoundInput {
   allocation?: "proportional" | "equal";
   pilot?: boolean;
 }
+
+export interface AgreementValue {
+  value: number | null;
+  low: number | null;
+  high: number | null;
+}
+
+export interface AgreementDimension {
+  /** Items with at least two scores in this dimension. */
+  n: number;
+  alpha: AgreementValue;
+  /** Only with exactly two Avaliadores. */
+  kappa: AgreementValue | null;
+  confusion: { avaliadores: string[]; levels: number[]; matrix: number[][] } | null;
+}
+
+export interface AnnotationAgreement {
+  round: AnnotationRoundSummary;
+  avaliadores: string[];
+  dimensions: Record<"correctness" | "grounding", AgreementDimension>;
+  disagreements: {
+    item_id: number; position: number; question: string; generated_answer: string;
+    notes: Record<string, AnnotationNoteValues>;
+  }[];
+  note: string | null;
+}

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.annotation.rubric import RUBRIC
 from app.annotation.service import (
     AnnotationError,
+    close_round,
     create_round,
     get_annotator,
     get_round,
@@ -19,6 +20,7 @@ from app.annotation.service import (
     preview_round,
     queue,
     remove_participant,
+    round_agreement,
     round_progress,
     round_summary,
     save_note,
@@ -191,6 +193,19 @@ def delete_participant(round_id: int, annotator_id: int, session: Session = Depe
     """Remove an Avaliador (registered by mistake, say) from a Rodada, with their notes in it."""
     deleted = _or_http(lambda: remove_participant(session, get_round(session, round_id), annotator_id))
     return {"round_id": round_id, "annotator_id": annotator_id, "notes_deleted": deleted}
+
+
+@router.post("/annotation/rounds/{round_id}/close")
+def post_close(round_id: int, session: Session = Depends(_session)) -> dict:
+    """Close the Rodada: no more notes, ready for the analysis."""
+    return round_summary(_or_http(lambda: close_round(session, get_round(session, round_id))))
+
+
+@router.get("/annotation/rounds/{round_id}/agreement")
+def get_agreement(round_id: int, resamples: int = Query(10_000, ge=100, le=10_000),
+                  session: Session = Depends(_session)) -> dict:
+    """Concordância between the Avaliadores of a Rodada, with 95% bootstrap CIs."""
+    return _or_http(lambda: round_agreement(session, get_round(session, round_id), resamples))
 
 
 @router.get("/annotation/rounds/{round_id}/queue")

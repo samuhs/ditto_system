@@ -699,3 +699,107 @@ def test_a_comment_is_kept_with_the_note(env):
     client.put(url, json={"correctness": 2, "grounding": 2, "comment": "Resposta longa, mas certa."})
 
     assert _first_item(client, rnd["id"], ana)["note"]["comment"] == "Resposta longa, mas certa."
+
+
+# ---- #51: closing a Rodada and measuring the Concordância ----
+
+def _score_all(client, round_id, annotator_id, scores):
+    """Join and score the Items in position order: scores[i] = (correctness, grounding) or None to skip."""
+    _join(client, round_id, annotator_id)
+    from app.core.db.models import AnnotationItem  # noqa: F401
+    items = sorted(client.get(f"/annotation/rounds/{round_id}/queue",
+                              params={"annotator_id": annotator_id}).json()["items"],
+                   key=lambda i: i["position"])
+    for item, score in zip(items, scores):
+        if score is None:
+            continue
+        if score == "cannot":
+            body = {"cannot_evaluate": True, "reason": "ambígua"}
+        else:
+            body = {"correctness": score[0], "grounding": score[1]}
+        assert client.put(f"/annotation/items/{item['id']}/notes/{annotator_id}", json=body).status_code == 200
+    return items
+
+
+def test_closing_a_round_refuses_new_notes(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    ana = _annotator(client)
+    items = _score_all(client, rnd["id"], ana, [(1, 1)])
+
+    assert client.post(f"/annotation/rounds/{rnd['id']}/close").json()["status"] == "closed"
+    late = client.put(f"/annotation/items/{items[1]['id']}/notes/{ana}", json={"correctness": 1, "grounding": 1})
+    assert late.status_code == 409
+
+
+def test_agreement_of_two_avaliadores_has_kappa_alpha_confusion_and_disagreements(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=4)
+    ana, bruno = _annotator(client, "Ana"), _annotator(client, "Bruno")
+    _score_all(client, rnd["id"], ana, [(0, 2), (1, 2), (2, 2), (2, 2)])
+    _score_all(client, rnd["id"], bruno, [(0, 2), (2, 2), (2, 2), (1, 2)])
+
+    result = client.get(f"/annotation/rounds/{rnd['id']}/agreement", params={"resamples": 200}).json()
+
+    corr = result["dimensions"]["correctness"]
+    assert corr["n"] == 4
+    assert corr["kappa"]["value"] == pytest.approx(7 / 11)
+    assert corr["alpha"]["value"] is not None
+    assert corr["alpha"]["low"] <= corr["alpha"]["value"] <= corr["alpha"]["high"]
+    assert corr["confusion"] == {"avaliadores": ["Ana", "Bruno"], "levels": [0, 1, 2],
+                                 "matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 1]]}
+    assert result["dimensions"]["grounding"]["kappa"] is None  # no variation: undefined
+    disagreements = result["disagreements"]
+    assert len(disagreements) == 2
+    assert {d["notes"]["Ana"]["correctness"] for d in disagreements} == {1, 2}
+    assert result["avaliadores"] == ["Ana", "Bruno"]
+
+
+def test_items_without_a_score_are_left_out_of_that_dimension(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=3)
+    ana, bruno = _annotator(client, "Ana"), _annotator(client, "Bruno")
+    _score_all(client, rnd["id"], ana, [(0, 1), (1, 1), "cannot"])
+    _score_all(client, rnd["id"], bruno, [(0, 1), (2, 2), (2, 2)])
+
+    dims = client.get(f"/annotation/rounds/{rnd['id']}/agreement", params={"resamples": 100}).json()["dimensions"]
+
+    assert dims["correctness"]["n"] == 2
+    assert dims["grounding"]["n"] == 2
+
+
+def test_kappa_only_with_exactly_two_avaliadores(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=3)
+    for name, scores in (("Ana", [(0, 0), (1, 1), (2, 2)]), ("Bruno", [(0, 0), (1, 1), (2, 1)]),
+                         ("Caio", [(0, 0), (2, 1), (2, 2)])):
+        _score_all(client, rnd["id"], _annotator(client, name), scores)
+
+    corr = client.get(f"/annotation/rounds/{rnd['id']}/agreement",
+                      params={"resamples": 100}).json()["dimensions"]["correctness"]
+
+    assert corr["kappa"] is None
+    assert corr["confusion"] is None
+    assert corr["alpha"]["value"] is not None
+
+
+def test_agreement_with_a_single_avaliador_says_why_it_is_missing(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    _score_all(client, rnd["id"], _annotator(client), [(1, 1), (2, 2)])
+
+    result = client.get(f"/annotation/rounds/{rnd['id']}/agreement", params={"resamples": 100}).json()
+
+    assert result["dimensions"]["correctness"]["alpha"]["value"] is None
+    assert "dois avaliadores" in result["note"]
+
+
+def test_a_closed_round_keeps_its_notes_even_when_removing_a_participant(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    ana = _annotator(client)
+    _score_all(client, rnd["id"], ana, [(1, 1)])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+
+    assert client.delete(f"/annotation/rounds/{rnd['id']}/participants/{ana}").status_code == 409
+    assert client.get(f"/annotation/rounds/{rnd['id']}").json()["progress"][0]["done"] == 1

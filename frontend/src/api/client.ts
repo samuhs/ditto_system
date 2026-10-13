@@ -1,4 +1,5 @@
 import type {
+  AnnotationAgreement,
   AnnotationNoteValues,
   AnnotationQueue,
   AnnotationRoundDetail,
@@ -366,4 +367,14 @@ export async function saveAnnotationNote(
   itemId: number, annotatorId: number, note: AnnotationNoteValues,
 ): Promise<AnnotationNoteValues & { item_id: number; annotator_id: number }> {
   return asJson(await fetch(`${BASE}/annotation/items/${itemId}/notes/${annotatorId}`, { method: "PUT", ...json(note) }));
+}
+
+/** Freezes the notes of a Rodada for the analysis. */
+export async function closeAnnotationRound(id: number): Promise<AnnotationRoundSummary> {
+  return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds/${id}/close`, { method: "POST" }));
+}
+
+/** Concordância between the Avaliadores of a Rodada (kappa, alpha, disagreements). */
+export async function getAnnotationAgreement(id: number): Promise<AnnotationAgreement> {
+  return asJson<AnnotationAgreement>(await fetch(`${BASE}/annotation/rounds/${id}/agreement`));
 }

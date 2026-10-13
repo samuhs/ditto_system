@@ -6,7 +6,14 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.annotation.rubric import RUBRIC_VERSION
+from app.annotation.agreement import (
+    RESAMPLES,
+    bootstrap_ci,
+    confusion_matrix,
+    krippendorff_alpha,
+    weighted_kappa,
+)
+from app.annotation.rubric import DIMENSIONS, LEVELS, RUBRIC_VERSION
 from app.core.db.models import (
     AnnotationItem,
     AnnotationNote,
@@ -277,6 +284,8 @@ def remove_participant(session: Session, rnd: AnnotationRound, annotator_id: int
     The removal is recorded (not deleted), so a screen still open with the old queue cannot
     quietly bring the Avaliador back by saving: they must pick the Rodada again.
     """
+    if rnd.status != "open":
+        raise AnnotationError("A Rodada está fechada: as notas estão congeladas.", status=409)
     participant = _participant(session, rnd.id, annotator_id)
     notes = list(session.scalars(
         select(AnnotationNote)
@@ -379,3 +388,89 @@ def save_note(session: Session, item_id: int, annotator_id: int, correctness: in
     note.comment = (comment or "").strip() or None
     session.commit()
     return note
+
+
+def close_round(session: Session, rnd: AnnotationRound) -> AnnotationRound:
+    """Freeze the notes of a Rodada before analysing them."""
+    rnd.status = "closed"
+    session.commit()
+    return rnd
+
+
+def _ci(value, interval) -> dict:
+    low, high = interval if interval else (None, None)
+    return {"value": value, "low": low, "high": high}
+
+
+# A closed Rodada's notes never change, so its Concordância is computed once per process.
+_closed_agreement: dict[tuple[int, int, int], dict] = {}
+
+
+def round_agreement(session: Session, rnd: AnnotationRound, resamples: int = RESAMPLES) -> dict:
+    """The Concordância of a Rodada; cached once the Rodada is closed (the bootstrap takes seconds)."""
+    if rnd.status != "open":
+        key = (id(session.get_bind()), rnd.id, resamples)  # the bind keeps test databases apart
+        if key not in _closed_agreement:
+            _closed_agreement[key] = _compute_agreement(session, rnd, resamples)
+        return _closed_agreement[key]
+    return _compute_agreement(session, rnd, resamples)
+
+
+def _compute_agreement(session: Session, rnd: AnnotationRound, resamples: int) -> dict:
+    """Concordância per Rubrica dimension: Krippendorff's ordinal alpha (2+ Avaliadores) and,
+    with exactly two, quadratic-weighted kappa and the confusion matrix; plus the Items where
+    the Avaliadores disagree. A score left out ("não se aplica", "não consigo avaliar") is a
+    missing value for that dimension."""
+    rows = session.execute(
+        select(AnnotationNote, Annotator.name)
+        .join(Annotator, AnnotationNote.annotator_id == Annotator.id)
+        .join(AnnotationItem, AnnotationNote.item_id == AnnotationItem.id)
+        .where(AnnotationItem.round_id == rnd.id)
+    ).all()
+    names = sorted({name for _, name in rows}, key=str.lower)
+    by_item: dict[int, dict[str, AnnotationNote]] = {}
+    for note, name in rows:
+        by_item.setdefault(note.item_id, {})[name] = note
+
+    def value(note: AnnotationNote | None, dim: str):
+        if note is None or note.cannot_evaluate:
+            return None
+        return getattr(note, dim)
+
+    dimensions = {}
+    for dim in DIMENSIONS:
+        units = [[value(by_item.get(item.id, {}).get(n), dim) for n in names] for item in rnd.items]
+        pairable = [u for u in units if sum(v is not None for v in u) >= 2]
+        alpha = krippendorff_alpha(pairable)
+        alpha_ci = bootstrap_ci(pairable, krippendorff_alpha, resamples) if alpha is not None else None
+        entry = {"n": len(pairable), "alpha": _ci(alpha, alpha_ci), "kappa": None, "confusion": None}
+        if len(names) == 2:
+            pairs = [(u[0], u[1]) for u in pairable]
+            a, b = [p[0] for p in pairs], [p[1] for p in pairs]
+            kappa = weighted_kappa(a, b, LEVELS)
+            if kappa is not None:
+                def kappa_of(ps):
+                    return weighted_kappa([p[0] for p in ps], [p[1] for p in ps], LEVELS)
+                ci = bootstrap_ci(pairs, kappa_of, resamples)
+                entry["kappa"] = _ci(kappa, ci)
+            if pairs:
+                entry["confusion"] = {"avaliadores": names, "levels": list(LEVELS),
+                                      "matrix": confusion_matrix(a, b, LEVELS)}
+        dimensions[dim] = entry
+
+    disagreements = []
+    for item in rnd.items:
+        notes = by_item.get(item.id, {})
+        split = any(len({value(n, dim) for n in notes.values()} - {None}) > 1 for dim in DIMENSIONS)
+        if split:
+            disagreements.append({
+                "item_id": item.id, "position": item.position, "question": item.question,
+                "generated_answer": item.generated_answer,
+                "notes": {name: note_out(note) for name, note in sorted(notes.items())},
+            })
+    return {
+        "round": round_summary(rnd), "avaliadores": names, "dimensions": dimensions,
+        "disagreements": disagreements,
+        "note": ("A Concordância precisa de pelo menos dois avaliadores nas mesmas respostas "
+                 "(ou de uma rodada de reteste)." if len(names) < 2 else None),
+    }
