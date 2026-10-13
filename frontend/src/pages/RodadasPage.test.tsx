@@ -352,12 +352,13 @@ describe("RodadaDetailPage", () => {
     closedRound();
     vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
     vi.mocked(client.annotationExportUrl).mockImplementation(
-      (id, kind, decimal) => `/api/x/${id}.${kind}${decimal === "comma" ? "?c" : ""}`);
+      (id, kind, decimal, _excel, lang) => `/api/x/${id}.${kind}${lang === "en" ? "?en" : decimal === "comma" ? "?c" : ""}`);
     renderAt("/anotacao/5");
 
     expect(await screen.findByRole("link", { name: /notas \(csv\)/i })).toHaveAttribute("href", "/api/x/5.csv");
     expect(screen.getByRole("link", { name: /tabelas latex \(ponto\)/i })).toHaveAttribute("href", "/api/x/5.tex");
     expect(screen.getByRole("link", { name: /tabelas latex \(vírgula\)/i })).toHaveAttribute("href", "/api/x/5.tex?c");
+    expect(screen.getByRole("link", { name: /tabelas latex em inglês/i })).toHaveAttribute("href", "/api/x/5.tex?en");
   });
 
   it("offers only the notes for a pilot Rodada", async () => {

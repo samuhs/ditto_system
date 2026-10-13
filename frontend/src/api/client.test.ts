@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  annotationExportUrl,
   createChatConfig,
   createExperiment,
   getDialogue,
@@ -210,5 +211,15 @@ describe("api client", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating: 8 }),
     });
+  });
+});
+
+describe("annotationExportUrl", () => {
+  it("builds the CSV, Excel and LaTeX (Portuguese and English) download URLs", () => {
+    expect(annotationExportUrl(5, "csv")).toBe("/api/annotation/rounds/5/export.csv");
+    expect(annotationExportUrl(5, "csv", "point", true)).toBe("/api/annotation/rounds/5/export.csv?excel=true");
+    expect(annotationExportUrl(5, "tex")).toBe("/api/annotation/rounds/5/export.tex");
+    expect(annotationExportUrl(5, "tex", "comma")).toBe("/api/annotation/rounds/5/export.tex?decimal=comma");
+    expect(annotationExportUrl(5, "tex", "point", false, "en")).toBe("/api/annotation/rounds/5/export.tex?lang=en");
   });
 });

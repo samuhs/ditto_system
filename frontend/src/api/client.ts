@@ -427,10 +427,15 @@ export async function getRetests(roundId: number): Promise<RetestAgreement[]> {
   return asJson<RetestAgreement[]>(await fetch(`${BASE}/annotation/rounds/${roundId}/retests`));
 }
 
-/** Download URL of a Rodada's notes (CSV) or analysis tables (LaTeX, point or comma decimals). */
+/** Download URL of a Rodada's notes (CSV, plain or for Excel) or analysis tables (LaTeX: Portuguese
+ * with point or comma decimals, or English for the English paper). */
 export function annotationExportUrl(
-  roundId: number, kind: "csv" | "tex", decimal: "point" | "comma" = "point", excel = false,
+  roundId: number, kind: "csv" | "tex", decimal: "point" | "comma" = "point", excel = false, lang: "pt" | "en" = "pt",
 ): string {
-  const query = kind === "tex" && decimal === "comma" ? "?decimal=comma" : kind === "csv" && excel ? "?excel=true" : "";
-  return `${BASE}/annotation/rounds/${roundId}/export.${kind}${query}`;
+  const params = new URLSearchParams();
+  if (kind === "tex" && lang === "en") params.set("lang", "en");
+  else if (kind === "tex" && decimal === "comma") params.set("decimal", "comma");
+  if (kind === "csv" && excel) params.set("excel", "true");
+  const query = params.toString();
+  return `${BASE}/annotation/rounds/${roundId}/export.${kind}${query ? `?${query}` : ""}`;
 }

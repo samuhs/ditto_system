@@ -400,6 +400,9 @@ export function RodadaDetailPage() {
             <>
               <a href={annotationExportUrl(round.id, "tex")} download>Baixar tabelas LaTeX (ponto)</a>
               <a href={annotationExportUrl(round.id, "tex", "comma")} download>Baixar tabelas LaTeX (vírgula)</a>
+              <a href={annotationExportUrl(round.id, "tex", "point", false, "en")} download>
+                Baixar tabelas LaTeX em inglês
+              </a>
             </>
           )}
         </p>

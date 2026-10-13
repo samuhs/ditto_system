@@ -277,16 +277,25 @@ def export_csv(round_id: int, excel: bool = Query(False), session: Session = Dep
     return _download(content, "text/csv; charset=utf-8", f"anotacao-rodada-{round_id}.csv")
 
 
+def _variant(lang: str, decimal: str) -> str:
+    """File-name suffix telling the LaTeX variants apart (English, Portuguese with commas)."""
+    if lang == "en":
+        return "-en"
+    return "-virgula" if decimal == "comma" else ""
+
+
 @router.get("/annotation/rounds/{round_id}/export.tex")
 def export_latex(round_id: int, resamples: int = Query(10_000, ge=100, le=10_000),
                  decimal: Literal["point", "comma"] = Query("point"),
+                 lang: Literal["pt", "en"] = Query("pt"),
                  session: Session = Depends(_session)) -> Response:
-    """Concordância and Spearman tables in LaTeX (booktabs); refused for pilot Rodadas."""
+    """Concordância and Spearman tables in LaTeX (booktabs), captions in Portuguese or English
+    (`lang=en`, for the English paper); refused for pilot and retest Rodadas."""
     rnd = _or_http(lambda: get_round(session, round_id))
     validation = _or_http(lambda: round_validation(session, rnd, resamples))
     agreement = round_agreement(session, rnd, resamples)
-    return _download(to_latex(agreement, validation, decimal, resamples), "application/x-tex; charset=utf-8",
-                     f"anotacao-rodada-{round_id}.tex")
+    return _download(to_latex(agreement, validation, decimal, resamples, lang), "application/x-tex; charset=utf-8",
+                     f"anotacao-rodada-{round_id}{_variant(lang, decimal)}.tex")
 
 
 @router.post("/annotation/rounds/{round_id}/close")

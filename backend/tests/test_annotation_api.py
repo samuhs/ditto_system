@@ -1211,3 +1211,19 @@ def test_the_excel_csv_uses_semicolons_and_quotes_formulas(env):
     assert excel.splitlines()[0].count(";") > 5
     assert "'=HYPERLINK" in excel
     assert "'=HYPERLINK" not in plain and "=HYPERLINK" in plain
+
+
+def test_the_latex_can_be_written_in_english_for_the_english_paper(env):
+    client, sf = env
+    rnd = _validation_round(client, sf)
+
+    tex = client.get(f"/annotation/rounds/{rnd['id']}/export.tex", params={"resamples": 100, "lang": "en"}).text
+    pt = client.get(f"/annotation/rounds/{rnd['id']}/export.tex", params={"resamples": 100}).text
+
+    assert "Inter-annotator agreement" in tex and "Spearman correlation" in tex and "Correctness" in tex
+    assert "Concordância" not in tex and "Correção" not in tex and "rodada" not in tex
+    assert "1.000" in tex and "100 resamples" in tex  # point decimals, English separators
+    assert "Concordância" in pt  # Portuguese stays the default
+    names = [client.get(f"/annotation/rounds/{rnd['id']}/export.tex", params={"resamples": 100, **p}).headers[
+        "content-disposition"] for p in ({}, {"decimal": "comma"}, {"lang": "en"})]
+    assert len(set(names)) == 3 and "-en.tex" in names[2]
