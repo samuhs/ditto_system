@@ -155,6 +155,19 @@ describe("RodadaDetailPage", () => {
     expect(screen.getByText(/semente 7/i)).toBeInTheDocument();
   });
 
+  it("removes a participant only after confirming, with their notes", async () => {
+    vi.mocked(client.removeAnnotationParticipant).mockResolvedValue({ round_id: 5, annotator_id: 3, notes_deleted: 7 });
+    renderAt("/anotacao/5");
+    const ana = (await screen.findByText("Ana")).closest("tr")!;
+
+    await userEvent.click(within(ana).getByRole("button", { name: /remover/i }));
+    expect(client.removeAnnotationParticipant).not.toHaveBeenCalled();
+    await userEvent.click(within(ana).getByRole("button", { name: /confirmar: apagar 7 notas/i }));
+
+    expect(client.removeAnnotationParticipant).toHaveBeenCalledWith(5, 3);
+    expect(client.getAnnotationRound).toHaveBeenCalledTimes(2);
+  });
+
   it("says when nobody has evaluated yet", async () => {
     vi.mocked(client.getAnnotationRound).mockResolvedValue({ ...round, progress: [] });
     renderAt("/anotacao/5");

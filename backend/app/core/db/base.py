@@ -52,6 +52,7 @@ ADDED_COLUMNS = {
     "experiment_run": {"graph_stats": "JSON"},
     "annotation_round": {"pilot": "BOOLEAN DEFAULT FALSE", "strata": "JSON",
                          "allocation": "VARCHAR(20) DEFAULT 'proportional'"},
+    "annotation_participant": {"removed_at": "TIMESTAMP"},
 }
 
 

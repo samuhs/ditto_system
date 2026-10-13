@@ -8,6 +8,7 @@ import {
   listAnnotationRounds,
   listAnnotators,
   previewAnnotationRound,
+  removeAnnotationParticipant,
   setAnnotatorActive,
 } from "../api/client";
 import type {
@@ -256,10 +257,24 @@ export function RodadaDetailPage() {
   const { id } = useParams();
   const [round, setRound] = useState<AnnotationRoundDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<number | null>(null);
 
-  useEffect(() => {
+  function load() {
     getAnnotationRound(Number(id)).then(setRound).catch((e) => setError(errorText(e)));
-  }, [id]);
+  }
+
+  useEffect(load, [id]);
+
+  async function remove(annotatorId: number) {
+    setError(null);
+    try {
+      await removeAnnotationParticipant(Number(id), annotatorId);
+      setConfirming(null);
+      load();
+    } catch (e) {
+      setError(errorText(e));
+    }
+  }
 
   return (
     <div>
@@ -277,12 +292,24 @@ export function RodadaDetailPage() {
           ) : (
             <div className="ditto-table-wrap">
               <table className="ditto-table">
-                <thead><tr><th>Avaliador</th><th>Avaliadas</th></tr></thead>
+                <thead><tr><th>Avaliador</th><th>Avaliadas</th><th /></tr></thead>
                 <tbody>
                   {round.progress.map((p) => (
                     <tr key={p.annotator_id}>
                       <td>{p.name}</td>
                       <td className="ditto-num">{p.done} de {p.total}</td>
+                      <td>
+                        {confirming === p.annotator_id ? (
+                          <>
+                            <Button size="xs" color="red" onClick={() => remove(p.annotator_id)}>
+                              Confirmar: apagar {p.done} notas
+                            </Button>
+                            <Button size="xs" variant="subtle" onClick={() => setConfirming(null)}>Cancelar</Button>
+                          </>
+                        ) : (
+                          <Button size="xs" variant="subtle" onClick={() => setConfirming(p.annotator_id)}>Remover</Button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

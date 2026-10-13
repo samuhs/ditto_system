@@ -13,9 +13,11 @@ from app.annotation.service import (
     create_round,
     get_annotator,
     get_round,
+    join_round,
     list_rounds as list_round_summaries,
     preview_round,
     queue,
+    remove_participant,
     round_progress,
     round_summary,
     save_note,
@@ -62,6 +64,10 @@ class RoundIn(BaseModel):
         if not self.items and self.experiment_id is None:
             raise ValueError("informe as Combinações (items) ou o experiment_id")
         return self
+
+
+class ParticipantIn(BaseModel):
+    annotator_id: int
 
 
 class NoteIn(BaseModel):
@@ -165,6 +171,21 @@ def round_detail(round_id: int, session: Session = Depends(_session)) -> dict:
     """A Rodada with each Avaliador's progress."""
     rnd = _or_http(lambda: get_round(session, round_id))
     return {**round_summary(rnd), "progress": round_progress(session, rnd)}
+
+
+@router.post("/annotation/rounds/{round_id}/participants")
+def post_participant(round_id: int, body: ParticipantIn, session: Session = Depends(_session)) -> dict:
+    """An Avaliador joins an open Rodada; joining again changes nothing."""
+    _or_http(lambda: join_round(session, get_round(session, round_id),
+                                get_annotator(session, body.annotator_id)))
+    return {"round_id": round_id, "annotator_id": body.annotator_id}
+
+
+@router.delete("/annotation/rounds/{round_id}/participants/{annotator_id}")
+def delete_participant(round_id: int, annotator_id: int, session: Session = Depends(_session)) -> dict:
+    """Remove an Avaliador (registered by mistake, say) from a Rodada, with their notes in it."""
+    deleted = _or_http(lambda: remove_participant(session, get_round(session, round_id), annotator_id))
+    return {"round_id": round_id, "annotator_id": annotator_id, "notes_deleted": deleted}
 
 
 @router.get("/annotation/rounds/{round_id}/queue")

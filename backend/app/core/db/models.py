@@ -220,3 +220,17 @@ class AnnotationNote(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+
+class AnnotationParticipant(Base):
+    """An Avaliador who joined a Rodada (listed in its progress even before the first note)."""
+
+    __tablename__ = "annotation_participant"
+    __table_args__ = (UniqueConstraint("round_id", "annotator_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    round_id: Mapped[int] = mapped_column(ForeignKey("annotation_round.id"))
+    annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
+    joined_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    # Set when the researcher removes the Avaliador; their notes are refused until they rejoin.
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

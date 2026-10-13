@@ -80,6 +80,7 @@ describe("AvaliarPage", () => {
     vi.mocked(client.listAnnotationRounds).mockResolvedValue([round]);
     vi.mocked(client.getRubric).mockResolvedValue(rubric);
     vi.mocked(client.getAnnotationQueue).mockResolvedValue(queue());
+    vi.mocked(client.joinAnnotationRound).mockResolvedValue(undefined);
     vi.mocked(client.saveAnnotationNote).mockResolvedValue({
       item_id: 11, annotator_id: 3, correctness: 2, grounding: 2,
     });
@@ -125,6 +126,20 @@ describe("AvaliarPage", () => {
 
     expect(await screen.findByRole("button", { name: /piloto/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /antiga/i })).not.toBeInTheDocument();
+  });
+
+  it("joins the Rodada when the Avaliador picks it", async () => {
+    await openRound();
+
+    expect(client.joinAnnotationRound).toHaveBeenCalledWith(5, 3);
+  });
+
+  it("marks pilot Rodadas in the choice", async () => {
+    vi.mocked(client.listAnnotationRounds).mockResolvedValue([{ ...round, pilot: true }]);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "Ana" }));
+
+    expect(await screen.findByRole("button", { name: /piloto · 2 respostas · rodada piloto/i })).toBeInTheDocument();
   });
 
   async function openRound() {

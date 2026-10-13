@@ -1,13 +1,16 @@
 """Rodadas de anotação: sampling answers from Experimentos and recording the Avaliadores' notes."""
 import random
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.annotation.rubric import RUBRIC_VERSION
 from app.core.db.models import (
     AnnotationItem,
     AnnotationNote,
+    AnnotationParticipant,
     AnnotationRound,
     Annotator,
     Experiment,
@@ -219,20 +222,86 @@ def list_rounds(session: Session) -> list[dict]:
 
 
 def round_progress(session: Session, rnd: AnnotationRound) -> list[dict]:
-    """Notes done per Avaliador who scored at least one Item of the Rodada."""
+    """Notes done per Avaliador who joined the Rodada or scored at least one of its Items."""
+    names = dict(session.execute(
+        select(Annotator.id, Annotator.name)
+        .join(AnnotationParticipant, AnnotationParticipant.annotator_id == Annotator.id)
+        .where(AnnotationParticipant.round_id == rnd.id, AnnotationParticipant.removed_at.is_(None))
+    ).all())
+    done: dict[int, int] = dict.fromkeys(names, 0)
     rows = session.execute(
-        select(Annotator, AnnotationNote)
+        select(Annotator.id, Annotator.name, AnnotationNote)
         .join(AnnotationNote, AnnotationNote.annotator_id == Annotator.id)
         .join(AnnotationItem, AnnotationNote.item_id == AnnotationItem.id)
         .where(AnnotationItem.round_id == rnd.id)
-        .order_by(Annotator.name)
     ).all()
-    done: dict[int, list] = {}
-    for annotator, note in rows:
-        entry = done.setdefault(annotator.id, [annotator.name, 0])
-        entry[1] += _is_done(note)
-    return [{"annotator_id": aid, "name": name, "done": n, "total": len(rnd.items)}
-            for aid, (name, n) in done.items()]
+    for annotator_id, name, note in rows:
+        names[annotator_id] = name
+        done[annotator_id] = done.get(annotator_id, 0) + _is_done(note)
+    total = len(rnd.items)
+    return [{"annotator_id": aid, "name": names[aid], "done": done[aid], "total": total}
+            for aid in sorted(names, key=lambda a: names[a].lower())]
+
+
+def _participant(session: Session, round_id: int, annotator_id: int) -> AnnotationParticipant | None:
+    return session.scalar(select(AnnotationParticipant).where(
+        AnnotationParticipant.round_id == round_id, AnnotationParticipant.annotator_id == annotator_id))
+
+
+def _add_participant(session: Session, round_id: int, annotator_id: int) -> None:
+    session.add(AnnotationParticipant(round_id=round_id, annotator_id=annotator_id))
+    try:
+        session.commit()
+    except IntegrityError:  # joined at the same moment by a second request: already in
+        session.rollback()
+
+
+def join_round(session: Session, rnd: AnnotationRound, annotator: Annotator) -> None:
+    """Make the Avaliador a participant of an open Rodada (joining twice is a no-op;
+    joining after a removal brings them back)."""
+    if rnd.status != "open":
+        raise AnnotationError("A Rodada está fechada.", status=409)
+    if not annotator.active:
+        raise AnnotationError(f"{annotator.name} está desativado.", status=409)
+    participant = _participant(session, rnd.id, annotator.id)
+    if participant is None:
+        _add_participant(session, rnd.id, annotator.id)
+    elif participant.removed_at is not None:
+        participant.removed_at = None
+        session.commit()
+
+
+def remove_participant(session: Session, rnd: AnnotationRound, annotator_id: int) -> int:
+    """Drop an Avaliador from a Rodada with all their notes in it; returns how many notes went.
+
+    The removal is recorded (not deleted), so a screen still open with the old queue cannot
+    quietly bring the Avaliador back by saving: they must pick the Rodada again.
+    """
+    participant = _participant(session, rnd.id, annotator_id)
+    notes = list(session.scalars(
+        select(AnnotationNote)
+        .join(AnnotationItem, AnnotationNote.item_id == AnnotationItem.id)
+        .where(AnnotationItem.round_id == rnd.id, AnnotationNote.annotator_id == annotator_id)
+    ))
+    active = participant is not None and participant.removed_at is None
+    if not active and not notes:
+        raise AnnotationError("Esse avaliador não participa desta Rodada.", status=404)
+    for note in notes:
+        session.delete(note)
+    if participant is None:
+        participant = AnnotationParticipant(round_id=rnd.id, annotator_id=annotator_id)
+        session.add(participant)
+    participant.removed_at = datetime.now(UTC).replace(tzinfo=None)
+    session.commit()
+    return len(notes)
+
+
+def _order(rnd: AnnotationRound, annotator_id: int) -> list[AnnotationItem]:
+    """The Rodada's Items in this Avaliador's own order: a stable permutation per (seed, Avaliador),
+    so the order of presentation does not bias every Avaliador the same way."""
+    items = list(rnd.items)
+    random.Random(f"{rnd.seed}:{annotator_id}").shuffle(items)
+    return items
 
 
 def _is_done(note: AnnotationNote | None) -> bool:
@@ -247,7 +316,7 @@ def queue(session: Session, rnd: AnnotationRound, annotator: Annotator) -> dict:
         .where(AnnotationItem.round_id == rnd.id, AnnotationNote.annotator_id == annotator.id)
     )}
     items = []
-    for item in rnd.items:
+    for item in _order(rnd, annotator.id):
         note = notes.get(item.id)
         items.append({
             "id": item.id, "position": item.position, "question": item.question,
@@ -270,6 +339,12 @@ def save_note(session: Session, item_id: int, annotator_id: int,
     get_annotator(session, annotator_id)
     if item.round.status != "open":
         raise AnnotationError("A Rodada está fechada: não aceita notas.", status=409)
+    participant = _participant(session, item.round_id, annotator_id)
+    if participant is not None and participant.removed_at is not None:
+        raise AnnotationError("Você foi removido desta Rodada. Escolha a rodada de novo para voltar.",
+                              status=409)
+    if participant is None:  # scoring is participating
+        _add_participant(session, item.round_id, annotator_id)
     note = session.scalar(select(AnnotationNote).where(
         AnnotationNote.item_id == item_id, AnnotationNote.annotator_id == annotator_id))
     if note is None:

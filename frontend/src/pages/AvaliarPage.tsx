@@ -5,6 +5,7 @@ import {
   createAnnotator,
   getAnnotationQueue,
   getRubric,
+  joinAnnotationRound,
   listAnnotationRounds,
   listAnnotators,
   saveAnnotationNote,
@@ -31,6 +32,21 @@ export function AvaliarPage() {
   const [annotator, setAnnotator] = useState<Annotator | null>(null);
   const [roundId, setRoundId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
+
+  async function choose(id: number) {
+    if (!annotator || joining) return;
+    setError(null);
+    setJoining(true);
+    try {
+      await joinAnnotationRound(id, annotator.id);
+      setRoundId(id);
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setJoining(false);
+    }
+  }
 
   function leave() {
     setRoundId(null);
@@ -52,7 +68,7 @@ export function AvaliarPage() {
       {error && <Errata title="Algo não funcionou">{error}</Errata>}
       {!annotator && <Identify onDone={setAnnotator} onError={setError} />}
       {annotator && roundId === null && (
-        <ChooseRound onChoose={setRoundId} onError={setError} />
+        <ChooseRound onChoose={choose} onError={setError} busy={joining} />
       )}
       {annotator && roundId !== null && (
         <Evaluate roundId={roundId} annotator={annotator} onError={setError} />
@@ -107,7 +123,9 @@ function Identify({ onDone, onError }: { onDone: (a: Annotator) => void; onError
   );
 }
 
-function ChooseRound({ onChoose, onError }: { onChoose: (id: number) => void; onError: (e: string) => void }) {
+function ChooseRound({ onChoose, onError, busy }: {
+  onChoose: (id: number) => void; onError: (e: string) => void; busy: boolean;
+}) {
   const [rounds, setRounds] = useState<AnnotationRoundSummary[] | null>(null);
 
   useEffect(() => {
@@ -122,8 +140,8 @@ function ChooseRound({ onChoose, onError }: { onChoose: (id: number) => void; on
       {rounds?.length === 0 && <p className="ditto-empty">Nenhuma rodada aberta. Peça ao pesquisador para criar uma.</p>}
       <div className="ditto-choices">
         {rounds?.map((r) => (
-          <Button key={r.id} variant="default" onClick={() => onChoose(r.id)}>
-            {r.name} · {r.size} respostas
+          <Button key={r.id} variant="default" disabled={busy} onClick={() => onChoose(r.id)}>
+            {r.name} · {r.size} respostas{r.pilot ? " · rodada piloto" : ""}
           </Button>
         ))}
       </div>

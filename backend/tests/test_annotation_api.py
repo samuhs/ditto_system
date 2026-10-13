@@ -516,3 +516,100 @@ def test_a_round_from_an_experimento_still_running_is_refused(env):
 
     assert response.status_code == 422
     assert "concluído" in response.json()["detail"]
+
+
+# ---- #49: joining Rodadas, per-Avaliador order, removing a participant ----
+
+def _join(client, round_id, annotator_id):
+    return client.post(f"/annotation/rounds/{round_id}/participants", json={"annotator_id": annotator_id})
+
+
+def test_joining_a_round_lists_the_avaliador_in_the_progress_even_with_nothing_done(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=3)
+    ana = _annotator(client, "Ana")
+
+    assert _join(client, rnd["id"], ana).status_code == 200
+    assert _join(client, rnd["id"], ana).status_code == 200  # joining twice is harmless
+
+    progress = client.get(f"/annotation/rounds/{rnd['id']}").json()["progress"]
+    assert progress == [{"annotator_id": ana, "name": "Ana", "done": 0, "total": 3}]
+
+
+def test_an_inactive_avaliador_cannot_join(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=3)
+    ana = _annotator(client, "Ana")
+    client.patch(f"/annotators/{ana}", json={"active": False})
+
+    assert _join(client, rnd["id"], ana).status_code == 409
+
+
+def test_each_avaliador_sees_their_own_stable_order(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf, n_ok=20), size=20)
+    ana, bruno = _annotator(client, "Ana"), _annotator(client, "Bruno")
+
+    def order(annotator_id):
+        q = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": annotator_id}).json()
+        return [i["id"] for i in q["items"]]
+
+    assert order(ana) == order(ana)
+    assert order(ana) != order(bruno)
+    assert sorted(order(ana)) == sorted(order(bruno))
+
+
+def test_removing_a_participant_deletes_their_notes_in_that_round_only(env):
+    client, sf = env
+    experiment_id = _experiment(sf)
+    rnd, other = _round(client, experiment_id, size=2), _round(client, experiment_id, size=2)
+    ana = _annotator(client, "Ana")
+    for r in (rnd, other):
+        _join(client, r["id"], ana)
+        item = client.get(f"/annotation/rounds/{r['id']}/queue", params={"annotator_id": ana}).json()["items"][0]
+        client.put(f"/annotation/items/{item['id']}/notes/{ana}", json={"correctness": 1, "grounding": 1})
+
+    response = client.delete(f"/annotation/rounds/{rnd['id']}/participants/{ana}")
+
+    assert response.status_code == 200
+    assert response.json() == {"round_id": rnd["id"], "annotator_id": ana, "notes_deleted": 1}
+    assert client.get(f"/annotation/rounds/{rnd['id']}").json()["progress"] == []
+    assert client.get(f"/annotation/rounds/{other['id']}").json()["progress"][0]["done"] == 1
+
+
+def test_removing_someone_who_is_not_a_participant_is_404(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    ana = _annotator(client, "Ana")
+
+    assert client.delete(f"/annotation/rounds/{rnd['id']}/participants/{ana}").status_code == 404
+
+
+def test_a_removed_avaliador_cannot_save_until_they_pick_the_round_again(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    ana = _annotator(client, "Ana")
+    _join(client, rnd["id"], ana)
+    item_id = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()["items"][0]["id"]
+    client.put(f"/annotation/items/{item_id}/notes/{ana}", json={"correctness": 1, "grounding": 1})
+    client.delete(f"/annotation/rounds/{rnd['id']}/participants/{ana}")
+
+    stale = client.put(f"/annotation/items/{item_id}/notes/{ana}", json={"correctness": 2, "grounding": 2})
+
+    assert stale.status_code == 409
+    assert client.get(f"/annotation/rounds/{rnd['id']}").json()["progress"] == []
+    _join(client, rnd["id"], ana)
+    assert client.put(f"/annotation/items/{item_id}/notes/{ana}",
+                      json={"correctness": 2, "grounding": 2}).status_code == 200
+    assert client.get(f"/annotation/rounds/{rnd['id']}").json()["progress"][0]["done"] == 1
+
+
+def test_scoring_without_joining_first_joins_the_round(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    ana = _annotator(client, "Ana")
+    item_id = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()["items"][0]["id"]
+
+    client.put(f"/annotation/items/{item_id}/notes/{ana}", json={"correctness": 1, "grounding": 1})
+
+    assert client.delete(f"/annotation/rounds/{rnd['id']}/participants/{ana}").json()["notes_deleted"] == 1

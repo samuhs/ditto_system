@@ -341,6 +341,20 @@ export async function getAnnotationRound(id: number): Promise<AnnotationRoundDet
   return asJson<AnnotationRoundDetail>(await fetch(`${BASE}/annotation/rounds/${id}`));
 }
 
+/** The Avaliador joins an open Rodada (idempotent). */
+export async function joinAnnotationRound(roundId: number, annotatorId: number): Promise<void> {
+  await asJson(await fetch(`${BASE}/annotation/rounds/${roundId}/participants`, {
+    method: "POST", ...json({ annotator_id: annotatorId }),
+  }));
+}
+
+/** Removes an Avaliador from a Rodada together with their notes in it. */
+export async function removeAnnotationParticipant(
+  roundId: number, annotatorId: number,
+): Promise<{ round_id: number; annotator_id: number; notes_deleted: number }> {
+  return asJson(await fetch(`${BASE}/annotation/rounds/${roundId}/participants/${annotatorId}`, { method: "DELETE" }));
+}
+
 /** A Rodada as one Avaliador sees it: blind, with only that Avaliador's notes. */
 export async function getAnnotationQueue(roundId: number, annotatorId: number): Promise<AnnotationQueue> {
   return asJson<AnnotationQueue>(
