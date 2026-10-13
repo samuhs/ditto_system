@@ -228,7 +228,23 @@ describe("AvaliarPage", () => {
     expect(screen.queryByText("Quantos metros tem a roda-gigante?")).not.toBeInTheDocument();
   });
 
-  it("says when the whole Rodada is done", async () => {
+  it("thanks the Avaliador after the last answer and offers to go back to the start", async () => {
+    await openRound();
+    await userEvent.click(screen.getByRole("radio", { name: /Correção: 2 · Correta/ }));
+    await userEvent.click(screen.getByRole("radio", { name: /Fundamentação: 2 · Apoiada/ }));
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+    await screen.findByText("Quanto custa o almoço?");
+    await userEvent.click(screen.getByRole("radio", { name: /Correção: 2 · Correta/ }));
+
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(await screen.findByText(/obrigado/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 de 2 respostas/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /voltar ao início/i }));
+    expect(await screen.findByRole("button", { name: /sou um avaliador novo/i })).toBeInTheDocument();
+  });
+
+  it("lets the Avaliador review a finished Rodada", async () => {
     vi.mocked(client.getAnnotationQueue).mockResolvedValue(queue({
       items: queue().items.map((i) => ({ ...i, note: note(2, i.grounding_applicable ? 2 : null) })),
       done: 2,
@@ -237,7 +253,18 @@ describe("AvaliarPage", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Ana" }));
     await userEvent.click(await screen.findByRole("button", { name: /piloto/i }));
 
-    await waitFor(() => expect(screen.getByText(/2 de 2 avaliadas/i)).toBeInTheDocument());
+    expect(await screen.findByText(/obrigado/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /revisar minhas notas/i }));
+
+    expect(await screen.findByText("Quantos metros tem a roda-gigante?")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Correção: 2 · Correta/ })).toBeChecked();
+
+    // correcting a note while reviewing keeps the Avaliador in the review
+    await userEvent.click(screen.getByRole("radio", { name: /Correção: 1 · Parcial/ }));
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(await screen.findByText("Quanto custa o almoço?")).toBeInTheDocument();
+    expect(screen.queryByText(/obrigado/i)).not.toBeInTheDocument();
   });
 
   it("shows Fundamentação as not applicable when nothing was retrieved, and saves it as null", async () => {

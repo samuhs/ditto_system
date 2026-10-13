@@ -1,5 +1,5 @@
 import { Button, Checkbox, Radio, TextInput, Textarea } from "@mantine/core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   createAnnotator,
@@ -110,7 +110,7 @@ export function AvaliarPage() {
         <Adjudicate roundId={adjudicating} annotator={annotator} onError={setError} />
       )}
       {annotator && roundId !== null && (
-        <Evaluate roundId={roundId} annotator={annotator} onError={setError} />
+        <Evaluate roundId={roundId} annotator={annotator} onError={setError} onLeave={leave} />
       )}
     </div>
   );
@@ -315,8 +315,8 @@ function Adjudicate({ roundId, annotator, onError }: {
   );
 }
 
-function Evaluate({ roundId, annotator, onError }: {
-  roundId: number; annotator: Annotator; onError: (e: string | null) => void;
+function Evaluate({ roundId, annotator, onError, onLeave }: {
+  roundId: number; annotator: Annotator; onError: (e: string | null) => void; onLeave: () => void;
 }) {
   const [queue, setQueue] = useState<AnnotationQueue | null>(null);
   const [rubric, setRubric] = useState<Rubric | null>(null);
@@ -324,6 +324,13 @@ function Evaluate({ roundId, annotator, onError }: {
   // Unsaved choices per Item, kept while the Avaliador moves between answers.
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
   const [saving, setSaving] = useState(false);
+  // Every answer has a note: show the thank-you screen instead of an answer.
+  const [finished, setFinished] = useState(false);
+  // Latest position and drafts, read after a save returns (the closure holds the old ones).
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  const draftsRef = useRef(drafts);
+  draftsRef.current = drafts;
 
   useEffect(() => {
     Promise.all([getAnnotationQueue(roundId, annotator.id), getRubric()])
@@ -333,6 +340,7 @@ function Evaluate({ roundId, annotator, onError }: {
         setDrafts({});
         const firstOpen = q.items.findIndex((i) => i.note === null);
         setIndex(firstOpen === -1 ? 0 : firstOpen);
+        setFinished(q.items.length > 0 && firstOpen === -1);
       })
       .catch((e) => onError(errorText(e)));
   }, [roundId, annotator.id, onError]);
@@ -352,6 +360,7 @@ function Evaluate({ roundId, annotator, onError }: {
     onError(null);
     try {
       const sent = draft;
+      const wasPending = queue.items.some((i) => i.note === null);
       const note = toNote(draft, item);
       await saveAnnotationNote(item.id, annotator.id, note);
       const items = queue.items.map((i) => (i.id === item.id ? { ...i, note } : i));
@@ -366,6 +375,13 @@ function Evaluate({ roundId, annotator, onError }: {
       // Avaliador already moved elsewhere during the request.
       const pending = [...items.keys()].map((k) => (index + 1 + k) % items.length)
         .find((k) => items[k].note === null);
+      // Thank-you only when this save filled the last pending answer, the Avaliador stayed on it,
+      // and no other answer holds an unsaved choice (reviewing a finished Rodada never ends it).
+      const otherUnsaved = Object.entries(draftsRef.current).some(([id, d]) => {
+        const other = items.find((i) => i.id === Number(id));
+        return other !== undefined && other.id !== item.id && changes(d, other);
+      });
+      if (wasPending && pending === undefined && indexRef.current === index && !otherUnsaved) setFinished(true);
       setIndex((current) => (current === index ? (pending ?? Math.min(index + 1, items.length - 1)) : current));
     } catch (e) {
       onError(errorText(e));
@@ -384,7 +400,7 @@ function Evaluate({ roundId, annotator, onError }: {
       if (!onRadio && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(tag)) return;
       if (document.querySelector('[role="dialog"]')) return;  // the help is open: keys belong to it
       if (onRadio && e.key.startsWith("Arrow")) return;
-      if (!item || saving || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (!item || saving || finished || e.metaKey || e.ctrlKey || e.altKey) return;
       if (["0", "1", "2"].includes(e.key) && !draft.cannot_evaluate) {
         const value = Number(e.key);
         // 0/1/2 score Correção first, then Fundamentação (when it applies).
@@ -403,9 +419,26 @@ function Evaluate({ roundId, annotator, onError }: {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [item, draft, edit, save, last, saving]);
+  }, [item, draft, edit, save, last, saving, finished]);
 
   if (!queue || !rubric) return null;
+  if (finished) {
+    return (
+      <section className="ditto-sec ditto-thanks">
+        <h1 className="ditto-h2">Obrigado, {annotator.name}!</h1>
+        <p className="ditto-read">
+          Você avaliou {queue.done} de {queue.total} respostas da rodada {queue.round.name}. Suas notas estão salvas.
+        </p>
+        <p className="ditto-muted">
+          Enquanto a rodada estiver aberta, você ainda pode revisar e corrigir qualquer nota.
+        </p>
+        <div className="ditto-annotate-nav">
+          <Button onClick={onLeave}>Voltar ao início</Button>
+          <Button variant="default" onClick={() => { setFinished(false); setIndex(0); }}>Revisar minhas notas</Button>
+        </div>
+      </section>
+    );
+  }
   const unsaved = item ? item.id in drafts && changes(drafts[item.id], item) : false;
 
   return (
