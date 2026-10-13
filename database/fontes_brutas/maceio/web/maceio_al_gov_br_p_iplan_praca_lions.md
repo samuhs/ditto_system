@@ -1,0 +1,21 @@
+<!-- fonte: https://maceio.al.gov.br/p/iplan/praca-lions | coletado_em: 2026-10-12T12:27:37+00:00 -->
+Prefeitura de Maceió | Praça Lions
+# Praça Lions
+A Praça Lions, localizada no bairro de Pajuçara, em Maceió, Alagoas, é um espaço público que guarda uma longa história de conexão com a comunidade local. Situada em um dos bairros mais tradicionais da cidade, conhecido por suas belezas naturais e pela rica oferta de turismo, a praça é um ponto de encontro para moradores e visitantes. Próxima à orla marítima, a Praça Lions se destaca por sua localização privilegiada e pelo entorno diversificado, que inclui hotéis, restaurantes, o Pavilhão do Artesanato e a Feirinha de Artesanato da Pajuçara.
+O monumento existente na praça é de um leão de aparência singela e construído todo em alvenaria. Ele conta com várias placas comemorativas que registram importantes momentos históricos. Uma das placas menciona que a praça foi inaugurada em 25 de fevereiro de 1967, durante a primeira convenção distrital L-14 do Lions Internacional em Maceió, no "Ano da Paz", como parte de uma promoção do Lions Centro. Outra placa documenta a restauração da praça realizada em outubro de 1992, com o apoio da Construtora Sobral Maceió Ltda., sob a administração do prefeito Pedro Vieira e do governador Geraldo Bulhões. Uma terceira placa, situada em um pedestal próximo à calçada, foi colocada em homenagem aos 500 anos do descobrimento do Brasil e marca o plantio de uma muda de pau-brasil (Caesalpinia echinata) em 22 de abril de 2000, como uma homenagem do Lions Clube de Maceió.
+Recentemente, a Praça Lions passou por uma revitalização que trouxe novas funcionalidades e equipamentos para a área, tornando-a ainda mais atraente e inclusiva. A renovação incluiu a instalação de um sistema automatizado de irrigação, que ajuda a manter os espaços verdes sempre bonitos e bem cuidados, além de novos equipamentos, como uma academia ao ar livre, playground para crianças, espaço pet, quiosques de alimentação e um redário. Esses novos elementos proporcionam um ambiente acolhedor e diversificado, atraindo pessoas de todas as idades e interesses.
+Além de suas novas comodidades, a praça agora conta com uma minifloresta e uma horta comunitária, oferecendo um contato maior com a natureza e uma fonte de alimentos frescos para os frequentadores. As barracas da Feirinha de Artesanato Guerreiros da Arte foram reorganizadas para melhorar a circulação e destacar o trabalho dos artesãos locais, enquanto novos espaços para piqueniques, lanchonetes e áreas de estar convidam as pessoas a passarem mais tempo no local, desfrutando de um ambiente tranquilo e harmonioso.
+Na gestão do prefeito JHC, a praça contou com todas essas melhorias, tornando-se um espaço ainda mais convidativo, ideal para quem busca lazer, convivência e um ambiente tranquilo em meio à cidade. Seja para praticar esportes, brincar com as crianças ou simplesmente aproveitar um dia ao ar livre, a praça continua sendo um ponto central para quem quer desfrutar de um ambiente agradável e acolhedor em Maceió. A revitalização e a preservação de sua história fazem da Praça Lions um local emblemático para a cidade, refletindo o compromisso de Maceió em oferecer espaços públicos de qualidade e acessíveis para todos.
+Com todas essas melhorias, a Praça Lions se tornou um espaço ainda mais convidativo, ideal para quem busca lazer, convivência e um ambiente tranquilo em meio à cidade. Seja para praticar esportes, brincar com as crianças ou simplesmente aproveitar um dia ao ar livre, a praça continua sendo um ponto central para quem quer desfrutar de um ambiente agradável e acolhedor em Maceió. A revitalização e a preservação de sua história demonstram o compromisso de Maceió em promover espaços públicos acolhedores e acessíveis para todos.
+Praça Lions. Foto: Felipe Sostenes
+IPTU 2026
+Gira, Maceió quando o Turismo gira
+Ações Estratégicas e Parcerias
+Secretaria Executiva do Gabinete Prefeito
+Secretaria Extraordinária de Indústria, Comércio e Serviços
+Estratégias Disruptivas e Economia Digital
+Mulher, Pessoas com Deficiência, Idosos e Cidadania
+Abastecimento, Agricultura, Pesca e Aquicultura
+Trabalho, Emprego e Economia Solidária
+Inclusão Social e Ações Comunitárias
+Meio Ambiente e Sustentabilidade

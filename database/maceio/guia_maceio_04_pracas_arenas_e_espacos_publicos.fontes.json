@@ -1,0 +1,1213 @@
+{
+  "gerado_em": "2026-10-12",
+  "blocos": [
+    {
+      "secao": "Programas de requalificação de espaços públicos",
+      "cabecalho": "O que é a série \"Maceió: Museu a Céu Aberto\"?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/maceio-museu-a-ceu-aberto",
+          "url": "https://maceio.al.gov.br/p/iplam/maceio-museu-a-ceu-aberto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:41+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/sobre-o-iplam",
+          "url": "https://maceio.al.gov.br/p/iplam/sobre-o-iplam",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:44+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 592
+    },
+    {
+      "secao": "Programas de requalificação de espaços públicos",
+      "cabecalho": "O que é o programa Brota na Grota?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/area-de-convivio-do-conjunto-virgem-dos-pobres-1",
+          "url": "https://maceio.al.gov.br/p/iplam/area-de-convivio-do-conjunto-virgem-dos-pobres-1",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:43+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-do-canaa",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-do-canaa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:47+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/mirante-severino-brito",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-severino-brito",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 543
+    },
+    {
+      "secao": "Programas de requalificação de espaços públicos",
+      "cabecalho": "Quantas areninhas a Prefeitura construiu em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semesp/areninhas",
+          "url": "https://maceio.al.gov.br/p/semesp/areninhas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:26+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/arena-pajucara",
+          "url": "https://maceio.al.gov.br/p/iplan/arena-pajucara",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:32+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 470
+    },
+    {
+      "secao": "Programas de requalificação de espaços públicos",
+      "cabecalho": "Como usar uma areninha da Prefeitura de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semesp/areninhas",
+          "url": "https://maceio.al.gov.br/p/semesp/areninhas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:26+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 488
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Lions, na Pajuçara?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-lions",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-lions",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:37+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/canteiro-da-praca-lions",
+          "url": "https://maceio.al.gov.br/p/iplam/canteiro-da-praca-lions",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:42+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 616
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é o Canteiro da Praça Lions?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/canteiro-da-praca-lions",
+          "url": "https://maceio.al.gov.br/p/iplam/canteiro-da-praca-lions",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:42+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 356
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Ganga Zumba, em Cruz das Almas?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-ganga-zumba",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-ganga-zumba",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:05+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 674
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Milton Buarque Wanderley (Praça Lídia Coelho)?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-milton-buarque-wanderley",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-milton-buarque-wanderley",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:11+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 517
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Emílio de Maya, na Ponta Verde?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/emilio-eliseu-de-maya",
+          "url": "https://maceio.al.gov.br/p/iplan/emilio-eliseu-de-maya",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 636
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Hélio Vasconcelos, na Ponta Verde?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-helio-vasconcelos",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-helio-vasconcelos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:27+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/parquinho-infantil-vovo-helio-vasconcelos",
+          "url": "https://maceio.al.gov.br/p/iplan/parquinho-infantil-vovo-helio-vasconcelos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:34+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 610
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça do Caruaru, na Ponta Verde?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-do-caruaru",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-do-caruaru",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:42+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 454
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Dona Constança, na Jatiúca?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-dona-constanca-historia-da-familia-de-gois-monteiro",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-dona-constanca-historia-da-familia-de-gois-monteiro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:37+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 549
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Arena Pajuçara?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/arena-pajucara",
+          "url": "https://maceio.al.gov.br/p/iplan/arena-pajucara",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:32+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 417
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Liberato Mitchell (\"Praça do COC\")?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-liberato-mitchell-praca-do-coc",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-liberato-mitchell-praca-do-coc",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:13+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 548
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça da Maravilha, no Poço?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-da-maravilha",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-da-maravilha",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:11+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 529
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Recife, no Poço?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-recife",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-recife",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:30+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 439
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Nossa Senhora das Graças, na Levada?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-nossa-senhora-das-gracas",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-nossa-senhora-das-gracas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:46+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 578
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Guimarães Passos?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-guimaraes-passos",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-guimaraes-passos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:27+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 571
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça dos Pescadores, no Trapiche da Barra?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-dos-pescadores",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-dos-pescadores",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:09+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 374
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça dos Velhos, no Vergel do Lago?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-dos-velhos",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-dos-velhos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:42+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 407
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Carmen Valéria Vianna de Sá, no Pontal da Barra?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-carmen-valeria-vianna-de-sa",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-carmen-valeria-vianna-de-sa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:05+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 632
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Moleque Namorador, na Ponta Grossa?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-moleque-namorador",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-moleque-namorador",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:18+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 610
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça Cidade de Deus, no Trapiche da Barra?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-cidade-de-deus",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-cidade-de-deus",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:23+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 415
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça José Joaquim da Silva, no Vale do Reginaldo?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-jose-joaquim-da-silva",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-jose-joaquim-da-silva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:03+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 579
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "Que obras o Brota na Grota fez no Vale do Reginaldo?",
+      "fontes": [
+        {
+          "fonte": "pref:p/seminfra/praca-manoel-messias-lopes-da-silva",
+          "url": "https://maceio.al.gov.br/p/seminfra/praca-manoel-messias-lopes-da-silva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:40+00:00"
+        },
+        {
+          "fonte": "pref:p/seminfra/quadra-poliesportiva-do-vale-do-reginaldo",
+          "url": "https://maceio.al.gov.br/p/seminfra/quadra-poliesportiva-do-vale-do-reginaldo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 470
+    },
+    {
+      "secao": "Praças da orla e da parte baixa",
+      "cabecalho": "O que é a Praça do Badú, na Grota São Rafael?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-do-badu-grota-sao-rafael",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-do-badu-grota-sao-rafael",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:15+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 444
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é o Parque Linear do Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/parque-linear-do-benedito-bentes",
+          "url": "https://maceio.al.gov.br/p/iplam/parque-linear-do-benedito-bentes",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:01+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 613
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é o Parque das Crianças, no Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/parque-das-criancas",
+          "url": "https://maceio.al.gov.br/p/iplam/parque-das-criancas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 554
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Arena Alto da Alegria, no Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/arena-alto-da-alegria",
+          "url": "https://maceio.al.gov.br/p/iplam/arena-alto-da-alegria",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:09+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 313
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Arena Jardim Planalto, no Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/arena-jardim-planalto",
+          "url": "https://maceio.al.gov.br/p/iplam/arena-jardim-planalto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:55+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 398
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Arena Cidade Sorriso II, no Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-arena-cidade-sorriso-ii",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-arena-cidade-sorriso-ii",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:06+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 485
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Maria Onça dos Santos, no Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-maria-onca-dos-santos",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-maria-onca-dos-santos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:17+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 515
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Maria de Lourdes da Silva, no Conjunto Carminha?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-maria-de-lourdes-da-silva",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-maria-de-lourdes-da-silva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 516
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça do Conjunto Carminha?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-do-conjunto-carminha",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-do-conjunto-carminha",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:21+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 317
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça da Rua QC, no Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-da-rua-qc",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-da-rua-qc",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:21+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 342
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é o Mercado Público do Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mercado-publico-do-benedito-bentes",
+          "url": "https://maceio.al.gov.br/p/iplam/mercado-publico-do-benedito-bentes",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:53+00:00"
+        },
+        {
+          "fonte": "pref:p/semapa/feiras-e-mercados",
+          "url": "https://maceio.al.gov.br/p/semapa/feiras-e-mercados",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:48+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 635
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Areninha Graciliano Ramos?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/areninha-graciliano-ramos",
+          "url": "https://maceio.al.gov.br/p/iplan/areninha-graciliano-ramos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:31+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 375
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Graciliano Ramos?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-graciliano-ramos",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-graciliano-ramos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 606
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Acauã e a Areninha Acauã?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-acaua",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-acaua",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:50+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/areninha-acaua",
+          "url": "https://maceio.al.gov.br/p/iplan/areninha-acaua",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:30+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 531
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Areninha Inocoop, na Cidade Universitária?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/areninha-inocoop",
+          "url": "https://maceio.al.gov.br/p/iplan/areninha-inocoop",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:29+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 379
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Areninha do Novo Jardim?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/areninha-do-novo-jardim",
+          "url": "https://maceio.al.gov.br/p/iplan/areninha-do-novo-jardim",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:22+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 401
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Areninha Eustáquio Gomes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/areninha-eustaquio-gomes",
+          "url": "https://maceio.al.gov.br/p/iplan/areninha-eustaquio-gomes",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:29+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 348
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Roberto de Carvalho, no Eustáquio Gomes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-roberto-de-carvalho",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-roberto-de-carvalho",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:16+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 512
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Areninha Henrique Equelman?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/areninha-henrique-equelman",
+          "url": "https://maceio.al.gov.br/p/iplan/areninha-henrique-equelman",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:22+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 560
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Engenheiro Gustavo Lúcio Rodrigues Barbosa, no Clima Bom?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-engenheiro-gustavo-lucio-rodrigues-barbosa",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-engenheiro-gustavo-lucio-rodrigues-barbosa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:10+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 568
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Maria Mariana, no Conjunto Salvador Lyra?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-maria-mariana",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-maria-mariana",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:15+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 503
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Ademar Passos de Oliveira, no Feitosa?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-ademar-passos-de-oliveira",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-ademar-passos-de-oliveira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:04+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 495
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Nossa Senhora de Fátima, no Feitosa?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-nossa-senhora-de-fatima-espaco-de-fe-convivencia-e-transformacao-no-bairro-do-feitosa",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-nossa-senhora-de-fatima-espaco-de-fe-convivencia-e-transformacao-no-bairro-do-feitosa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:23+00:00"
+        },
+        {
+          "fonte": "pref:p/alurb/coleta-seletiva",
+          "url": "https://maceio.al.gov.br/p/alurb/coleta-seletiva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:49+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 568
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça São Luís Orione, no São Jorge?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-sao-luis-orione",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-sao-luis-orione",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:53+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 492
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Gastão Florêncio Miranda, em Santa Lúcia?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-gastao-florencio-miranda",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-gastao-florencio-miranda",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:32+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 442
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça José Alves Feitosa, no Conjunto Novo Jardim?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-jose-alves-feitosa",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-jose-alves-feitosa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:19+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 294
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Radialista Edval Vieira de Oliveira, na Grota do Bolão?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-radialista-edval-vieira-de-oliveira",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-radialista-edval-vieira-de-oliveira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:19+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 584
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Willams da Silva Gama, no Novo Mundo?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-willams-da-silva-gama",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-willams-da-silva-gama",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:54+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 559
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Clécio Henrique Monteiro, na Serraria?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-clecio-henrique-monteiro",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-clecio-henrique-monteiro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:01+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 467
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Nossa Senhora Aparecida (Pracinha da Casal)?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-nossa-senhora-aparecida",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-nossa-senhora-aparecida",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:28+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 533
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça São José, em Fernão Velho?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-sao-jose-fernao-velho",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-sao-jose-fernao-velho",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:20+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-coronel-othon-bezerra-de-melo",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-coronel-othon-bezerra-de-melo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 552
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Coronel Othon Bezerra de Melo, em Fernão Velho?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-coronel-othon-bezerra-de-melo",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-coronel-othon-bezerra-de-melo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 534
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça São Pedro, em Garça Torta?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-sao-pedro",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-sao-pedro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:50+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 468
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Santa Terezinha, em Riacho Doce?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-santa-terezinha-riacho-doce",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-santa-terezinha-riacho-doce",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:40+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 442
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Praça Alto do Cruzeiro, em Riacho Doce?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-alto-do-cruzeiro",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-alto-do-cruzeiro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:24+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 346
+    },
+    {
+      "secao": "Praças e arenas da parte alta",
+      "cabecalho": "O que é a Avenida Eixo Norte, em Riacho Doce?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/avenida-eixo-norte",
+          "url": "https://maceio.al.gov.br/p/iplam/avenida-eixo-norte",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:48+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 385
+    },
+    {
+      "secao": "Mirantes comunitários",
+      "cabecalho": "O que é o Mirante do Jacintinho (Mirante da Paz)?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mirante-da-paz",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-da-paz",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:48+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/mirante-mirante-da-paz",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-mirante-da-paz",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:48+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 623
+    },
+    {
+      "secao": "Mirantes comunitários",
+      "cabecalho": "O que é o Mirante Severino Brito, na Chã da Jaqueira?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mirante-severino-brito",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-severino-brito",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 301
+    },
+    {
+      "secao": "Mirantes comunitários",
+      "cabecalho": "O que é o Mirante Chã de Bebedouro?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mirante-cha-de-bebedouro",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-cha-de-bebedouro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:58+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 472
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é o Mercado da Produção Expedito Antônio da Silva?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mercado-da-producao-expedito-antonio-da-silva",
+          "url": "https://maceio.al.gov.br/p/iplam/mercado-da-producao-expedito-antonio-da-silva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 646
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "Qual a história do Mercado Público de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mercado-da-producao-expedito-antonio-da-silva",
+          "url": "https://maceio.al.gov.br/p/iplam/mercado-da-producao-expedito-antonio-da-silva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 514
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é o Terminal Rosane Collor, no Clima Bom?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/terminal-rosane-collor",
+          "url": "https://maceio.al.gov.br/p/iplam/terminal-rosane-collor",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:00+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 589
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é o Terminal do Village Campestre II?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/terminal-do-village-campestre-ii",
+          "url": "https://maceio.al.gov.br/p/iplam/terminal-do-village-campestre-ii",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 477
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é a Linha Verde, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/linha-verde",
+          "url": "https://maceio.al.gov.br/p/iplam/linha-verde",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:47+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 430
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é o Canteiro da Rua Epaminondas Gracindo?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/canteiro-da-epaminondas-gracindo",
+          "url": "https://maceio.al.gov.br/p/iplam/canteiro-da-epaminondas-gracindo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:43+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 578
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é o Alfarrábio Cultural Almerinda Farias Gama?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/alfarrabio-cultural-almerinda-farias-gama",
+          "url": "https://maceio.al.gov.br/p/iplam/alfarrabio-cultural-almerinda-farias-gama",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 648
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é o Parque da Mulher, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/parque-da-mulher",
+          "url": "https://maceio.al.gov.br/p/iplan/parque-da-mulher",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:18+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 540
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é a Praça da Macaxeira, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-da-macaxeira",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-da-macaxeira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:35+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 496
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é a Rotatória São Marcelino Champagnat?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/rotatoria-sao-marcelino-champagnat",
+          "url": "https://maceio.al.gov.br/p/iplam/rotatoria-sao-marcelino-champagnat",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:03+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 399
+    },
+    {
+      "secao": "Mercados, terminais e vias requalificados",
+      "cabecalho": "O que é a Rotatória Rota do Mar?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/rotatoria-rota-do-mar",
+          "url": "https://maceio.al.gov.br/p/iplan/rotatoria-rota-do-mar",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:17+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 347
+    }
+  ],
+  "conflitos": [
+    "Mirante do Jacintinho: a Prefeitura tem duas páginas (\"Mirante da Paz\" e \"Mirante Mirante da Paz\"); uma dá área de cerca de 7.009 m² e a outra 7.953,60 m², e uma atribui a obra sem citar gestão, a outra à gestão Rodrigo Cunha. A base registra as duas áreas.",
+    "Nome da Praça Nossa Senhora das Graças: a página diz que o nome oficial é Praça Guimarães Passos, mas há outra página \"Praça Guimarães Passos\" descrevendo outra praça, sem bairro, com uma banca de frutas. A base trata as duas como praças diferentes e registra a observação.",
+    "Bairro da Praça Cidade de Deus: a página diz \"Conjunto Lenita Vilela, no bairro Trapiche\". A base usa Trapiche da Barra, nome oficial do bairro."
+  ],
+  "lacunas": [
+    "Endereço exato da maioria das praças: as páginas da Prefeitura informam o bairro ou o conjunto, raramente rua e número.",
+    "Data de entrega da maioria das obras: as páginas atribuem a obra a uma gestão, mas raramente dão a data."
+  ],
+  "documento": "../../maceio/guia_maceio_04_pracas_arenas_e_espacos_publicos.md",
+  "mestre": "mestres/04_pracas_arenas_e_espacos_publicos.anotado.md"
+}

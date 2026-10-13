@@ -1,0 +1,990 @@
+{
+  "gerado_em": "2026-10-12",
+  "blocos": [
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Onde fica Maceió e de que estado é capital?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "ibge",
+          "url": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/AL/municipios",
+          "licenca": "Dado público (IBGE)",
+          "coletado_em": "2026-10-12T12:22:41+00:00"
+        },
+        {
+          "fonte": "wikidata",
+          "url": "https://query.wikidata.org/sparql",
+          "licenca": "CC0 (Wikidata)",
+          "coletado_em": "2026-10-12T12:22:44+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 562
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Quantos habitantes tem Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "wikidata",
+          "url": "https://query.wikidata.org/sparql",
+          "licenca": "CC0 (Wikidata)",
+          "coletado_em": "2026-10-12T12:22:44+00:00"
+        },
+        {
+          "fonte": "ibge",
+          "url": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/AL/municipios",
+          "licenca": "Dado público (IBGE)",
+          "coletado_em": "2026-10-12T12:22:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "Censo 2022 do IBGE via Wikipedia e Wikidata; estimativa 2021 via Wikidata",
+      "caracteres": 458
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Qual é a área de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wikidata",
+          "url": "https://query.wikidata.org/sparql",
+          "licenca": "CC0 (Wikidata)",
+          "coletado_em": "2026-10-12T12:22:44+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 387
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Quais municípios fazem divisa com Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "wikidata",
+          "url": "https://query.wikidata.org/sparql",
+          "licenca": "CC0 (Wikidata)",
+          "coletado_em": "2026-10-12T12:22:44+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 583
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "O que é a Região Metropolitana de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Regi%C3%A3o_Metropolitana_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Regi%C3%A3o_Metropolitana_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 557
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Qual é a origem do nome Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Lagoa_Munda%C3%BA",
+          "url": "https://pt.wikipedia.org/wiki/Lagoa_Munda%C3%BA",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 573
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Qual é o apelido de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 267
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Quando é o aniversário de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:noticias/ilumina/prefeitura-abre-natal-de-todos-nos-e-destaca-fortalecimento-do-turismo-de-maceio",
+          "url": "https://maceio.al.gov.br/noticias/ilumina/prefeitura-abre-natal-de-todos-nos-e-destaca-fortalecimento-do-turismo-de-maceio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:21+00:00"
+        },
+        {
+          "fonte": "pref:especiais/gira-maceio-quando-o-turismo-gira",
+          "url": "https://maceio.al.gov.br/especiais/gira-maceio-quando-o-turismo-gira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:03+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "a notícia de abertura do Natal (quinta-feira, 5 de dezembro de 2024) fala em 209 anos; a página \"Gira, Maceió\" fala em 210 anos",
+      "caracteres": 459
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Como é a economia de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 684
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Qual é o papel do turismo na economia de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:noticias/semtur/maceio-conquista-lideranca-nacional-em-vendas-de-turismo-e-amplia-protagonismo-no-mercado-internacional",
+          "url": "https://maceio.al.gov.br/noticias/semtur/maceio-conquista-lideranca-nacional-em-vendas-de-turismo-e-amplia-protagonismo-no-mercado-internacional",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:13+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 687
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Quantos turistas chegaram a Maceió pelo aeroporto em julho e agosto de 2026?",
+      "fontes": [
+        {
+          "fonte": "pref:noticias/semtur/maceio-avanca-no-turismo-desembarques-crescem-7-4-em-julho-e-agosto-e-fluxo-internacional-dispara-em-2026",
+          "url": "https://maceio.al.gov.br/noticias/semtur/maceio-avanca-no-turismo-desembarques-crescem-7-4-em-julho-e-agosto-e-fluxo-internacional-dispara-em-2026",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:06+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "dados da Aena divulgados pela Prefeitura",
+      "caracteres": 591
+    },
+    {
+      "secao": "Visão geral de Maceió",
+      "cabecalho": "Qual foi a ocupação hoteleira de Maceió no feriado de Nossa Senhora Aparecida de 2026?",
+      "fontes": [
+        {
+          "fonte": "pref:noticias/semtur/prefeito-rodrigo-cunha-destaca-ocupacao-hoteleira-de-90-no-feriadao-da-padroeira",
+          "url": "https://maceio.al.gov.br/noticias/semtur/prefeito-rodrigo-cunha-destaca-ocupacao-hoteleira-de-90-no-feriadao-da-padroeira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:05+00:00"
+        },
+        {
+          "fonte": "pref:noticias/semtur/maceio-se-destaca-como-destino-mais-procurado-para-voos-e-hospedagens-entre-setembro-e-novembro-aponta-kayak",
+          "url": "https://maceio.al.gov.br/noticias/semtur/maceio-se-destaca-como-destino-mais-procurado-para-voos-e-hospedagens-entre-setembro-e-novembro-aponta-kayak",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:11+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 657
+    },
+    {
+      "secao": "Geografia e clima de Maceió",
+      "cabecalho": "Como é o clima de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 545
+    },
+    {
+      "secao": "Geografia e clima de Maceió",
+      "cabecalho": "Quais são os recordes de temperatura e chuva de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "dados do INMET citados pela Wikipedia",
+      "caracteres": 471
+    },
+    {
+      "secao": "Geografia e clima de Maceió",
+      "cabecalho": "Quais rios e riachos cortam Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/parque-linear-douglas-lins-de-araujo",
+          "url": "https://maceio.al.gov.br/p/iplam/parque-linear-douglas-lins-de-araujo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:53+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 537
+    },
+    {
+      "secao": "Geografia e clima de Maceió",
+      "cabecalho": "Como Maceió é dividida em parte alta e parte baixa?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/linha-verde",
+          "url": "https://maceio.al.gov.br/p/iplam/linha-verde",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:47+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/mirante-da-paz",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-da-paz",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:48+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Tabuleiro_do_Martins",
+          "url": "https://pt.wikipedia.org/wiki/Tabuleiro_do_Martins",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 617
+    },
+    {
+      "secao": "Geografia e clima de Maceió",
+      "cabecalho": "Quantos bairros tem Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:p/semdes/conselhos-tutelares",
+          "url": "https://maceio.al.gov.br/p/semdes/conselhos-tutelares",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:52+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 370
+    },
+    {
+      "secao": "População e sociedade de Maceió",
+      "cabecalho": "Qual é o IDH de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 451
+    },
+    {
+      "secao": "População e sociedade de Maceió",
+      "cabecalho": "Qual é a religião predominante em Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "Censo 2022 citado pela Wikipedia",
+      "caracteres": 378
+    },
+    {
+      "secao": "População e sociedade de Maceió",
+      "cabecalho": "Qual é a padroeira de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "url": "https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:feriados-municipais",
+          "url": "https://maceio.al.gov.br/feriados-municipais",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:04+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 369
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "Quem habitava a região de Maceió antes dos portugueses?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 308
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "Como começou o povoamento de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "url": "https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 585
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "Quando Maceió virou vila e cidade?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 567
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "Por que a capital de Alagoas passou para Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Porto_de_Jaragu%C3%A1",
+          "url": "https://pt.wikipedia.org/wiki/Porto_de_Jaragu%C3%A1",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Jaragu%C3%A1_(Macei%C3%B3)",
+          "url": "https://pt.wikipedia.org/wiki/Jaragu%C3%A1_(Macei%C3%B3)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 504
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "O que aconteceu em Maceió durante a Revolta dos Cabanos, em 1844?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 645
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "Quando Dom Pedro II visitou Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "url": "https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/o-parque-massay-o-k",
+          "url": "https://maceio.al.gov.br/p/iplam/o-parque-massay-o-k",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:07+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 448
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "O que foi a Quebra de Xangô, em 1912?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Quebra_de_Xang%C3%B4",
+          "url": "https://pt.wikipedia.org/wiki/Quebra_de_Xang%C3%B4",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 679
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "Como foi a vida cultural de Maceió nos anos 1930?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 353
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "O que foi a queda de Suruagy, em 1997?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 471
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "Quando Maceió foi Capital Americana da Cultura?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 213
+    },
+    {
+      "secao": "História de Maceió",
+      "cabecalho": "Qual tratado Maceió assinou com Gwangju, na Coreia do Sul?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 256
+    },
+    {
+      "secao": "Governo de Maceió",
+      "cabecalho": "Quem é o prefeito de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:prefeito",
+          "url": "https://maceio.al.gov.br/prefeito",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Jo%C3%A3o_Henrique_Caldas",
+          "url": "https://pt.wikipedia.org/wiki/Jo%C3%A3o_Henrique_Caldas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 548
+    },
+    {
+      "secao": "Governo de Maceió",
+      "cabecalho": "Quem foi João Henrique Caldas (JHC)?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Jo%C3%A3o_Henrique_Caldas",
+          "url": "https://pt.wikipedia.org/wiki/Jo%C3%A3o_Henrique_Caldas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 595
+    },
+    {
+      "secao": "Governo de Maceió",
+      "cabecalho": "Onde fica a sede da Prefeitura de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:prefeitura",
+          "url": "https://maceio.al.gov.br/prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:07+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 560
+    },
+    {
+      "secao": "Governo de Maceió",
+      "cabecalho": "Como é a Câmara Municipal de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 288
+    },
+    {
+      "secao": "Governo de Maceió",
+      "cabecalho": "Quais são os feriados municipais de Maceió em 2026?",
+      "fontes": [
+        {
+          "fonte": "pref:feriados-municipais",
+          "url": "https://maceio.al.gov.br/feriados-municipais",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:04+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "Decreto nº 10.234, de 29 de dezembro de 2025",
+      "caracteres": 579
+    },
+    {
+      "secao": "Governo de Maceió",
+      "cabecalho": "Quais são os feriados estaduais de Alagoas que valem em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:feriados-municipais",
+          "url": "https://maceio.al.gov.br/feriados-municipais",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:04+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 544
+    },
+    {
+      "secao": "Governo de Maceió",
+      "cabecalho": "Quais personalidades nasceram em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Floriano_Peixoto",
+          "url": "https://pt.wikipedia.org/wiki/Floriano_Peixoto",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Djavan",
+          "url": "https://pt.wikipedia.org/wiki/Djavan",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/L%C3%AAdo_Ivo",
+          "url": "https://pt.wikipedia.org/wiki/L%C3%AAdo_Ivo",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "url": "https://maceio.al.gov.br/p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 544
+    },
+    {
+      "secao": "Governo de Maceió",
+      "cabecalho": "Quem foi Floriano Peixoto e qual sua ligação com Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Floriano_Peixoto",
+          "url": "https://pt.wikipedia.org/wiki/Floriano_Peixoto",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "url": "https://maceio.al.gov.br/p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        },
+        {
+          "fonte": "pref:feriados-municipais",
+          "url": "https://maceio.al.gov.br/feriados-municipais",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:04+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 511
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "O que é o afundamento do solo de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/ggi-dos-bairros/sobre-o-ggi",
+          "url": "https://maceio.al.gov.br/p/ggi-dos-bairros/sobre-o-ggi",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:46+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 576
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "Quando começou o afundamento do solo em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 563
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "O que aconteceu com a mina 18 da Braskem em 2023?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:especiais/situacao-de-emergencia",
+          "url": "https://maceio.al.gov.br/especiais/situacao-de-emergencia",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:02+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 555
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "Quais medidas oficiais foram tomadas sobre o afundamento do solo?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/ggi-dos-bairros/sobre-o-ggi",
+          "url": "https://maceio.al.gov.br/p/ggi-dos-bairros/sobre-o-ggi",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:46+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 735
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "Quanto a Braskem pagou de indenização pelo afundamento do solo?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Braskem",
+          "url": "https://pt.wikipedia.org/wiki/Braskem",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 573
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "Quais patrimônios históricos foram afetados pelo afundamento do solo em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 718
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "O que aconteceu com a casa de Nise da Silveira em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 567
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "O que é o Memorial da Solidariedade, no Mirante Chã de Bebedouro?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mirante-cha-de-bebedouro",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-cha-de-bebedouro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:58+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 342
+    },
+    {
+      "secao": "Afundamento do solo em Maceió",
+      "cabecalho": "Que obras em Maceió fazem parte do acordo socioambiental com a Braskem?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/linha-verde",
+          "url": "https://maceio.al.gov.br/p/iplam/linha-verde",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:47+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/areninha-do-bom-parto",
+          "url": "https://maceio.al.gov.br/p/iplam/areninha-do-bom-parto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:44+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 490
+    }
+  ],
+  "conflitos": [
+    "Área do município: a Wikidata registra 503,072 km²; o artigo da Wikipedia fala em 509,320 km² na abertura e em \"aproximadamente 511 km²\" na seção de geografia. A base registra as três versões.",
+    "Número de vereadores: a Wikipedia diz que a Câmara tem 31 vereadores. Não foi encontrada fonte oficial da Câmara na coleta. Mantido como aberto.",
+    "Data de elevação a cidade e de instalação da capital: a Wikipedia dá 9 de dezembro de 1839 para a elevação a cidade e a transferência da capital (Resolução Legislativa nº 11) e 16 de dezembro de 1839 para a chegada das tropas e a instalação do governo; a Wikivoyage dá 16 de dezembro de 1839 para a instalação da sede do governo. A base registra as duas datas com seus papéis.",
+    "Data da Quebra de Xangô: a Wikipedia (artigos Maceió e Quebra de Xangô) diz 1º e 2 de fevereiro de 1912, respectivamente. A base registra a noite de 1º para 2 de fevereiro de 1912 como \"fevereiro de 1912\" e cita as duas datas.",
+    "Pessoas afetadas pelo afundamento: a Wikipedia cita cerca de 60 mil pessoas desalojadas, 55 mil afetadas e \"64 mil pessoas\" nas estimativas da Prefeitura. A base registra as três cifras."
+  ],
+  "lacunas": [
+    "Estimativa populacional do IBGE para 2025: não coletada; a base usa o Censo 2022 (957.916) e a estimativa de 2021 da Wikidata (1.031.597).",
+    "Lista de cidades-irmãs: a Wikipedia anuncia a lista, mas o texto coletado vem vazio; só o tratado com Gwangju tem fonte."
+  ],
+  "documento": "../../maceio/guia_maceio_01_visao_geral_e_historia.md",
+  "mestre": "mestres/01_visao_geral_e_historia.anotado.md"
+}

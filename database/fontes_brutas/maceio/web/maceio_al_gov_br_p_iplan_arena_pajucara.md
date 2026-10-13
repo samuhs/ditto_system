@@ -1,0 +1,22 @@
+<!-- fonte: https://maceio.al.gov.br/p/iplan/arena-pajucara | coletado_em: 2026-10-12T12:27:32+00:00 -->
+Prefeitura de Maceió | Arena Pajuçara
+# Arena Pajuçara
+Arena Pajuçara: De antigo “Campo do Soró” a um novo e moderno espaço esportivo na Orla de Maceió
+Localizada na icônica orla de Pajuçara, a nova Arena Pajuçara representa um avanço significativo no incentivo ao esporte e na revitalização urbana de Maceió. O espaço, que antes era conhecido como "Campo do Soró", carrega uma história afetiva para os moradores da região. O nome fazia referência a uma barraca popular que ficava vizinho ao antigo campo, onde hoje se localizava o restaurante Parmegianno. Era ali, no antigo campo de barro, que os moradores da Pajuçara, Ponta da Terra e bairros vizinhos se reuniam para competições amadoras e “rachas” de futebol, mantendo viva uma tradição comunitária que unia pessoas de todas as idades.
+Apesar de seu papel como ponto de encontro esportivo, o antigo "Campo do Soró" apresentava muitas limitações. O piso de barro, aliado à ausência de alambrados, arquibancadas e refletores, tornava inviável a prática esportiva de forma regular e confortável. A precariedade do espaço impedia que seu potencial fosse plenamente aproveitado pela comunidade.
+A revitalização da Arena Pajuçara vai além de uma obra de infraestrutura: ela simboliza um compromisso com a inclusão social e o fortalecimento da comunidade local. Este é o 15º equipamento esportivo na modalidade de campo de futebol desse entregue pela Prefeitura Municipal de Maceió, e o primeiro localizado na parte baixa da cidade, ampliando o acesso ao esporte para um número maior de pessoas. Além de ser um local para a prática de esportes, a Arena também se destaca como um novo espaço de convivência, onde jovens, adultos, e pessoas da melhor idade podem se reunir, fortalecendo ainda mais os laços comunitários, e promoção da cultura de saúde e bem-estar.
+A revitalização do antigo "Campo do Soró" em uma Arena moderna, reforça o papel essencial do esporte no desenvolvimento integral das pessoas. Onde a pratica de esportes, proporciona o bem-estar físico, tendo como benefícios o controle do peso, da pressão arterial e de doenças crônicas, como diabetes e problemas cardiovasculares. Além de melhorar a circulação cerebral, fortalecendo a cognição e a memória. No aspecto mental, o esporte tem impacto direto na autoestima, ajudando as pessoas a se sentirem mais confiantes e seguras de si, sendo uma ferramenta poderosa para prevenção da depressão, e, atuando na redução do estresse, aumentando a melhoraria da qualidade de vida.
+A Arena Pajuçara não se limita à função esportiva, e, por estar localizada na famosa orla de Pajuçara, o espaço também se integra ao turismo local da cidade, proporcionando aos moradores e visitantes, um equipamento esportivo, com infraestrutura moderna, onde os usuários podem desfrutar ao mesmo tempo, das belezas naturais do entorno e do movimento cultural da região. Essa combinação reforça a imagem de Maceió como uma cidade que valoriza o esporte, o lazer e a qualidade de vida.
+Com essa transformação, o antigo "Campo do Soró", deixa de ser apenas uma lembrança do passado, e, se torna mais um símbolo do futuro da cidade, que investe maciçamente em locais para as mais variadas práticas esportivas, proporcionando a inclusão social e o bem-estar da sua população.
+Na gestão do prefeito JHC, a área foi completamente transformada, dando lugar a nova Arena Pajuçara, que agora conta com uma estrutura moderna e eficiente, projetada para incentivar a prática esportiva e promover a qualidade de vida aos moradores e visitantes da cidade. O campo recebeu grama sintética de alta qualidade, alambrados para maior segurança, arquibancadas que comportam espectadores com conforto, e refletores de LED que permitem o uso do espaço no período noturno.
+IPTU 2026
+Gira, Maceió quando o Turismo gira
+Ações Estratégicas e Parcerias
+Secretaria Executiva do Gabinete Prefeito
+Secretaria Extraordinária de Indústria, Comércio e Serviços
+Estratégias Disruptivas e Economia Digital
+Mulher, Pessoas com Deficiência, Idosos e Cidadania
+Abastecimento, Agricultura, Pesca e Aquicultura
+Trabalho, Emprego e Economia Solidária
+Inclusão Social e Ações Comunitárias
+Meio Ambiente e Sustentabilidade

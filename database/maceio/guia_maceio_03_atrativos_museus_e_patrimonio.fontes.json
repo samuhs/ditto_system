@@ -1,0 +1,1061 @@
+{
+  "gerado_em": "2026-10-12",
+  "blocos": [
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "Quais são os principais pontos turísticos de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        },
+        {
+          "fonte": "pref:noticias/semtur/prefeito-rodrigo-cunha-destaca-ocupacao-hoteleira-de-90-no-feriadao-da-padroeira",
+          "url": "https://maceio.al.gov.br/noticias/semtur/prefeito-rodrigo-cunha-destaca-ocupacao-hoteleira-de-90-no-feriadao-da-padroeira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:05+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 563
+    },
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "O que é a Roda Massay-ó-k, a roda-gigante de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/roda-massay-o-k",
+          "url": "https://maceio.al.gov.br/p/iplam/roda-massay-o-k",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:07+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/o-parque-massay-o-k",
+          "url": "https://maceio.al.gov.br/p/iplam/o-parque-massay-o-k",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:07+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 658
+    },
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "O que é o Parque Massay-ó-k, na Pajuçara?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/o-parque-massay-o-k",
+          "url": "https://maceio.al.gov.br/p/iplam/o-parque-massay-o-k",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:07+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 599
+    },
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "O que foi o Gogó da Ema?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Gog%C3%B3_da_Ema_(%C3%A1rvore)",
+          "url": "https://pt.wikipedia.org/wiki/Gog%C3%B3_da_Ema_(%C3%A1rvore)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "osm:node/6659201141",
+          "url": "https://www.openstreetmap.org/node/6659201141",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 404
+    },
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "Quando caiu o Gogó da Ema?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Gog%C3%B3_da_Ema_(%C3%A1rvore)",
+          "url": "https://pt.wikipedia.org/wiki/Gog%C3%B3_da_Ema_(%C3%A1rvore)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 609
+    },
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "O que é a Praça Gogó da Ema?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Gog%C3%B3_da_Ema_(%C3%A1rvore)",
+          "url": "https://pt.wikipedia.org/wiki/Gog%C3%B3_da_Ema_(%C3%A1rvore)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:noticias/ilumina/prefeitura-abre-natal-de-todos-nos-e-destaca-fortalecimento-do-turismo-de-maceio",
+          "url": "https://maceio.al.gov.br/noticias/ilumina/prefeitura-abre-natal-de-todos-nos-e-destaca-fortalecimento-do-turismo-de-maceio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:21+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 466
+    },
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "O que é o Marco dos Corais, na Ponta Verde?",
+      "fontes": [
+        {
+          "fonte": "osm:way/252709796",
+          "url": "https://www.openstreetmap.org/way/252709796",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:noticias/ilumina/maceio-acende-luzes-do-natal-de-todos-nos-no-sabado-6",
+          "url": "https://maceio.al.gov.br/noticias/ilumina/maceio-acende-luzes-do-natal-de-todos-nos-no-sabado-6",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:19+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 350
+    },
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "Que estátuas existem na orla de Maceió?",
+      "fontes": [
+        {
+          "fonte": "osm:node/6561504895",
+          "url": "https://www.openstreetmap.org/node/6561504895",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/6561467378",
+          "url": "https://www.openstreetmap.org/node/6561467378",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/6727778638",
+          "url": "https://www.openstreetmap.org/node/6727778638",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/6561504894",
+          "url": "https://www.openstreetmap.org/node/6561504894",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/10078256923",
+          "url": "https://www.openstreetmap.org/node/10078256923",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5390046115",
+          "url": "https://www.openstreetmap.org/node/5390046115",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/posto-7",
+          "url": "https://maceio.al.gov.br/p/iplam/posto-7",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:59+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 511
+    },
+    {
+      "secao": "Principais atrativos de Maceió",
+      "cabecalho": "O que é o Posto 7, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/posto-7",
+          "url": "https://maceio.al.gov.br/p/iplam/posto-7",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:59+00:00"
+        },
+        {
+          "fonte": "osm:node/4159983381",
+          "url": "https://www.openstreetmap.org/node/4159983381",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 516
+    },
+    {
+      "secao": "Bairro histórico de Jaraguá",
+      "cabecalho": "O que é o bairro de Jaraguá, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Jaragu%C3%A1_(Macei%C3%B3)",
+          "url": "https://pt.wikipedia.org/wiki/Jaragu%C3%A1_(Macei%C3%B3)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:prefeitura",
+          "url": "https://maceio.al.gov.br/prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:07+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 571
+    },
+    {
+      "secao": "Bairro histórico de Jaraguá",
+      "cabecalho": "O que é a Rua Sá e Albuquerque, em Jaraguá?",
+      "fontes": [
+        {
+          "fonte": "pref:prefeitura",
+          "url": "https://maceio.al.gov.br/prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:07+00:00"
+        },
+        {
+          "fonte": "pref:noticias/fmac/jaragua-vira-palco-da-cultura-popular-em-grande-cortejo-no-festival-internacional-de-cultura-de-maceio",
+          "url": "https://maceio.al.gov.br/noticias/fmac/jaragua-vira-palco-da-cultura-popular-em-grande-cortejo-no-festival-internacional-de-cultura-de-maceio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:08+00:00"
+        },
+        {
+          "fonte": "osm:node/643613818",
+          "url": "https://www.openstreetmap.org/node/643613818",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/643613805",
+          "url": "https://www.openstreetmap.org/node/643613805",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 453
+    },
+    {
+      "secao": "Bairro histórico de Jaraguá",
+      "cabecalho": "O que é o Porto de Jaraguá (Porto de Maceió)?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Porto_de_Jaragu%C3%A1",
+          "url": "https://pt.wikipedia.org/wiki/Porto_de_Jaragu%C3%A1",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 603
+    },
+    {
+      "secao": "Bairro histórico de Jaraguá",
+      "cabecalho": "Maceió recebe navios de cruzeiro?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:noticias/semapa/mercado-do-artesanato-encanta-visitantes-de-todo-o-brasil-e-estrangeiros",
+          "url": "https://maceio.al.gov.br/noticias/semapa/mercado-do-artesanato-encanta-visitantes-de-todo-o-brasil-e-estrangeiros",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:23+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 424
+    },
+    {
+      "secao": "Bairro histórico de Jaraguá",
+      "cabecalho": "O que é a réplica da Estátua da Liberdade de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/parque-centenario",
+          "url": "https://maceio.al.gov.br/p/iplan/parque-centenario",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Porto_de_Jaragu%C3%A1",
+          "url": "https://pt.wikipedia.org/wiki/Porto_de_Jaragu%C3%A1",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "osm:node/6577087903",
+          "url": "https://www.openstreetmap.org/node/6577087903",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 564
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "O que é o Museu Théo Brandão?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Museu_Th%C3%A9o_Brand%C3%A3o",
+          "url": "https://pt.wikipedia.org/wiki/Museu_Th%C3%A9o_Brand%C3%A3o",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:node/643488501",
+          "url": "https://www.openstreetmap.org/node/643488501",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 617
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "O que é o Museu Palácio Floriano Peixoto (MUPA)?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Museu_Pal%C3%A1cio_Floriano_Peixoto",
+          "url": "https://pt.wikipedia.org/wiki/Museu_Pal%C3%A1cio_Floriano_Peixoto",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:node/812528777",
+          "url": "https://www.openstreetmap.org/node/812528777",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 627
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "Qual o horário de visita do Museu Palácio Floriano Peixoto?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Museu_Pal%C3%A1cio_Floriano_Peixoto",
+          "url": "https://pt.wikipedia.org/wiki/Museu_Pal%C3%A1cio_Floriano_Peixoto",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "horário registrado pela Wikipedia, sem data de atualização",
+      "caracteres": 283
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "O que é o Instituto Histórico e Geográfico de Alagoas (IHGAL)?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Instituto_Hist%C3%B3rico_e_Geogr%C3%A1fico_de_Alagoas",
+          "url": "https://pt.wikipedia.org/wiki/Instituto_Hist%C3%B3rico_e_Geogr%C3%A1fico_de_Alagoas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 635
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "O que é o Museu da Imagem e do Som de Alagoas (MISA)?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Museu_da_Imagem_e_do_Som_de_Alagoas",
+          "url": "https://pt.wikipedia.org/wiki/Museu_da_Imagem_e_do_Som_de_Alagoas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "osm:node/643613805",
+          "url": "https://www.openstreetmap.org/node/643613805",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 521
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "Que outros museus existem em Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:node/644354725",
+          "url": "https://www.openstreetmap.org/node/644354725",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/410606663",
+          "url": "https://www.openstreetmap.org/way/410606663",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/681436037",
+          "url": "https://www.openstreetmap.org/way/681436037",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/6937832703",
+          "url": "https://www.openstreetmap.org/node/6937832703",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/1481604801",
+          "url": "https://www.openstreetmap.org/way/1481604801",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 544
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "O que tem no Museu de História Natural da Ufal?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:way/1481604801",
+          "url": "https://www.openstreetmap.org/way/1481604801",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 413
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "O que é a Galeria Massayó?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/galeria-massayo",
+          "url": "https://maceio.al.gov.br/p/iplam/galeria-massayo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:34+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 577
+    },
+    {
+      "secao": "Museus de Maceió",
+      "cabecalho": "O que era o Cine Rex, na Pajuçara?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/galeria-massayo",
+          "url": "https://maceio.al.gov.br/p/iplam/galeria-massayo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:34+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/o-parque-massay-o-k",
+          "url": "https://maceio.al.gov.br/p/iplam/o-parque-massay-o-k",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:07+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 452
+    },
+    {
+      "secao": "Igrejas e santuários de Maceió",
+      "cabecalho": "O que é a Catedral Metropolitana de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "url": "https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 557
+    },
+    {
+      "secao": "Igrejas e santuários de Maceió",
+      "cabecalho": "Qual a origem da Catedral de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "url": "https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 528
+    },
+    {
+      "secao": "Igrejas e santuários de Maceió",
+      "cabecalho": "Quais são as principais igrejas católicas de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 594
+    },
+    {
+      "secao": "Igrejas e santuários de Maceió",
+      "cabecalho": "O que é a Igreja de Nossa Senhora do Ó, em Ipioca?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "url": "https://maceio.al.gov.br/p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 519
+    },
+    {
+      "secao": "Igrejas e santuários de Maceió",
+      "cabecalho": "O que é o Santuário da Virgem dos Pobres, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mirante-virgem-dos-pobres",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-virgem-dos-pobres",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:44+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 599
+    },
+    {
+      "secao": "Igrejas e santuários de Maceió",
+      "cabecalho": "O que é o Mirante Virgem dos Pobres?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mirante-virgem-dos-pobres",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-virgem-dos-pobres",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:44+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 576
+    },
+    {
+      "secao": "Igrejas e santuários de Maceió",
+      "cabecalho": "Qual a história da Arquidiocese de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Arquidiocese_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Arquidiocese_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/mirante-dom-antonio-brandao",
+          "url": "https://maceio.al.gov.br/p/iplan/mirante-dom-antonio-brandao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:19+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 614
+    },
+    {
+      "secao": "Teatros e cultura",
+      "cabecalho": "O que é o Teatro Deodoro?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/praca-marechal-deodoro",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-marechal-deodoro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:33+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/praca-moleque-namorador",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-moleque-namorador",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:18+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 471
+    },
+    {
+      "secao": "Teatros e cultura",
+      "cabecalho": "Quais são os teatros de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:node/2007249935",
+          "url": "https://www.openstreetmap.org/node/2007249935",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 450
+    },
+    {
+      "secao": "Teatros e cultura",
+      "cabecalho": "Onde tem cinema em Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:node/7239121099",
+          "url": "https://www.openstreetmap.org/node/7239121099",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/7239121101",
+          "url": "https://www.openstreetmap.org/node/7239121101",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/7239121102",
+          "url": "https://www.openstreetmap.org/node/7239121102",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/7239121100",
+          "url": "https://www.openstreetmap.org/node/7239121100",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 441
+    },
+    {
+      "secao": "Teatros e cultura",
+      "cabecalho": "O que é a Academia Alagoana de Letras e onde fica?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-marechal-deodoro",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-marechal-deodoro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:33+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/mirante-dom-antonio-brandao",
+          "url": "https://maceio.al.gov.br/p/iplan/mirante-dom-antonio-brandao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:19+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 314
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "Qual a história da Praça Marechal Deodoro, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-marechal-deodoro",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-marechal-deodoro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:33+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 588
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "O que mudou na Praça Marechal Deodoro em 2024?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-marechal-deodoro",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-marechal-deodoro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:33+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 584
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "O que é a Praça Montepio dos Artistas, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-montepio-dos-artistas",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-montepio-dos-artistas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:33+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 575
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "O que é a Praça 13 de Maio e a estátua da Mãe Preta?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/a-praca-13-de-maio",
+          "url": "https://maceio.al.gov.br/p/iplan/a-praca-13-de-maio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:39+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 582
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "O que é o Parque do Centenário, no Farol?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/parque-centenario",
+          "url": "https://maceio.al.gov.br/p/iplan/parque-centenario",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 541
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "Como foi restaurado o mapa de Alagoas do Parque do Centenário?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/parque-centenario",
+          "url": "https://maceio.al.gov.br/p/iplan/parque-centenario",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 644
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "O que é o Mirante São Gonçalo, no Farol?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        },
+        {
+          "fonte": "osm:node/4858102069",
+          "url": "https://www.openstreetmap.org/node/4858102069",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:p/alurb/coleta-seletiva",
+          "url": "https://maceio.al.gov.br/p/alurb/coleta-seletiva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:49+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 418
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "O que é o Mirante Dom Antônio Brandão, no Farol?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/mirante-dom-antonio-brandao",
+          "url": "https://maceio.al.gov.br/p/iplan/mirante-dom-antonio-brandao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:19+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 560
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "O que é o Mirante de Ipioca?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "url": "https://maceio.al.gov.br/p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 622
+    },
+    {
+      "secao": "Praças históricas e mirantes turísticos",
+      "cabecalho": "O que mudou no Mirante de Ipioca na gestão JHC?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "url": "https://maceio.al.gov.br/p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 415
+    },
+    {
+      "secao": "Esporte e estádios",
+      "cabecalho": "O que é o Estádio Rei Pelé (Trapichão)?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Est%C3%A1dio_Rei_Pel%C3%A9",
+          "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Rei_Pel%C3%A9",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:way/37062120",
+          "url": "https://www.openstreetmap.org/way/37062120",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 593
+    },
+    {
+      "secao": "Esporte e estádios",
+      "cabecalho": "Quais jogos da Seleção Brasileira aconteceram em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Est%C3%A1dio_Rei_Pel%C3%A9",
+          "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Rei_Pel%C3%A9",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 527
+    },
+    {
+      "secao": "Esporte e estádios",
+      "cabecalho": "Quais são os times de futebol de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Centro_Sportivo_Alagoano",
+          "url": "https://pt.wikipedia.org/wiki/Centro_Sportivo_Alagoano",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Clube_de_Regatas_Brasil",
+          "url": "https://pt.wikipedia.org/wiki/Clube_de_Regatas_Brasil",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 564
+    },
+    {
+      "secao": "Esporte e estádios",
+      "cabecalho": "Que grandes eventos esportivos Maceió já recebeu?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semesp/principais-eventos",
+          "url": "https://maceio.al.gov.br/p/semesp/principais-eventos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:24+00:00"
+        },
+        {
+          "fonte": "pref:noticias/semtur/com-apoio-da-prefeitura-de-maceio-campeonato-internacional-de-tenis-reune-atletas-de-19-paises-e-fortalece-o-turismo-esportivo-na-capital",
+          "url": "https://maceio.al.gov.br/noticias/semtur/com-apoio-da-prefeitura-de-maceio-campeonato-internacional-de-tenis-reune-atletas-de-19-paises-e-fortalece-o-turismo-esportivo-na-capital",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:05+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 644
+    }
+  ],
+  "conflitos": [
+    "Capacidade do Estádio Rei Pelé: a Wikipedia sobre Maceió diz 19 mil torcedores; o artigo do estádio diz 17.126 pessoas. A base registra as duas.",
+    "Altura da Roda Massay-ó-k e localização: a Prefeitura diz 42 metros, na Praça Multieventos (Parque Massay-ó-k), na Pajuçara. Sem divergência de altura, mas a Prefeitura usa os dois nomes da praça.",
+    "Data de inauguração da Catedral: a Wikipedia diz 31 de dezembro de 1859, com a presença de Dom Pedro II. Sem outra fonte."
+  ],
+  "lacunas": [
+    "Horários de visitação do Museu Théo Brandão, do Memorial Teotônio Vilela, do Museu de Arte Brasileira e do Museu Pierre Chalita: não encontrados em fonte oficial na coleta.",
+    "Preço e horário da Roda Massay-ó-k: a Prefeitura não informa; remete a um QR Code.",
+    "Data de inauguração da Galeria Massayó: a página da Prefeitura não informa."
+  ],
+  "documento": "../../maceio/guia_maceio_03_atrativos_museus_e_patrimonio.md",
+  "mestre": "mestres/03_atrativos_museus_e_patrimonio.anotado.md"
+}

@@ -1,0 +1,1269 @@
+{
+  "gerado_em": "2026-10-12",
+  "blocos": [
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "Qual é o telefone da Central de Serviços da Prefeitura de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        },
+        {
+          "fonte": "pref:noticias/ilumina/ilumina-inicia-montagem-da-ornamentacao-para-o-festival-internacional-de-cultura-de-maceio",
+          "url": "https://maceio.al.gov.br/noticias/ilumina/ilumina-inicia-montagem-da-ornamentacao-para-o-festival-internacional-de-cultura-de-maceio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:13+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 269
+    },
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "Como pedir conserto de iluminação pública em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 541
+    },
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "Como pedir limpeza urbana ou recolhimento de entulho em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        },
+        {
+          "fonte": "pref:p/alurb/coleta-de-volumosos",
+          "url": "https://maceio.al.gov.br/p/alurb/coleta-de-volumosos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:47+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 419
+    },
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "Como denunciar problemas de trânsito em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        },
+        {
+          "fonte": "pref:p/dmtt/contatos-dmtt",
+          "url": "https://maceio.al.gov.br/p/dmtt/contatos-dmtt",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:55+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 473
+    },
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "Qual o telefone da Defesa Civil de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        },
+        {
+          "fonte": "pref:p/defesa-civil/previne-maceio",
+          "url": "https://maceio.al.gov.br/p/defesa-civil/previne-maceio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:50+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 468
+    },
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "Como denunciar obras irregulares ou crimes ambientais em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 616
+    },
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "Qual o telefone da Guarda Municipal de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:noticias/semsc/prefeito-rodrigo-cunha-anuncia-funcionamento-especial-da-rua-aberta-no-feriado-de-12-de-outubro",
+          "url": "https://maceio.al.gov.br/noticias/semsc/prefeito-rodrigo-cunha-anuncia-funcionamento-especial-da-rua-aberta-no-feriado-de-12-de-outubro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:21+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 330
+    },
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "Onde fica a Secretaria de Turismo de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semtur-2/servico-de-informacoes-ao-cidadao-turismo-e-esporte",
+          "url": "https://maceio.al.gov.br/p/semtur-2/servico-de-informacoes-ao-cidadao-turismo-e-esporte",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:55+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 446
+    },
+    {
+      "secao": "Telefones e canais da Prefeitura de Maceió",
+      "cabecalho": "O que é o Centro de Atendimento ao Turista (CAT) de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:noticias/semtur/verao-massayo-2026-tera-centro-de-atendimento-ao-turista",
+          "url": "https://maceio.al.gov.br/noticias/semtur/verao-massayo-2026-tera-centro-de-atendimento-ao-turista",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:19+00:00"
+        },
+        {
+          "fonte": "pref:noticias/semtur-2/centro-de-atendimento-ao-turista-auxilia-visitantes-durante-o-maior-sao-joao-do-litoral-do-brasil",
+          "url": "https://maceio.al.gov.br/noticias/semtur-2/centro-de-atendimento-ao-turista-auxilia-visitantes-durante-o-maior-sao-joao-do-litoral-do-brasil",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:22+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/saude-da-gente",
+          "url": "https://maceio.al.gov.br/p/sms/saude-da-gente",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:43+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 515
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "O que é o CRAS e onde encontrar um em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/cras",
+          "url": "https://maceio.al.gov.br/p/semdes/cras",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:54+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 480
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "Quais são os endereços dos CRAS de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/cras",
+          "url": "https://maceio.al.gov.br/p/semdes/cras",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:54+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 710
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "Onde se inscrever no CadÚnico em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/cadunico",
+          "url": "https://maceio.al.gov.br/p/semdes/cadunico",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:53+00:00"
+        },
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 596
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "Que benefícios o CadÚnico dá acesso em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/cadunico",
+          "url": "https://maceio.al.gov.br/p/semdes/cadunico",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:53+00:00"
+        },
+        {
+          "fonte": "pref:p/semdes/unidades-descentralizadas-de-assistencia-social-de-maceio-udas",
+          "url": "https://maceio.al.gov.br/p/semdes/unidades-descentralizadas-de-assistencia-social-de-maceio-udas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:53+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 562
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "O que são as Udas, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/unidades-descentralizadas-de-assistencia-social-de-maceio-udas",
+          "url": "https://maceio.al.gov.br/p/semdes/unidades-descentralizadas-de-assistencia-social-de-maceio-udas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:53+00:00"
+        },
+        {
+          "fonte": "pref:p/semdes/carteira-do-autista",
+          "url": "https://maceio.al.gov.br/p/semdes/carteira-do-autista",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:51+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 584
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "Como tirar a Carteira do Autista em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/carteira-do-autista",
+          "url": "https://maceio.al.gov.br/p/semdes/carteira-do-autista",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:51+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 528
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "O que é o Restaurante Popular de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/restaurante-popular",
+          "url": "https://maceio.al.gov.br/p/semdes/restaurante-popular",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 591
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "Onde a pessoa em situação de rua pode ser atendida em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/centros-pop",
+          "url": "https://maceio.al.gov.br/p/semdes/centros-pop",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:51+00:00"
+        },
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 586
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "O que fazem os Conselhos Tutelares de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semdes/conselhos-tutelares",
+          "url": "https://maceio.al.gov.br/p/semdes/conselhos-tutelares",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 498
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "Como se inscrever no Minha Casa Minha Vida em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semhab/servicos-habitacao",
+          "url": "https://maceio.al.gov.br/p/semhab/servicos-habitacao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:51+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 590
+    },
+    {
+      "secao": "Assistência social em Maceió",
+      "cabecalho": "Quais residenciais populares foram entregues em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/semhab/servicos-habitacao",
+          "url": "https://maceio.al.gov.br/p/semhab/servicos-habitacao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:51+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 541
+    },
+    {
+      "secao": "Limpeza urbana e reciclagem",
+      "cabecalho": "Onde ficam os ecopontos de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/alurb/ecopontos",
+          "url": "https://maceio.al.gov.br/p/alurb/ecopontos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:50+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 720
+    },
+    {
+      "secao": "Limpeza urbana e reciclagem",
+      "cabecalho": "Como funciona a coleta seletiva em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/alurb/coleta-seletiva",
+          "url": "https://maceio.al.gov.br/p/alurb/coleta-seletiva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:49+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 546
+    },
+    {
+      "secao": "Limpeza urbana e reciclagem",
+      "cabecalho": "Onde ficam os Pontos de Entrega Voluntária (PEVs) de recicláveis em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/alurb/coleta-seletiva",
+          "url": "https://maceio.al.gov.br/p/alurb/coleta-seletiva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:49+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 613
+    },
+    {
+      "secao": "Limpeza urbana e reciclagem",
+      "cabecalho": "O que é o projeto Carroceiro Legal, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/alurb/ecopontos",
+          "url": "https://maceio.al.gov.br/p/alurb/ecopontos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:50+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 406
+    },
+    {
+      "secao": "Limpeza urbana e reciclagem",
+      "cabecalho": "Como funciona a Central Única de Sepultamentos de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/alurb/central-unica-de-sepultamentos",
+          "url": "https://maceio.al.gov.br/p/alurb/central-unica-de-sepultamentos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:49+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 572
+    },
+    {
+      "secao": "Consumidor, emprego e empreendedorismo",
+      "cabecalho": "Onde fica o Procon Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/segov/procon-maceio",
+          "url": "https://maceio.al.gov.br/p/segov/procon-maceio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:58+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 565
+    },
+    {
+      "secao": "Consumidor, emprego e empreendedorismo",
+      "cabecalho": "O que o Procon Maceió faz?",
+      "fontes": [
+        {
+          "fonte": "pref:p/segov/procon-maceio",
+          "url": "https://maceio.al.gov.br/p/segov/procon-maceio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:58+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 491
+    },
+    {
+      "secao": "Consumidor, emprego e empreendedorismo",
+      "cabecalho": "O que são as Salas do Empreendedor de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sefaz/salas-do-empreendedor",
+          "url": "https://maceio.al.gov.br/p/sefaz/salas-do-empreendedor",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:56+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 584
+    },
+    {
+      "secao": "Consumidor, emprego e empreendedorismo",
+      "cabecalho": "Onde procurar emprego pela Prefeitura de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:disques-da-prefeitura",
+          "url": "https://maceio.al.gov.br/disques-da-prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:06+00:00"
+        },
+        {
+          "fonte": "pref:p/semtes/sine",
+          "url": "https://maceio.al.gov.br/p/semtes/sine",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:50+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 417
+    },
+    {
+      "secao": "Animais",
+      "cabecalho": "Como adotar um cão ou gato em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sebema/feira-de-adocao",
+          "url": "https://maceio.al.gov.br/p/sebema/feira-de-adocao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:47+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 640
+    },
+    {
+      "secao": "Animais",
+      "cabecalho": "O que fazer se perder ou achar um animal em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/sebema/central-de-animais-achados-e-perdidos",
+          "url": "https://maceio.al.gov.br/p/sebema/central-de-animais-achados-e-perdidos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:46+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 248
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Onde fica o aeroporto de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Aeroporto_Internacional_de_Macei%C3%B3_-_Zumbi_dos_Palmares",
+          "url": "https://pt.wikipedia.org/wiki/Aeroporto_Internacional_de_Macei%C3%B3_-_Zumbi_dos_Palmares",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 565
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Quais voos internacionais saem de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Aeroporto_Internacional_de_Macei%C3%B3_-_Zumbi_dos_Palmares",
+          "url": "https://pt.wikipedia.org/wiki/Aeroporto_Internacional_de_Macei%C3%B3_-_Zumbi_dos_Palmares",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:especiais/gira-maceio-quando-o-turismo-gira",
+          "url": "https://maceio.al.gov.br/especiais/gira-maceio-quando-o-turismo-gira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:03+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 430
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Qual a história do aeroporto de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Aeroporto_Internacional_de_Macei%C3%B3_-_Zumbi_dos_Palmares",
+          "url": "https://pt.wikipedia.org/wiki/Aeroporto_Internacional_de_Macei%C3%B3_-_Zumbi_dos_Palmares",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 519
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Como ir do aeroporto para a orla de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "preços e linhas da Wikivoyage, sem data",
+      "caracteres": 522
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Como funciona o VLT de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Sistema_de_Trens_Urbanos_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Sistema_de_Trens_Urbanos_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "osm:node/6392484813",
+          "url": "https://www.openstreetmap.org/node/6392484813",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5807457166",
+          "url": "https://www.openstreetmap.org/node/5807457166",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 630
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Quais são as estações do VLT de Maceió?",
+      "fontes": [
+        {
+          "fonte": "osm:node/6392484813",
+          "url": "https://www.openstreetmap.org/node/6392484813",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/613872534",
+          "url": "https://www.openstreetmap.org/way/613872534",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5885317270",
+          "url": "https://www.openstreetmap.org/node/5885317270",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5807457179",
+          "url": "https://www.openstreetmap.org/node/5807457179",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5807457166",
+          "url": "https://www.openstreetmap.org/node/5807457166",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5807457160",
+          "url": "https://www.openstreetmap.org/node/5807457160",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5807456335",
+          "url": "https://www.openstreetmap.org/node/5807456335",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/7119146213",
+          "url": "https://www.openstreetmap.org/node/7119146213",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5807457154",
+          "url": "https://www.openstreetmap.org/node/5807457154",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/5807456324",
+          "url": "https://www.openstreetmap.org/node/5807456324",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 384
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Como funciona o ônibus em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/dmtt/sistema-integrado-de-mobilidade-de-maceio-simm",
+          "url": "https://maceio.al.gov.br/p/dmtt/sistema-integrado-de-mobilidade-de-maceio-simm",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:54+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 619
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Onde conseguir o cartão de ônibus em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/dmtt/sistema-integrado-de-mobilidade-de-maceio-simm",
+          "url": "https://maceio.al.gov.br/p/dmtt/sistema-integrado-de-mobilidade-de-maceio-simm",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:54+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 347
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Quais são os terminais de ônibus de Maceió?",
+      "fontes": [
+        {
+          "fonte": "osm:way/285156913",
+          "url": "https://www.openstreetmap.org/way/285156913",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/681709749",
+          "url": "https://www.openstreetmap.org/way/681709749",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/944455929",
+          "url": "https://www.openstreetmap.org/way/944455929",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/364004118",
+          "url": "https://www.openstreetmap.org/way/364004118",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/481318044",
+          "url": "https://www.openstreetmap.org/node/481318044",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/1279210265",
+          "url": "https://www.openstreetmap.org/way/1279210265",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/913522339",
+          "url": "https://www.openstreetmap.org/node/913522339",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/616775165",
+          "url": "https://www.openstreetmap.org/node/616775165",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/terminal-rosane-collor",
+          "url": "https://maceio.al.gov.br/p/iplam/terminal-rosane-collor",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 569
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Onde fica a rodoviária de Maceió?",
+      "fontes": [
+        {
+          "fonte": "osm:way/688253952",
+          "url": "https://www.openstreetmap.org/way/688253952",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/praca-da-macaxeira",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-da-macaxeira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:35+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/terminal-rosane-collor",
+          "url": "https://maceio.al.gov.br/p/iplam/terminal-rosane-collor",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 367
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Quais são as principais avenidas de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/linha-verde",
+          "url": "https://maceio.al.gov.br/p/iplam/linha-verde",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:47+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 511
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "Maceió tem ciclovias?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/linha-verde",
+          "url": "https://maceio.al.gov.br/p/iplam/linha-verde",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:47+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/nova-orla",
+          "url": "https://maceio.al.gov.br/p/iplam/nova-orla",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:58+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 541
+    },
+    {
+      "secao": "Transporte em Maceió",
+      "cabecalho": "O que é o PlanMobi de Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:especiais/plano-de-mobilidade-planmobi",
+          "url": "https://maceio.al.gov.br/especiais/plano-de-mobilidade-planmobi",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:03+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 303
+    },
+    {
+      "secao": "Educação superior em Maceió",
+      "cabecalho": "Quais são as universidades de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:way/1163676621",
+          "url": "https://www.openstreetmap.org/way/1163676621",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/4915102480",
+          "url": "https://www.openstreetmap.org/node/4915102480",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/186670145",
+          "url": "https://www.openstreetmap.org/way/186670145",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:p/segov/procon-maceio",
+          "url": "https://maceio.al.gov.br/p/segov/procon-maceio",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:58+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 562
+    },
+    {
+      "secao": "Educação superior em Maceió",
+      "cabecalho": "O que é a Universidade Federal de Alagoas (Ufal)?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Universidade_Federal_de_Alagoas",
+          "url": "https://pt.wikipedia.org/wiki/Universidade_Federal_de_Alagoas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "osm:way/37060474",
+          "url": "https://www.openstreetmap.org/way/37060474",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 627
+    },
+    {
+      "secao": "Educação superior em Maceió",
+      "cabecalho": "Qual a história do Instituto Federal de Alagoas (Ifal) em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Instituto_Federal_de_Alagoas",
+          "url": "https://pt.wikipedia.org/wiki/Instituto_Federal_de_Alagoas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "osm:way/232197560",
+          "url": "https://www.openstreetmap.org/way/232197560",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 627
+    },
+    {
+      "secao": "Educação superior em Maceió",
+      "cabecalho": "Onde fica a Biblioteca Pública Estadual de Alagoas?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "osm:way/682578058",
+          "url": "https://www.openstreetmap.org/way/682578058",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 390
+    },
+    {
+      "secao": "Educação superior em Maceió",
+      "cabecalho": "Quais são os jornais e emissoras de TV de Maceió?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Gazeta_de_Alagoas",
+          "url": "https://pt.wikipedia.org/wiki/Gazeta_de_Alagoas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 393
+    },
+    {
+      "secao": "Hospedagem em Maceió",
+      "cabecalho": "Onde ficar em Maceió?",
+      "fontes": [
+        {
+          "fonte": "osm:way/416806245",
+          "url": "https://www.openstreetmap.org/way/416806245",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/290388074",
+          "url": "https://www.openstreetmap.org/way/290388074",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/417739473",
+          "url": "https://www.openstreetmap.org/way/417739473",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/640870506",
+          "url": "https://www.openstreetmap.org/node/640870506",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/375955317",
+          "url": "https://www.openstreetmap.org/way/375955317",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/1162920387",
+          "url": "https://www.openstreetmap.org/way/1162920387",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 404
+    },
+    {
+      "secao": "Hospedagem em Maceió",
+      "cabecalho": "Quais hotéis ficam na orla da Pajuçara?",
+      "fontes": [
+        {
+          "fonte": "osm:way/416806245",
+          "url": "https://www.openstreetmap.org/way/416806245",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/290388074",
+          "url": "https://www.openstreetmap.org/way/290388074",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/417739473",
+          "url": "https://www.openstreetmap.org/way/417739473",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/416823784",
+          "url": "https://www.openstreetmap.org/way/416823784",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/416806241",
+          "url": "https://www.openstreetmap.org/way/416806241",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/416806249",
+          "url": "https://www.openstreetmap.org/way/416806249",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/416806238",
+          "url": "https://www.openstreetmap.org/way/416806238",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/417060322",
+          "url": "https://www.openstreetmap.org/way/417060322",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/416823781",
+          "url": "https://www.openstreetmap.org/way/416823781",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/240888263",
+          "url": "https://www.openstreetmap.org/way/240888263",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 462
+    },
+    {
+      "secao": "Hospedagem em Maceió",
+      "cabecalho": "Quais hotéis ficam na Ponta Verde e na Jatiúca?",
+      "fontes": [
+        {
+          "fonte": "osm:node/640870506",
+          "url": "https://www.openstreetmap.org/node/640870506",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:node/640870507",
+          "url": "https://www.openstreetmap.org/node/640870507",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/187439007",
+          "url": "https://www.openstreetmap.org/way/187439007",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/415105178",
+          "url": "https://www.openstreetmap.org/way/415105178",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:relation/13511696",
+          "url": "https://www.openstreetmap.org/relation/13511696",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/375955317",
+          "url": "https://www.openstreetmap.org/way/375955317",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/410985901",
+          "url": "https://www.openstreetmap.org/way/410985901",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/428055653",
+          "url": "https://www.openstreetmap.org/way/428055653",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/428061170",
+          "url": "https://www.openstreetmap.org/way/428061170",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/412230529",
+          "url": "https://www.openstreetmap.org/way/412230529",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/444398731",
+          "url": "https://www.openstreetmap.org/way/444398731",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 550
+    },
+    {
+      "secao": "Hospedagem em Maceió",
+      "cabecalho": "Quais hotéis ficam em Cruz das Almas e no litoral norte?",
+      "fontes": [
+        {
+          "fonte": "osm:way/1162920387",
+          "url": "https://www.openstreetmap.org/way/1162920387",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/316318775",
+          "url": "https://www.openstreetmap.org/way/316318775",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/492866438",
+          "url": "https://www.openstreetmap.org/way/492866438",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/452699249",
+          "url": "https://www.openstreetmap.org/way/452699249",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/244904999",
+          "url": "https://www.openstreetmap.org/way/244904999",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/286351599",
+          "url": "https://www.openstreetmap.org/way/286351599",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/1178477934",
+          "url": "https://www.openstreetmap.org/way/1178477934",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 507
+    }
+  ],
+  "conflitos": [
+    "Número de ecopontos: a página da Alurb diz \"existem 7 ecopontos\", mas lista 8 endereços. A base registra a lista de 8 e a afirmação de 7.",
+    "Distância do aeroporto ao centro: a Wikipedia diz 22 km do centro de Maceió; a proposta de VLT até o aeroporto fala em trajeto de 20 km. A base usa 22 km.",
+    "Número de CRAS: a página diz que Maceió conta com 16 unidades, mas lista 20 endereços. A base registra os dois números.",
+    "Endereço do Centro de Atendimento ao Turista: o resumo do buscador associou o CAT à Rua Godofredo Ferro, 53, Centro, que é o endereço da Secretaria de Turismo, Esporte e Lazer (Semtel) na página de Serviço de Informações ao Cidadão. O CAT tem unidades em eventos e o CAT Praia na Ponta Verde. A base separa as duas coisas."
+  ],
+  "lacunas": [
+    "Tarifa de ônibus em 2026: a Wikivoyage cita R$ 3,15 e táxi com bandeirada de R$ 3,00, valores antigos sem data; não usados como atuais.",
+    "Tarifa e horários do VLT em 2026: a Wikipedia cita R$ 2,50 por viagem e intervalo mínimo de 20 minutos, sem data.",
+    "Telefone e horário da Rodoviária de Maceió: não coletados em fonte oficial."
+  ],
+  "documento": "../../maceio/guia_maceio_08_servicos_transporte_e_hospedagem.md",
+  "mestre": "mestres/08_servicos_transporte_e_hospedagem.anotado.md"
+}

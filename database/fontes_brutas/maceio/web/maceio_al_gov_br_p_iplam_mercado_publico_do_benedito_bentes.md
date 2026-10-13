@@ -1,0 +1,26 @@
+<!-- fonte: https://maceio.al.gov.br/p/iplam/mercado-publico-do-benedito-bentes | coletado_em: 2026-10-12T12:26:53+00:00 -->
+Prefeitura de Maceió | Mercado Público do Benedito Bentes
+Mercado Público do Benedito Bentes
+# Mercado Público do Benedito Bentes
+A história do Mercado Público do Benedito Bentes está diretamente ligada ao processo de expansão urbana de Maceió e ao desenvolvimento do bairro Benedito Bentes como um dos mais populosos da capital. O equipamento foi inicialmente construído pela Companhia de Habitação Popular de Alagoas (Cohab), em 1987, sob responsabilidade do Governo do Estado.
+Ao longo dos anos, o mercado passou por mudanças administrativas e estruturais, sendo posteriormente transferido para a gestão municipal. Ainda na década de 1990, o espaço recebeu a implantação de uma feira hortifrutigranjeira em sua área externa, com o objetivo de ampliar a oferta de produtos e fortalecer o comércio local.
+Apesar de contar com uma infraestrutura considerada adequada para a época, incluindo estacionamento, áreas cobertas, iluminação e banheiros, o mercado enfrentou desafios relacionados à sua localização, inicialmente afastada dos principais fluxos de moradores. Esse fator contribuiu para a saída de parte dos comerciantes e para o surgimento de iniciativas paralelas de comercialização.
+Nesse contexto, ganhou destaque a feira livre instalada no canteiro central do conjunto Benedito Bentes II, que se estabeleceu como importante alternativa de abastecimento para a população local. Com forte participação de moradores da região, especialmente trabalhadores oriundos de atividades como pesca e corte de cana-de-açúcar, a feira tornou-se elemento essencial na dinâmica econômica do bairro, ainda que marcada por condições precárias de infraestrutura.
+A reorganização desse cenário ocorreu com a transferência da feira para a Rua Caxeu, localizada no entorno do mercado público, aliada à regularização dos feirantes pela Secretaria Municipal do Trabalho, Abastecimento e Economia Solidária (Semtabes). A medida contribuiu para o aumento da movimentação no equipamento público e para a integração de diferentes atividades comerciais na região, incluindo a tradicional feira da troca, realizada na Praça Padre Cícero.
+Esse processo de reorganização urbana reforçou o papel do mercado como ponto central de comércio e convivência no Benedito Bentes, ao mesmo tempo em que evidenciou novos desafios sociais e urbanos no entorno do equipamento, conforme apontado em estudo desenvolvido por Paulo Victor Barbosa Vieira da Silva, do curso de Geografia da Universidade Federal de Alagoas (Ufal).
+O Mercado Público do Benedito Bentes passou por um amplo processo de reestruturação e requalificação promovido pela Prefeitura de Maceió, com o objetivo de oferecer melhores condições de trabalho aos permissionários e mais conforto à população do bairro.
+Antes da intervenção, o equipamento encontrava-se em estado avançado de degradação, sem a devida manutenção ao longo dos anos. Diante desse cenário, foi realizada uma reconstrução completa do espaço, a partir de projeto idealizado pelo arquiteto Tacio Rodrigues, resultando em um equipamento moderno, funcional e adequado às demandas atuais.
+O novo mercado ocupa uma área de 1.575,90 m² e conta com estrutura moderna, planejada para atender às demandas atuais de comerciantes e consumidores. A estrutura foi planejada para assegurar conforto, segurança e acessibilidade, com banheiros adaptados para pessoas com deficiência e instalações sanitárias separadas para permissionários e clientes, promovendo inclusão e organização no uso do espaço.
+Na gestão do prefeito JHC, a requalificação do Mercado Público do Benedito Bentes reforça seu papel como importante equipamento de abastecimento e convivência, contribuindo para o fortalecimento da economia local e para a valorização do bairro Benedito Bentes. O novo mercado foi implantado no mesmo local onde funcionava a antiga estrutura, entre as ruas Caina e Caxeu, mantendo sua referência territorial e simbólica para a população.
+O equipamento público possui boxes equipados com balcões de granito, 24 tarimbas destinadas à comercialização de carne vermelha, frango, frutos do mar e outros produtos, além de espaço para lanchonetes, banheiros convencionais e adaptados para pessoas com deficiência e área de circulação de consumidores. A intervenção realizada na parte alta de Maceió garante melhores condições de trabalho aos permissionários e mais conforto e segurança para quem frequenta o local, tradicionalmente reconhecido pela diversidade de produtos oferecidos.
+IPTU 2026
+Gira, Maceió quando o Turismo gira
+Ações Estratégicas e Parcerias
+Secretaria Executiva do Gabinete Prefeito
+Secretaria Extraordinária de Indústria, Comércio e Serviços
+Estratégias Disruptivas e Economia Digital
+Mulher, Pessoas com Deficiência, Idosos e Cidadania
+Abastecimento, Agricultura, Pesca e Aquicultura
+Trabalho, Emprego e Economia Solidária
+Inclusão Social e Ações Comunitárias
+Meio Ambiente e Sustentabilidade

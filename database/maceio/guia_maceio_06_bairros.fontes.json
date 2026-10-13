@@ -1,0 +1,964 @@
+{
+  "gerado_em": "2026-10-12",
+  "blocos": [
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o Centro de Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "url": "https://pt.wikipedia.org/wiki/Catedral_Metropolitana_Nossa_Senhora_dos_Prazeres",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/praca-montepio-dos-artistas",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-montepio-dos-artistas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:33+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/praca-marechal-deodoro",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-marechal-deodoro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:33+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/alfarrabio-cultural-almerinda-farias-gama",
+          "url": "https://maceio.al.gov.br/p/iplam/alfarrabio-cultural-almerinda-farias-gama",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:52+00:00"
+        },
+        {
+          "fonte": "osm:way/1240756706",
+          "url": "https://www.openstreetmap.org/way/1240756706",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 580
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro da Pajuçara, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/o-parque-massay-o-k",
+          "url": "https://maceio.al.gov.br/p/iplam/o-parque-massay-o-k",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:07+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Clube_de_Regatas_Brasil",
+          "url": "https://pt.wikipedia.org/wiki/Clube_de_Regatas_Brasil",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/praca-lions",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-lions",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:37+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 554
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como era a Pajuçara nas décadas de 1960 e 1970?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/o-parque-massay-o-k",
+          "url": "https://maceio.al.gov.br/p/iplam/o-parque-massay-o-k",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:07+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 507
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro da Ponta Verde, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-helio-vasconcelos",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-helio-vasconcelos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:27+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Gog%C3%B3_da_Ema_(%C3%A1rvore)",
+          "url": "https://pt.wikipedia.org/wiki/Gog%C3%B3_da_Ema_(%C3%A1rvore)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:noticias/semsc/rua-aberta-reune-familias-e-garante-renda-extra-para-ambulantes-na-ponta-verde",
+          "url": "https://maceio.al.gov.br/noticias/semsc/rua-aberta-reune-familias-e-garante-renda-extra-para-ambulantes-na-ponta-verde",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:21+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 568
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro da Jatiúca, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/posto-7",
+          "url": "https://maceio.al.gov.br/p/iplam/posto-7",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:59+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/praca-dona-constanca-historia-da-familia-de-gois-monteiro",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-dona-constanca-historia-da-familia-de-gois-monteiro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:37+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Instituto_Federal_de_Alagoas",
+          "url": "https://pt.wikipedia.org/wiki/Instituto_Federal_de_Alagoas",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 472
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro de Cruz das Almas, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-ganga-zumba",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-ganga-zumba",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:05+00:00"
+        },
+        {
+          "fonte": "osm:way/245718028",
+          "url": "https://www.openstreetmap.org/way/245718028",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "osm:way/1163676621",
+          "url": "https://www.openstreetmap.org/way/1163676621",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 433
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro de Jaraguá, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Jaragu%C3%A1_(Macei%C3%B3)",
+          "url": "https://pt.wikipedia.org/wiki/Jaragu%C3%A1_(Macei%C3%B3)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:prefeitura",
+          "url": "https://maceio.al.gov.br/prefeitura",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:28:07+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/nova-orla",
+          "url": "https://maceio.al.gov.br/p/iplam/nova-orla",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:58+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 577
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro do Pontal da Barra, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/superintendencias/pontal-da-barra",
+          "url": "https://maceio.al.gov.br/p/superintendencias/pontal-da-barra",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:07+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-carmen-valeria-vianna-de-sa",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-carmen-valeria-vianna-de-sa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:05+00:00"
+        },
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 502
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro do Trapiche da Barra, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Est%C3%A1dio_Rei_Pel%C3%A9",
+          "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Rei_Pel%C3%A9",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-dos-pescadores",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-dos-pescadores",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:09+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "url": "https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "osm:way/265052143",
+          "url": "https://www.openstreetmap.org/way/265052143",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 526
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro do Vergel do Lago, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "url": "https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 587
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Que enchentes atingiram o Vergel do Lago?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "url": "https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 361
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como o Vergel do Lago se ligou aos hidroaviões?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "url": "https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Aeroporto_Internacional_de_Macei%C3%B3_-_Zumbi_dos_Palmares",
+          "url": "https://pt.wikipedia.org/wiki/Aeroporto_Internacional_de_Macei%C3%B3_-_Zumbi_dos_Palmares",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 522
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Que conjuntos habitacionais foram construídos para moradores da Lagoa Mundaú?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "url": "https://pt.wikipedia.org/wiki/Vergel_do_Lago",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/semhab/servicos-habitacao",
+          "url": "https://maceio.al.gov.br/p/semhab/servicos-habitacao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:51+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 653
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro da Levada, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mercado-da-producao-expedito-antonio-da-silva",
+          "url": "https://maceio.al.gov.br/p/iplam/mercado-da-producao-expedito-antonio-da-silva",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:52+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Esta%C3%A7%C3%A3o_Mercado_do_Artesanato",
+          "url": "https://pt.wikipedia.org/wiki/Esta%C3%A7%C3%A3o_Mercado_do_Artesanato",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-nossa-senhora-das-gracas",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-nossa-senhora-das-gracas",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:46+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 504
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro do Poço, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Po%C3%A7o_(Macei%C3%B3)",
+          "url": "https://pt.wikipedia.org/wiki/Po%C3%A7o_(Macei%C3%B3)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/praca-recife",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-recife",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:30+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-da-maravilha",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-da-maravilha",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:11+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 500
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "Como é o bairro do Farol, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/parque-centenario",
+          "url": "https://maceio.al.gov.br/p/iplan/parque-centenario",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/mirante-dom-antonio-brandao",
+          "url": "https://maceio.al.gov.br/p/iplan/mirante-dom-antonio-brandao",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:19+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 479
+    },
+    {
+      "secao": "Bairros da orla e do Centro",
+      "cabecalho": "O que é o CEPA, no Farol?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 437
+    },
+    {
+      "secao": "Bairros afetados pelo afundamento do solo",
+      "cabecalho": "Como é o bairro do Pinheiro, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 535
+    },
+    {
+      "secao": "Bairros afetados pelo afundamento do solo",
+      "cabecalho": "Como é o bairro de Bebedouro, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/alurb/parque-municipal-e-parque-do-horto",
+          "url": "https://maceio.al.gov.br/p/alurb/parque-municipal-e-parque-do-horto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:49+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 623
+    },
+    {
+      "secao": "Bairros afetados pelo afundamento do solo",
+      "cabecalho": "Como é o bairro do Mutange, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Mutange",
+          "url": "https://pt.wikipedia.org/wiki/Mutange",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 569
+    },
+    {
+      "secao": "Bairros afetados pelo afundamento do solo",
+      "cabecalho": "Como é o bairro do Bom Parto, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Bom_Parto",
+          "url": "https://pt.wikipedia.org/wiki/Bom_Parto",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/areninha-do-bom-parto",
+          "url": "https://maceio.al.gov.br/p/iplam/areninha-do-bom-parto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:44+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 590
+    },
+    {
+      "secao": "Bairros afetados pelo afundamento do solo",
+      "cabecalho": "O que era a Fábrica Alexandria, no Bom Parto?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Bom_Parto",
+          "url": "https://pt.wikipedia.org/wiki/Bom_Parto",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Afundamento_do_solo_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 628
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro do Benedito Bentes, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Benedito_Bentes",
+          "url": "https://pt.wikipedia.org/wiki/Benedito_Bentes",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/parque-linear-do-benedito-bentes",
+          "url": "https://maceio.al.gov.br/p/iplam/parque-linear-do-benedito-bentes",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:01+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 639
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "O que tem no Benedito Bentes?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/parque-linear-do-benedito-bentes",
+          "url": "https://maceio.al.gov.br/p/iplam/parque-linear-do-benedito-bentes",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:01+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/mercado-publico-do-benedito-bentes",
+          "url": "https://maceio.al.gov.br/p/iplam/mercado-publico-do-benedito-bentes",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:53+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "osm:way/285156913",
+          "url": "https://www.openstreetmap.org/way/285156913",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:noticias/fmac/prefeito-rodrigo-cunha-divulga-programacao-completa-do-sao-joao-massayo-2026",
+          "url": "https://maceio.al.gov.br/noticias/fmac/prefeito-rodrigo-cunha-divulga-programacao-completa-do-sao-joao-massayo-2026",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:34:15+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 540
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro do Tabuleiro do Martins, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Tabuleiro_do_Martins",
+          "url": "https://pt.wikipedia.org/wiki/Tabuleiro_do_Martins",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 613
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro da Serraria, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Serraria_(Macei%C3%B3)",
+          "url": "https://pt.wikipedia.org/wiki/Serraria_(Macei%C3%B3)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/semdes/cadunico",
+          "url": "https://maceio.al.gov.br/p/semdes/cadunico",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:53+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 627
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro da Cidade Universitária, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "osm:way/37060474",
+          "url": "https://www.openstreetmap.org/way/37060474",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "pref:p/iplan/areninha-do-novo-jardim",
+          "url": "https://maceio.al.gov.br/p/iplan/areninha-do-novo-jardim",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:22+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "osm:way/722642813",
+          "url": "https://www.openstreetmap.org/way/722642813",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        },
+        {
+          "fonte": "cnes:136581",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=136581",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:3397874",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=3397874",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "cnes:902179",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=902179",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 537
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro do Jacintinho, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mirante-da-paz",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-da-paz",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:48+00:00"
+        },
+        {
+          "fonte": "pref:p/semesp/projetos-viva-volei-e-gigantes-no-esporte",
+          "url": "https://maceio.al.gov.br/p/semesp/projetos-viva-volei-e-gigantes-no-esporte",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:25+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "url": "https://maceio.al.gov.br/p/sms/contatos-da-secretaria-municipal-de-saude---sms",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "cnes:2868628",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2868628",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        },
+        {
+          "fonte": "osm:way/741039216",
+          "url": "https://www.openstreetmap.org/way/741039216",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 480
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro do Clima Bom, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/terminal-rosane-collor",
+          "url": "https://maceio.al.gov.br/p/iplam/terminal-rosane-collor",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-engenheiro-gustavo-lucio-rodrigues-barbosa",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-engenheiro-gustavo-lucio-rodrigues-barbosa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:10+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 489
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro de Fernão Velho, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-sao-jose-fernao-velho",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-sao-jose-fernao-velho",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:20+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-coronel-othon-bezerra-de-melo",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-coronel-othon-bezerra-de-melo",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:14+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Sistema_de_Trens_Urbanos_de_Macei%C3%B3",
+          "url": "https://pt.wikipedia.org/wiki/Sistema_de_Trens_Urbanos_de_Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 551
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro de Ipioca, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "url": "https://maceio.al.gov.br/p/iplan/o-mirante-de-ipioca-homenagem-a-floriano-peixoto",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:36+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "url": "https://pt.wikivoyage.org/wiki/Macei%C3%B3",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:22:47+00:00"
+        },
+        {
+          "fonte": "pref:p/semdes/restaurante-popular",
+          "url": "https://maceio.al.gov.br/p/semdes/restaurante-popular",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:52+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 514
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro de Garça Torta, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/praca-sao-pedro",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-sao-pedro",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:50+00:00"
+        },
+        {
+          "fonte": "osm:way/295848204",
+          "url": "https://www.openstreetmap.org/way/295848204",
+          "licenca": "ODbL — © OpenStreetMap contributors",
+          "coletado_em": "2026-10-12T12:23:14+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 472
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro de Riacho Doce, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Riacho_Doce_(Macei%C3%B3)",
+          "url": "https://pt.wikipedia.org/wiki/Riacho_Doce_(Macei%C3%B3)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/parque-linear-de-riacho-doce",
+          "url": "https://maceio.al.gov.br/p/iplam/parque-linear-de-riacho-doce",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:59+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/avenida-eixo-norte",
+          "url": "https://maceio.al.gov.br/p/iplam/avenida-eixo-norte",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:48+00:00"
+        }
+      ],
+      "confianca": "aberto",
+      "nota": "",
+      "caracteres": 472
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro da Chã da Jaqueira, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplam/mirante-severino-brito",
+          "url": "https://maceio.al.gov.br/p/iplam/mirante-severino-brito",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:26:45+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "web:https://pt.wikipedia.org/wiki/Guerreiro_(folguedo)",
+          "url": "https://pt.wikipedia.org/wiki/Guerreiro_(folguedo)",
+          "licenca": "Página da web (verificar termos de uso)",
+          "coletado_em": "2026-10-12T12:45:00+00:00"
+        },
+        {
+          "fonte": "cnes:2008769",
+          "url": "https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search=2008769",
+          "licenca": "Dado público (CNES/DATASUS)",
+          "coletado_em": "2026-10-12T12:25:41+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 409
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Como é o bairro do Feitosa, em Maceió?",
+      "fontes": [
+        {
+          "fonte": "pref:p/iplan/praca-nossa-senhora-de-fatima-espaco-de-fe-convivencia-e-transformacao-no-bairro-do-feitosa",
+          "url": "https://maceio.al.gov.br/p/iplan/praca-nossa-senhora-de-fatima-espaco-de-fe-convivencia-e-transformacao-no-bairro-do-feitosa",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:23+00:00"
+        },
+        {
+          "fonte": "pref:p/iplam/praca-ademar-passos-de-oliveira",
+          "url": "https://maceio.al.gov.br/p/iplam/praca-ademar-passos-de-oliveira",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:04+00:00"
+        },
+        {
+          "fonte": "pref:p/alurb/ecopontos",
+          "url": "https://maceio.al.gov.br/p/alurb/ecopontos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:50+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 405
+    },
+    {
+      "secao": "Bairros da parte alta",
+      "cabecalho": "Que outros bairros de Maceió aparecem nas fontes?",
+      "fontes": [
+        {
+          "fonte": "wiki",
+          "url": "https://pt.wikipedia.org/wiki/Macei%C3%B3",
+          "licenca": "CC BY-SA 4.0 (Wikipedia)",
+          "coletado_em": "2026-10-12T12:22:45+00:00"
+        },
+        {
+          "fonte": "pref:p/sms/rede-basica-de-servicos",
+          "url": "https://maceio.al.gov.br/p/sms/rede-basica-de-servicos",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:57+00:00"
+        },
+        {
+          "fonte": "pref:p/semdes/cras",
+          "url": "https://maceio.al.gov.br/p/semdes/cras",
+          "licenca": "Dado público (site da Prefeitura)",
+          "coletado_em": "2026-10-12T12:27:54+00:00"
+        }
+      ],
+      "confianca": "oficial",
+      "nota": "",
+      "caracteres": 511
+    }
+  ],
+  "conflitos": [
+    "Lei que criou o bairro da Serraria: o artigo da Wikipedia sobre a Serraria cita a Lei Municipal nº 4.953, de 6 de janeiro de 2000; o artigo sobre Maceió diz que os 50 bairros foram definidos pela Lei nº 4.952, de 2000, e o artigo do Benedito Bentes cita a Lei nº 4.952, de 6 de janeiro de 2000. A base registra as duas numerações.",
+    "População do Benedito Bentes: a Wikipedia dá 88.084 habitantes, sem data; a Prefeitura diz que o Parque Linear do Benedito Bentes beneficia cerca de 90 mil pessoas. A base registra a cifra da Wikipedia.",
+    "População do Tabuleiro do Martins: a Wikipedia cita 55.818 habitantes \"segundo o Censo de 2002\", ano em que não houve censo; marcado como \"carece de fontes\" no artigo. A base registra a cifra com a ressalva."
+  ],
+  "lacunas": [
+    "População de 2022 por bairro: não coletada; só há cifras antigas da Wikipedia para alguns bairros.",
+    "Lista oficial completa dos 50 bairros: não coletada; a base descreve os bairros que aparecem nas fontes."
+  ],
+  "documento": "../../maceio/guia_maceio_06_bairros.md",
+  "mestre": "mestres/06_bairros.anotado.md"
+}
