@@ -10,8 +10,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.annotation.rubric import RUBRIC
 from app.annotation.service import (
     AnnotationError,
+    adjudicate,
+    adjudication_view,
     close_round,
     create_round,
+    final_notes,
     get_annotator,
     get_round,
     join_round,
@@ -24,6 +27,7 @@ from app.annotation.service import (
     round_progress,
     round_summary,
     save_note,
+    set_adjudicator,
 )
 from app.api.deps import get_session_factory
 from app.core.db.models import Annotator
@@ -67,6 +71,16 @@ class RoundIn(BaseModel):
         if not self.items and self.experiment_id is None:
             raise ValueError("informe as Combinações (items) ou o experiment_id")
         return self
+
+
+class RoundPatch(BaseModel):
+    adjudicator_id: int | None
+
+
+class AdjudicationIn(BaseModel):
+    annotator_id: int
+    correctness: int | None = Field(None, ge=0, le=2)
+    grounding: int | None = Field(None, ge=0, le=2)
 
 
 class ParticipantIn(BaseModel):
@@ -193,6 +207,33 @@ def delete_participant(round_id: int, annotator_id: int, session: Session = Depe
     """Remove an Avaliador (registered by mistake, say) from a Rodada, with their notes in it."""
     deleted = _or_http(lambda: remove_participant(session, get_round(session, round_id), annotator_id))
     return {"round_id": round_id, "annotator_id": annotator_id, "notes_deleted": deleted}
+
+
+@router.patch("/annotation/rounds/{round_id}")
+def patch_round(round_id: int, body: RoundPatch, session: Session = Depends(_session)) -> dict:
+    """Designate (or clear) the Rodada's adjudicator."""
+    rnd = _or_http(lambda: set_adjudicator(session, get_round(session, round_id), body.adjudicator_id))
+    return round_summary(rnd)
+
+
+@router.get("/annotation/rounds/{round_id}/adjudication")
+def get_adjudication(round_id: int, annotator_id: int = Query(...), session: Session = Depends(_session)) -> dict:
+    """The disputed Items of a closed Rodada, for its adjudicator only."""
+    return _or_http(lambda: adjudication_view(session, get_round(session, round_id),
+                                              get_annotator(session, annotator_id)))
+
+
+@router.put("/annotation/items/{item_id}/adjudication")
+def put_adjudication(item_id: int, body: AdjudicationIn, session: Session = Depends(_session)) -> dict:
+    """The adjudicator's decision on every disputed dimension of an Item."""
+    decision = _or_http(lambda: adjudicate(session, item_id, body.annotator_id, body.correctness, body.grounding))
+    return {"item_id": decision.item_id, "correctness": decision.correctness, "grounding": decision.grounding}
+
+
+@router.get("/annotation/rounds/{round_id}/final")
+def get_final(round_id: int, session: Session = Depends(_session)) -> dict:
+    """The Nota final of each Item and how many are still pending."""
+    return _or_http(lambda: final_notes(session, get_round(session, round_id)))
 
 
 @router.post("/annotation/rounds/{round_id}/close")

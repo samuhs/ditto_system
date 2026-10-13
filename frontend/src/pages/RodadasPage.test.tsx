@@ -11,7 +11,7 @@ vi.mock("../api/client");
 
 const round = {
   id: 5, name: "piloto", description: "", status: "open" as const, seed: 7, rubric_version: 1,
-  experiment_ids: [90], size: 10, pilot: false, strata: [], allocation: "proportional" as const,
+  experiment_ids: [90], size: 10, pilot: false, strata: [], allocation: "proportional" as const, adjudicator_id: null,
   created_at: "2026-10-13T03:00:00",
 };
 
@@ -135,6 +135,8 @@ describe("RodadasPage", () => {
 describe("RodadaDetailPage", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(client.listAnnotators).mockResolvedValue([]);
+    vi.mocked(client.getFinalNotes).mockResolvedValue({ round, items: [], pending: 0 });
     vi.mocked(client.getAnnotationAgreement).mockResolvedValue({
       round, avaliadores: [], note: "sem dados", disagreements: [],
       dimensions: {
@@ -260,6 +262,38 @@ describe("RodadaDetailPage", () => {
     renderAt("/anotacao/5");
 
     expect(await screen.findByText(/precisa de pelo menos dois avaliadores/i)).toBeInTheDocument();
+  });
+
+  it("designates the adjudicator among the Avaliadores", async () => {
+    closedRound();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    vi.mocked(client.listAnnotators).mockResolvedValue([
+      { id: 3, name: "Ana", active: true }, { id: 9, name: "Orientador", active: true },
+    ]);
+    vi.mocked(client.setAnnotationAdjudicator).mockResolvedValue({ ...round, adjudicator_id: 9 });
+    vi.mocked(client.getFinalNotes).mockResolvedValue({ round, items: [], pending: 0 });
+    renderAt("/anotacao/5");
+
+    await userEvent.selectOptions(await screen.findByLabelText(/adjudicador/i), "9");
+
+    expect(client.setAnnotationAdjudicator).toHaveBeenCalledWith(5, 9);
+  });
+
+  it("summarises the Nota final with what is still pending", async () => {
+    closedRound();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    vi.mocked(client.listAnnotators).mockResolvedValue([]);
+    vi.mocked(client.getFinalNotes).mockResolvedValue({
+      round, pending: 1,
+      items: [
+        { id: 1, position: 0, final: { correctness: 2, grounding: 2 }, status: "concordância" },
+        { id: 2, position: 1, final: { correctness: 1, grounding: 2 }, status: "adjudicada" },
+        { id: 3, position: 2, final: { correctness: null, grounding: null }, status: "pendente" },
+      ],
+    });
+    renderAt("/anotacao/5");
+
+    expect(await screen.findByText(/1 em concordância · 1 adjudicada · 1 pendente/i)).toBeInTheDocument();
   });
 });
 

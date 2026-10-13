@@ -3,14 +3,17 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   createAnnotator,
+  getAdjudication,
   getAnnotationQueue,
   getRubric,
   joinAnnotationRound,
   listAnnotationRounds,
   listAnnotators,
+  saveAdjudication,
   saveAnnotationNote,
 } from "../api/client";
 import type {
+  AdjudicationView,
   AnnotationNoteValues,
   AnnotationQueue,
   AnnotationQueueItem,
@@ -57,6 +60,7 @@ function changes(draft: Draft, item: AnnotationQueueItem): boolean {
 export function AvaliarPage() {
   const [annotator, setAnnotator] = useState<Annotator | null>(null);
   const [roundId, setRoundId] = useState<number | null>(null);
+  const [adjudicating, setAdjudicating] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
 
@@ -76,6 +80,7 @@ export function AvaliarPage() {
 
   function leave() {
     setRoundId(null);
+    setAdjudicating(null);
     setAnnotator(null);
     setError(null);
   }
@@ -93,8 +98,12 @@ export function AvaliarPage() {
       </header>
       {error && <Errata title="Algo não funcionou">{error}</Errata>}
       {!annotator && <Identify onDone={setAnnotator} onError={setError} />}
-      {annotator && roundId === null && (
-        <ChooseRound onChoose={choose} onError={setError} busy={joining} />
+      {annotator && roundId === null && adjudicating === null && (
+        <ChooseRound annotatorId={annotator.id} onChoose={choose} onAdjudicate={setAdjudicating}
+          onError={setError} busy={joining} />
+      )}
+      {annotator && adjudicating !== null && (
+        <Adjudicate roundId={adjudicating} annotator={annotator} onError={setError} />
       )}
       {annotator && roundId !== null && (
         <Evaluate roundId={roundId} annotator={annotator} onError={setError} />
@@ -149,28 +158,153 @@ function Identify({ onDone, onError }: { onDone: (a: Annotator) => void; onError
   );
 }
 
-function ChooseRound({ onChoose, onError, busy }: {
-  onChoose: (id: number) => void; onError: (e: string) => void; busy: boolean;
+function ChooseRound({ annotatorId, onChoose, onAdjudicate, onError, busy }: {
+  annotatorId: number; onChoose: (id: number) => void; onAdjudicate: (id: number) => void;
+  onError: (e: string) => void; busy: boolean;
 }) {
   const [rounds, setRounds] = useState<AnnotationRoundSummary[] | null>(null);
 
   useEffect(() => {
-    listAnnotationRounds()
-      .then((all) => setRounds(all.filter((r) => r.status === "open")))
-      .catch((e) => onError(errorText(e)));
+    listAnnotationRounds().then(setRounds).catch((e) => onError(errorText(e)));
   }, [onError]);
+
+  const open = rounds?.filter((r) => r.status === "open") ?? [];
+  const toAdjudicate = rounds?.filter((r) => r.status === "closed" && r.adjudicator_id === annotatorId) ?? [];
 
   return (
     <section className="ditto-sec">
       <h1 className="ditto-h2">Escolha a rodada</h1>
-      {rounds?.length === 0 && <p className="ditto-empty">Nenhuma rodada aberta. Peça ao pesquisador para criar uma.</p>}
+      {rounds && open.length === 0 && toAdjudicate.length === 0 && (
+        <p className="ditto-empty">Nenhuma rodada aberta. Peça ao pesquisador para criar uma.</p>
+      )}
       <div className="ditto-choices">
-        {rounds?.map((r) => (
+        {open.map((r) => (
           <Button key={r.id} variant="default" disabled={busy} onClick={() => onChoose(r.id)}>
             {r.name} · {r.size} respostas{r.pilot ? " · rodada piloto" : ""}
           </Button>
         ))}
       </div>
+      {toAdjudicate.length > 0 && (
+        <>
+          <h2 className="ditto-h3">Adjudicação</h2>
+          <div className="ditto-choices">
+            {toAdjudicate.map((r) => (
+              <Button key={r.id} variant="light" onClick={() => onAdjudicate(r.id)}>Adjudicar {r.name}</Button>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function Adjudicate({ roundId, annotator, onError }: {
+  roundId: number; annotator: Annotator; onError: (e: string | null) => void;
+}) {
+  const [view, setView] = useState<AdjudicationView | null>(null);
+  const [rubric, setRubric] = useState<Rubric | null>(null);
+  const [index, setIndex] = useState(0);
+  const [choice, setChoice] = useState<{ correctness: number | null; grounding: number | null }>(
+    { correctness: null, grounding: null });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    Promise.all([getAdjudication(roundId, annotator.id), getRubric()])
+      .then(([v, r]) => {
+        setView(v);
+        setRubric(r);
+        const first = v.items.findIndex((i) => i.adjudication === null);
+        const at = first === -1 ? 0 : first;
+        setIndex(at);
+        setChoice(v.items[at]?.adjudication ?? { correctness: null, grounding: null });
+      })
+      .catch((e) => onError(errorText(e)));
+  }, [roundId, annotator.id, onError]);
+
+  if (!view || !rubric) return null;
+  const item = view.items[index];
+
+  function go(to: number) {
+    setIndex(to);
+    setChoice(view!.items[to]?.adjudication ?? { correctness: null, grounding: null });
+  }
+
+  async function save() {
+    if (!view || !item) return;
+    setSaving(true);
+    onError(null);
+    try {
+      const decision = {
+        correctness: item.disputed.includes("correctness") ? choice.correctness : null,
+        grounding: item.disputed.includes("grounding") ? choice.grounding : null,
+      };
+      await saveAdjudication(item.id, annotator.id, decision);
+      const items = view.items.map((i) => (i.id === item.id ? { ...i, adjudication: decision } : i));
+      setView({ ...view, items, decided: items.filter((i) => i.adjudication !== null).length });
+      const next = items.findIndex((i, k) => k !== index && i.adjudication === null);
+      if (next !== -1) {
+        setIndex(next);
+        setChoice({ correctness: null, grounding: null });
+      }
+    } catch (e) {
+      onError(errorText(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const complete = item ? item.disputed.every((d) => choice[d] !== null) : false;
+
+  return (
+    <section className="ditto-sec">
+      <div className="ditto-sec-head">
+        <h1 className="ditto-h2">Adjudicação · {view.round.name}</h1>
+        <p className="ditto-read">
+          {view.decided} de {view.total} decididas. Você vê as notas dos avaliadores só nas respostas em que eles
+          discordaram, e decide a nota de cada dimensão em disputa.
+        </p>
+      </div>
+      {view.total === 0 && <p className="ditto-empty">Os avaliadores concordaram em tudo: não há o que adjudicar.</p>}
+      {item && (
+        <div className="ditto-annotate">
+          <div className="ditto-annotate-text">
+            <h2 className="ditto-h3">Pergunta</h2>
+            <p>{item.question}</p>
+            <h2 className="ditto-h3">Resposta de referência</h2>
+            <p>{item.reference_answer}</p>
+            <h2 className="ditto-h3">Evidência</h2>
+            <ul>{item.evidence.map((e, k) => <li key={k}>{e}</li>)}</ul>
+            <h2 className="ditto-h3">Resposta avaliada</h2>
+            <p className="ditto-annotate-answer">{item.generated_answer}</p>
+            <details>
+              <summary>Trechos que o sistema recuperou ({item.retrieved_context.length})</summary>
+              <ol>{item.retrieved_context.map((c, k) => <li key={k}>{c}</li>)}</ol>
+            </details>
+          </div>
+          <div className="ditto-annotate-rubric">
+            <fieldset className="ditto-rubric-dim">
+              <legend>Notas dos avaliadores (Correção / Fundamentação)</legend>
+              {Object.entries(item.notes).map(([name, n]) => (
+                <div key={name}>
+                  {name}: {n.cannot_evaluate ? "não conseguiu avaliar" : `${n.correctness ?? "—"} / ${n.grounding ?? "—"}`}
+                  {n.comment ? ` (“${n.comment}”)` : ""}
+                </div>
+              ))}
+            </fieldset>
+            {rubric.dimensions.filter((dim) => item.disputed.includes(dim.key)).map((dim) => (
+              <DimensionField key={dim.key} dim={dim} value={choice[dim.key]} disabled={false}
+                onChange={(v) => setChoice((c) => ({ ...c, [dim.key]: v }))} />
+            ))}
+            <div className="ditto-annotate-nav">
+              <Button variant="default" disabled={index === 0} onClick={() => go(index - 1)}>Anterior</Button>
+              <Button variant="default" disabled={index === view.items.length - 1} onClick={() => go(index + 1)}>
+                Próxima
+              </Button>
+              <Button onClick={save} disabled={!complete} loading={saving}>Salvar decisão</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -34,7 +34,7 @@ const rubric: Rubric = {
 
 const round = {
   id: 5, name: "piloto", description: "", status: "open" as const, seed: 7, rubric_version: 1,
-  experiment_ids: [90], size: 2, pilot: false, strata: [], allocation: "proportional" as const,
+  experiment_ids: [90], size: 2, pilot: false, strata: [], allocation: "proportional" as const, adjudicator_id: null,
   created_at: null,
 };
 
@@ -327,4 +327,49 @@ describe("AvaliarPage", () => {
     expect(client.saveAnnotationNote).not.toHaveBeenCalled();
     expect(await screen.findByText("Quanto custa o almoço?")).toBeInTheDocument();
   });
+
+  describe("as adjudicator", () => {
+    const view = {
+      round: { ...round, id: 8, name: "principal", status: "closed" as const, adjudicator_id: 3 },
+      decided: 0, total: 1,
+      items: [{
+        id: 40, position: 2, question: "Qual é o telefone da Defesa Civil?", reference_answer: "199.",
+        evidence: ["Defesa Civil: 199"], retrieved_context: ["Defesa Civil 199, 24 horas"],
+        generated_answer: "É o 199.", grounding_applicable: true,
+        notes: { Bruno: note(1, 2), Caio: note(2, 2) }, disputed: ["correctness" as const], adjudication: null,
+      }],
+    };
+
+    beforeEach(() => {
+      vi.mocked(client.listAnnotationRounds).mockResolvedValue([round, view.round]);
+      vi.mocked(client.getAdjudication).mockResolvedValue(view);
+      vi.mocked(client.saveAdjudication).mockResolvedValue({ item_id: 40, correctness: 2, grounding: null });
+    });
+
+    it("offers the closed Rodadas the Avaliador adjudicates", async () => {
+      renderPage();
+      await userEvent.click(await screen.findByRole("button", { name: "Ana" }));
+
+      expect(await screen.findByRole("button", { name: /adjudicar principal/i })).toBeInTheDocument();
+    });
+
+    it("shows the others' notes on the disputed answer and records the decision", async () => {
+      renderPage();
+      await userEvent.click(await screen.findByRole("button", { name: "Ana" }));
+      await userEvent.click(await screen.findByRole("button", { name: /adjudicar principal/i }));
+
+      expect(await screen.findByText("Qual é o telefone da Defesa Civil?")).toBeInTheDocument();
+      expect(client.getAdjudication).toHaveBeenCalledWith(8, 3);
+      expect(screen.getByText(/Bruno: 1 \/ 2/)).toBeInTheDocument();
+      expect(screen.getByText(/Caio: 2 \/ 2/)).toBeInTheDocument();
+      // only the disputed dimension is decided
+      expect(screen.queryByRole("radio", { name: /Fundamentação/ })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole("radio", { name: /Correção: 2 · Correta/ }));
+      await userEvent.click(screen.getByRole("button", { name: /salvar decisão/i }));
+
+      expect(client.saveAdjudication).toHaveBeenCalledWith(40, 3, { correctness: 2, grounding: null });
+      expect(await screen.findByText(/1 de 1 decididas/i)).toBeInTheDocument();
+    });
+  });
 });
+

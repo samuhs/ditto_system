@@ -15,6 +15,7 @@ from app.annotation.agreement import (
 )
 from app.annotation.rubric import DIMENSIONS, LEVELS, RUBRIC_VERSION
 from app.core.db.models import (
+    AnnotationAdjudication,
     AnnotationItem,
     AnnotationNote,
     AnnotationParticipant,
@@ -213,6 +214,7 @@ def round_summary(rnd: AnnotationRound, size: int | None = None) -> dict:
         "id": rnd.id, "name": rnd.name, "description": rnd.description, "status": rnd.status,
         "seed": rnd.seed, "rubric_version": rnd.rubric_version, "pilot": bool(rnd.pilot),
         "strata": list(rnd.strata or []), "allocation": rnd.allocation or "proportional",
+        "adjudicator_id": rnd.adjudicator_id,
         "experiment_ids": list(rnd.experiment_ids),
         "size": len(rnd.items) if size is None else size,
         "created_at": rnd.created_at.isoformat() if rnd.created_at else None,
@@ -421,21 +423,8 @@ def _compute_agreement(session: Session, rnd: AnnotationRound, resamples: int) -
     with exactly two, quadratic-weighted kappa and the confusion matrix; plus the Items where
     the Avaliadores disagree. A score left out ("não se aplica", "não consigo avaliar") is a
     missing value for that dimension."""
-    rows = session.execute(
-        select(AnnotationNote, Annotator.name)
-        .join(Annotator, AnnotationNote.annotator_id == Annotator.id)
-        .join(AnnotationItem, AnnotationNote.item_id == AnnotationItem.id)
-        .where(AnnotationItem.round_id == rnd.id)
-    ).all()
-    names = sorted({name for _, name in rows}, key=str.lower)
-    by_item: dict[int, dict[str, AnnotationNote]] = {}
-    for note, name in rows:
-        by_item.setdefault(note.item_id, {})[name] = note
-
-    def value(note: AnnotationNote | None, dim: str):
-        if note is None or note.cannot_evaluate:
-            return None
-        return getattr(note, dim)
+    by_item, names = _notes_by_item(session, rnd)
+    value = _value
 
     dimensions = {}
     for dim in DIMENSIONS:
@@ -461,8 +450,7 @@ def _compute_agreement(session: Session, rnd: AnnotationRound, resamples: int) -
     disagreements = []
     for item in rnd.items:
         notes = by_item.get(item.id, {})
-        split = any(len({value(n, dim) for n in notes.values()} - {None}) > 1 for dim in DIMENSIONS)
-        if split:
+        if _disputed(notes):
             disagreements.append({
                 "item_id": item.id, "position": item.position, "question": item.question,
                 "generated_answer": item.generated_answer,
@@ -474,3 +462,156 @@ def _compute_agreement(session: Session, rnd: AnnotationRound, resamples: int) -
         "note": ("A Concordância precisa de pelo menos dois avaliadores nas mesmas respostas "
                  "(ou de uma rodada de reteste)." if len(names) < 2 else None),
     }
+
+
+def _notes_by_item(
+    session: Session, rnd: AnnotationRound,
+) -> tuple[dict[int, dict[str, AnnotationNote]], list[str]]:
+    """The Rodada's notes per Item, keyed by Avaliador name, and the names in order."""
+    rows = session.execute(
+        select(AnnotationNote, Annotator.name)
+        .join(Annotator, AnnotationNote.annotator_id == Annotator.id)
+        .join(AnnotationItem, AnnotationNote.item_id == AnnotationItem.id)
+        .where(AnnotationItem.round_id == rnd.id)
+    ).all()
+    by_item: dict[int, dict[str, AnnotationNote]] = {}
+    for note, name in rows:
+        by_item.setdefault(note.item_id, {})[name] = note
+    return by_item, sorted({name for _, name in rows}, key=str.lower)
+
+
+def _value(note: AnnotationNote | None, dim: str):
+    """A score as it counts for agreement: missing when left out or not evaluable."""
+    if note is None or note.cannot_evaluate:
+        return None
+    return getattr(note, dim)
+
+
+def _disputed(notes: dict[str, AnnotationNote]) -> list[str]:
+    """The dimensions where the Avaliadores gave different scores."""
+    return [dim for dim in DIMENSIONS if len({_value(n, dim) for n in notes.values()} - {None}) > 1]
+
+
+def _scored(session: Session, rnd: AnnotationRound, annotator_id: int) -> bool:
+    return bool(session.scalar(
+        select(func.count()).select_from(AnnotationNote)
+        .join(AnnotationItem, AnnotationNote.item_id == AnnotationItem.id)
+        .where(AnnotationItem.round_id == rnd.id, AnnotationNote.annotator_id == annotator_id)
+    ))
+
+
+def set_adjudicator(session: Session, rnd: AnnotationRound, annotator_id: int | None) -> AnnotationRound:
+    """Designate who decides the disagreements; never someone who scored this Rodada."""
+    if annotator_id is not None:
+        annotator = get_annotator(session, annotator_id)
+        if _scored(session, rnd, annotator_id):
+            raise AnnotationError(f"{annotator.name} deu notas nesta Rodada e não pode adjudicá-la.", status=409)
+    rnd.adjudicator_id = annotator_id
+    session.commit()
+    return rnd
+
+
+def _check_adjudicator(session: Session, rnd: AnnotationRound, annotator_id: int) -> None:
+    if rnd.adjudicator_id != annotator_id:
+        raise AnnotationError("Só o adjudicador designado pode ver e decidir as discordâncias.", status=403)
+    if rnd.status != "closed":
+        raise AnnotationError("Feche a Rodada antes da Adjudicação, para as discordâncias não mudarem.",
+                              status=409)
+    # Checked again here: designated while the Rodada was open, they may have scored it since.
+    if _scored(session, rnd, annotator_id):
+        raise AnnotationError("O adjudicador deu notas nesta Rodada e não pode decidir as discordâncias.",
+                              status=409)
+
+
+def adjudication_view(session: Session, rnd: AnnotationRound, annotator: Annotator) -> dict:
+    """The disputed Items, with every Avaliador's note, for the adjudicator only."""
+    _check_adjudicator(session, rnd, annotator.id)
+    by_item, _ = _notes_by_item(session, rnd)
+    decisions = _decisions(session, rnd)
+    items = []
+    for item in rnd.items:
+        notes = by_item.get(item.id, {})
+        disputed = _disputed(notes)
+        if not disputed:
+            continue
+        decision = decisions.get(item.id)
+        items.append({
+            "id": item.id, "position": item.position, "question": item.question,
+            "reference_answer": item.reference_answer, "evidence": list(item.evidence),
+            "retrieved_context": list(item.retrieved_context), "generated_answer": item.generated_answer,
+            "grounding_applicable": bool(item.retrieved_context),
+            "notes": {name: note_out(n) for name, n in sorted(notes.items())},
+            "disputed": disputed,
+            "adjudication": ({"correctness": decision.correctness, "grounding": decision.grounding}
+                             if decision else None),
+        })
+    return {"round": round_summary(rnd), "items": items,
+            "decided": sum(i["adjudication"] is not None for i in items), "total": len(items)}
+
+
+def adjudicate(session: Session, item_id: int, annotator_id: int, correctness: int | None,
+               grounding: int | None) -> AnnotationAdjudication:
+    """Record the adjudicator's scores for every disputed dimension of an Item."""
+    item = session.get(AnnotationItem, item_id)
+    if item is None:
+        raise AnnotationError(f"Item {item_id} não existe.", status=404)
+    _check_adjudicator(session, item.round, annotator_id)
+    by_item, _ = _notes_by_item(session, item.round)
+    disputed = _disputed(by_item.get(item_id, {}))
+    if not disputed:
+        raise AnnotationError("Os Avaliadores concordam neste Item: não há o que adjudicar.", status=409)
+    given = {"correctness": correctness, "grounding": grounding}
+    missing = [dim for dim in disputed if given[dim] is None]
+    if missing:
+        raise AnnotationError("Falta decidir: " + ", ".join(missing) + ".")
+    decision = session.scalar(select(AnnotationAdjudication).where(AnnotationAdjudication.item_id == item_id))
+    if decision is None:
+        decision = AnnotationAdjudication(item_id=item_id, annotator_id=annotator_id)
+        session.add(decision)
+    decision.annotator_id = annotator_id  # whoever decided last
+    decision.correctness = correctness if "correctness" in disputed else None
+    decision.grounding = grounding if "grounding" in disputed else None
+    session.commit()
+    return decision
+
+
+def final_notes(session: Session, rnd: AnnotationRound) -> dict:
+    """The Nota final of each Item: the common score where the Avaliadores agree, the
+    adjudicator's where they disagree, and nothing (pendente) while undecided."""
+    by_item, _ = _notes_by_item(session, rnd)
+    decisions = _decisions(session, rnd)
+    items, pending = [], 0
+    for item in rnd.items:
+        notes = by_item.get(item.id, {})
+        disputed = _disputed(notes)
+        decision = decisions.get(item.id)
+        final = {}
+        for dim in DIMENSIONS:
+            values = {_value(n, dim) for n in notes.values()} - {None}
+            if dim in disputed:
+                final[dim] = getattr(decision, dim) if decision else None
+            else:
+                final[dim] = next(iter(values)) if values else None
+        # How many Avaliadores gave a usable score, in the dimension with most of them.
+        scorers = max(sum(_value(n, dim) is not None for n in notes.values()) for dim in DIMENSIONS)
+        if disputed and decision is None:
+            status = "pendente"
+            pending += 1
+        elif disputed:
+            status = "adjudicada"
+        elif scorers >= 2:
+            status = "concordância"
+        else:
+            status = "uma nota" if scorers == 1 else "sem notas"
+        items.append({"id": item.id, "position": item.position, "final": final, "status": status,
+                      "auto_scores": dict(item.auto_scores), "question_type": item.question_type,
+                      "combination": dict(item.combination)})
+    return {"round": round_summary(rnd), "items": items, "pending": pending}
+
+
+def _decisions(session: Session, rnd: AnnotationRound) -> dict[int, AnnotationAdjudication]:
+    return {a.item_id: a for a in session.scalars(
+        select(AnnotationAdjudication)
+        .join(AnnotationItem, AnnotationAdjudication.item_id == AnnotationItem.id)
+        .where(AnnotationItem.round_id == rnd.id)
+    )}

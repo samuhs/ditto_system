@@ -545,6 +545,8 @@ export interface AnnotationRoundSummary {
   pilot: boolean;
   strata: AnnotationStratumDim[];
   allocation: "proportional" | "equal";
+  /** Who decides the Nota final where the Avaliadores disagree. */
+  adjudicator_id: number | null;
   created_at: string | null;
 }
 
@@ -645,4 +647,36 @@ export interface AnnotationAgreement {
     notes: Record<string, AnnotationNoteValues>;
   }[];
   note: string | null;
+}
+
+export interface AdjudicationItem {
+  id: number;
+  position: number;
+  question: string;
+  reference_answer: string | null;
+  evidence: string[];
+  retrieved_context: string[];
+  generated_answer: string;
+  grounding_applicable: boolean;
+  /** Every Avaliador's note, by name (the adjudicator sees them only here, on disputed Items). */
+  notes: Record<string, AnnotationNoteValues>;
+  disputed: ("correctness" | "grounding")[];
+  adjudication: { correctness: number | null; grounding: number | null } | null;
+}
+
+export interface AdjudicationView {
+  round: AnnotationRoundSummary;
+  items: AdjudicationItem[];
+  decided: number;
+  total: number;
+}
+
+export interface FinalNotes {
+  round: AnnotationRoundSummary;
+  items: {
+    id: number; position: number;
+    final: { correctness: number | null; grounding: number | null };
+    status: "concordância" | "adjudicada" | "pendente" | "uma nota" | "sem notas";
+  }[];
+  pending: number;
 }

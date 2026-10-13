@@ -1,4 +1,6 @@
 import type {
+  AdjudicationView,
+  FinalNotes,
   AnnotationAgreement,
   AnnotationNoteValues,
   AnnotationQueue,
@@ -377,4 +379,31 @@ export async function closeAnnotationRound(id: number): Promise<AnnotationRoundS
 /** Concordância between the Avaliadores of a Rodada (kappa, alpha, disagreements). */
 export async function getAnnotationAgreement(id: number): Promise<AnnotationAgreement> {
   return asJson<AnnotationAgreement>(await fetch(`${BASE}/annotation/rounds/${id}/agreement`));
+}
+
+/** Designates (or clears, with null) the Rodada's adjudicator. */
+export async function setAnnotationAdjudicator(roundId: number, annotatorId: number | null): Promise<AnnotationRoundSummary> {
+  return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds/${roundId}`, {
+    method: "PATCH", ...json({ adjudicator_id: annotatorId }),
+  }));
+}
+
+/** The disputed Items of a closed Rodada, for its adjudicator only. */
+export async function getAdjudication(roundId: number, annotatorId: number): Promise<AdjudicationView> {
+  return asJson<AdjudicationView>(
+    await fetch(`${BASE}/annotation/rounds/${roundId}/adjudication?annotator_id=${annotatorId}`),
+  );
+}
+
+export async function saveAdjudication(
+  itemId: number, annotatorId: number, decision: { correctness: number | null; grounding: number | null },
+): Promise<{ item_id: number; correctness: number | null; grounding: number | null }> {
+  return asJson(await fetch(`${BASE}/annotation/items/${itemId}/adjudication`, {
+    method: "PUT", ...json({ annotator_id: annotatorId, ...decision }),
+  }));
+}
+
+/** The Nota final of each Item and how many are still pending adjudication. */
+export async function getFinalNotes(roundId: number): Promise<FinalNotes> {
+  return asJson<FinalNotes>(await fetch(`${BASE}/annotation/rounds/${roundId}/final`));
 }

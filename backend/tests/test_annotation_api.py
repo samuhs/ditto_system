@@ -803,3 +803,139 @@ def test_a_closed_round_keeps_its_notes_even_when_removing_a_participant(env):
 
     assert client.delete(f"/annotation/rounds/{rnd['id']}/participants/{ana}").status_code == 409
     assert client.get(f"/annotation/rounds/{rnd['id']}").json()["progress"][0]["done"] == 1
+
+
+# ---- #52: Adjudicação and Nota final ----
+
+def _disputed_round(client, sf):
+    """A closed Rodada of 3 Items: Ana and Bruno agree on the first, disagree on Correção of the
+    second and on both dimensions of the third. Returns (round, items in position order, ids)."""
+    rnd = _round(client, _experiment(sf), size=3)
+    ana, bruno, ori = _annotator(client, "Ana"), _annotator(client, "Bruno"), _annotator(client, "Orientador")
+    items = _score_all(client, rnd["id"], ana, [(2, 2), (1, 2), (0, 0)])
+    _score_all(client, rnd["id"], bruno, [(2, 2), (2, 2), (2, 1)])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+    return rnd, items, (ana, bruno, ori)
+
+
+def _set_adjudicator(client, round_id, annotator_id):
+    return client.patch(f"/annotation/rounds/{round_id}", json={"adjudicator_id": annotator_id})
+
+
+def test_the_researcher_designates_an_adjudicator(env):
+    client, sf = env
+    rnd, _, (_, _, ori) = _disputed_round(client, sf)
+
+    response = _set_adjudicator(client, rnd["id"], ori)
+
+    assert response.status_code == 200
+    assert client.get(f"/annotation/rounds/{rnd['id']}").json()["adjudicator_id"] == ori
+
+
+def test_someone_who_scored_the_round_cannot_adjudicate_it(env):
+    client, sf = env
+    rnd, _, (ana, _, _) = _disputed_round(client, sf)
+
+    assert _set_adjudicator(client, rnd["id"], ana).status_code == 409
+
+
+def test_the_adjudicator_sees_only_the_disagreements_with_the_others_notes(env):
+    client, sf = env
+    rnd, items, (_, _, ori) = _disputed_round(client, sf)
+    _set_adjudicator(client, rnd["id"], ori)
+
+    view = client.get(f"/annotation/rounds/{rnd['id']}/adjudication", params={"annotator_id": ori}).json()
+
+    assert sorted(i["id"] for i in view["items"]) == sorted([items[1]["id"], items[2]["id"]])
+    disputed = next(i for i in view["items"] if i["id"] == items[1]["id"])
+    assert disputed["notes"]["Ana"]["correctness"] == 1 and disputed["notes"]["Bruno"]["correctness"] == 2
+    assert disputed["disputed"] == ["correctness"]
+    assert disputed["adjudication"] is None
+
+
+def test_only_the_adjudicator_can_see_or_decide(env):
+    client, sf = env
+    rnd, items, (ana, _, ori) = _disputed_round(client, sf)
+    _set_adjudicator(client, rnd["id"], ori)
+
+    assert client.get(f"/annotation/rounds/{rnd['id']}/adjudication", params={"annotator_id": ana}).status_code == 403
+    response = client.put(f"/annotation/items/{items[1]['id']}/adjudication",
+                          json={"annotator_id": ana, "correctness": 2})
+    assert response.status_code == 403
+
+
+def test_adjudication_needs_a_closed_round(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    ori = _annotator(client, "Orientador")
+
+    assert _set_adjudicator(client, rnd["id"], ori).status_code == 200
+    assert client.get(f"/annotation/rounds/{rnd['id']}/adjudication", params={"annotator_id": ori}).status_code == 409
+
+
+def test_the_final_note_follows_agreement_then_adjudication_and_counts_what_is_pending(env):
+    client, sf = env
+    rnd, items, (_, _, ori) = _disputed_round(client, sf)
+    _set_adjudicator(client, rnd["id"], ori)
+
+    before = client.get(f"/annotation/rounds/{rnd['id']}/final").json()
+    assert before["pending"] == 2
+
+    decided = client.put(f"/annotation/items/{items[1]['id']}/adjudication",
+                         json={"annotator_id": ori, "correctness": 1})
+    assert decided.status_code == 200
+    final = client.get(f"/annotation/rounds/{rnd['id']}/final").json()
+
+    by_id = {i["id"]: i for i in final["items"]}
+    assert by_id[items[0]["id"]]["final"] == {"correctness": 2, "grounding": 2}
+    assert by_id[items[0]["id"]]["status"] == "concordância"
+    assert by_id[items[1]["id"]]["final"] == {"correctness": 1, "grounding": 2}
+    assert by_id[items[1]["id"]]["status"] == "adjudicada"
+    assert by_id[items[2]["id"]]["final"] == {"correctness": None, "grounding": None}
+    assert by_id[items[2]["id"]]["status"] == "pendente"
+    assert final["pending"] == 1
+
+
+def test_the_adjudication_must_cover_every_disputed_dimension(env):
+    client, sf = env
+    rnd, items, (_, _, ori) = _disputed_round(client, sf)
+    _set_adjudicator(client, rnd["id"], ori)
+
+    partial = client.put(f"/annotation/items/{items[2]['id']}/adjudication",
+                         json={"annotator_id": ori, "correctness": 1})
+
+    assert partial.status_code == 422
+
+
+def test_an_item_without_disagreement_cannot_be_adjudicated(env):
+    client, sf = env
+    rnd, items, (_, _, ori) = _disputed_round(client, sf)
+    _set_adjudicator(client, rnd["id"], ori)
+
+    response = client.put(f"/annotation/items/{items[0]['id']}/adjudication",
+                          json={"annotator_id": ori, "correctness": 2, "grounding": 2})
+
+    assert response.status_code == 409
+
+
+def test_an_adjudicator_who_scored_after_being_designated_cannot_adjudicate(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    ana, ori = _annotator(client, "Ana"), _annotator(client, "Orientador")
+    _set_adjudicator(client, rnd["id"], ori)
+    _score_all(client, rnd["id"], ana, [(0, 0), (1, 1)])
+    _score_all(client, rnd["id"], ori, [(2, 2), (1, 1)])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+
+    assert client.get(f"/annotation/rounds/{rnd['id']}/adjudication", params={"annotator_id": ori}).status_code == 409
+
+
+def test_a_note_against_cannot_evaluate_is_not_concordance(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=1)
+    _score_all(client, rnd["id"], _annotator(client, "Ana"), [(2, 2)])
+    _score_all(client, rnd["id"], _annotator(client, "Bruno"), ["cannot"])
+
+    final = client.get(f"/annotation/rounds/{rnd['id']}/final").json()
+
+    assert final["items"][0]["status"] == "uma nota"

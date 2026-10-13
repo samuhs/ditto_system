@@ -175,6 +175,8 @@ class AnnotationRound(Base):
     # Sampling design: the dimensions stratified on and how the size is split among strata.
     strata: Mapped[list] = mapped_column(JSON, default=list)
     allocation: Mapped[str] = mapped_column(String(20), default="proportional")
+    # Who decides the Nota final where the Avaliadores disagree (e.g. the advisor).
+    adjudicator_id: Mapped[int | None] = mapped_column(ForeignKey("annotator.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     items: Mapped[list["AnnotationItem"]] = relationship(
@@ -238,3 +240,18 @@ class AnnotationParticipant(Base):
     joined_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     # Set when the researcher removes the Avaliador; their notes are refused until they rejoin.
     removed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class AnnotationAdjudication(Base):
+    """The adjudicator's decision on an Item where the Avaliadores disagree."""
+
+    __tablename__ = "annotation_adjudication"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("annotation_item.id"), unique=True)
+    annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
+    correctness: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    grounding: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )

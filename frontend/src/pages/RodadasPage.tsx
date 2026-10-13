@@ -1,4 +1,4 @@
-import { Button, Checkbox, NumberInput, Radio, TextInput } from "@mantine/core";
+import { Button, Checkbox, NativeSelect, NumberInput, Radio, TextInput } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -7,10 +7,12 @@ import {
   createAnnotationRound,
   getAnnotationAgreement,
   getAnnotationRound,
+  getFinalNotes,
   listAnnotationRounds,
   listAnnotators,
   previewAnnotationRound,
   removeAnnotationParticipant,
+  setAnnotationAdjudicator,
   setAnnotatorActive,
 } from "../api/client";
 import type {
@@ -23,6 +25,7 @@ import type {
   AnnotationRoundSummary,
   AnnotationStratumDim,
   Annotator,
+  FinalNotes,
 } from "../api/types";
 import { CombinationPicker } from "../components/CombinationPicker";
 import { Errata, Saved, errorText } from "../components/Notice";
@@ -267,6 +270,21 @@ export function RodadaDetailPage() {
   const [closing, setClosing] = useState(false);
 
   const [computing, setComputing] = useState(false);
+  const [annotators, setAnnotators] = useState<Annotator[]>([]);
+  const [final, setFinal] = useState<FinalNotes | null>(null);
+
+  async function designate(value: string) {
+    setError(null);
+    try {
+      // Only the round and the final notes depend on it: no need to redo the Concordância.
+      setRound((r) => (r ? { ...r, adjudicator_id: value ? Number(value) : null } : r));
+      await setAnnotationAdjudicator(Number(id), value ? Number(value) : null);
+      getAnnotationRound(Number(id)).then(setRound).catch((e) => setError(errorText(e)));
+      getFinalNotes(Number(id)).then(setFinal).catch((e) => setError(errorText(e)));
+    } catch (e) {
+      setError(errorText(e));
+    }
+  }
 
   function computeAgreement() {
     setComputing(true);
@@ -283,7 +301,11 @@ export function RodadaDetailPage() {
     getAnnotationRound(Number(id))
       .then((r) => {
         setRound(r);
-        if (r.status === "closed") computeAgreement();
+        if (r.status === "closed") {
+          computeAgreement();
+          listAnnotators().then(setAnnotators).catch((e) => setError(errorText(e)));
+          getFinalNotes(Number(id)).then(setFinal).catch((e) => setError(errorText(e)));
+        }
       })
       .catch((e) => setError(errorText(e)));
   }
@@ -374,8 +396,37 @@ export function RodadaDetailPage() {
         </section>
       )}
       {agreement && <AgreementSection agreement={agreement} />}
+      {round?.status === "closed" && (
+        <section className="ditto-sec">
+          <div className="ditto-sec-head">
+            <h2 className="ditto-h2">Adjudicação e Nota final</h2>
+            <p className="ditto-read">
+              Onde os avaliadores discordam, o adjudicador decide a nota na tela de avaliação. Ele não pode ter dado
+              notas nesta rodada.
+            </p>
+          </div>
+          <NativeSelect
+            label="Adjudicador"
+            value={round.adjudicator_id ? String(round.adjudicator_id) : ""}
+            onChange={(e) => designate(e.currentTarget.value)}
+            data={[{ value: "", label: "Ninguém designado" },
+              ...annotators
+                .filter((a) => a.active || a.id === round.adjudicator_id)
+                .map((a) => ({ value: String(a.id), label: a.active ? a.name : `${a.name} (desativado)` }))]}
+            maw={320}
+          />
+          {final && <p>{finalSummary(final)}</p>}
+        </section>
+      )}
     </div>
   );
+}
+
+function finalSummary(final: FinalNotes): string {
+  const count = (status: string) => final.items.filter((i) => i.status === status).length;
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  return `${count("concordância")} em concordância · ${plural(count("adjudicada"), "adjudicada")} · `
+    + `${plural(final.pending, "pendente")}`;
 }
 
 const DIM_LABEL = { correctness: "Correção", grounding: "Fundamentação" } as const;
