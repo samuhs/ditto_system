@@ -53,6 +53,8 @@ ADDED_COLUMNS = {
     "annotation_round": {"pilot": "BOOLEAN DEFAULT FALSE", "strata": "JSON",
                          "allocation": "VARCHAR(20) DEFAULT 'proportional'"},
     "annotation_participant": {"removed_at": "TIMESTAMP"},
+    "annotation_note": {"cannot_evaluate": "BOOLEAN DEFAULT FALSE", "reason": "VARCHAR",
+                        "comment": "VARCHAR"},
 }
 
 

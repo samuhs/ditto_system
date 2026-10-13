@@ -575,9 +575,14 @@ export interface AnnotationRoundDetail extends AnnotationRoundSummary {
   progress: AnnotationProgress[];
 }
 
+/** An Avaliador's note. `grounding` is null when it does not apply (no retrieved context);
+ * with `cannot_evaluate`, both scores are null and `reason` says why. */
 export interface AnnotationNoteValues {
-  correctness: number;
-  grounding: number;
+  correctness: number | null;
+  grounding: number | null;
+  cannot_evaluate: boolean;
+  reason: string | null;
+  comment: string | null;
 }
 
 /** One answer as an Avaliador sees it: no Técnica, LLM, Experimento or automatic score. */
@@ -590,6 +595,8 @@ export interface AnnotationQueueItem {
   evidence: string[];
   retrieved_context: string[];
   generated_answer: string;
+  /** False when the system retrieved no context (e.g. closed_book): Fundamentação does not apply. */
+  grounding_applicable: boolean;
   note: AnnotationNoteValues | null;
 }
 

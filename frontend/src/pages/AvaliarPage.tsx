@@ -1,5 +1,5 @@
-import { Button, Radio, TextInput } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { Button, Checkbox, Radio, TextInput, Textarea } from "@mantine/core";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   createAnnotator,
@@ -11,7 +11,9 @@ import {
   saveAnnotationNote,
 } from "../api/client";
 import type {
+  AnnotationNoteValues,
   AnnotationQueue,
+  AnnotationQueueItem,
   AnnotationRoundSummary,
   Annotator,
   Rubric,
@@ -19,9 +21,33 @@ import type {
 } from "../api/types";
 import { Errata, errorText } from "../components/Notice";
 
-type Draft = { correctness: number | null; grounding: number | null };
+type Draft = AnnotationNoteValues;
 
-const EMPTY: Draft = { correctness: null, grounding: null };
+const EMPTY: Draft = { correctness: null, grounding: null, cannot_evaluate: false, reason: null, comment: null };
+
+function isComplete(d: Draft, item: AnnotationQueueItem): boolean {
+  if (d.cannot_evaluate) return Boolean(d.reason?.trim());
+  return d.correctness !== null && (!item.grounding_applicable || d.grounding !== null);
+}
+
+/** What goes to the API: no scores when the Avaliador cannot evaluate, no Fundamentação when
+ * it does not apply, blank texts as null. */
+function toNote(d: Draft, item: AnnotationQueueItem): AnnotationNoteValues {
+  if (d.cannot_evaluate) {
+    return { correctness: null, grounding: null, cannot_evaluate: true, reason: d.reason?.trim() || null,
+      comment: d.comment?.trim() || null };
+  }
+  return {
+    correctness: d.correctness, grounding: item.grounding_applicable ? d.grounding : null,
+    cannot_evaluate: false, reason: null, comment: d.comment?.trim() || null,
+  };
+}
+
+/** Whether saving `draft` would change the stored note (compares what would be sent). */
+function changes(draft: Draft, item: AnnotationQueueItem): boolean {
+  const saved = item.note ?? EMPTY;
+  return JSON.stringify(toNote(draft, item)) !== JSON.stringify(toNote(saved, item));
+}
 
 /**
  * The Avaliador's screen, in focus mode (no menu, no link to results): who is evaluating,
@@ -155,7 +181,8 @@ function Evaluate({ roundId, annotator, onError }: {
   const [queue, setQueue] = useState<AnnotationQueue | null>(null);
   const [rubric, setRubric] = useState<Rubric | null>(null);
   const [index, setIndex] = useState(0);
-  const [draft, setDraft] = useState<Draft>(EMPTY);
+  // Unsaved choices per Item, kept while the Avaliador moves between answers.
+  const [drafts, setDrafts] = useState<Record<number, Draft>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -163,41 +190,82 @@ function Evaluate({ roundId, annotator, onError }: {
       .then(([q, r]) => {
         setQueue(q);
         setRubric(r);
+        setDrafts({});
         const firstOpen = q.items.findIndex((i) => i.note === null);
-        go(q, firstOpen === -1 ? 0 : firstOpen);
+        setIndex(firstOpen === -1 ? 0 : firstOpen);
       })
       .catch((e) => onError(errorText(e)));
   }, [roundId, annotator.id, onError]);
 
-  function go(q: AnnotationQueue, to: number) {
-    setIndex(to);
-    setDraft(q.items[to]?.note ?? EMPTY);
-  }
+  const item = queue?.items[index];
+  const draft: Draft = item ? (drafts[item.id] ?? item.note ?? EMPTY) : EMPTY;
+  const edit = useCallback((change: Partial<Draft>) => {
+    if (!item) return;
+    setDrafts((all) => ({ ...all, [item.id]: { ...(all[item.id] ?? item.note ?? EMPTY), ...change } }));
+  }, [item]);
+  const complete = item ? isComplete(draft, item) : false;
+  const last = queue ? queue.items.length - 1 : 0;
 
-  if (!queue || !rubric) return null;
-  const item = queue.items[index];
-  const complete = draft.correctness !== null && draft.grounding !== null;
-
-  async function save() {
-    if (!queue || !item || draft.correctness === null || draft.grounding === null) return;
+  const save = useCallback(async () => {
+    if (!queue || !item || !isComplete(draft, item) || saving) return;
     setSaving(true);
     onError(null);
     try {
-      const note = { correctness: draft.correctness, grounding: draft.grounding };
+      const sent = draft;
+      const note = toNote(draft, item);
       await saveAnnotationNote(item.id, annotator.id, note);
       const items = queue.items.map((i) => (i.id === item.id ? { ...i, note } : i));
-      const next: AnnotationQueue = { ...queue, items, done: items.filter((i) => i.note !== null).length };
-      setQueue(next);
-      // Next answer still without a note, wrapping around to ones skipped earlier.
+      setQueue({ ...queue, items, done: items.filter((i) => i.note !== null).length });
+      // Drop the draft only if nothing was edited while the request was in flight.
+      setDrafts((all) => {
+        if (all[item.id] !== undefined && all[item.id] !== sent) return all;
+        const { [item.id]: _sent, ...rest } = all;
+        return rest;
+      });
+      // Next answer still without a note, wrapping around to ones skipped earlier; unless the
+      // Avaliador already moved elsewhere during the request.
       const pending = [...items.keys()].map((k) => (index + 1 + k) % items.length)
         .find((k) => items[k].note === null);
-      go(next, pending ?? Math.min(index + 1, items.length - 1));
+      setIndex((current) => (current === index ? (pending ?? Math.min(index + 1, items.length - 1)) : current));
     } catch (e) {
       onError(errorText(e));
     } finally {
       setSaving(false);
     }
-  }
+  }, [queue, item, draft, saving, annotator.id, index, onError]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName ?? "";
+      const onRadio = tag === "INPUT" && target?.getAttribute("type") === "radio";
+      // Typing, buttons and links keep their own keys; on a radio only the digits and Enter are
+      // shortcuts (the arrows move between its levels).
+      if (!onRadio && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(tag)) return;
+      if (onRadio && e.key.startsWith("Arrow")) return;
+      if (!item || saving || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (["0", "1", "2"].includes(e.key) && !draft.cannot_evaluate) {
+        const value = Number(e.key);
+        // 0/1/2 score Correção first, then Fundamentação (when it applies).
+        if (draft.correctness === null || !item.grounding_applicable) edit({ correctness: value });
+        else edit({ grounding: value });
+      } else if (e.key === "Enter") {
+        void save();
+      } else if (e.key === "ArrowLeft") {
+        setIndex((i) => Math.max(0, i - 1));
+      } else if (e.key === "ArrowRight") {
+        setIndex((i) => Math.min(last, i + 1));
+      } else {
+        return;
+      }
+      e.preventDefault();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [item, draft, edit, save, last, saving]);
+
+  if (!queue || !rubric) return null;
+  const unsaved = item ? item.id in drafts && changes(drafts[item.id], item) : false;
 
   return (
     <section className="ditto-sec">
@@ -205,6 +273,7 @@ function Evaluate({ roundId, annotator, onError }: {
         <h1 className="ditto-h2">{queue.round.name}</h1>
         <p className="ditto-read">
           Resposta {index + 1} de {queue.total} · {queue.done} de {queue.total} avaliadas
+          {unsaved && <strong> · escolha não salva</strong>}
         </p>
       </div>
       {item && (
@@ -227,20 +296,44 @@ function Evaluate({ roundId, annotator, onError }: {
           </div>
           <div className="ditto-annotate-rubric">
             {rubric.dimensions.map((dim) => (
-              <DimensionField
-                key={dim.key}
-                dim={dim}
-                value={draft[dim.key]}
-                onChange={(v) => setDraft((d) => ({ ...d, [dim.key]: v }))}
-              />
+              dim.key === "grounding" && !item.grounding_applicable ? (
+                <fieldset key={dim.key} className="ditto-rubric-dim">
+                  <legend>{dim.label}</legend>
+                  <p className="ditto-muted">Não se aplica: o sistema não recuperou trechos para esta resposta.</p>
+                </fieldset>
+              ) : (
+                <DimensionField
+                  key={dim.key}
+                  dim={dim}
+                  value={draft[dim.key]}
+                  disabled={draft.cannot_evaluate}
+                  onChange={(v) => edit({ [dim.key]: v })}
+                />
+              )
             ))}
+            <Checkbox
+              label="Não consigo avaliar esta resposta"
+              checked={draft.cannot_evaluate}
+              onChange={(e) => edit({ cannot_evaluate: e.currentTarget.checked })}
+            />
+            {draft.cannot_evaluate && (
+              <TextInput label="Por quê?" value={draft.reason ?? ""} onChange={(e) => edit({ reason: e.currentTarget.value })} />
+            )}
+            <Textarea
+              label="Comentário (opcional)"
+              value={draft.comment ?? ""}
+              onChange={(e) => edit({ comment: e.currentTarget.value })}
+              autosize
+              minRows={2}
+            />
             <div className="ditto-annotate-nav">
-              <Button variant="default" disabled={index === 0} onClick={() => go(queue, index - 1)}>Anterior</Button>
-              <Button variant="default" disabled={index === queue.items.length - 1} onClick={() => go(queue, index + 1)}>
-                Próxima
-              </Button>
+              <Button variant="default" disabled={index === 0} onClick={() => setIndex(index - 1)}>Anterior</Button>
+              <Button variant="default" disabled={index === last} onClick={() => setIndex(index + 1)}>Próxima</Button>
               <Button onClick={save} disabled={!complete} loading={saving}>Salvar e seguir</Button>
             </div>
+            <p className="ditto-muted">
+              Atalhos: 0, 1 e 2 dão a nota (Correção, depois Fundamentação) · Enter salva e segue · ← e → navegam.
+            </p>
           </div>
         </div>
       )}
@@ -248,8 +341,8 @@ function Evaluate({ roundId, annotator, onError }: {
   );
 }
 
-function DimensionField({ dim, value, onChange }: {
-  dim: RubricDimension; value: number | null; onChange: (v: number) => void;
+function DimensionField({ dim, value, disabled, onChange }: {
+  dim: RubricDimension; value: number | null; disabled: boolean; onChange: (v: number) => void;
 }) {
   return (
     <fieldset className="ditto-rubric-dim">
@@ -260,6 +353,7 @@ function DimensionField({ dim, value, onChange }: {
           key={lvl.value}
           name={dim.key}
           checked={value === lvl.value}
+          disabled={disabled}
           onChange={() => onChange(lvl.value)}
           aria-label={`${dim.label}: ${lvl.value} · ${lvl.label}`}
           label={<span><strong>{lvl.value} · {lvl.label}</strong> — {lvl.description}</span>}

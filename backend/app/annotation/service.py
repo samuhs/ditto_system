@@ -305,7 +305,28 @@ def _order(rnd: AnnotationRound, annotator_id: int) -> list[AnnotationItem]:
 
 
 def _is_done(note: AnnotationNote | None) -> bool:
-    return note is not None and note.correctness is not None
+    return note is not None and (note.correctness is not None or bool(note.cannot_evaluate))
+
+
+def note_out(note: AnnotationNote) -> dict:
+    return {"correctness": note.correctness, "grounding": note.grounding,
+            "cannot_evaluate": bool(note.cannot_evaluate), "reason": note.reason, "comment": note.comment}
+
+
+def _check_note(item: AnnotationItem, correctness, grounding, cannot_evaluate, reason) -> None:
+    """The Rubrica's rules for one note on one Item."""
+    if cannot_evaluate:
+        if not (reason or "").strip():
+            raise AnnotationError("Diga por que não dá para avaliar.")
+        if correctness is not None or grounding is not None:
+            raise AnnotationError("Quem não consegue avaliar não dá notas.")
+        return
+    if correctness is None:
+        raise AnnotationError("Falta a nota de Correção.")
+    if item.retrieved_context and grounding is None:
+        raise AnnotationError("Falta a nota de Fundamentação.")
+    if not item.retrieved_context and grounding is not None:
+        raise AnnotationError("Sem trechos recuperados, a Fundamentação não se aplica.")
 
 
 def queue(session: Session, rnd: AnnotationRound, annotator: Annotator) -> dict:
@@ -323,22 +344,24 @@ def queue(session: Session, rnd: AnnotationRound, annotator: Annotator) -> dict:
             "question_type": item.question_type, "reference_answer": item.reference_answer,
             "evidence": list(item.evidence), "retrieved_context": list(item.retrieved_context),
             "generated_answer": item.generated_answer,
-            "note": ({"correctness": note.correctness, "grounding": note.grounding}
-                     if note is not None else None),
+            "grounding_applicable": bool(item.retrieved_context),
+            "note": note_out(note) if note is not None else None,
         })
     return {"round": round_summary(rnd), "annotator": {"id": annotator.id, "name": annotator.name},
             "items": items, "done": sum(_is_done(notes.get(i.id)) for i in rnd.items),
             "total": len(rnd.items)}
 
 
-def save_note(session: Session, item_id: int, annotator_id: int,
-              correctness: int, grounding: int) -> AnnotationNote:
+def save_note(session: Session, item_id: int, annotator_id: int, correctness: int | None,
+              grounding: int | None, cannot_evaluate: bool = False, reason: str | None = None,
+              comment: str | None = None) -> AnnotationNote:
     item = session.get(AnnotationItem, item_id)
     if item is None:
         raise AnnotationError(f"Item {item_id} não existe.", status=404)
     get_annotator(session, annotator_id)
     if item.round.status != "open":
         raise AnnotationError("A Rodada está fechada: não aceita notas.", status=409)
+    _check_note(item, correctness, grounding, cannot_evaluate, reason)
     participant = _participant(session, item.round_id, annotator_id)
     if participant is not None and participant.removed_at is not None:
         raise AnnotationError("Você foi removido desta Rodada. Escolha a rodada de novo para voltar.",
@@ -351,5 +374,8 @@ def save_note(session: Session, item_id: int, annotator_id: int,
         note = AnnotationNote(item_id=item_id, annotator_id=annotator_id)
         session.add(note)
     note.correctness, note.grounding = correctness, grounding
+    note.cannot_evaluate = cannot_evaluate
+    note.reason = reason.strip() if cannot_evaluate and reason else None
+    note.comment = (comment or "").strip() or None
     session.commit()
     return note

@@ -15,6 +15,7 @@ from app.annotation.service import (
     get_round,
     join_round,
     list_rounds as list_round_summaries,
+    note_out,
     preview_round,
     queue,
     remove_participant,
@@ -71,8 +72,12 @@ class ParticipantIn(BaseModel):
 
 
 class NoteIn(BaseModel):
-    correctness: int = Field(ge=0, le=2)
-    grounding: int = Field(ge=0, le=2)
+    correctness: int | None = Field(None, ge=0, le=2)
+    # None when the Fundamentação does not apply (no retrieved context) or cannot be judged.
+    grounding: int | None = Field(None, ge=0, le=2)
+    cannot_evaluate: bool = False
+    reason: str | None = Field(None, max_length=500)
+    comment: str | None = Field(None, max_length=2000)
 
 
 def _annotator_out(a: Annotator) -> dict:
@@ -199,7 +204,6 @@ def round_queue(round_id: int, annotator_id: int = Query(...),
 @router.put("/annotation/items/{item_id}/notes/{annotator_id}")
 def put_note(item_id: int, annotator_id: int, body: NoteIn, session: Session = Depends(_session)) -> dict:
     """Save (or replace) one Avaliador's note on an Item."""
-    note = _or_http(lambda: save_note(session, item_id, annotator_id,
-                                      body.correctness, body.grounding))
-    return {"item_id": note.item_id, "annotator_id": note.annotator_id,
-            "correctness": note.correctness, "grounding": note.grounding}
+    note = _or_http(lambda: save_note(session, item_id, annotator_id, body.correctness, body.grounding,
+                                      body.cannot_evaluate, body.reason, body.comment))
+    return {"item_id": note.item_id, "annotator_id": note.annotator_id, **note_out(note)}

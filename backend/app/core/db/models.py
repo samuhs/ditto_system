@@ -217,6 +217,10 @@ class AnnotationNote(Base):
     annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
     correctness: Mapped[int | None] = mapped_column(Integer, nullable=True)
     grounding: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # "Não consigo avaliar": the Item is left out of both dimensions, with the reason why.
+    cannot_evaluate: Mapped[bool] = mapped_column(Boolean, default=False)
+    reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    comment: Mapped[str | None] = mapped_column(String, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )

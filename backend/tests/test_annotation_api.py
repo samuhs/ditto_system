@@ -203,7 +203,8 @@ def test_a_note_is_saved_and_shown_only_to_its_avaliador(env):
     bruno_queue = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": bruno}).json()
     mine = next(i for i in ana_queue["items"] if i["id"] == item_id)
     theirs = next(i for i in bruno_queue["items"] if i["id"] == item_id)
-    assert mine["note"] == {"correctness": 2, "grounding": 1}
+    assert mine["note"] == {"correctness": 2, "grounding": 1, "cannot_evaluate": False, "reason": None,
+                            "comment": None}
     assert theirs["note"] is None
     assert (ana_queue["done"], ana_queue["total"]) == (1, 2)
     assert (bruno_queue["done"], bruno_queue["total"]) == (0, 2)
@@ -220,7 +221,7 @@ def test_saving_again_replaces_the_note(env):
     client.put(f"/annotation/items/{item_id}/notes/{ana}", json={"correctness": 2, "grounding": 2})
 
     queue = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()
-    assert queue["items"][0]["note"] == {"correctness": 2, "grounding": 2}
+    assert {k: queue["items"][0]["note"][k] for k in ("correctness", "grounding")} == {"correctness": 2, "grounding": 2}
     assert queue["done"] == 1
 
 
@@ -613,3 +614,88 @@ def test_scoring_without_joining_first_joins_the_round(env):
     client.put(f"/annotation/items/{item_id}/notes/{ana}", json={"correctness": 1, "grounding": 1})
 
     assert client.delete(f"/annotation/rounds/{rnd['id']}/participants/{ana}").json()["notes_deleted"] == 1
+
+
+# ---- #50: "não se aplica", "não consigo avaliar", comment ----
+
+def _closed_book_round(client, sf):
+    """A Rodada whose only answer has no retrieved context (closed_book)."""
+    session = sf()
+    experiment = Experiment(name="cb", status="done", config={"base": "guia"})
+    run = ExperimentRun(chunking="markdown", embedding="e5", rag_technique="closed_book",
+                        retriever="similarity", llm="L0", status="done")
+    run.results.append(RunResult(question="Sem contexto?", reference_answer="Ref.", generated_answer="Não sei.",
+                                 retrieved_context=[], scores={"answer_correctness": 0.4}))
+    experiment.runs.append(run)
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    return _round(client, experiment_id, size=1)
+
+
+def _first_item(client, round_id, annotator_id):
+    return client.get(f"/annotation/rounds/{round_id}/queue", params={"annotator_id": annotator_id}).json()["items"][0]
+
+
+def test_the_queue_says_whether_grounding_applies(env):
+    client, sf = env
+    ana = _annotator(client)
+
+    with_context = _first_item(client, _round(client, _experiment(sf), size=1)["id"], ana)
+    without = _first_item(client, _closed_book_round(client, sf)["id"], ana)
+
+    assert with_context["grounding_applicable"] is True
+    assert without["grounding_applicable"] is False
+
+
+def test_without_retrieved_context_grounding_must_be_left_out(env):
+    client, sf = env
+    rnd = _closed_book_round(client, sf)
+    ana = _annotator(client)
+    item = _first_item(client, rnd["id"], ana)
+    url = f"/annotation/items/{item['id']}/notes/{ana}"
+
+    assert client.put(url, json={"correctness": 1, "grounding": 2}).status_code == 422
+    assert client.put(url, json={"correctness": 1}).status_code == 200
+    queue = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()
+    assert queue["items"][0]["note"]["grounding"] is None
+    assert queue["done"] == 1
+
+
+def test_with_retrieved_context_grounding_is_required(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=1)
+    ana = _annotator(client)
+    item = _first_item(client, rnd["id"], ana)
+
+    assert client.put(f"/annotation/items/{item['id']}/notes/{ana}", json={"correctness": 1}).status_code == 422
+
+
+def test_cannot_evaluate_needs_a_reason_and_no_scores(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=1)
+    ana = _annotator(client)
+    url = f"/annotation/items/{_first_item(client, rnd['id'], ana)['id']}/notes/{ana}"
+
+    assert client.put(url, json={"cannot_evaluate": True}).status_code == 422
+    assert client.put(url, json={"cannot_evaluate": True, "reason": "  "}).status_code == 422
+    assert client.put(url, json={"cannot_evaluate": True, "reason": "ambígua", "correctness": 1,
+                                 "grounding": 1}).status_code == 422
+    assert client.put(url, json={"cannot_evaluate": True, "reason": "Referência ambígua"}).status_code == 200
+
+    queue = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()
+    note = queue["items"][0]["note"]
+    assert (note["cannot_evaluate"], note["reason"], note["correctness"]) == (True, "Referência ambígua", None)
+    assert queue["done"] == 1  # counted as handled
+
+
+def test_a_comment_is_kept_with_the_note(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=1)
+    ana = _annotator(client)
+    url = f"/annotation/items/{_first_item(client, rnd['id'], ana)['id']}/notes/{ana}"
+
+    client.put(url, json={"correctness": 2, "grounding": 2, "comment": "Resposta longa, mas certa."})
+
+    assert _first_item(client, rnd["id"], ana)["note"]["comment"] == "Resposta longa, mas certa."

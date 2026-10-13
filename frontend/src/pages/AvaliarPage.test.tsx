@@ -47,18 +47,22 @@ function queue(over: Partial<AnnotationQueue> = {}): AnnotationQueue {
         id: 11, position: 0, question: "Quantos metros tem a roda-gigante?", question_type: "simples",
         reference_answer: "42 metros.", evidence: ["A roda tem 42 metros de altura"],
         retrieved_context: ["Trecho recuperado sobre a roda"], generated_answer: "Tem 42 metros.",
-        note: null,
+        grounding_applicable: true, note: null,
       },
       {
         id: 12, position: 1, question: "Quanto custa o almoço?", question_type: "simples",
         reference_answer: "R$ 3.", evidence: ["almoço por R$ 3"], retrieved_context: [],
-        generated_answer: "Custa R$ 3.", note: null,
+        generated_answer: "Custa R$ 3.", grounding_applicable: false, note: null,
       },
     ],
     done: 0,
     total: 2,
     ...over,
   };
+}
+
+function note(correctness: number | null, grounding: number | null) {
+  return { correctness, grounding, cannot_evaluate: false, reason: null, comment: null };
 }
 
 function renderPage() {
@@ -82,7 +86,7 @@ describe("AvaliarPage", () => {
     vi.mocked(client.getAnnotationQueue).mockResolvedValue(queue());
     vi.mocked(client.joinAnnotationRound).mockResolvedValue(undefined);
     vi.mocked(client.saveAnnotationNote).mockResolvedValue({
-      item_id: 11, annotator_id: 3, correctness: 2, grounding: 2,
+      item_id: 11, annotator_id: 3, ...note(2, 2),
     });
   });
 
@@ -167,7 +171,7 @@ describe("AvaliarPage", () => {
     await userEvent.click(screen.getByRole("radio", { name: /Fundamentação: 1 · Parcial/ }));
     await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
 
-    expect(client.saveAnnotationNote).toHaveBeenCalledWith(11, 3, { correctness: 2, grounding: 1 });
+    expect(client.saveAnnotationNote).toHaveBeenCalledWith(11, 3, note(2, 1));
     expect(await screen.findByText("Quanto custa o almoço?")).toBeInTheDocument();
     expect(screen.getByText(/1 de 2 avaliadas/i)).toBeInTheDocument();
   });
@@ -178,7 +182,6 @@ describe("AvaliarPage", () => {
     await screen.findByText("Quanto custa o almoço?");
 
     await userEvent.click(screen.getByRole("radio", { name: /Correção: 2 · Correta/ }));
-    await userEvent.click(screen.getByRole("radio", { name: /Fundamentação: 2 · Apoiada/ }));
     await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
 
     expect(await screen.findByText("Quantos metros tem a roda-gigante?")).toBeInTheDocument();
@@ -194,7 +197,7 @@ describe("AvaliarPage", () => {
 
   it("shows a note already given when the Avaliador comes back to an answer", async () => {
     vi.mocked(client.getAnnotationQueue).mockResolvedValue(queue({
-      items: queue().items.map((i) => (i.id === 11 ? { ...i, note: { correctness: 1, grounding: 2 } } : i)),
+      items: queue().items.map((i) => (i.id === 11 ? { ...i, note: note(1, 2) } : i)),
       done: 1,
     }));
     renderPage();
@@ -227,7 +230,7 @@ describe("AvaliarPage", () => {
 
   it("says when the whole Rodada is done", async () => {
     vi.mocked(client.getAnnotationQueue).mockResolvedValue(queue({
-      items: queue().items.map((i) => ({ ...i, note: { correctness: 2, grounding: 2 } })),
+      items: queue().items.map((i) => ({ ...i, note: note(2, i.grounding_applicable ? 2 : null) })),
       done: 2,
     }));
     renderPage();
@@ -235,5 +238,93 @@ describe("AvaliarPage", () => {
     await userEvent.click(await screen.findByRole("button", { name: /piloto/i }));
 
     await waitFor(() => expect(screen.getByText(/2 de 2 avaliadas/i)).toBeInTheDocument());
+  });
+
+  it("shows Fundamentação as not applicable when nothing was retrieved, and saves it as null", async () => {
+    await openRound();
+    await userEvent.click(screen.getByRole("button", { name: /próxima/i }));
+    await screen.findByText("Quanto custa o almoço?");
+
+    expect(screen.getByText(/não se aplica/i)).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /Fundamentação/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: /Correção: 2 · Correta/ }));
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(client.saveAnnotationNote).toHaveBeenCalledWith(12, 3, note(2, null));
+  });
+
+  it("lets the Avaliador say they cannot evaluate, with a reason", async () => {
+    await openRound();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: /não consigo avaliar/i }));
+    expect(screen.getByRole("button", { name: /salvar e seguir/i })).toBeDisabled();
+    await userEvent.type(screen.getByLabelText(/por quê/i), "Referência ambígua");
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(client.saveAnnotationNote).toHaveBeenCalledWith(11, 3, {
+      correctness: null, grounding: null, cannot_evaluate: true, reason: "Referência ambígua", comment: null,
+    });
+  });
+
+  it("saves an optional comment with the note", async () => {
+    await openRound();
+
+    await userEvent.click(screen.getByRole("radio", { name: /Correção: 1 · Parcial/ }));
+    await userEvent.click(screen.getByRole("radio", { name: /Fundamentação: 2 · Apoiada/ }));
+    await userEvent.type(screen.getByLabelText(/comentário/i), "Faltou o nome da roda");
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(client.saveAnnotationNote).toHaveBeenCalledWith(11, 3, { ...note(1, 2), comment: "Faltou o nome da roda" });
+  });
+
+  it("keeps an unsaved choice when moving between answers", async () => {
+    await openRound();
+
+    await userEvent.click(screen.getByRole("radio", { name: /Correção: 1 · Parcial/ }));
+    await userEvent.click(screen.getByRole("button", { name: /próxima/i }));
+    await userEvent.click(await screen.findByRole("button", { name: /anterior/i }));
+
+    expect(screen.getByRole("radio", { name: /Correção: 1 · Parcial/ })).toBeChecked();
+    expect(screen.getByText(/não salva/i)).toBeInTheDocument();
+  });
+
+  it("scores and saves with the keyboard", async () => {
+    await openRound();
+
+    await userEvent.keyboard("2");
+    await userEvent.keyboard("1");
+    await userEvent.keyboard("{Enter}");
+
+    expect(client.saveAnnotationNote).toHaveBeenCalledWith(11, 3, note(2, 1));
+    expect(await screen.findByText("Quanto custa o almoço?")).toBeInTheDocument();
+    await userEvent.keyboard("{ArrowLeft}");
+    expect(await screen.findByText("Quantos metros tem a roda-gigante?")).toBeInTheDocument();
+  });
+
+  it("shows the keyboard shortcuts", async () => {
+    await openRound();
+
+    expect(screen.getByText(/atalhos/i)).toBeInTheDocument();
+  });
+
+  it("does not flag as unsaved a comment typed and erased", async () => {
+    await openRound();
+
+    await userEvent.type(screen.getByLabelText(/comentário/i), "x");
+    await userEvent.clear(screen.getByLabelText(/comentário/i));
+
+    expect(screen.queryByText(/não salva/i)).not.toBeInTheDocument();
+  });
+
+  it("leaves Enter on a focused button to the button", async () => {
+    await openRound();
+    await userEvent.click(screen.getByRole("radio", { name: /Correção: 2 · Correta/ }));
+    await userEvent.click(screen.getByRole("radio", { name: /Fundamentação: 2 · Apoiada/ }));
+
+    screen.getByRole("button", { name: /próxima/i }).focus();
+    await userEvent.keyboard("{Enter}");
+
+    expect(client.saveAnnotationNote).not.toHaveBeenCalled();
+    expect(await screen.findByText("Quanto custa o almoço?")).toBeInTheDocument();
   });
 });
