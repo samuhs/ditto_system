@@ -13,6 +13,7 @@ from app.annotation.service import (
     adjudicate,
     adjudication_view,
     close_round,
+    create_retest,
     create_round,
     final_notes,
     get_annotator,
@@ -23,6 +24,7 @@ from app.annotation.service import (
     preview_round,
     queue,
     remove_participant,
+    retest_agreement,
     round_agreement,
     round_progress,
     round_summary,
@@ -242,6 +244,21 @@ def get_validation(round_id: int, resamples: int = Query(10_000, ge=100, le=10_0
                    session: Session = Depends(_session)) -> dict:
     """The human Nota final against the automatic metrics (Spearman, means per Combinação and type)."""
     return _or_http(lambda: round_validation(session, get_round(session, round_id), resamples))
+
+
+@router.post("/annotation/rounds/{round_id}/retest", status_code=201)
+def post_retest(round_id: int, body: ParticipantIn, session: Session = Depends(_session)) -> dict:
+    """A retest Rodada: the same Items for the same Avaliador, in a new order."""
+    retest = _or_http(lambda: create_retest(session, get_round(session, round_id),
+                                            get_annotator(session, body.annotator_id)))
+    return round_summary(retest)
+
+
+@router.get("/annotation/rounds/{round_id}/retests")
+def get_retests(round_id: int, resamples: int = Query(10_000, ge=100, le=10_000),
+                session: Session = Depends(_session)) -> list[dict]:
+    """Intra-rater alpha between each Avaliador's two passes (this Rodada and its retests)."""
+    return _or_http(lambda: retest_agreement(session, get_round(session, round_id), resamples))
 
 
 @router.post("/annotation/rounds/{round_id}/close")

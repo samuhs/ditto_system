@@ -1,4 +1,5 @@
 import type {
+  RetestAgreement,
   AnnotationValidation,
   AdjudicationView,
   FinalNotes,
@@ -412,4 +413,16 @@ export async function getFinalNotes(roundId: number): Promise<FinalNotes> {
 /** The human Nota final against the automatic metrics (Spearman; means per Combinação and type). */
 export async function getAnnotationValidation(roundId: number): Promise<AnnotationValidation> {
   return asJson<AnnotationValidation>(await fetch(`${BASE}/annotation/rounds/${roundId}/validation`));
+}
+
+/** A retest Rodada: the same Items for the same Avaliador, in a new order. */
+export async function createRetest(roundId: number, annotatorId: number): Promise<AnnotationRoundSummary> {
+  return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds/${roundId}/retest`, {
+    method: "POST", ...json({ annotator_id: annotatorId }),
+  }));
+}
+
+/** Intra-rater alpha between each Avaliador's first pass and their retest. */
+export async function getRetests(roundId: number): Promise<RetestAgreement[]> {
+  return asJson<RetestAgreement[]>(await fetch(`${BASE}/annotation/rounds/${roundId}/retests`));
 }

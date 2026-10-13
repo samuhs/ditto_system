@@ -217,6 +217,7 @@ def round_summary(rnd: AnnotationRound, size: int | None = None) -> dict:
         "seed": rnd.seed, "rubric_version": rnd.rubric_version, "pilot": bool(rnd.pilot),
         "strata": list(rnd.strata or []), "allocation": rnd.allocation or "proportional",
         "adjudicator_id": rnd.adjudicator_id,
+        "source_round_id": rnd.source_round_id, "retest_annotator_id": rnd.retest_annotator_id,
         "experiment_ids": list(rnd.experiment_ids),
         "size": len(rnd.items) if size is None else size,
         "created_at": rnd.created_at.isoformat() if rnd.created_at else None,
@@ -267,6 +268,12 @@ def _add_participant(session: Session, round_id: int, annotator_id: int) -> None
         session.rollback()
 
 
+def _check_retest(rnd: AnnotationRound, annotator_id: int) -> None:
+    """A retest Rodada belongs to one Avaliador: nobody else reads or scores it."""
+    if rnd.retest_annotator_id is not None and rnd.retest_annotator_id != annotator_id:
+        raise AnnotationError("Esta é uma rodada de reteste de outro avaliador.", status=409)
+
+
 def join_round(session: Session, rnd: AnnotationRound, annotator: Annotator) -> None:
     """Make the Avaliador a participant of an open Rodada (joining twice is a no-op;
     joining after a removal brings them back)."""
@@ -274,6 +281,7 @@ def join_round(session: Session, rnd: AnnotationRound, annotator: Annotator) -> 
         raise AnnotationError("A Rodada está fechada.", status=409)
     if not annotator.active:
         raise AnnotationError(f"{annotator.name} está desativado.", status=409)
+    _check_retest(rnd, annotator.id)
     participant = _participant(session, rnd.id, annotator.id)
     if participant is None:
         _add_participant(session, rnd.id, annotator.id)
@@ -344,6 +352,7 @@ def _check_note(item: AnnotationItem, correctness, grounding, cannot_evaluate, r
 
 def queue(session: Session, rnd: AnnotationRound, annotator: Annotator) -> dict:
     """The Rodada as one Avaliador sees it: blind (no Técnica, LLM, Experimento or scores)."""
+    _check_retest(rnd, annotator.id)
     notes = {n.item_id: n for n in session.scalars(
         select(AnnotationNote)
         .join(AnnotationItem, AnnotationNote.item_id == AnnotationItem.id)
@@ -374,6 +383,7 @@ def save_note(session: Session, item_id: int, annotator_id: int, correctness: in
     get_annotator(session, annotator_id)
     if item.round.status != "open":
         raise AnnotationError("A Rodada está fechada: não aceita notas.", status=409)
+    _check_retest(item.round, annotator_id)
     _check_note(item, correctness, grounding, cannot_evaluate, reason)
     participant = _participant(session, item.round_id, annotator_id)
     if participant is not None and participant.removed_at is not None:
@@ -657,6 +667,9 @@ def round_validation(session: Session, rnd: AnnotationRound, resamples: int = RE
     only (the Item still counts in the other one); a pilot Rodada is refused."""
     if rnd.pilot:
         raise AnnotationError("Rodada piloto fica fora da análise: ela só calibra a Rubrica.", status=409)
+    if rnd.retest_annotator_id is not None:
+        raise AnnotationError("Rodada de reteste mede só a confiabilidade; a validação usa a Rodada original.",
+                              status=409)
     final = final_notes(session, rnd)
     by_id = {item.id: item for item in rnd.items}
     correlations = {"correctness": [], "grounding": []}
@@ -675,3 +688,67 @@ def round_validation(session: Session, rnd: AnnotationRound, resamples: int = RE
                for g in _group_means(rows, lambda r: r["question_type"] or "", resamples)]
     return {"round": round_summary(rnd), "pending": final["pending"], "n": len(rows),
             "correlations": correlations, "by_combination": by_combination, "by_question_type": by_type}
+
+
+def create_retest(session: Session, rnd: AnnotationRound, annotator: Annotator) -> AnnotationRound:
+    """A new open Rodada with copies of a closed Rodada's Items, for one Avaliador who scored it,
+    in a different order (new seed) and without the first pass's notes."""
+    if rnd.retest_annotator_id is not None:
+        raise AnnotationError("Esta já é uma rodada de reteste.", status=409)
+    if rnd.status != "closed":
+        raise AnnotationError("Feche a Rodada antes de criar o reteste.", status=409)
+    if not annotator.active:
+        raise AnnotationError(f"{annotator.name} está desativado.", status=409)
+    if not _scored(session, rnd, annotator.id):
+        raise AnnotationError(f"{annotator.name} não deu notas nesta Rodada.", status=409)
+    exists = session.scalar(select(AnnotationRound).where(
+        AnnotationRound.source_round_id == rnd.id, AnnotationRound.retest_annotator_id == annotator.id))
+    if exists is not None:
+        raise AnnotationError(f"Já existe o reteste de {annotator.name} nesta Rodada ({exists.name}).", status=409)
+    suffix = f" · reteste de {annotator.name}"
+    name = rnd.name[: max(0, 120 - len(suffix))] + suffix
+    retest = AnnotationRound(
+        name=name[:120], description=rnd.description,
+        seed=(rnd.seed + 1) % 2**31, rubric_version=rnd.rubric_version, experiment_ids=list(rnd.experiment_ids),
+        pilot=rnd.pilot, strata=list(rnd.strata or []), allocation=rnd.allocation,
+        source_round_id=rnd.id, retest_annotator_id=annotator.id,
+    )
+    for item in rnd.items:
+        retest.items.append(AnnotationItem(
+            position=item.position, source_result_id=item.source_result_id, source_item_id=item.id,
+            experiment_id=item.experiment_id, combination=dict(item.combination), question=item.question,
+            question_type=item.question_type, reference_answer=item.reference_answer,
+            evidence=list(item.evidence), retrieved_context=list(item.retrieved_context),
+            generated_answer=item.generated_answer, auto_scores=dict(item.auto_scores),
+        ))
+    session.add(retest)
+    session.commit()
+    return retest
+
+
+def retest_agreement(session: Session, rnd: AnnotationRound, resamples: int = RESAMPLES) -> list[dict]:
+    """Intra-rater reliability: ordinal alpha between each Avaliador's first pass on this Rodada
+    and their pass on its retest Rodadas, per Rubrica dimension."""
+    out = []
+    retests = session.scalars(select(AnnotationRound).where(AnnotationRound.source_round_id == rnd.id)
+                              .order_by(AnnotationRound.id))
+    for retest in retests:
+        annotator = get_annotator(session, retest.retest_annotator_id)
+        first = {n.item_id: n for n in session.scalars(select(AnnotationNote).where(
+            AnnotationNote.annotator_id == annotator.id,
+            AnnotationNote.item_id.in_([i.id for i in rnd.items])))}
+        second = {n.item_id: n for n in session.scalars(select(AnnotationNote).where(
+            AnnotationNote.annotator_id == annotator.id,
+            AnnotationNote.item_id.in_([i.id for i in retest.items])))}
+        dimensions = {}
+        for dim in DIMENSIONS:
+            units = [[_value(first.get(item.source_item_id), dim), _value(second.get(item.id), dim)]
+                     for item in retest.items]
+            pairable = [u for u in units if None not in u]
+            alpha = krippendorff_alpha(pairable)
+            ci = bootstrap_ci(pairable, krippendorff_alpha, resamples) if alpha is not None else None
+            dimensions[dim] = {"n": len(pairable), "alpha": _ci(alpha, ci)}
+        out.append({"retest_round_id": retest.id, "status": retest.status, "avaliador": annotator.name,
+                    "done": sum(_is_done(n) for n in second.values()), "total": len(retest.items),
+                    "dimensions": dimensions})
+    return out

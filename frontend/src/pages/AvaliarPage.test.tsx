@@ -34,7 +34,7 @@ const rubric: Rubric = {
 
 const round = {
   id: 5, name: "piloto", description: "", status: "open" as const, seed: 7, rubric_version: 1,
-  experiment_ids: [90], size: 2, pilot: false, strata: [], allocation: "proportional" as const, adjudicator_id: null,
+  experiment_ids: [90], size: 2, pilot: false, strata: [], allocation: "proportional" as const, adjudicator_id: null, source_round_id: null, retest_annotator_id: null,
   created_at: null,
 };
 
@@ -370,6 +370,18 @@ describe("AvaliarPage", () => {
       expect(client.saveAdjudication).toHaveBeenCalledWith(40, 3, { correctness: 2, grounding: null });
       expect(await screen.findByText(/1 de 1 decididas/i)).toBeInTheDocument();
     });
+  });
+
+  it("offers a retest Rodada only to its Avaliador", async () => {
+    vi.mocked(client.listAnnotationRounds).mockResolvedValue([
+      { ...round, id: 7, name: "piloto · reteste de Ana", retest_annotator_id: 3 },
+      { ...round, id: 9, name: "principal · reteste de Bruno", retest_annotator_id: 4 },
+    ]);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "Ana" }));
+
+    expect(await screen.findByRole("button", { name: /reteste de Ana/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reteste de Bruno/i })).not.toBeInTheDocument();
   });
 });
 

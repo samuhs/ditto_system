@@ -177,6 +177,9 @@ class AnnotationRound(Base):
     allocation: Mapped[str] = mapped_column(String(20), default="proportional")
     # Who decides the Nota final where the Avaliadores disagree (e.g. the advisor).
     adjudicator_id: Mapped[int | None] = mapped_column(ForeignKey("annotator.id"), nullable=True)
+    # A retest Rodada: the same Items for the same Avaliador, to measure intra-rater reliability.
+    source_round_id: Mapped[int | None] = mapped_column(ForeignKey("annotation_round.id"), nullable=True)
+    retest_annotator_id: Mapped[int | None] = mapped_column(ForeignKey("annotator.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     items: Mapped[list["AnnotationItem"]] = relationship(
@@ -194,6 +197,8 @@ class AnnotationItem(Base):
     position: Mapped[int] = mapped_column(Integer)
     # Where the copy came from; no foreign key, so deleting the Experimento keeps the item.
     source_result_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # In a retest Rodada, the Item of the original Rodada this one repeats.
+    source_item_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     experiment_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     combination: Mapped[dict] = mapped_column(JSON, default=dict)
     question: Mapped[str] = mapped_column(String)

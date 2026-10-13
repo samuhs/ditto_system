@@ -1030,3 +1030,115 @@ def test_a_pilot_round_is_kept_out_of_the_analysis(env):
 
     assert response.status_code == 409
     assert "piloto" in response.json()["detail"]
+
+
+# ---- #54: retest Rodadas and intra-rater reliability ----
+
+def _scored_closed_round(client, sf, scores):
+    rnd = _round(client, _experiment(sf), size=len(scores))
+    ana = _annotator(client, "Ana")
+    _score_all(client, rnd["id"], ana, scores)
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+    return rnd, ana
+
+
+def _retest(client, round_id, annotator_id):
+    return client.post(f"/annotation/rounds/{round_id}/retest", json={"annotator_id": annotator_id})
+
+
+def test_a_retest_copies_the_items_for_the_same_avaliador_in_a_new_order(env):
+    client, sf = env
+    rnd, ana = _scored_closed_round(client, sf, [(0, 0), (1, 1), (2, 2), (2, 1), (1, 0), (0, 2)])
+
+    response = _retest(client, rnd["id"], ana)
+
+    assert response.status_code == 201, response.text
+    retest = response.json()
+    assert retest["source_round_id"] == rnd["id"] and retest["retest_annotator_id"] == ana
+    assert retest["size"] == 6 and retest["status"] == "open"
+    original = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()["items"]
+    _join(client, retest["id"], ana)
+    second = client.get(f"/annotation/rounds/{retest['id']}/queue", params={"annotator_id": ana}).json()["items"]
+    assert [i["question"] for i in second] != [i["question"] for i in original]
+    assert sorted(i["question"] for i in second) == sorted(i["question"] for i in original)
+    assert all(i["note"] is None for i in second)  # the first pass is not shown
+
+
+def test_only_the_retested_avaliador_can_join_the_retest(env):
+    client, sf = env
+    rnd, ana = _scored_closed_round(client, sf, [(1, 1), (2, 2)])
+    bruno = _annotator(client, "Bruno")
+    retest = _retest(client, rnd["id"], ana).json()
+
+    assert _join(client, retest["id"], bruno).status_code == 409
+
+
+def test_a_retest_needs_a_closed_round_scored_by_that_avaliador(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    ana, bruno = _annotator(client, "Ana"), _annotator(client, "Bruno")
+    _score_all(client, rnd["id"], ana, [(1, 1), (2, 2)])
+
+    assert _retest(client, rnd["id"], ana).status_code == 409  # still open
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+    assert _retest(client, rnd["id"], bruno).status_code == 409  # Bruno never scored it
+
+
+def test_intra_rater_alpha_between_the_two_passes(env):
+    client, sf = env
+    scores = [(0, 0), (1, 1), (2, 2), (2, 1), (1, 0), (0, 2)]
+    rnd, ana = _scored_closed_round(client, sf, scores)
+    retest = _retest(client, rnd["id"], ana).json()
+    _join(client, retest["id"], ana)
+    # same scores the second time, by question: perfect intra-rater agreement
+    first = {i["question"]: i["note"] for i in client.get(f"/annotation/rounds/{rnd['id']}/queue",
+                                                           params={"annotator_id": ana}).json()["items"]}
+    for item in client.get(f"/annotation/rounds/{retest['id']}/queue", params={"annotator_id": ana}).json()["items"]:
+        note = first[item["question"]]
+        client.put(f"/annotation/items/{item['id']}/notes/{ana}",
+                   json={"correctness": note["correctness"], "grounding": note["grounding"]})
+
+    result = client.get(f"/annotation/rounds/{rnd['id']}/retests", params={"resamples": 100}).json()
+
+    assert len(result) == 1
+    assert result[0]["avaliador"] == "Ana"
+    assert result[0]["retest_round_id"] == retest["id"]
+    assert result[0]["dimensions"]["correctness"]["n"] == 6
+    assert result[0]["dimensions"]["correctness"]["alpha"]["value"] == pytest.approx(1.0)
+
+
+def test_nobody_else_can_read_or_score_a_retest(env):
+    client, sf = env
+    rnd, ana = _scored_closed_round(client, sf, [(1, 1), (2, 2)])
+    bruno = _annotator(client, "Bruno")
+    retest = _retest(client, rnd["id"], ana).json()
+    _join(client, retest["id"], ana)
+    item_id = client.get(f"/annotation/rounds/{retest['id']}/queue", params={"annotator_id": ana}).json()["items"][0]["id"]
+
+    assert client.get(f"/annotation/rounds/{retest['id']}/queue", params={"annotator_id": bruno}).status_code == 409
+    assert client.put(f"/annotation/items/{item_id}/notes/{bruno}",
+                      json={"correctness": 1, "grounding": 1}).status_code == 409
+
+
+def test_retests_are_unique_per_avaliador_and_never_nested(env):
+    client, sf = env
+    rnd, ana = _scored_closed_round(client, sf, [(1, 1), (2, 2)])
+    retest = _retest(client, rnd["id"], ana).json()
+
+    assert _retest(client, rnd["id"], ana).status_code == 409
+    client.post(f"/annotation/rounds/{retest['id']}/close")
+    assert _retest(client, retest["id"], ana).status_code == 409
+    assert client.get(f"/annotation/rounds/{retest['id']}/validation").status_code == 409
+
+
+def test_a_retest_name_fits_the_column(env):
+    client, sf = env
+    long_round = client.post("/annotation/rounds", json={"name": "R" * 120, "experiment_id": _experiment(sf),
+                                                          "sample_size": 1, "seed": 2}).json()
+    ana = _annotator(client, "A" * 100)
+    _score_all(client, long_round["id"], ana, [(1, 1)])
+    client.post(f"/annotation/rounds/{long_round['id']}/close")
+
+    retest = _retest(client, long_round["id"], ana).json()
+
+    assert len(retest["name"]) <= 120

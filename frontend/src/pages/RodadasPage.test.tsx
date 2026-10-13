@@ -11,7 +11,7 @@ vi.mock("../api/client");
 
 const round = {
   id: 5, name: "piloto", description: "", status: "open" as const, seed: 7, rubric_version: 1,
-  experiment_ids: [90], size: 10, pilot: false, strata: [], allocation: "proportional" as const, adjudicator_id: null,
+  experiment_ids: [90], size: 10, pilot: false, strata: [], allocation: "proportional" as const, adjudicator_id: null, source_round_id: null, retest_annotator_id: null,
   created_at: "2026-10-13T03:00:00",
 };
 
@@ -322,6 +322,30 @@ describe("RodadaDetailPage", () => {
     const combo = screen.getByText("agentic · gemma-4").closest("tr")!;
     expect(within(combo).getByText("1,50 [1,20; 1,80]")).toBeInTheDocument();
     expect(within(combo).getByText("0,73 [0,70; 0,76]")).toBeInTheDocument();
+  });
+
+  it("creates a retest for an Avaliador who scored the Rodada and shows the intra-rater alpha", async () => {
+    closedRound();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    vi.mocked(client.createRetest).mockResolvedValue({ ...round, id: 12, retest_annotator_id: 3 });
+    vi.mocked(client.getRetests).mockResolvedValue([{
+      retest_round_id: 12, status: "closed", avaliador: "Ana", done: 10, total: 10,
+      dimensions: {
+        correctness: { n: 10, alpha: { value: 0.88, low: 0.7, high: 0.97 } },
+        grounding: { n: 9, alpha: { value: 0.75, low: 0.5, high: 0.9 } },
+      },
+    }]);
+    renderAt("/anotacao/5");
+
+    await userEvent.selectOptions(await screen.findByLabelText(/avaliador do reteste/i), "3");
+    await userEvent.click(screen.getByRole("button", { name: /criar reteste/i }));
+    expect(client.createRetest).toHaveBeenCalledWith(5, 3);
+
+    await userEvent.click(screen.getByRole("button", { name: /calcular confiabilidade/i }));
+    const table = await screen.findByRole("table", { name: /confiabilidade intra-avaliador/i });
+    const row = within(table).getByText("Ana").closest("tr")!;
+    expect(within(row).getByText("0,88 [0,70; 0,97]")).toBeInTheDocument();
+    expect(within(row).getByText("10 de 10")).toBeInTheDocument();
   });
 });
 

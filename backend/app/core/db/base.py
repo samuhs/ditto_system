@@ -51,8 +51,10 @@ ADDED_COLUMNS = {
     "question_profile": {"model_signals": "JSON", "question_type": "VARCHAR(20)"},
     "experiment_run": {"graph_stats": "JSON"},
     "annotation_round": {"pilot": "BOOLEAN DEFAULT FALSE", "strata": "JSON", "adjudicator_id": "INTEGER",
+                         "source_round_id": "INTEGER", "retest_annotator_id": "INTEGER",
                          "allocation": "VARCHAR(20) DEFAULT 'proportional'"},
     "annotation_participant": {"removed_at": "TIMESTAMP"},
+    "annotation_item": {"source_item_id": "INTEGER"},
     "annotation_note": {"cannot_evaluate": "BOOLEAN DEFAULT FALSE", "reason": "VARCHAR",
                         "comment": "VARCHAR"},
 }

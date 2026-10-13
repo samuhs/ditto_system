@@ -5,10 +5,12 @@ import { Link, useParams } from "react-router-dom";
 import {
   closeAnnotationRound,
   createAnnotationRound,
+  createRetest,
   getAnnotationAgreement,
   getAnnotationRound,
   getAnnotationValidation,
   getFinalNotes,
+  getRetests,
   listAnnotationRounds,
   listAnnotators,
   previewAnnotationRound,
@@ -30,6 +32,7 @@ import type {
   FinalNotes,
   MeanCi,
   MetricCorrelation,
+  RetestAgreement,
 } from "../api/types";
 import { CombinationPicker } from "../components/CombinationPicker";
 import { Errata, Saved, errorText } from "../components/Notice";
@@ -278,6 +281,24 @@ export function RodadaDetailPage() {
   const [final, setFinal] = useState<FinalNotes | null>(null);
   const [validation, setValidation] = useState<AnnotationValidation | null>(null);
   const [validating, setValidating] = useState(false);
+  const [retestFor, setRetestFor] = useState("");
+  const [retests, setRetests] = useState<RetestAgreement[] | null>(null);
+  const [retestCreated, setRetestCreated] = useState<string | null>(null);
+
+  async function newRetest() {
+    setError(null);
+    try {
+      const r = await createRetest(Number(id), Number(retestFor));
+      setRetestCreated(r.name);
+      setRetests(null);
+    } catch (e) {
+      setError(errorText(e));
+    }
+  }
+
+  function loadRetests() {
+    getRetests(Number(id)).then(setRetests).catch((e) => setError(errorText(e)));
+  }
 
   function validate() {
     setValidating(true);
@@ -434,7 +455,48 @@ export function RodadaDetailPage() {
           {final && <p>{finalSummary(final)}</p>}
         </section>
       )}
-      {round?.status === "closed" && !round.pilot && (
+      {round?.status === "closed" && round.retest_annotator_id === null && (
+        <section className="ditto-sec">
+          <div className="ditto-sec-head">
+            <h2 className="ditto-h2">Reteste</h2>
+            <p className="ditto-read">
+              Sem segundo avaliador, o mesmo avaliador reavalia as mesmas respostas em outra ordem, sem ver as notas da
+              primeira vez (de preferência duas semanas depois). O α entre as duas passagens mede a confiabilidade.
+            </p>
+          </div>
+          <div className="ditto-inline-form">
+            <NativeSelect
+              label="Avaliador do reteste"
+              value={retestFor}
+              onChange={(e) => setRetestFor(e.currentTarget.value)}
+              data={[{ value: "", label: "Escolha" },
+                ...round.progress.filter((p) => p.done > 0).map((p) => ({ value: String(p.annotator_id), label: p.name }))]}
+            />
+            <Button variant="default" onClick={newRetest} disabled={!retestFor}>Criar reteste</Button>
+          </div>
+          {retestCreated && <Saved>Rodada {retestCreated} criada.</Saved>}
+          {!retests && <Button variant="subtle" onClick={loadRetests}>Calcular confiabilidade dos retestes</Button>}
+          {retests && retests.length === 0 && <p className="ditto-muted">Nenhum reteste desta rodada.</p>}
+          {retests && retests.length > 0 && (
+            <div className="ditto-table-wrap">
+              <table className="ditto-table" aria-label="Confiabilidade intra-avaliador">
+                <thead><tr><th>Avaliador</th><th>Reteste</th><th>α Correção</th><th>α Fundamentação</th></tr></thead>
+                <tbody>
+                  {retests.map((r) => (
+                    <tr key={r.retest_round_id}>
+                      <td>{r.avaliador}</td>
+                      <td><Link to={`/anotacao/${r.retest_round_id}`}>{r.done} de {r.total}</Link></td>
+                      <td>{withCi(r.dimensions.correctness.alpha)}</td>
+                      <td>{withCi(r.dimensions.grounding.alpha)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+      {round?.status === "closed" && !round.pilot && round.retest_annotator_id === null && (
         <section className="ditto-sec">
           <div className="ditto-sec-head">
             <h2 className="ditto-h2">Nota humana × métricas automáticas</h2>

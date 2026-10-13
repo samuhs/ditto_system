@@ -547,6 +547,9 @@ export interface AnnotationRoundSummary {
   allocation: "proportional" | "equal";
   /** Who decides the Nota final where the Avaliadores disagree. */
   adjudicator_id: number | null;
+  /** Set on a retest Rodada: the original Rodada and the Avaliador who repeats it. */
+  source_round_id: number | null;
+  retest_annotator_id: number | null;
   created_at: string | null;
 }
 
@@ -709,4 +712,13 @@ export interface AnnotationValidation {
   correlations: { correctness: MetricCorrelation[]; grounding: MetricCorrelation[] };
   by_combination: (ValidationGroup & { rag: string; llm: string })[];
   by_question_type: (ValidationGroup & { question_type: string })[];
+}
+
+export interface RetestAgreement {
+  retest_round_id: number;
+  status: "open" | "closed";
+  avaliador: string;
+  done: number;
+  total: number;
+  dimensions: Record<"correctness" | "grounding", { n: number; alpha: AgreementValue }>;
 }

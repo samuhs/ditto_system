@@ -168,7 +168,9 @@ function ChooseRound({ annotatorId, onChoose, onAdjudicate, onError, busy }: {
     listAnnotationRounds().then(setRounds).catch((e) => onError(errorText(e)));
   }, [onError]);
 
-  const open = rounds?.filter((r) => r.status === "open") ?? [];
+  // A retest Rodada is offered only to the Avaliador it repeats.
+  const open = rounds?.filter((r) => r.status === "open"
+    && (r.retest_annotator_id === null || r.retest_annotator_id === annotatorId)) ?? [];
   const toAdjudicate = rounds?.filter((r) => r.status === "closed" && r.adjudicator_id === annotatorId) ?? [];
 
   return (
