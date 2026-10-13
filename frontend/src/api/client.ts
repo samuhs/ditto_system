@@ -1,4 +1,5 @@
 import type {
+  AnnotationValidation,
   AdjudicationView,
   FinalNotes,
   AnnotationAgreement,
@@ -406,4 +407,9 @@ export async function saveAdjudication(
 /** The Nota final of each Item and how many are still pending adjudication. */
 export async function getFinalNotes(roundId: number): Promise<FinalNotes> {
   return asJson<FinalNotes>(await fetch(`${BASE}/annotation/rounds/${roundId}/final`));
+}
+
+/** The human Nota final against the automatic metrics (Spearman; means per Combinação and type). */
+export async function getAnnotationValidation(roundId: number): Promise<AnnotationValidation> {
+  return asJson<AnnotationValidation>(await fetch(`${BASE}/annotation/rounds/${roundId}/validation`));
 }

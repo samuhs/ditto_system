@@ -295,5 +295,33 @@ describe("RodadaDetailPage", () => {
 
     expect(await screen.findByText(/1 em concordância · 1 adjudicada · 1 pendente/i)).toBeInTheDocument();
   });
+
+  it("compares the human Nota final with the automatic metrics on demand", async () => {
+    closedRound();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    vi.mocked(client.getAnnotationValidation).mockResolvedValue({
+      round, pending: 2, n: 58,
+      correlations: {
+        correctness: [{ metric: "answer_correctness", n: 58, rho: 0.41, low: 0.18, high: 0.6 },
+          { metric: "chrf", n: 58, rho: null, low: null, high: null }],
+        grounding: [{ metric: "faithfulness", n: 50, rho: 0.55, low: 0.3, high: 0.72 }],
+      },
+      by_combination: [{ rag: "agentic", llm: "gemma-4", n: 12, human: { mean: 1.5, low: 1.2, high: 1.8 },
+        automatic: { mean: 0.729, low: 0.7, high: 0.76 } }],
+      by_question_type: [{ question_type: "ponte", n: 18, human: { mean: 1.1, low: 0.8, high: 1.4 },
+        automatic: { mean: 0.6, low: 0.55, high: 0.65 } }],
+    });
+    renderAt("/anotacao/5");
+
+    await userEvent.click(await screen.findByRole("button", { name: /comparar com as métricas/i }));
+
+    const table = await screen.findByRole("table", { name: /spearman/i });
+    const ac = within(table).getByText("answer_correctness").closest("tr")!;
+    expect(within(ac).getByText("0,41 [0,18; 0,60]")).toBeInTheDocument();
+    expect(screen.getByText(/2 respostas têm dimensão pendente de adjudicação/i)).toBeInTheDocument();
+    const combo = screen.getByText("agentic · gemma-4").closest("tr")!;
+    expect(within(combo).getByText("1,50 [1,20; 1,80]")).toBeInTheDocument();
+    expect(within(combo).getByText("0,73 [0,70; 0,76]")).toBeInTheDocument();
+  });
 });
 

@@ -26,6 +26,7 @@ from app.annotation.service import (
     round_agreement,
     round_progress,
     round_summary,
+    round_validation,
     save_note,
     set_adjudicator,
 )
@@ -234,6 +235,13 @@ def put_adjudication(item_id: int, body: AdjudicationIn, session: Session = Depe
 def get_final(round_id: int, session: Session = Depends(_session)) -> dict:
     """The Nota final of each Item and how many are still pending."""
     return _or_http(lambda: final_notes(session, get_round(session, round_id)))
+
+
+@router.get("/annotation/rounds/{round_id}/validation")
+def get_validation(round_id: int, resamples: int = Query(10_000, ge=100, le=10_000),
+                   session: Session = Depends(_session)) -> dict:
+    """The human Nota final against the automatic metrics (Spearman, means per Combinação and type)."""
+    return _or_http(lambda: round_validation(session, get_round(session, round_id), resamples))
 
 
 @router.post("/annotation/rounds/{round_id}/close")

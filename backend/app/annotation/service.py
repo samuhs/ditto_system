@@ -11,6 +11,7 @@ from app.annotation.agreement import (
     bootstrap_ci,
     confusion_matrix,
     krippendorff_alpha,
+    spearman,
     weighted_kappa,
 )
 from app.annotation.rubric import DIMENSIONS, LEVELS, RUBRIC_VERSION
@@ -26,6 +27,7 @@ from app.core.db.models import (
     RunResult,
 )
 from app.experiments.orchestrator import ERROR_PREFIX
+from app.experiments.stats import mean_ci
 
 
 class AnnotationError(Exception):
@@ -615,3 +617,61 @@ def _decisions(session: Session, rnd: AnnotationRound) -> dict[int, AnnotationAd
         .join(AnnotationItem, AnnotationAdjudication.item_id == AnnotationItem.id)
         .where(AnnotationItem.round_id == rnd.id)
     )}
+
+
+CORRECTNESS_METRICS = ("answer_correctness", "token_f1", "chrf", "rouge_l")
+GROUNDING_METRICS = ("faithfulness",)
+
+
+def _correlation(pairs: list[tuple[float, float]], metric: str, resamples: int) -> dict:
+    rho = spearman([p[0] for p in pairs], [p[1] for p in pairs])
+    ci = None
+    if rho is not None:
+        ci = bootstrap_ci(pairs, lambda ps: spearman([p[0] for p in ps], [p[1] for p in ps]), resamples)
+    low, high = ci if ci else (None, None)
+    return {"metric": metric, "n": len(pairs), "rho": rho, "low": low, "high": high}
+
+
+def _group_means(rows: list[dict], key, resamples: int) -> list[dict]:
+    """Mean human Correção and mean answer_correctness per group, over the same Items (those
+    with both), so the two columns are comparable."""
+    groups: dict = {}
+    for row in rows:
+        if row["automatic"] is not None:
+            groups.setdefault(key(row), []).append(row)
+    out = []
+    for k, members in sorted(groups.items(), key=lambda kv: str(kv[0])):
+        h = mean_ci([m["human"] for m in members], resamples)
+        a = mean_ci([m["automatic"] for m in members], resamples)
+        out.append({"key": k, "n": len(members),
+                    "human": {"mean": h.mean, "low": h.low, "high": h.high},
+                    "automatic": {"mean": a.mean, "low": a.low, "high": a.high}})
+    return out
+
+
+def round_validation(session: Session, rnd: AnnotationRound, resamples: int = RESAMPLES) -> dict:
+    """The human Nota final against the automatic metrics stored with each Item: Spearman per
+    metric (Correção against the answer metrics, Fundamentação against faithfulness) and the
+    mean human Correção per Combinação (Técnica RAG × LLM) and per Tipo de pergunta, next to the
+    mean answer_correctness. A dimension still pending adjudication is left out of that dimension
+    only (the Item still counts in the other one); a pilot Rodada is refused."""
+    if rnd.pilot:
+        raise AnnotationError("Rodada piloto fica fora da análise: ela só calibra a Rubrica.", status=409)
+    final = final_notes(session, rnd)
+    by_id = {item.id: item for item in rnd.items}
+    correlations = {"correctness": [], "grounding": []}
+    for dim, metrics in (("correctness", CORRECTNESS_METRICS), ("grounding", GROUNDING_METRICS)):
+        for metric in metrics:
+            pairs = [(entry["final"][dim], by_id[entry["id"]].auto_scores[metric]) for entry in final["items"]
+                     if entry["final"][dim] is not None and by_id[entry["id"]].auto_scores.get(metric) is not None]
+            correlations[dim].append(_correlation(pairs, metric, resamples))
+    rows = [{"human": e["final"]["correctness"], "automatic": by_id[e["id"]].auto_scores.get("answer_correctness"),
+             "rag": by_id[e["id"]].combination.get("rag"), "llm": by_id[e["id"]].combination.get("llm"),
+             "question_type": by_id[e["id"]].question_type}
+            for e in final["items"] if e["final"]["correctness"] is not None]
+    by_combination = [{"rag": g["key"][0], "llm": g["key"][1], **{k: v for k, v in g.items() if k != "key"}}
+                      for g in _group_means(rows, lambda r: (r["rag"], r["llm"]), resamples)]
+    by_type = [{"question_type": g["key"], **{k: v for k, v in g.items() if k != "key"}}
+               for g in _group_means(rows, lambda r: r["question_type"] or "", resamples)]
+    return {"round": round_summary(rnd), "pending": final["pending"], "n": len(rows),
+            "correlations": correlations, "by_combination": by_combination, "by_question_type": by_type}

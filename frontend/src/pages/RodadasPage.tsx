@@ -7,6 +7,7 @@ import {
   createAnnotationRound,
   getAnnotationAgreement,
   getAnnotationRound,
+  getAnnotationValidation,
   getFinalNotes,
   listAnnotationRounds,
   listAnnotators,
@@ -24,8 +25,11 @@ import type {
   AnnotationRoundPreview,
   AnnotationRoundSummary,
   AnnotationStratumDim,
+  AnnotationValidation,
   Annotator,
   FinalNotes,
+  MeanCi,
+  MetricCorrelation,
 } from "../api/types";
 import { CombinationPicker } from "../components/CombinationPicker";
 import { Errata, Saved, errorText } from "../components/Notice";
@@ -272,11 +276,22 @@ export function RodadaDetailPage() {
   const [computing, setComputing] = useState(false);
   const [annotators, setAnnotators] = useState<Annotator[]>([]);
   const [final, setFinal] = useState<FinalNotes | null>(null);
+  const [validation, setValidation] = useState<AnnotationValidation | null>(null);
+  const [validating, setValidating] = useState(false);
+
+  function validate() {
+    setValidating(true);
+    getAnnotationValidation(Number(id))
+      .then(setValidation)
+      .catch((e) => setError(errorText(e)))
+      .finally(() => setValidating(false));
+  }
 
   async function designate(value: string) {
     setError(null);
     try {
-      // Only the round and the final notes depend on it: no need to redo the Concordância.
+      // Only the round, the final notes and the validation depend on it: no need to redo the Concordância.
+      setValidation(null);
       setRound((r) => (r ? { ...r, adjudicator_id: value ? Number(value) : null } : r));
       await setAnnotationAdjudicator(Number(id), value ? Number(value) : null);
       getAnnotationRound(Number(id)).then(setRound).catch((e) => setError(errorText(e)));
@@ -298,6 +313,7 @@ export function RodadaDetailPage() {
   // computes it on demand, since the bootstrap takes a few seconds and the notes still change.
   function load() {
     setAgreement(null);
+    setValidation(null);
     getAnnotationRound(Number(id))
       .then((r) => {
         setRound(r);
@@ -418,6 +434,21 @@ export function RodadaDetailPage() {
           {final && <p>{finalSummary(final)}</p>}
         </section>
       )}
+      {round?.status === "closed" && !round.pilot && (
+        <section className="ditto-sec">
+          <div className="ditto-sec-head">
+            <h2 className="ditto-h2">Nota humana × métricas automáticas</h2>
+            <p className="ditto-read">
+              Spearman entre a Nota final e cada métrica, e a nota humana média por Combinação e por tipo de pergunta,
+              ao lado da answer_correctness média. Diz qual métrica automática acompanha melhor o julgamento humano.
+            </p>
+          </div>
+          {!validation && (
+            <Button variant="default" onClick={validate} loading={validating}>Comparar com as métricas</Button>
+          )}
+          {validation && <ValidationTables validation={validation} />}
+        </section>
+      )}
     </div>
   );
 }
@@ -427,6 +458,76 @@ function finalSummary(final: FinalNotes): string {
   const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
   return `${count("concordância")} em concordância · ${plural(count("adjudicada"), "adjudicada")} · `
     + `${plural(final.pending, "pendente")}`;
+}
+
+function meanCi(m: MeanCi | null): string {
+  return m ? `${dec(m.mean)} [${dec(m.low)}; ${dec(m.high)}]` : "—";
+}
+
+function rhoCi(c: MetricCorrelation): string {
+  if (c.rho === null) return "—";
+  return c.low === null || c.high === null ? dec(c.rho) : `${dec(c.rho)} [${dec(c.low)}; ${dec(c.high)}]`;
+}
+
+function ValidationTables({ validation }: { validation: AnnotationValidation }) {
+  const correlations = [
+    ...validation.correlations.correctness.map((c) => ({ ...c, dim: "Correção" })),
+    ...validation.correlations.grounding.map((c) => ({ ...c, dim: "Fundamentação" })),
+  ];
+  return (
+    <>
+      {validation.pending > 0 && (
+        <p className="ditto-muted">
+          {validation.pending} respostas têm dimensão pendente de adjudicação: só a dimensão pendente ficou de fora.
+        </p>
+      )}
+      <div className="ditto-table-wrap">
+        <table className="ditto-table" aria-label="Spearman entre a nota humana e as métricas">
+          <thead><tr><th>Nota humana</th><th>Métrica</th><th className="ditto-num">Respostas</th><th>ρ de Spearman [IC 95%]</th></tr></thead>
+          <tbody>
+            {correlations.map((c) => (
+              <tr key={`${c.dim}-${c.metric}`}>
+                <td>{c.dim}</td>
+                <td>{c.metric}</td>
+                <td className="ditto-num">{c.n}</td>
+                <td>{rhoCi(c)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="ditto-table-wrap">
+        <table className="ditto-table" aria-label="Nota humana por Combinação">
+          <thead><tr><th>Técnica · LLM</th><th className="ditto-num">Respostas</th><th>Correção humana (0–2)</th><th>answer_correctness</th></tr></thead>
+          <tbody>
+            {validation.by_combination.map((g) => (
+              <tr key={`${g.rag}-${g.llm}`}>
+                <td>{g.rag} · {g.llm}</td>
+                <td className="ditto-num">{g.n}</td>
+                <td>{meanCi(g.human)}</td>
+                <td>{meanCi(g.automatic)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="ditto-table-wrap">
+        <table className="ditto-table" aria-label="Nota humana por tipo de pergunta">
+          <thead><tr><th>Tipo de pergunta</th><th className="ditto-num">Respostas</th><th>Correção humana (0–2)</th><th>answer_correctness</th></tr></thead>
+          <tbody>
+            {validation.by_question_type.map((g) => (
+              <tr key={g.question_type}>
+                <td>{g.question_type || "—"}</td>
+                <td className="ditto-num">{g.n}</td>
+                <td>{meanCi(g.human)}</td>
+                <td>{meanCi(g.automatic)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
 }
 
 const DIM_LABEL = { correctness: "Correção", grounding: "Fundamentação" } as const;

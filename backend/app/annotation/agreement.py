@@ -7,6 +7,8 @@ import random
 from collections import Counter
 from collections.abc import Callable, Sequence
 
+from app.experiments.stats import mid_ranks
+
 Rating = int | None
 RESAMPLES = 10_000
 SEED = 0
@@ -104,3 +106,17 @@ def bootstrap_ci(units: Sequence, statistic: Callable[[Sequence], float | None],
         return None
     values.sort()
     return values[int(0.025 * len(values))], values[min(len(values) - 1, int(0.975 * len(values)))]
+
+
+def spearman(x: Sequence[float], y: Sequence[float]) -> float | None:
+    """Spearman's rho (Pearson correlation of mid-ranks); None without variation."""
+    if len(x) < 2:
+        return None
+    rx, ry = mid_ranks(list(x)), mid_ranks(list(y))
+    mx, my = sum(rx) / len(rx), sum(ry) / len(ry)
+    sxy = sum((a - mx) * (b - my) for a, b in zip(rx, ry))
+    sxx = sum((a - mx) ** 2 for a in rx)
+    syy = sum((b - my) ** 2 for b in ry)
+    if sxx == 0 or syy == 0:
+        return None
+    return sxy / (sxx * syy) ** 0.5

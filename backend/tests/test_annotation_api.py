@@ -939,3 +939,94 @@ def test_a_note_against_cannot_evaluate_is_not_concordance(env):
     final = client.get(f"/annotation/rounds/{rnd['id']}/final").json()
 
     assert final["items"][0]["status"] == "uma nota"
+
+
+# ---- #53: human scores against the automatic metrics ----
+
+def _validation_round(client, sf, pilot=False):
+    """A closed Rodada of 6 Items scored the same by Ana and Bruno, with answer_correctness
+    rising with the human Correção (so Spearman is high)."""
+    session = sf()
+    experiment = Experiment(name="val", status="done", config={"base": "b2"})
+    for k, (rag, llm) in enumerate((("naive", "L0"), ("agentic", "M3"))):
+        run = ExperimentRun(chunking="markdown", embedding="e5", rag_technique=rag, retriever="similarity",
+                            llm=llm, status="done")
+        for i in range(3):
+            run.results.append(RunResult(
+                question=f"Q{k}{i}?", reference_answer="Ref.", question_type=("simples", "ponte", "simples")[i],
+                generated_answer=f"R{k}{i}.", retrieved_context=["trecho"],
+                scores={"answer_correctness": 0.4 + 0.1 * i + 0.01 * k, "token_f1": 0.2 + 0.1 * i,
+                        "chrf": 0.3, "rouge_l": 0.1 * i, "faithfulness": 0.5 + 0.1 * i},
+            ))
+        experiment.runs.append(run)
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    rnd = client.post("/annotation/rounds", json={"name": "val", "experiment_id": experiment_id, "sample_size": 6,
+                                                  "seed": 1, "pilot": pilot}).json()
+    ana, bruno = _annotator(client, "Ana"), _annotator(client, "Bruno")
+    for a in (ana, bruno):
+        _join(client, rnd["id"], a)
+        for item in client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": a}).json()["items"]:
+            i = int(item["question"][2])
+            client.put(f"/annotation/items/{item['id']}/notes/{a}", json={"correctness": i, "grounding": i})
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+    return rnd
+
+
+def test_spearman_between_the_human_correctness_and_each_metric(env):
+    client, sf = env
+    rnd = _validation_round(client, sf)
+
+    result = client.get(f"/annotation/rounds/{rnd['id']}/validation", params={"resamples": 200}).json()
+
+    corr = {c["metric"]: c for c in result["correlations"]["correctness"]}
+    assert set(corr) == {"answer_correctness", "token_f1", "chrf", "rouge_l"}
+    assert corr["answer_correctness"]["rho"] == pytest.approx(1.0, abs=0.13)  # ties within k
+    assert corr["answer_correctness"]["n"] == 6
+    assert corr["chrf"]["rho"] is None  # constant metric: undefined
+    grounding = {c["metric"]: c for c in result["correlations"]["grounding"]}
+    assert set(grounding) == {"faithfulness"}
+    assert grounding["faithfulness"]["rho"] == pytest.approx(1.0)
+    assert result["pending"] == 0
+
+
+def test_mean_human_score_per_combination_and_question_type(env):
+    client, sf = env
+    rnd = _validation_round(client, sf)
+
+    result = client.get(f"/annotation/rounds/{rnd['id']}/validation", params={"resamples": 200}).json()
+
+    by_combo = {(c["rag"], c["llm"]): c for c in result["by_combination"]}
+    naive = by_combo[("naive", "L0")]
+    assert naive["n"] == 3
+    assert naive["human"]["mean"] == pytest.approx(1.0)  # scores 0, 1, 2
+    assert naive["automatic"]["mean"] == pytest.approx(0.5)  # 0.4, 0.5, 0.6
+    by_type = {t["question_type"]: t for t in result["by_question_type"]}
+    assert by_type["ponte"]["n"] == 2
+    assert by_type["ponte"]["human"]["mean"] == pytest.approx(1.0)
+
+
+def test_pending_items_are_left_out_and_counted(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+    items = _score_all(client, rnd["id"], _annotator(client, "Ana"), [(0, 0), (1, 1)])
+    _score_all(client, rnd["id"], _annotator(client, "Bruno"), [(2, 2), (1, 1)])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+
+    result = client.get(f"/annotation/rounds/{rnd['id']}/validation", params={"resamples": 100}).json()
+
+    assert result["pending"] == 1
+    assert result["correlations"]["correctness"][0]["n"] == 1
+    assert items  # silence unused
+
+
+def test_a_pilot_round_is_kept_out_of_the_analysis(env):
+    client, sf = env
+    rnd = _validation_round(client, sf, pilot=True)
+
+    response = client.get(f"/annotation/rounds/{rnd['id']}/validation")
+
+    assert response.status_code == 409
+    assert "piloto" in response.json()["detail"]

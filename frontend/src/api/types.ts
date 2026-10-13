@@ -680,3 +680,33 @@ export interface FinalNotes {
   }[];
   pending: number;
 }
+
+export interface MetricCorrelation {
+  metric: string;
+  n: number;
+  rho: number | null;
+  low: number | null;
+  high: number | null;
+}
+
+export interface MeanCi {
+  mean: number;
+  low: number;
+  high: number;
+}
+
+export interface ValidationGroup {
+  n: number;
+  human: MeanCi;
+  /** Mean answer_correctness of the same Items. */
+  automatic: MeanCi | null;
+}
+
+export interface AnnotationValidation {
+  round: AnnotationRoundSummary;
+  pending: number;
+  n: number;
+  correlations: { correctness: MetricCorrelation[]; grounding: MetricCorrelation[] };
+  by_combination: (ValidationGroup & { rag: string; llm: string })[];
+  by_question_type: (ValidationGroup & { question_type: string })[];
+}

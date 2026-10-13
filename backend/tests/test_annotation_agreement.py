@@ -69,3 +69,21 @@ def test_bootstrap_ci_brackets_the_estimate_and_is_reproducible():
     assert first == second
     low, high = first
     assert low <= point <= high
+
+
+def test_spearman_matches_a_hand_worked_example():
+    from app.annotation.agreement import spearman
+    # ranks equal values; d = [0, 1, 1, 0]: rho = 1 - 6*2 / (4*15) = 0.8
+    assert spearman([1, 2, 3, 4], [1, 3, 2, 4]) == pytest.approx(0.8)
+
+
+def test_spearman_uses_mid_ranks_for_ties():
+    from app.annotation.agreement import spearman
+    # x ranks [1.5, 1.5, 3, 4]; Pearson of ranks = 4.5 / sqrt(4.5 * 5)
+    assert spearman([1, 1, 2, 3], [1, 2, 3, 4]) == pytest.approx(4.5 / (4.5 * 5) ** 0.5)
+
+
+def test_spearman_is_undefined_without_variation():
+    from app.annotation.agreement import spearman
+    assert spearman([1, 1, 1], [1, 2, 3]) is None
+    assert spearman([1], [2]) is None
