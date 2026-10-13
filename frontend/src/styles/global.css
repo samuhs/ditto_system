@@ -1472,3 +1472,7 @@ a { color: inherit; text-underline-offset: 3px; }
 @media (max-width: 760px) {
   .ditto-annotate { grid-template-columns: minmax(0, 1fr); }
 }
+
+.ditto-guide h3 { font-size: 15px; margin: 18px 0 6px; }
+.ditto-guide p, .ditto-guide li { font-family: var(--font-read); font-size: 15px; line-height: 1.5; }
+.ditto-guide ul, .ditto-guide ol { padding-left: 20px; margin: 0; }

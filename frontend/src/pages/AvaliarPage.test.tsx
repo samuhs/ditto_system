@@ -1,5 +1,5 @@
 import { MantineProvider } from "@mantine/core";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -382,6 +382,49 @@ describe("AvaliarPage", () => {
 
     expect(await screen.findByRole("button", { name: /reteste de Ana/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /reteste de Bruno/i })).not.toBeInTheDocument();
+  });
+
+  it("explains how to evaluate in a popup available at every step", async () => {
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: /como avaliar/i }));
+
+    const dialog = await screen.findByRole("dialog", { name: /como avaliar/i });
+    expect(within(dialog).getByText(/0 · errada/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/compare com os trechos recuperados/i)).toBeInTheDocument();
+    expect(within(dialog).getAllByText(/não se aplica/i).length).toBeGreaterThan(0);
+    expect(within(dialog).getAllByText(/não consigo avaliar/i).length).toBeGreaterThan(0);
+    expect(within(dialog).getByText(/atalhos/i)).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: /entendi/i }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("keeps the help available while evaluating", async () => {
+    await openRound();
+
+    expect(screen.getByRole("button", { name: /como avaliar/i })).toBeInTheDocument();
+  });
+
+  it("does not score with the keyboard while the help is open", async () => {
+    await openRound();
+    await userEvent.click(screen.getByRole("button", { name: /como avaliar/i }));
+    await screen.findByRole("dialog");
+
+    // From a non-button element, so only the "help is open" guard can stop the shortcut.
+    fireEvent.keyDown(document.body, { key: "2" });
+
+    expect(screen.getByRole("radio", { name: /Correção: 2 · Correta/, hidden: true })).not.toBeChecked();
+  });
+
+  it("gives the shortcuts back to the screen when the help closes", async () => {
+    await openRound();
+    await userEvent.click(screen.getByRole("button", { name: /como avaliar/i }));
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: /entendi/i }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await userEvent.keyboard("2");
+
+    expect(screen.getByRole("radio", { name: /Correção: 2 · Correta/ })).toBeChecked();
   });
 });
 

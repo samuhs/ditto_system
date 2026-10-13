@@ -22,6 +22,7 @@ import type {
   Rubric,
   RubricDimension,
 } from "../api/types";
+import { AnnotationGuide } from "../components/AnnotationGuide";
 import { Errata, errorText } from "../components/Notice";
 
 type Draft = AnnotationNoteValues;
@@ -63,6 +64,7 @@ export function AvaliarPage() {
   const [adjudicating, setAdjudicating] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   async function choose(id: number) {
     if (!annotator || joining) return;
@@ -89,6 +91,7 @@ export function AvaliarPage() {
     <div className="ditto-focus">
       <header className="ditto-focus-head">
         <span className="ditto-focus-title">Anotação humana</span>
+        <Button variant="light" size="xs" onClick={() => setGuideOpen(true)}>ⓘ Como avaliar</Button>
         {annotator && (
           <span className="ditto-focus-who">
             Avaliando como <strong>{annotator.name}</strong>
@@ -96,6 +99,7 @@ export function AvaliarPage() {
           </span>
         )}
       </header>
+      <AnnotationGuide opened={guideOpen} onClose={() => setGuideOpen(false)} />
       {error && <Errata title="Algo não funcionou">{error}</Errata>}
       {!annotator && <Identify onDone={setAnnotator} onError={setError} />}
       {annotator && roundId === null && adjudicating === null && (
@@ -378,6 +382,7 @@ function Evaluate({ roundId, annotator, onError }: {
       // Typing, buttons and links keep their own keys; on a radio only the digits and Enter are
       // shortcuts (the arrows move between its levels).
       if (!onRadio && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(tag)) return;
+      if (document.querySelector('[role="dialog"]')) return;  // the help is open: keys belong to it
       if (onRadio && e.key.startsWith("Arrow")) return;
       if (!item || saving || e.metaKey || e.ctrlKey || e.altKey) return;
       if (["0", "1", "2"].includes(e.key) && !draft.cannot_evaluate) {
