@@ -426,3 +426,11 @@ export async function createRetest(roundId: number, annotatorId: number): Promis
 export async function getRetests(roundId: number): Promise<RetestAgreement[]> {
   return asJson<RetestAgreement[]>(await fetch(`${BASE}/annotation/rounds/${roundId}/retests`));
 }
+
+/** Download URL of a Rodada's notes (CSV) or analysis tables (LaTeX, point or comma decimals). */
+export function annotationExportUrl(
+  roundId: number, kind: "csv" | "tex", decimal: "point" | "comma" = "point", excel = false,
+): string {
+  const query = kind === "tex" && decimal === "comma" ? "?decimal=comma" : kind === "csv" && excel ? "?excel=true" : "";
+  return `${BASE}/annotation/rounds/${roundId}/export.${kind}${query}`;
+}

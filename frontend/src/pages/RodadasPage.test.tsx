@@ -347,5 +347,27 @@ describe("RodadaDetailPage", () => {
     expect(within(row).getByText("0,88 [0,70; 0,97]")).toBeInTheDocument();
     expect(within(row).getByText("10 de 10")).toBeInTheDocument();
   });
+
+  it("offers the notes as CSV and the analysis tables as LaTeX for a closed Rodada", async () => {
+    closedRound();
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    vi.mocked(client.annotationExportUrl).mockImplementation(
+      (id, kind, decimal) => `/api/x/${id}.${kind}${decimal === "comma" ? "?c" : ""}`);
+    renderAt("/anotacao/5");
+
+    expect(await screen.findByRole("link", { name: /notas \(csv\)/i })).toHaveAttribute("href", "/api/x/5.csv");
+    expect(screen.getByRole("link", { name: /tabelas latex \(ponto\)/i })).toHaveAttribute("href", "/api/x/5.tex");
+    expect(screen.getByRole("link", { name: /tabelas latex \(vírgula\)/i })).toHaveAttribute("href", "/api/x/5.tex?c");
+  });
+
+  it("offers only the notes for a pilot Rodada", async () => {
+    vi.mocked(client.getAnnotationRound).mockResolvedValue({ ...round, status: "closed", pilot: true, progress: [] });
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(agreement);
+    vi.mocked(client.annotationExportUrl).mockReturnValue("/api/x");
+    renderAt("/anotacao/5");
+
+    expect(await screen.findByRole("link", { name: /notas \(csv\)/i })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /latex/i })).not.toBeInTheDocument();
+  });
 });
 

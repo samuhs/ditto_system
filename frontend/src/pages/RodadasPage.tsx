@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import {
+  annotationExportUrl,
   closeAnnotationRound,
   createAnnotationRound,
   createRetest,
@@ -390,6 +391,18 @@ export function RodadaDetailPage() {
             <Button variant="default" onClick={() => setClosing(true)}>Fechar rodada</Button>
           )}
         </div>
+      )}
+      {round?.status === "closed" && (
+        <p className="ditto-annotate-nav">
+          <a href={annotationExportUrl(round.id, "csv")} download>Baixar notas (CSV)</a>
+          <a href={annotationExportUrl(round.id, "csv", "point", true)} download>Baixar notas para Excel (;)</a>
+          {!round.pilot && round.retest_annotator_id === null && (
+            <>
+              <a href={annotationExportUrl(round.id, "tex")} download>Baixar tabelas LaTeX (ponto)</a>
+              <a href={annotationExportUrl(round.id, "tex", "comma")} download>Baixar tabelas LaTeX (vírgula)</a>
+            </>
+          )}
+        </p>
       )}
       {round && (
         <section className="ditto-sec">

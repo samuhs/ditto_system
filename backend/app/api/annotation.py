@@ -2,11 +2,13 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.annotation.export import to_csv, to_latex
 from app.annotation.rubric import RUBRIC
 from app.annotation.service import (
     AnnotationError,
@@ -259,6 +261,32 @@ def get_retests(round_id: int, resamples: int = Query(10_000, ge=100, le=10_000)
                 session: Session = Depends(_session)) -> list[dict]:
     """Intra-rater alpha between each Avaliador's two passes (this Rodada and its retests)."""
     return _or_http(lambda: retest_agreement(session, get_round(session, round_id), resamples))
+
+
+def _download(content: str, media_type: str, filename: str) -> Response:
+    return Response(content=content, media_type=media_type,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/annotation/rounds/{round_id}/export.csv")
+def export_csv(round_id: int, excel: bool = Query(False), session: Session = Depends(_session)) -> Response:
+    """Every note of the Rodada (long format) with the Nota final and the automatic metrics;
+    `excel=true` gives the ";"-separated, formula-safe version for spreadsheets in PT-BR."""
+    rnd = _or_http(lambda: get_round(session, round_id))
+    content = "\ufeff" + to_csv(session, rnd, final_notes(session, rnd), excel)  # BOM: spreadsheets read UTF-8
+    return _download(content, "text/csv; charset=utf-8", f"anotacao-rodada-{round_id}.csv")
+
+
+@router.get("/annotation/rounds/{round_id}/export.tex")
+def export_latex(round_id: int, resamples: int = Query(10_000, ge=100, le=10_000),
+                 decimal: Literal["point", "comma"] = Query("point"),
+                 session: Session = Depends(_session)) -> Response:
+    """Concordância and Spearman tables in LaTeX (booktabs); refused for pilot Rodadas."""
+    rnd = _or_http(lambda: get_round(session, round_id))
+    validation = _or_http(lambda: round_validation(session, rnd, resamples))
+    agreement = round_agreement(session, rnd, resamples)
+    return _download(to_latex(agreement, validation, decimal, resamples), "application/x-tex; charset=utf-8",
+                     f"anotacao-rodada-{round_id}.tex")
 
 
 @router.post("/annotation/rounds/{round_id}/close")

@@ -1142,3 +1142,72 @@ def test_a_retest_name_fits_the_column(env):
     retest = _retest(client, long_round["id"], ana).json()
 
     assert len(retest["name"]) <= 120
+
+
+# ---- #55: CSV and LaTeX export ----
+
+def test_the_csv_has_one_row_per_note_and_dimension_with_the_final_note_and_metrics(env):
+    import csv
+    import io
+    client, sf = env
+    rnd = _validation_round(client, sf)
+
+    response = client.get(f"/annotation/rounds/{rnd['id']}/export.csv")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    rows = list(csv.DictReader(io.StringIO(response.text.lstrip("﻿"))))
+    assert len(rows) == 6 * 2 * 2  # Items x Avaliadores x dimensions
+    first = rows[0]
+    for column in ("rodada", "item", "pergunta", "tipo_pergunta", "rag", "llm", "avaliador", "dimensao",
+                   "nota", "nao_consegue_avaliar", "nota_final", "situacao_final", "answer_correctness",
+                   "faithfulness"):
+        assert column in first
+    assert {r["dimensao"] for r in rows} == {"correctness", "grounding"}
+    assert all(r["situacao_final"] == "concordância" for r in rows)
+
+
+def test_the_latex_has_the_agreement_and_correlation_tables_matching_the_page(env):
+    client, sf = env
+    rnd = _validation_round(client, sf)
+    page = client.get(f"/annotation/rounds/{rnd['id']}/agreement", params={"resamples": 100}).json()
+
+    tex = client.get(f"/annotation/rounds/{rnd['id']}/export.tex", params={"resamples": 100}).text
+
+    assert "\\begin{tabular}" in tex and "\\toprule" in tex
+    assert "Concordância" in tex and "Spearman" in tex
+    alpha = page["dimensions"]["correctness"]["alpha"]["value"]
+    assert f"{alpha:.3f}" in tex
+
+
+def test_the_latex_can_use_the_decimal_comma(env):
+    client, sf = env
+    rnd = _validation_round(client, sf)
+
+    tex = client.get(f"/annotation/rounds/{rnd['id']}/export.tex", params={"resamples": 100, "decimal": "comma"}).text
+
+    assert "1,000" in tex and "1.000" not in tex
+
+
+def test_a_pilot_round_exports_its_notes_but_no_analysis_tables(env):
+    client, sf = env
+    rnd = _validation_round(client, sf, pilot=True)
+
+    assert client.get(f"/annotation/rounds/{rnd['id']}/export.csv").status_code == 200
+    assert client.get(f"/annotation/rounds/{rnd['id']}/export.tex").status_code == 409
+
+
+def test_the_excel_csv_uses_semicolons_and_quotes_formulas(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=1)
+    ana = _annotator(client, "Ana")
+    item = _score_all(client, rnd["id"], ana, [None])[0]
+    client.put(f"/annotation/items/{item['id']}/notes/{ana}",
+               json={"correctness": 1, "grounding": 1, "comment": "=HYPERLINK(\"x\")"})
+
+    excel = client.get(f"/annotation/rounds/{rnd['id']}/export.csv", params={"excel": True}).text
+    plain = client.get(f"/annotation/rounds/{rnd['id']}/export.csv").text
+
+    assert excel.splitlines()[0].count(";") > 5
+    assert "'=HYPERLINK" in excel
+    assert "'=HYPERLINK" not in plain and "=HYPERLINK" in plain
