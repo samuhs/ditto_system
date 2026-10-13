@@ -1,4 +1,16 @@
 import type {
+  RetestAgreement,
+  AnnotationValidation,
+  AdjudicationView,
+  FinalNotes,
+  AnnotationAgreement,
+  AnnotationNoteValues,
+  AnnotationQueue,
+  AnnotationRoundDetail,
+  AnnotationRoundInput,
+  AnnotationRoundPreview,
+  AnnotationRoundSummary,
+  Annotator,
   AppSettings,
   Comparison,
   BaseSummary,
@@ -22,6 +34,7 @@ import type {
   Options,
   Persona,
   PromptsResponse,
+  Rubric,
 } from "./types";
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api";
@@ -289,4 +302,140 @@ export async function saveStallLimit(minutes: number): Promise<{ stall_limit_min
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ minutes }),
   }));
+}
+
+// ---- Anotação humana ----
+
+const json = (body: unknown) => ({ headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+/** Avaliadores by name; `active` filters active or inactive ones. */
+export async function listAnnotators(active?: boolean): Promise<Annotator[]> {
+  const query = active === undefined ? "" : `?active=${active}`;
+  return asJson<Annotator[]>(await fetch(`${BASE}/annotators${query}`));
+}
+
+/** Registers a new Avaliador; refused (409) when the name is taken. */
+export async function createAnnotator(name: string): Promise<Annotator> {
+  return asJson<Annotator>(await fetch(`${BASE}/annotators`, { method: "POST", ...json({ name }) }));
+}
+
+export async function setAnnotatorActive(id: number, active: boolean): Promise<Annotator> {
+  return asJson<Annotator>(await fetch(`${BASE}/annotators/${id}`, { method: "PATCH", ...json({ active }) }));
+}
+
+export async function getRubric(): Promise<Rubric> {
+  return asJson<Rubric>(await fetch(`${BASE}/annotation/rubric`));
+}
+
+export async function listAnnotationRounds(): Promise<AnnotationRoundSummary[]> {
+  return asJson<AnnotationRoundSummary[]>(await fetch(`${BASE}/annotation/rounds`));
+}
+
+export async function createAnnotationRound(body: AnnotationRoundInput): Promise<AnnotationRoundSummary> {
+  return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds`, { method: "POST", ...json(body) }));
+}
+
+/** How many answers each stratum has and would give, without creating the Rodada. */
+export async function previewAnnotationRound(body: AnnotationRoundInput): Promise<AnnotationRoundPreview> {
+  return asJson<AnnotationRoundPreview>(
+    await fetch(`${BASE}/annotation/rounds/preview`, { method: "POST", ...json(body) }),
+  );
+}
+
+export async function getAnnotationRound(id: number): Promise<AnnotationRoundDetail> {
+  return asJson<AnnotationRoundDetail>(await fetch(`${BASE}/annotation/rounds/${id}`));
+}
+
+/** The Avaliador joins an open Rodada (idempotent). */
+export async function joinAnnotationRound(roundId: number, annotatorId: number): Promise<void> {
+  await asJson(await fetch(`${BASE}/annotation/rounds/${roundId}/participants`, {
+    method: "POST", ...json({ annotator_id: annotatorId }),
+  }));
+}
+
+/** Removes an Avaliador from a Rodada together with their notes in it. */
+export async function removeAnnotationParticipant(
+  roundId: number, annotatorId: number,
+): Promise<{ round_id: number; annotator_id: number; notes_deleted: number }> {
+  return asJson(await fetch(`${BASE}/annotation/rounds/${roundId}/participants/${annotatorId}`, { method: "DELETE" }));
+}
+
+/** A Rodada as one Avaliador sees it: blind, with only that Avaliador's notes. */
+export async function getAnnotationQueue(roundId: number, annotatorId: number): Promise<AnnotationQueue> {
+  return asJson<AnnotationQueue>(
+    await fetch(`${BASE}/annotation/rounds/${roundId}/queue?annotator_id=${annotatorId}`),
+  );
+}
+
+export async function saveAnnotationNote(
+  itemId: number, annotatorId: number, note: AnnotationNoteValues,
+): Promise<AnnotationNoteValues & { item_id: number; annotator_id: number }> {
+  return asJson(await fetch(`${BASE}/annotation/items/${itemId}/notes/${annotatorId}`, { method: "PUT", ...json(note) }));
+}
+
+/** Freezes the notes of a Rodada for the analysis. */
+export async function closeAnnotationRound(id: number): Promise<AnnotationRoundSummary> {
+  return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds/${id}/close`, { method: "POST" }));
+}
+
+/** Concordância between the Avaliadores of a Rodada (kappa, alpha, disagreements). */
+export async function getAnnotationAgreement(id: number): Promise<AnnotationAgreement> {
+  return asJson<AnnotationAgreement>(await fetch(`${BASE}/annotation/rounds/${id}/agreement`));
+}
+
+/** Designates (or clears, with null) the Rodada's adjudicator. */
+export async function setAnnotationAdjudicator(roundId: number, annotatorId: number | null): Promise<AnnotationRoundSummary> {
+  return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds/${roundId}`, {
+    method: "PATCH", ...json({ adjudicator_id: annotatorId }),
+  }));
+}
+
+/** The disputed Items of a closed Rodada, for its adjudicator only. */
+export async function getAdjudication(roundId: number, annotatorId: number): Promise<AdjudicationView> {
+  return asJson<AdjudicationView>(
+    await fetch(`${BASE}/annotation/rounds/${roundId}/adjudication?annotator_id=${annotatorId}`),
+  );
+}
+
+export async function saveAdjudication(
+  itemId: number, annotatorId: number, decision: { correctness: number | null; grounding: number | null },
+): Promise<{ item_id: number; correctness: number | null; grounding: number | null }> {
+  return asJson(await fetch(`${BASE}/annotation/items/${itemId}/adjudication`, {
+    method: "PUT", ...json({ annotator_id: annotatorId, ...decision }),
+  }));
+}
+
+/** The Nota final of each Item and how many are still pending adjudication. */
+export async function getFinalNotes(roundId: number): Promise<FinalNotes> {
+  return asJson<FinalNotes>(await fetch(`${BASE}/annotation/rounds/${roundId}/final`));
+}
+
+/** The human Nota final against the automatic metrics (Spearman; means per Combinação and type). */
+export async function getAnnotationValidation(roundId: number): Promise<AnnotationValidation> {
+  return asJson<AnnotationValidation>(await fetch(`${BASE}/annotation/rounds/${roundId}/validation`));
+}
+
+/** A retest Rodada: the same Items for the same Avaliador, in a new order. */
+export async function createRetest(roundId: number, annotatorId: number): Promise<AnnotationRoundSummary> {
+  return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds/${roundId}/retest`, {
+    method: "POST", ...json({ annotator_id: annotatorId }),
+  }));
+}
+
+/** Intra-rater alpha between each Avaliador's first pass and their retest. */
+export async function getRetests(roundId: number): Promise<RetestAgreement[]> {
+  return asJson<RetestAgreement[]>(await fetch(`${BASE}/annotation/rounds/${roundId}/retests`));
+}
+
+/** Download URL of a Rodada's notes (CSV, plain or for Excel) or analysis tables (LaTeX: Portuguese
+ * with point or comma decimals, or English for the English paper). */
+export function annotationExportUrl(
+  roundId: number, kind: "csv" | "tex", decimal: "point" | "comma" = "point", excel = false, lang: "pt" | "en" = "pt",
+): string {
+  const params = new URLSearchParams();
+  if (kind === "tex" && lang === "en") params.set("lang", "en");
+  else if (kind === "tex" && decimal === "comma") params.set("decimal", "comma");
+  if (kind === "csv" && excel) params.set("excel", "true");
+  const query = params.toString();
+  return `${BASE}/annotation/rounds/${roundId}/export.${kind}${query ? `?${query}` : ""}`;
 }

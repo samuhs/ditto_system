@@ -66,7 +66,7 @@ class Friedman:
     n: int
 
 
-def _mid_ranks(values: list[float]) -> list[float]:
+def mid_ranks(values: list[float]) -> list[float]:
     """Rank 1 for the lowest; tied values share the mean of the ranks they span."""
     order = sorted(range(len(values)), key=lambda i: values[i])
     ranks = [0.0] * len(values)
@@ -90,7 +90,7 @@ def friedman(blocks: list[list[float]]) -> Friedman:
     n, k = len(blocks), len(blocks[0])
     rank_sums = [0.0] * k
     for block in blocks:
-        for j, rank in enumerate(_mid_ranks(block)):
+        for j, rank in enumerate(mid_ranks(block)):
             rank_sums[j] += rank
     chi2 = 12 / (n * k * (k + 1)) * sum(r * r for r in rank_sums) - 3 * n * (k + 1)
     return Friedman(chi2=chi2, df=k - 1, p=chi2_sf(chi2, k - 1), n=n)

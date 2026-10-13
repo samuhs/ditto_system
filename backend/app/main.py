@@ -11,6 +11,7 @@ from app.core import llm  # noqa: F401  registers LLM providers
 from app.core import rag  # noqa: F401  registers RAG techniques
 from app.core import retrieval  # noqa: F401  registers retrievers
 from app.api import (
+    annotation,
     bases,
     chat,
     comparisons,
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(graph_builds.router)
     app.include_router(experiments.router)
     app.include_router(comparisons.router)
+    app.include_router(annotation.router)
     app.include_router(prompts.router)
     app.include_router(chat.router)
     app.include_router(settings.router)

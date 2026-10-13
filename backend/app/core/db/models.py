@@ -1,7 +1,7 @@
 """Relational models for experiments, runs, and results."""
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db.base import Base
@@ -145,3 +145,118 @@ class DialogueMessage(Base):
     position: Mapped[int] = mapped_column(Integer, default=0)
 
     dialogue: Mapped["Dialogue"] = relationship(back_populates="messages")
+
+
+class Annotator(Base):
+    """An Avaliador: a person who scores answers in the Anotação humana."""
+
+    __tablename__ = "annotator"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class AnnotationRound(Base):
+    """A Rodada de anotação: answers sampled from Experimentos for Avaliadores to score."""
+
+    __tablename__ = "annotation_round"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(String, default="")
+    status: Mapped[str] = mapped_column(String(20), default="open")
+    seed: Mapped[int] = mapped_column(Integer)
+    rubric_version: Mapped[int] = mapped_column(Integer)
+    experiment_ids: Mapped[list] = mapped_column(JSON, default=list)
+    # A pilot Rodada calibrates the Rubrica and never enters the analysis.
+    pilot: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Sampling design: the dimensions stratified on and how the size is split among strata.
+    strata: Mapped[list] = mapped_column(JSON, default=list)
+    allocation: Mapped[str] = mapped_column(String(20), default="proportional")
+    # Who decides the Nota final where the Avaliadores disagree (e.g. the advisor).
+    adjudicator_id: Mapped[int | None] = mapped_column(ForeignKey("annotator.id"), nullable=True)
+    # A retest Rodada: the same Items for the same Avaliador, to measure intra-rater reliability.
+    source_round_id: Mapped[int | None] = mapped_column(ForeignKey("annotation_round.id"), nullable=True)
+    retest_annotator_id: Mapped[int | None] = mapped_column(ForeignKey("annotator.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    items: Mapped[list["AnnotationItem"]] = relationship(
+        back_populates="round", cascade="all, delete-orphan", order_by="AnnotationItem.position"
+    )
+
+
+class AnnotationItem(Base):
+    """One answer of a Rodada, copied from its RunResult so the Rodada outlives the Experimento."""
+
+    __tablename__ = "annotation_item"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    round_id: Mapped[int] = mapped_column(ForeignKey("annotation_round.id"))
+    position: Mapped[int] = mapped_column(Integer)
+    # Where the copy came from; no foreign key, so deleting the Experimento keeps the item.
+    source_result_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # In a retest Rodada, the Item of the original Rodada this one repeats.
+    source_item_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    experiment_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    combination: Mapped[dict] = mapped_column(JSON, default=dict)
+    question: Mapped[str] = mapped_column(String)
+    question_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    reference_answer: Mapped[str | None] = mapped_column(String, nullable=True)
+    evidence: Mapped[list] = mapped_column(JSON, default=list)
+    retrieved_context: Mapped[list] = mapped_column(JSON, default=list)
+    generated_answer: Mapped[str] = mapped_column(String)
+    auto_scores: Mapped[dict] = mapped_column(JSON, default=dict)
+
+    round: Mapped["AnnotationRound"] = relationship(back_populates="items")
+    notes: Mapped[list["AnnotationNote"]] = relationship(cascade="all, delete-orphan")
+
+
+class AnnotationNote(Base):
+    """An Avaliador's scores for one Item de anotação, on the Rubrica's dimensions."""
+
+    __tablename__ = "annotation_note"
+    __table_args__ = (UniqueConstraint("item_id", "annotator_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("annotation_item.id"))
+    annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
+    correctness: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    grounding: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # "Não consigo avaliar": the Item is left out of both dimensions, with the reason why.
+    cannot_evaluate: Mapped[bool] = mapped_column(Boolean, default=False)
+    reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    comment: Mapped[str | None] = mapped_column(String, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class AnnotationParticipant(Base):
+    """An Avaliador who joined a Rodada (listed in its progress even before the first note)."""
+
+    __tablename__ = "annotation_participant"
+    __table_args__ = (UniqueConstraint("round_id", "annotator_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    round_id: Mapped[int] = mapped_column(ForeignKey("annotation_round.id"))
+    annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
+    joined_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    # Set when the researcher removes the Avaliador; their notes are refused until they rejoin.
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class AnnotationAdjudication(Base):
+    """The adjudicator's decision on an Item where the Avaliadores disagree."""
+
+    __tablename__ = "annotation_adjudication"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("annotation_item.id"), unique=True)
+    annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
+    correctness: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    grounding: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )

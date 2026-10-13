@@ -505,3 +505,220 @@ export interface Comparison {
   items: ComparisonItem[];
   excluded: { id: string; reason: string }[];
 }
+
+// ---- Anotação humana ----
+
+export interface Annotator {
+  id: number;
+  name: string;
+  active: boolean;
+}
+
+export interface RubricLevel {
+  value: number;
+  label: string;
+  description: string;
+}
+
+export interface RubricDimension {
+  key: "correctness" | "grounding";
+  label: string;
+  question: string;
+  levels: RubricLevel[];
+}
+
+export interface Rubric {
+  version: number;
+  dimensions: RubricDimension[];
+}
+
+export interface AnnotationRoundSummary {
+  id: number;
+  name: string;
+  description: string;
+  status: "open" | "closed";
+  seed: number;
+  rubric_version: number;
+  experiment_ids: number[];
+  size: number;
+  /** A pilot Rodada calibrates the Rubrica and never enters the analysis. */
+  pilot: boolean;
+  strata: AnnotationStratumDim[];
+  allocation: "proportional" | "equal";
+  /** Who decides the Nota final where the Avaliadores disagree. */
+  adjudicator_id: number | null;
+  /** Set on a retest Rodada: the original Rodada and the Avaliador who repeats it. */
+  source_round_id: number | null;
+  retest_annotator_id: number | null;
+  created_at: string | null;
+}
+
+export type AnnotationStratumDim = "question_type" | "rag" | "llm";
+
+export interface AnnotationStratumPreview {
+  key: Partial<Record<AnnotationStratumDim, string>>;
+  available: number;
+  allocated: number;
+  /** The stratum has fewer answers than its share; the others make up the difference. */
+  short: boolean;
+}
+
+export interface AnnotationRoundPreview {
+  available: number;
+  size: number;
+  strata: AnnotationStratumPreview[];
+}
+
+export interface AnnotationProgress {
+  annotator_id: number;
+  name: string;
+  done: number;
+  total: number;
+}
+
+export interface AnnotationRoundDetail extends AnnotationRoundSummary {
+  progress: AnnotationProgress[];
+}
+
+/** An Avaliador's note. `grounding` is null when it does not apply (no retrieved context);
+ * with `cannot_evaluate`, both scores are null and `reason` says why. */
+export interface AnnotationNoteValues {
+  correctness: number | null;
+  grounding: number | null;
+  cannot_evaluate: boolean;
+  reason: string | null;
+  comment: string | null;
+}
+
+/** One answer as an Avaliador sees it: no Técnica, LLM, Experimento or automatic score. */
+export interface AnnotationQueueItem {
+  id: number;
+  position: number;
+  question: string;
+  question_type: string | null;
+  reference_answer: string | null;
+  evidence: string[];
+  retrieved_context: string[];
+  generated_answer: string;
+  /** False when the system retrieved no context (e.g. closed_book): Fundamentação does not apply. */
+  grounding_applicable: boolean;
+  note: AnnotationNoteValues | null;
+}
+
+export interface AnnotationQueue {
+  round: AnnotationRoundSummary;
+  annotator: { id: number; name: string };
+  items: AnnotationQueueItem[];
+  done: number;
+  total: number;
+}
+
+export interface AnnotationRoundInput {
+  name: string;
+  /** Combinações to sample from, as "experiment:run". */
+  items?: string[];
+  experiment_id?: number;
+  sample_size: number;
+  seed?: number | null;
+  description?: string;
+  strata?: AnnotationStratumDim[];
+  allocation?: "proportional" | "equal";
+  pilot?: boolean;
+}
+
+export interface AgreementValue {
+  value: number | null;
+  low: number | null;
+  high: number | null;
+}
+
+export interface AgreementDimension {
+  /** Items with at least two scores in this dimension. */
+  n: number;
+  alpha: AgreementValue;
+  /** Only with exactly two Avaliadores. */
+  kappa: AgreementValue | null;
+  confusion: { avaliadores: string[]; levels: number[]; matrix: number[][] } | null;
+}
+
+export interface AnnotationAgreement {
+  round: AnnotationRoundSummary;
+  avaliadores: string[];
+  dimensions: Record<"correctness" | "grounding", AgreementDimension>;
+  disagreements: {
+    item_id: number; position: number; question: string; generated_answer: string;
+    notes: Record<string, AnnotationNoteValues>;
+  }[];
+  note: string | null;
+}
+
+export interface AdjudicationItem {
+  id: number;
+  position: number;
+  question: string;
+  reference_answer: string | null;
+  evidence: string[];
+  retrieved_context: string[];
+  generated_answer: string;
+  grounding_applicable: boolean;
+  /** Every Avaliador's note, by name (the adjudicator sees them only here, on disputed Items). */
+  notes: Record<string, AnnotationNoteValues>;
+  disputed: ("correctness" | "grounding")[];
+  adjudication: { correctness: number | null; grounding: number | null } | null;
+}
+
+export interface AdjudicationView {
+  round: AnnotationRoundSummary;
+  items: AdjudicationItem[];
+  decided: number;
+  total: number;
+}
+
+export interface FinalNotes {
+  round: AnnotationRoundSummary;
+  items: {
+    id: number; position: number;
+    final: { correctness: number | null; grounding: number | null };
+    status: "concordância" | "adjudicada" | "pendente" | "uma nota" | "sem notas";
+  }[];
+  pending: number;
+}
+
+export interface MetricCorrelation {
+  metric: string;
+  n: number;
+  rho: number | null;
+  low: number | null;
+  high: number | null;
+}
+
+export interface MeanCi {
+  mean: number;
+  low: number;
+  high: number;
+}
+
+export interface ValidationGroup {
+  n: number;
+  human: MeanCi;
+  /** Mean answer_correctness of the same Items. */
+  automatic: MeanCi | null;
+}
+
+export interface AnnotationValidation {
+  round: AnnotationRoundSummary;
+  pending: number;
+  n: number;
+  correlations: { correctness: MetricCorrelation[]; grounding: MetricCorrelation[] };
+  by_combination: (ValidationGroup & { rag: string; llm: string })[];
+  by_question_type: (ValidationGroup & { question_type: string })[];
+}
+
+export interface RetestAgreement {
+  retest_round_id: number;
+  status: "open" | "closed";
+  avaliador: string;
+  done: number;
+  total: number;
+  dimensions: Record<"correctness" | "grounding", { n: number; alpha: AgreementValue }>;
+}

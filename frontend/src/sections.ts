@@ -10,7 +10,7 @@ export type SectionId =
   | "preparar"
   | "experimentar"
   | "comparar"
-  | "conversar"
+  | "anotar" | "conversar"
   | "ajustar";
 
 export interface SectionPage {
@@ -60,6 +60,15 @@ export const SECTIONS: Section[] = [
     pages: [
       { to: "/results", label: "Resultados" },
       { to: "/compare", label: "Comparar" },
+    ],
+  },
+  {
+    id: "anotar",
+    label: "Anotar",
+    purpose: "Avaliadores dão notas às respostas, às cegas, para validar as métricas.",
+    pages: [
+      { to: "/anotacao", label: "Rodadas" },
+      { to: "/anotar", label: "Tela de avaliação" },
     ],
   },
   {
