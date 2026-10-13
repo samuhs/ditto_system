@@ -88,3 +88,29 @@ _Avoid_: hop, passo
 
 **Entidade-ponte**:
 A entidade que liga um Salto ao seguinte numa pergunta `ponte`.
+
+### Anotação humana
+
+**Avaliador**:
+Pessoa que dá notas às respostas na Anotação humana. Todos avaliam na máquina do pesquisador; o Avaliador se cadastra na própria tela de avaliação, só com o nome, sem senha. Desativado, some da lista de identificação, mas as notas ficam.
+_Avoid_: anotador, usuário, juiz (juiz é o LLM que avalia)
+
+**Rodada de anotação**:
+Respostas sorteadas de Experimentos, com semente gravada, para os Avaliadores darem notas. Aberta, aceita notas; fechada, congela as notas para a análise.
+_Avoid_: lote, batch
+
+**Item de anotação**:
+Uma resposta de uma Rodada, copiada do resultado de origem (pergunta, referência, evidência, trechos recuperados, resposta e métricas automáticas), para que a Rodada sobreviva ao Experimento ser apagado. O Avaliador nunca vê a Técnica RAG, o LLM nem o Experimento de origem.
+
+**Rubrica**:
+As dimensões e os níveis das notas, fixos no código e versionados; a Rodada grava a versão. A v1 tem Correção (0 errada, 1 parcial, 2 correta e completa) e Fundamentação (0 inventa, 1 parcial, 2 toda afirmação está nos trechos recuperados).
+
+**Nota final**:
+A nota de um Item depois da Adjudicação: a nota comum quando os Avaliadores concordam, a do adjudicador quando discordam.
+
+**Adjudicação**:
+A decisão de um terceiro (ex.: o orientador) sobre a nota dos Itens em que os Avaliadores discordam.
+
+**Concordância**:
+Quanto as notas de Avaliadores diferentes coincidem, medida por kappa ponderado ou α de Krippendorff.
+_Avoid_: acordo, acurácia

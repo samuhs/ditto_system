@@ -505,3 +505,86 @@ export interface Comparison {
   items: ComparisonItem[];
   excluded: { id: string; reason: string }[];
 }
+
+// ---- Anotação humana ----
+
+export interface Annotator {
+  id: number;
+  name: string;
+  active: boolean;
+}
+
+export interface RubricLevel {
+  value: number;
+  label: string;
+  description: string;
+}
+
+export interface RubricDimension {
+  key: "correctness" | "grounding";
+  label: string;
+  question: string;
+  levels: RubricLevel[];
+}
+
+export interface Rubric {
+  version: number;
+  dimensions: RubricDimension[];
+}
+
+export interface AnnotationRoundSummary {
+  id: number;
+  name: string;
+  description: string;
+  status: "open" | "closed";
+  seed: number;
+  rubric_version: number;
+  experiment_ids: number[];
+  size: number;
+  created_at: string | null;
+}
+
+export interface AnnotationProgress {
+  annotator_id: number;
+  name: string;
+  done: number;
+  total: number;
+}
+
+export interface AnnotationRoundDetail extends AnnotationRoundSummary {
+  progress: AnnotationProgress[];
+}
+
+export interface AnnotationNoteValues {
+  correctness: number;
+  grounding: number;
+}
+
+/** One answer as an Avaliador sees it: no Técnica, LLM, Experimento or automatic score. */
+export interface AnnotationQueueItem {
+  id: number;
+  position: number;
+  question: string;
+  question_type: string | null;
+  reference_answer: string | null;
+  evidence: string[];
+  retrieved_context: string[];
+  generated_answer: string;
+  note: AnnotationNoteValues | null;
+}
+
+export interface AnnotationQueue {
+  round: AnnotationRoundSummary;
+  annotator: { id: number; name: string };
+  items: AnnotationQueueItem[];
+  done: number;
+  total: number;
+}
+
+export interface AnnotationRoundInput {
+  name: string;
+  experiment_id: number;
+  sample_size: number;
+  seed?: number | null;
+  description?: string;
+}

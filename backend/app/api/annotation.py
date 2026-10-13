@@ -1,0 +1,160 @@
+"""Endpoints of the Anotação humana: Avaliadores, Rodadas de anotação and notes."""
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.annotation.rubric import RUBRIC
+from app.annotation.service import (
+    AnnotationError,
+    create_round,
+    get_annotator,
+    get_round,
+    list_rounds as list_round_summaries,
+    queue,
+    round_progress,
+    round_summary,
+    save_note,
+)
+from app.api.deps import get_session_factory
+from app.core.db.models import Annotator
+
+router = APIRouter()
+
+
+def _clean_name(value: str) -> str:
+    value = " ".join(value.split())
+    if not value:
+        raise ValueError("informe o nome")
+    return value
+
+
+class AnnotatorIn(BaseModel):
+    name: str = Field(max_length=120)
+
+    _not_blank = field_validator("name")(_clean_name)
+
+
+class AnnotatorPatch(BaseModel):
+    active: bool
+
+
+class RoundIn(BaseModel):
+    name: str = Field(max_length=120)
+    experiment_id: int
+    sample_size: int = Field(gt=0)
+    seed: int | None = Field(None, ge=0, le=2**31 - 1)  # the column is a 32-bit integer
+    description: str = ""
+
+    _not_blank = field_validator("name")(_clean_name)
+
+
+class NoteIn(BaseModel):
+    correctness: int = Field(ge=0, le=2)
+    grounding: int = Field(ge=0, le=2)
+
+
+def _annotator_out(a: Annotator) -> dict:
+    return {"id": a.id, "name": a.name, "active": a.active}
+
+
+def _session(factory: sessionmaker[Session] = Depends(get_session_factory)):
+    session = factory()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+def _or_http(call):
+    """Run `call`, turning an AnnotationError into the HTTP error it names."""
+    try:
+        return call()
+    except AnnotationError as exc:
+        raise HTTPException(status_code=exc.status, detail=str(exc)) from exc
+
+
+@router.get("/annotators")
+def list_annotators(active: bool | None = Query(None), session: Session = Depends(_session)) -> list[dict]:
+    """Avaliadores by name; `active` filters active or inactive ones."""
+    query = select(Annotator).order_by(Annotator.name)
+    if active is not None:
+        query = query.where(Annotator.active == active)
+    return [_annotator_out(a) for a in session.scalars(query)]
+
+
+@router.post("/annotators", status_code=201)
+def create_annotator(body: AnnotatorIn, session: Session = Depends(_session)) -> dict:
+    """Register a new Avaliador; a name already taken (ignoring case) is a 409."""
+    taken = session.scalar(select(Annotator).where(func.lower(Annotator.name) == body.name.lower()))
+    if taken is not None:
+        raise HTTPException(status_code=409, detail=_taken(taken))
+    annotator = Annotator(name=body.name)
+    session.add(annotator)
+    try:
+        session.commit()
+    except IntegrityError as exc:  # the same name registered at the same moment
+        session.rollback()
+        raise HTTPException(status_code=409, detail=f"Já existe um avaliador chamado {body.name}.") from exc
+    return _annotator_out(annotator)
+
+
+def _taken(annotator: Annotator) -> str:
+    if annotator.active:
+        return f"Já existe um avaliador chamado {annotator.name}. Escolha o nome na lista."
+    return (f"Já existe um avaliador chamado {annotator.name}, desativado. "
+            "Peça ao pesquisador para reativá-lo na página de Rodadas.")
+
+
+@router.patch("/annotators/{annotator_id}")
+def update_annotator(annotator_id: int, body: AnnotatorPatch, session: Session = Depends(_session)) -> dict:
+    """Activate or deactivate an Avaliador; their notes are kept either way."""
+    annotator = _or_http(lambda: get_annotator(session, annotator_id))
+    annotator.active = body.active
+    session.commit()
+    return _annotator_out(annotator)
+
+
+@router.get("/annotation/rubric")
+def get_rubric() -> dict:
+    """The Rubrica the Avaliadores score with."""
+    return RUBRIC
+
+
+@router.get("/annotation/rounds")
+def list_rounds(session: Session = Depends(_session)) -> list[dict]:
+    """Rodadas de anotação, newest first."""
+    return list_round_summaries(session)
+
+
+@router.post("/annotation/rounds", status_code=201)
+def post_round(body: RoundIn, session: Session = Depends(_session)) -> dict:
+    """Sample answers of an Experimento into a new Rodada (same seed, same sample)."""
+    rnd = _or_http(lambda: create_round(session, body.name, body.experiment_id, body.sample_size,
+                                        body.seed, body.description))
+    return round_summary(rnd)
+
+
+@router.get("/annotation/rounds/{round_id}")
+def round_detail(round_id: int, session: Session = Depends(_session)) -> dict:
+    """A Rodada with each Avaliador's progress."""
+    rnd = _or_http(lambda: get_round(session, round_id))
+    return {**round_summary(rnd), "progress": round_progress(session, rnd)}
+
+
+@router.get("/annotation/rounds/{round_id}/queue")
+def round_queue(round_id: int, annotator_id: int = Query(...),
+                session: Session = Depends(_session)) -> dict:
+    """The Rodada's Items for one Avaliador, blind, with only that Avaliador's notes."""
+    return _or_http(lambda: queue(session, get_round(session, round_id),
+                                  get_annotator(session, annotator_id)))
+
+
+@router.put("/annotation/items/{item_id}/notes/{annotator_id}")
+def put_note(item_id: int, annotator_id: int, body: NoteIn, session: Session = Depends(_session)) -> dict:
+    """Save (or replace) one Avaliador's note on an Item."""
+    note = _or_http(lambda: save_note(session, item_id, annotator_id,
+                                      body.correctness, body.grounding))
+    return {"item_id": note.item_id, "annotator_id": note.annotator_id,
+            "correctness": note.correctness, "grounding": note.grounding}

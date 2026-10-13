@@ -1,4 +1,10 @@
 import type {
+  AnnotationNoteValues,
+  AnnotationQueue,
+  AnnotationRoundDetail,
+  AnnotationRoundInput,
+  AnnotationRoundSummary,
+  Annotator,
   AppSettings,
   Comparison,
   BaseSummary,
@@ -22,6 +28,7 @@ import type {
   Options,
   Persona,
   PromptsResponse,
+  Rubric,
 } from "./types";
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api";
@@ -289,4 +296,52 @@ export async function saveStallLimit(minutes: number): Promise<{ stall_limit_min
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ minutes }),
   }));
+}
+
+// ---- Anotação humana ----
+
+const json = (body: unknown) => ({ headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+/** Avaliadores by name; `active` filters active or inactive ones. */
+export async function listAnnotators(active?: boolean): Promise<Annotator[]> {
+  const query = active === undefined ? "" : `?active=${active}`;
+  return asJson<Annotator[]>(await fetch(`${BASE}/annotators${query}`));
+}
+
+/** Registers a new Avaliador; refused (409) when the name is taken. */
+export async function createAnnotator(name: string): Promise<Annotator> {
+  return asJson<Annotator>(await fetch(`${BASE}/annotators`, { method: "POST", ...json({ name }) }));
+}
+
+export async function setAnnotatorActive(id: number, active: boolean): Promise<Annotator> {
+  return asJson<Annotator>(await fetch(`${BASE}/annotators/${id}`, { method: "PATCH", ...json({ active }) }));
+}
+
+export async function getRubric(): Promise<Rubric> {
+  return asJson<Rubric>(await fetch(`${BASE}/annotation/rubric`));
+}
+
+export async function listAnnotationRounds(): Promise<AnnotationRoundSummary[]> {
+  return asJson<AnnotationRoundSummary[]>(await fetch(`${BASE}/annotation/rounds`));
+}
+
+export async function createAnnotationRound(body: AnnotationRoundInput): Promise<AnnotationRoundSummary> {
+  return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds`, { method: "POST", ...json(body) }));
+}
+
+export async function getAnnotationRound(id: number): Promise<AnnotationRoundDetail> {
+  return asJson<AnnotationRoundDetail>(await fetch(`${BASE}/annotation/rounds/${id}`));
+}
+
+/** A Rodada as one Avaliador sees it: blind, with only that Avaliador's notes. */
+export async function getAnnotationQueue(roundId: number, annotatorId: number): Promise<AnnotationQueue> {
+  return asJson<AnnotationQueue>(
+    await fetch(`${BASE}/annotation/rounds/${roundId}/queue?annotator_id=${annotatorId}`),
+  );
+}
+
+export async function saveAnnotationNote(
+  itemId: number, annotatorId: number, note: AnnotationNoteValues,
+): Promise<AnnotationNoteValues & { item_id: number; annotator_id: number }> {
+  return asJson(await fetch(`${BASE}/annotation/items/${itemId}/notes/${annotatorId}`, { method: "PUT", ...json(note) }));
 }

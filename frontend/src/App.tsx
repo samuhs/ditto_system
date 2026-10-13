@@ -4,6 +4,7 @@ import { Sidebar, SubNav } from "./components/Sidebar";
 import { TasksToast } from "./components/TasksToast";
 import { TasksProvider } from "./context/TasksContext";
 import { AgentePage } from "./pages/AgentePage";
+import { AvaliarPage } from "./pages/AvaliarPage";
 import { AvaliacaoPage } from "./pages/AvaliacaoPage";
 import { BasesPage } from "./pages/BasesPage";
 import { ChatConfigsPage } from "./pages/ChatConfigsPage";
@@ -16,6 +17,7 @@ import { ExperimentPage } from "./pages/ExperimentPage";
 import { HomePage } from "./pages/HomePage";
 import { IngestPage } from "./pages/IngestPage";
 import { PromptsPage } from "./pages/PromptsPage";
+import { RodadaDetailPage, RodadasPage } from "./pages/RodadasPage";
 import { ResultsPage } from "./pages/ResultsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SectionContext, sectionForPath } from "./sections";
@@ -23,6 +25,15 @@ import { SectionContext, sectionForPath } from "./sections";
 export function App() {
   const location = useLocation();
   const section = sectionForPath(location.pathname);
+
+  // The Avaliador's screen is in focus mode: no menu, no way to the results (blind evaluation).
+  if (location.pathname === "/anotar") {
+    return (
+      <main id="conteudo" className="ditto-focus-shell">
+        <AvaliarPage />
+      </main>
+    );
+  }
 
   return (
     <TasksProvider>
@@ -45,6 +56,8 @@ export function App() {
                   <Route path="/results" element={<ResultsPage />} />
                   <Route path="/results/:id" element={<ExperimentDetailPage />} />
                   <Route path="/compare" element={<ComparePage />} />
+                  <Route path="/anotacao" element={<RodadasPage />} />
+                  <Route path="/anotacao/:id" element={<RodadaDetailPage />} />
                   <Route path="/prompts" element={<PromptsPage />} />
                   <Route path="/chat-configs" element={<ChatConfigsPage />} />
                   <Route path="/chat" element={<ChatPage />} />
