@@ -59,8 +59,10 @@ case "${1:-show}" in
     describe "$p"
     if curl -sf "$(./scripts/llm.sh url)/models" >/dev/null 2>&1; then
       step "Reiniciando o servidor de LLM com o perfil novo"
+      # Keep the address it runs on (up-local binds [::1]); down forgets it.
+      host="$(mlx_host)"
       ./scripts/llm.sh down || true
-      ./scripts/llm.sh up
+      MLX_HOST="$host" ./scripts/llm.sh up
     fi
     step "Falta reiniciar a API para o perfil valer"
     echo "  make up         # tudo no Docker"

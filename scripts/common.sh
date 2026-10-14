@@ -91,7 +91,18 @@ MLX_PY="$MLX_DIR/bin/python"
 mlx_port() { local p; p="$(env_get MLX_PORT)"; echo "${p:-11436}"; }
 # 127.0.0.1 so the API container reaches it via host.docker.internal; `make
 # up-local` uses ::1 instead (IPv6 loopback survives VPNs that break IPv4).
-mlx_host() { local h; h="$(env_get MLX_HOST)"; echo "${h:-127.0.0.1}"; }
+# Without an explicit MLX_HOST, a server already running keeps its address, so
+# `make model-list` or `make llm-up` never move the up-local server off [::1];
+# `make up` sets MLX_FOR_DOCKER=1 because its containers need 127.0.0.1.
+MLX_HOST_FILE="$MLX_DIR/server.host"   # the address the running server is bound to
+mlx_host() {
+  local h; h="$(env_get MLX_HOST)"
+  if [ -z "$h" ] && [ -z "${MLX_FOR_DOCKER:-}" ] && [ -f "$MLX_DIR/server.pid" ] \
+    && kill -0 "$(cat "$MLX_DIR/server.pid")" 2>/dev/null; then
+    h="$(cat "$MLX_HOST_FILE" 2>/dev/null)"
+  fi
+  echo "${h:-127.0.0.1}"
+}
 mlx_url() {
   case "$(mlx_host)" in
     *:*) echo "http://[$(mlx_host)]:$(mlx_port)" ;;

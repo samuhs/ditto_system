@@ -7,6 +7,7 @@
 #
 #   local.sh up      make up-local
 #   local.sh down    make down-local
+#   local.sh api-restart   make api-restart-local (only the API)
 #   local.sh status
 #
 # The Docker flow (make up) is untouched; running one stops the other's
@@ -55,6 +56,67 @@ llm_url_local() {
   esac
 }
 
+# Host Python trusts only certifi; add the host CAs (VPN/proxy that inspects
+# HTTPS) so Gemini and Hugging Face calls from the API keep verifying TLS.
+prepare_ca_env() {
+  ./scripts/host-certs.sh >/dev/null
+  CA_ENV=()
+  if [ -s certs/host-ca.pem ]; then
+    cat "$(backend/.venv/bin/python -c 'import certifi; print(certifi.where())')" certs/host-ca.pem \
+      >"$RUN_DIR/ca-bundle.pem" 2>/dev/null \
+      && CA_ENV=(SSL_CERT_FILE="$PWD/$RUN_DIR/ca-bundle.pem" REQUESTS_CA_BUNDLE="$PWD/$RUN_DIR/ca-bundle.pem")
+  fi
+}
+
+# Fails if another process holds the port (a running copy of ours is checked
+# with `alive` before this is called).
+require_free_port() {
+  if lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; then
+    fail "porta $1 ocupada por $(lsof -nP -iTCP:"$1" -sTCP:LISTEN | awk 'NR==2{print $1" (pid "$2")"}'). Mude $2 no .env."
+  fi
+}
+
+# Starts the API on [::1]; needs CA_ENV (prepare_ca_env) and LLM_URL.
+start_api() {
+  require_free_port "$API_PORT" API_PORT
+  (
+    # Read the root .env before leaving it: after `cd backend`, env_get would
+    # read backend/.env and silently drop every setting kept at the root.
+    gemini_key="$(env_get GEMINI_API_KEY)"
+    hf_token="$(env_get HF_TOKEN)"
+    profile="$(memory_profile)"
+    max_local_models="$(env_get MAX_LOCAL_MODELS)"
+    embedding_device="$(env_get EMBEDDING_DEVICE)"
+    max_concurrency="$(env_get MAX_EXPERIMENT_CONCURRENCY)"
+    allow_swap="$(env_get PERPLEXITY_ALLOW_SWAP)"
+    max_upload_mb="$(env_get MAX_UPLOAD_SIZE_MB)"
+    pg_password="$(env_get POSTGRES_PASSWORD)"; pg_password="${pg_password:-ditto}"
+    cd backend || exit 1
+    # Explicit [::1] everywhere: "localhost" may try 127.0.0.1 first.
+    env ${CA_ENV[@]+"${CA_ENV[@]}"} \
+    ENV_FILE="" \
+    DATABASE_URL="postgresql://ditto:$pg_password@[::1]:$PG_PORT/ditto" \
+    QDRANT_URL="http://[::1]:$QD_PORT" \
+    OLLAMA_BASE_URL="$LLM_URL" \
+    GEMINI_API_KEY="$gemini_key" \
+    HF_TOKEN="$hf_token" \
+    MEMORY_PROFILE="$profile" \
+    MAX_LOCAL_MODELS="$max_local_models" \
+    EMBEDDING_DEVICE="$embedding_device" \
+    MAX_EXPERIMENT_CONCURRENCY="$max_concurrency" \
+    PERPLEXITY_ALLOW_SWAP="$allow_swap" \
+    MAX_UPLOAD_SIZE_MB="$max_upload_mb" \
+    APP_CONFIG_DIR="$PWD/config" \
+    PROMPTS_DIR="$PWD/prompts" \
+    nohup ./.venv/bin/uvicorn app.main:app --host ::1 --port "$API_PORT" \
+      >"../$RUN_DIR/api.log" 2>&1 &
+    echo $! >"../$API_PID"
+  )
+  wait_http "http://[::1]:$API_PORT/health" 60 "$API_PID" \
+    || { tail -n 20 "$RUN_DIR/api.log" >&2; fail "a API não subiu (log acima: $RUN_DIR/api.log)"; }
+  ok "rodando em http://[::1]:$API_PORT (log: $RUN_DIR/api.log)"
+}
+
 up() {
   ./scripts/memory-profile.sh init
   step "Pré-requisitos"
@@ -67,15 +129,7 @@ up() {
   backend/.venv/bin/python -c 'import sentence_transformers' >/dev/null 2>&1 \
     || warn "embedders locais (e5, paraphrase) indisponíveis fora do Docker; para usá-los: LOCAL=1 make setup-dev"
 
-  # Host Python trusts only certifi; add the host CAs (VPN/proxy that inspects
-  # HTTPS) so Gemini and Hugging Face calls from the API keep verifying TLS.
-  ./scripts/host-certs.sh >/dev/null
-  CA_ENV=()
-  if [ -s certs/host-ca.pem ]; then
-    cat "$(backend/.venv/bin/python -c 'import certifi; print(certifi.where())')" certs/host-ca.pem \
-      >"$RUN_DIR/ca-bundle.pem" 2>/dev/null \
-      && CA_ENV=(SSL_CERT_FILE="$PWD/$RUN_DIR/ca-bundle.pem" REQUESTS_CA_BUNDLE="$PWD/$RUN_DIR/ca-bundle.pem")
-  fi
+  prepare_ca_env
 
   step "Postgres e Qdrant (Docker)"
   # The Docker api/frontend would hold the same ports.
@@ -106,53 +160,14 @@ up() {
   if alive "$API_PID"; then
     ok "já rodando (pid $(cat "$API_PID"))"
   else
-    for p in "$API_PORT" "$WEB_PORT"; do
-      if lsof -nP -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1; then
-        fail "porta $p ocupada por $(lsof -nP -iTCP:"$p" -sTCP:LISTEN | awk 'NR==2{print $1" (pid "$2")"}'). Mude API_PORT/WEB_PORT no .env."
-      fi
-    done
-    (
-      # Read the root .env before leaving it: after `cd backend`, env_get would
-      # read backend/.env and silently drop every setting kept at the root.
-      gemini_key="$(env_get GEMINI_API_KEY)"
-      hf_token="$(env_get HF_TOKEN)"
-      profile="$(memory_profile)"
-      max_local_models="$(env_get MAX_LOCAL_MODELS)"
-      embedding_device="$(env_get EMBEDDING_DEVICE)"
-      max_concurrency="$(env_get MAX_EXPERIMENT_CONCURRENCY)"
-      allow_swap="$(env_get PERPLEXITY_ALLOW_SWAP)"
-      max_upload_mb="$(env_get MAX_UPLOAD_SIZE_MB)"
-      pg_password="$(env_get POSTGRES_PASSWORD)"; pg_password="${pg_password:-ditto}"
-      cd backend || exit 1
-      # Explicit [::1] everywhere: "localhost" may try 127.0.0.1 first.
-      env ${CA_ENV[@]+"${CA_ENV[@]}"} \
-      ENV_FILE="" \
-      DATABASE_URL="postgresql://ditto:$pg_password@[::1]:$PG_PORT/ditto" \
-      QDRANT_URL="http://[::1]:$QD_PORT" \
-      OLLAMA_BASE_URL="$LLM_URL" \
-      GEMINI_API_KEY="$gemini_key" \
-      HF_TOKEN="$hf_token" \
-      MEMORY_PROFILE="$profile" \
-      MAX_LOCAL_MODELS="$max_local_models" \
-      EMBEDDING_DEVICE="$embedding_device" \
-      MAX_EXPERIMENT_CONCURRENCY="$max_concurrency" \
-      PERPLEXITY_ALLOW_SWAP="$allow_swap" \
-      MAX_UPLOAD_SIZE_MB="$max_upload_mb" \
-      APP_CONFIG_DIR="$PWD/config" \
-      PROMPTS_DIR="$PWD/prompts" \
-      nohup ./.venv/bin/uvicorn app.main:app --host ::1 --port "$API_PORT" \
-        >"../$RUN_DIR/api.log" 2>&1 &
-      echo $! >"../$API_PID"
-    )
-    wait_http "http://[::1]:$API_PORT/health" 60 "$API_PID" \
-      || { tail -n 20 "$RUN_DIR/api.log" >&2; fail "a API não subiu (log acima: $RUN_DIR/api.log)"; }
-    ok "rodando em http://[::1]:$API_PORT (log: $RUN_DIR/api.log)"
+    start_api
   fi
 
   step "Frontend (Vite, host)"
   if alive "$WEB_PID"; then
     ok "já rodando (pid $(cat "$WEB_PID"))"
   else
+    require_free_port "$WEB_PORT" WEB_PORT
     (
       cd frontend || exit 1
       VITE_API_PROXY="http://[::1]:$API_PORT" \
@@ -179,6 +194,16 @@ down() {
   ok "o servidor de LLM continua rodando (make llm-down para parar)"
 }
 
+# Restarts only the API (e.g. to free its memory between campaign slices); the
+# frontend, Postgres, Qdrant and the LLM server keep running.
+api_restart() {
+  step "API (host, IPv6)"
+  stop_pid "$API_PID" && ok "API parada" || ok "API não estava rodando"
+  prepare_ca_env
+  LLM_URL="$(llm_url_local)"
+  start_api
+}
+
 status() {
   alive "$API_PID" && ok "API rodando (pid $(cat "$API_PID"))" || warn "API parada"
   alive "$WEB_PID" && ok "frontend rodando (pid $(cat "$WEB_PID"))" || warn "frontend parado"
@@ -194,8 +219,9 @@ stop_apps() {
 
 case "${1:-status}" in
   up) up ;;
+  api-restart) api_restart ;;
   down) down ;;
   stop-apps) stop_apps ;;
   status) status ;;
-  *) fail "uso: scripts/local.sh up|down|status" ;;
+  *) fail "uso: scripts/local.sh up|down|api-restart|status" ;;
 esac
