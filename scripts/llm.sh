@@ -10,7 +10,6 @@ cd "$(dirname "$0")/.."
 
 MLX_PID="$MLX_DIR/server.pid"
 MLX_LOG="$MLX_DIR/server.log"
-MLX_HOST_FILE="$MLX_DIR/server.host"   # the address the running server is bound to
 mlx_pattern() { echo "mlx_lm.server --host .* --port $(mlx_port)"; }
 
 mlx_start() {

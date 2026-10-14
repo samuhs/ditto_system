@@ -1,4 +1,4 @@
-.PHONY: help memory-profile mem-watch up-local down-local status-local doctor certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm graph-gate up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
+.PHONY: help memory-profile mem-watch up-local down-local api-restart-local status-local doctor certs prepare setup setup-dev llm-setup llm-up llm-down llm-status model-add model-rm model-list bench-llm graph-gate up down logs test build install front-install front-test front-build ollama-up ollama-down docker-clean
 
 # MODEL and PARALLEL are optional: each LLM server has its own defaults.
 
@@ -16,7 +16,7 @@ help:
 	@echo "GraphRAG:  make graph-gate MODEL=...   (precisão/recall do extrator do Grafo de conhecimento contra o gabarito)"
 	@echo ""
 	@echo "Dia a dia: make down | logs | build | llm-up | llm-down | llm-status | docker-clean"
-	@echo "Sem Docker p/ API e front: make up-local | down-local | status-local (só banco e Qdrant no Docker)"
+	@echo "Sem Docker p/ API e front: make up-local | down-local | api-restart-local | status-local (só banco e Qdrant no Docker)"
 	@echo "Diagnóstico de rede (VPN): make doctor"
 	@echo "Memória:   make memory-profile [PROFILE=low|standard] (perfil ativo / trocar) | mem-watch"
 	@echo "Dev:       make setup-dev (venv, npm, graphify, hooks) | test | front-test | front-build"
@@ -92,7 +92,7 @@ up: prepare
 	@./scripts/local.sh stop-apps
 	@./scripts/check-ports.sh
 	docker compose up -d --build
-	@./scripts/llm.sh up || true
+	@MLX_FOR_DOCKER=1 ./scripts/llm.sh up || true
 	@./scripts/memory-profile.sh hint-up
 
 # Memory profile: show it, or switch with PROFILE=low|standard (restarts the LLM server).
@@ -115,6 +115,10 @@ up-local:
 
 down-local:
 	@./scripts/local.sh down
+
+# Restarts only the up-local API (frees its memory); frontend, databases and LLM keep running.
+api-restart-local:
+	@./scripts/local.sh api-restart
 
 status-local:
 	@./scripts/local.sh status
