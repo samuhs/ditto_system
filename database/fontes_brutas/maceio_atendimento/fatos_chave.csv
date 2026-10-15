@@ -1,0 +1,41 @@
+pergunta,tipo,fatos_chave
+Quanto custa pra tirar o boletim de acidente de trânsito?,simples,"R$ 212,57|R$ 52,36"
+Qual secretaria cuida de poda de árvore em terreno particular?,simples,ALURB
+Como eu agendo a castração do meu bichinho de estimação?,simples,(82) 98752-6505
+Quem pode propor uma emenda na lei orgânica do município?,simples,um terço|5%
+O que pode acontecer com o prefeito se ele cometer uma falta grave no cargo?,simples,Tribunal de Justiça|Câmara Municipal|cassação
+Como eu registro uma denúncia pela ouvidoria da prefeitura?,simples,agente público|local da ocorrência
+Como funciona o processo pra aprovar uma lei na câmara municipal?,simples,15 dias|sanção
+Quais as garantias de proteção à minha identidade?,simples,sigilo|não se identificar
+Como acompanhar a resposta à manifestação?,simples,número do protocolo|e-mail
+"Para fazer um pedido de acesso à informação, como proceder?",simples,Registrar|CPF
+Não sei o número da inscrição do meu imóvel. Como descobrir este número?,simples,Buscar inscrição imobiliária|CPF + CEP
+"Quem cuida da poda de árvore dentro do meu quintal, e quanto custa esse serviço?",ponte,"ALURB|R$ 70,00"
+"Quem aprova o orçamento da prefeitura, e quem fiscaliza as contas depois de aprovado?",ponte,dois terços|Tribunal de Contas
+"Quem recolhe os resíduos sólidos na minha rua, e quais outros serviços de limpeza esse mesmo setor oferece pro meu bairro?",ponte,ALURB|coleta de volumosos
+"Quem define os limites dos distritos da cidade, e como isso se relaciona com as regiões administrativas de Maceió?",ponte,lei local|Região Administrativa
+"Quem cuida do licenciamento de um evento de rua, e que outra licença eu preciso pedir separado pra colocar mesa e cadeira na calçada?",ponte,SEMSC|Licença de Mesas e Cadeiras
+"Quem recebe o pedido do seguro-desemprego, e onde eu atualizo minha carteira de trabalho no mesmo atendimento?",ponte,SEMTES|Carteira de Trabalho Digital
+"Quem autoriza a reforma de uma casa, e depois de pronta quem faz a vistoria final pra liberar o uso dela?",ponte,SEMURB|Carta Habite-se|vistoria
+"Quem cuida da emissão de nota fiscal de serviço, e que cadastro prévio a prefeitura exige antes disso?",ponte,SEFAZ|Cadastro de Vínculo do Contribuinte
+"O que a lei orgânica fala sobre desenvolvimento urbano, e como isso se relaciona com as regras que a prefeitura usa pra aprovar um projeto de construção?",ponte,legislação urbanística e edilícia
+"Pra marcar uma consulta ou exame pelo SMS, onde eu pego os remédios que já uso no tratamento?",ponte,(82) 3312.5492|Coordenação de Farmácia
+quem decide se deixa eu juntar dois terrenos vizinhos num terreno só?,ponte,Remembramento|SEMURB
+"quando o prefeito e o vice-prefeito não podem assumir ao mesmo tempo, até quando fica no comando quem entra no lugar deles?",ponte,Presidente da Câmara|90 dias
+"Qual pede mais requisitos pra entrar, o cadastro do Qualifica Maceió ou os cursos do Emprega Mulher?",comparacao,CadÚnico|declaração de escolaridade
+O que muda no processo da câmara entre aprovar uma lei comum e aprovar uma emenda à lei orgânica?,comparacao,dois turnos|dois terços|maioria simples
+"Qual cartão dá mais desconto, o VAMU Cidadão ou o VAMU Sênior?",comparacao,65 anos|gratuidade
+"Qual exige mais passos, pedir autorização pra colocar faixa de táxi ou pedir a aferição do taxímetro?",comparacao,RENAVAM|só o alvará
+"entre o cartão de estacionamento pra idoso e o cartão pra pessoa com deficiência, o que pedem de documento diferente pra cada um?",comparacao,atestado médico|2 meses
+"entre entrar pro cadastro do banco da mulher empreendedora e entrar num curso do qualifica maceió, quem pode se inscrever em cada um?",comparacao,18 anos|CadÚnico
+"entre a certidão de tempo de contribuição e a certidão negativa do iprev, o que pedem de documento pra emitir cada uma?",comparacao,só o CPF
+"entre criar um distrito novo e criar uma região administrativa nova, quem decide isso dentro da prefeitura?",comparacao,lei local|regiões administrativas
+Quais são os tipos de solicitações podem ser apresentadas à Ouvidoria?,agregacao,Denúncia|reclamação|sugestão|elogio
+Quantos tipos de certidão dá pra tirar no IPREV?,agregacao,Dois|Certidão Negativa
+Quais secretarias oferecem algum curso profissionalizante pra quem tá procurando emprego?,agregacao,SEMTES|SEMUC|SELJ
+Quais serviços da prefeitura atendem especificamente pessoa com alguma deficiência ou transtorno?,agregacao,Transtorno do Espectro Autista|credencial de estacionamento
+Quantos tipos de alvará o SEMURB emite pra quem vai construir ou reformar?,agregacao,Sete
+Quais órgãos recebem algum tipo de reclamação ou denúncia do cidadão?,agregacao,CGM|PROCON
+Quantos serviços voltados pra juventude o SELJ oferece?,agregacao,Cinco
+Quais secretarias têm cadastro voltado pra quem quer empreender?,agregacao,SEMUC|SELJ
+Como gerar a Guia de IPTU?,simples,IM Imobiliária|Emissão de guias de pagamento

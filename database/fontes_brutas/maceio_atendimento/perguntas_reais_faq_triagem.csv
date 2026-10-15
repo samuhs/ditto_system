@@ -1,0 +1,47 @@
+n,fonte,pergunta,triagem,motivo
+1,FAQ da Ouvidoria de Maceió,1- O que é uma ouvidoria?,descartada,a base não responde
+2,FAQ da Ouvidoria de Maceió,2- Quais são os tipos de solicitações podem ser apresentadas à Ouvidoria?,usável,tipos de manifestação (ficha da Ouvidoria)
+3,FAQ da Ouvidoria de Maceió,3- Como posso fazer uma solicitação?,usável,passo a passo da manifestação
+4,FAQ da Ouvidoria de Maceió,4 – Que órgãos compõem Poder Executivo municipal?,descartada,a base não responde
+5,FAQ da Ouvidoria de Maceió,5 - Quem pode se manifestar?,descartada,a base não responde
+6,FAQ da Ouvidoria de Maceió,6 - É preciso se cadastrar no sistema?,descartada,"sim/não; a base responde, mas o conjunto não usa perguntas sim/não"
+7,FAQ da Ouvidoria de Maceió,7 - Quais as garantias de proteção à minha identidade?,usável,sigilo total garantido pela Ouvidoria
+8,FAQ da Ouvidoria de Maceió,8 – Como cadastrar-se?,usável,campos de cadastro (Identificação Básica / Completo)
+9,FAQ da Ouvidoria de Maceió,9 – É possível fazer uma manifestação anônima?,descartada,"sim/não; a base responde, mas o conjunto não usa perguntas sim/não"
+10,FAQ da Ouvidoria de Maceió,10 – Como recuperar a senha?,descartada,a base não responde
+11,FAQ da Ouvidoria de Maceió,11 - O que fazer se não souber qual é a ouvidoria certa para receber a manifestação?,descartada,a base não responde
+12,FAQ da Ouvidoria de Maceió,12 - É possível incluir anexos na manifestação?,descartada,"sim/não; a base responde, mas o conjunto não usa perguntas sim/não"
+13,FAQ da Ouvidoria de Maceió,13 - Qual o prazo para receber a resposta?,descartada,a base não responde
+14,FAQ da Ouvidoria de Maceió,14 – O que fazer em caso de perda de prazo de resposta?,descartada,a base não responde
+15,FAQ da Ouvidoria de Maceió,15 - É possível alterar minha manifestação depois que foi enviada?,descartada,a base não responde
+16,FAQ da Ouvidoria de Maceió,16 – Como acompanhar a resposta à manifestação?,usável,protocolo e e-mail para consultar o andamento
+17,FAQ da Ouvidoria de Maceió,"17 – Para fazer um pedido de acesso à informação, como proceder?",usável,passo a passo da LAI
+18,FAQ da Ouvidoria de Maceió,18 - Como apresentar uma denúncia? Quais são os requisitos necessários?,usável,denúncia: informações sobre o agente público e local obrigatório
+19,FAQ da Ouvidoria de Maceió,19 – Quem pode fazer uma denúncia?,descartada,a base não responde
+20,FAQ da Ouvidoria de Maceió,20 - Posso desistir de denúncia feita por mim? O que devo fazer?,descartada,a base não responde
+21,FAQ da Ouvidoria de Maceió,21 - Onde posso encontrar dados sobre as ouvidorias?,descartada,a base não responde
+22,FAQ da Ouvidoria de Maceió,22 – Mais alguma dúvida?,descartada,"item de pesquisa de satisfação, não é dúvida"
+23,FAQ da Ouvidoria de Maceió,"De modo geral, como você avalia a qualidade do atendimento às manifestações da Ouvidoria de Maceió?",descartada,"item de pesquisa de satisfação, não é dúvida"
+24,FAQ da Ouvidoria de Maceió,Nossos ouvidores conseguem captar adequadamente suas dúvidas referente a sua manifestação?,descartada,"item de pesquisa de satisfação, não é dúvida"
+25,FAQ da Ouvidoria de Maceió,O tempo foi suficiente esperar para que sua manifestação fosse atendida?,descartada,"item de pesquisa de satisfação, não é dúvida"
+26,FAQ da Ouvidoria de Maceió,"Em uma escala de satisfação, como você classifica a Ouvidoria de Maceió?",descartada,"item de pesquisa de satisfação, não é dúvida"
+27,FAQ da Ouvidoria de Maceió,"Qual a possibilidade, em uma escala de 0 a 10, de você indicar a Ouvidoria de Maceió para um amigo ou conhecido?",descartada,"item de pesquisa de satisfação, não é dúvida"
+28,FAQ da Ouvidoria de Maceió,Como você ficou sabendo da Ouvidoria?,descartada,"item de pesquisa de satisfação, não é dúvida"
+29,FAQ de IPTU da SEMEC (2016),O que é o IPTU?,usável,definição de IPTU (ficha de Guias de Tributos)
+30,FAQ de IPTU da SEMEC (2016),Como se calcula o IPTU?,descartada,a base não responde
+31,FAQ de IPTU da SEMEC (2016),Em que situação o contribuinte tem direito à isenção no IPTU?,descartada,a base não responde
+32,FAQ de IPTU da SEMEC (2016),"Sou isento, mas ainda está sendo cobrada a ‘Taxa de Lixo’. Preciso pagar?",descartada,a base não responde
+33,FAQ de IPTU da SEMEC (2016),Não minha rua não passa serviço de ‘coleta de lixo’. Preciso pagar a ‘Taxa de lixo’?,descartada,a base não responde
+34,FAQ de IPTU da SEMEC (2016),Imóveis do ‘MINHA CASA MINHA VIDA’ são isentos de IPTU?,descartada,a base não responde
+35,FAQ de IPTU da SEMEC (2016),Aonde o carnê é entregue?,descartada,a base não responde
+36,FAQ de IPTU da SEMEC (2016),Como gerar a Guia de IPTU?,usável,emissão de guias de tributos (filtro IM Imobiliária para IPTU)
+37,FAQ de IPTU da SEMEC (2016),3603 ou pelo email atendimento@semec.maceio.al.gov.br 9- Não sei o número da inscrição do meu imóvel. Como descobrir este número?,usável,consulta de número de matrícula de imóvel
+38,FAQ de IPTU da SEMEC (2016),Como fazer o parcelamento dos débitos de IPTU em atraso?,descartada,a base não responde
+39,FAQ de IPTU da SEMEC (2016),Tem percentual de desconto no pagamento à vista ou parcelado do IPTU em atraso?,descartada,a base não responde
+40,FAQ de IPTU da SEMEC (2016),"No caso de negociação de débito, qual o número máximo de parcelas?",descartada,a base não responde
+41,FAQ de IPTU da SEMEC (2016),Qual o procedimento para solicitar a revisão cadastral do meu imóvel?,descartada,a base não responde
+42,FAQ de IPTU da SEMEC (2016),Melhorias no imóvel podem implicar em aumento do IPTU?,descartada,a base não responde
+43,FAQ de IPTU da SEMEC (2016),Imóvel edificado irregularmente (SEM ‘HABITE-SE’) paga IPTU?,descartada,"sim/não; a base responde, mas o conjunto não usa perguntas sim/não"
+44,FAQ de IPTU da SEMEC (2016),Como devo proceder se não sou mais o proprietário do imóvel e recebo carta de cobrança do IPTU?,descartada,a base não responde
+45,FAQ de IPTU da SEMEC (2016),Débitos do IPTU podem penhorar bens e bloquear contas bancárias de proprietário do imóvel?,descartada,a base não responde
+46,FAQ de IPTU da SEMEC (2016),Os valores arrecadados de IPTU são para o calçamento de nossas ruas?,descartada,a base não responde

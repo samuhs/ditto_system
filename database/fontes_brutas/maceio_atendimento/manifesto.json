@@ -1,0 +1,52 @@
+{
+ "guia_de_servicos_segov.pdf": {
+  "url": "https://www.servicos.maceio.al.gov.br/servicos/resources/arquivos/GUIA-DE-SERVICOS.pdf",
+  "orgao": "Prefeitura de Maceió, SEGOV",
+  "titulo": "Guia de Serviços da Secretaria Municipal de Governo e de Subprefeituras, versão 01 (Carta de Serviços ao Usuário, Lei 13.460/2017)",
+  "confianca": "oficial",
+  "licenca": "documento público",
+  "uso": "base B3",
+  "sha256": "2b32e3d615abaf71aeca389e69b1ebeab4ca8361153f6da0d356103ef91f5032",
+  "coletado_em": "2026-10-14"
+ },
+ "lei_organica_maceio_iplam.pdf": {
+  "url": "https://www.iplam.maceio.al.gov.br/servicos/pdf/arquivos_compram/lei_organica_de_maceio.pdf",
+  "orgao": "IPLAM, Prefeitura de Maceió (compilação do LeisMunicipais)",
+  "titulo": "Lei Orgânica do Município de Maceió, consolidada",
+  "confianca": "oficial",
+  "licenca": "documento público (lei)",
+  "uso": "base B3",
+  "sha256": "c432a86e53c939a68b324d02503b6085f037a36bd55e669023210c2b4a12fc8e",
+  "coletado_em": "2026-10-14"
+ },
+ "lei_organica_maceio_dhnet_2007.pdf": {
+  "url": "https://www.dhnet.org.br/direitos/municipais/a_pdf/lei_organica_al_maceio.pdf",
+  "orgao": "DHnet",
+  "titulo": "Lei Orgânica do Município de Maceió, versão de 2007",
+  "confianca": "secundario",
+  "licenca": "documento público (lei)",
+  "uso": "só vocabulário para reparar ligaduras da cópia do IPLAM",
+  "sha256": "496e21a2a96c8bb71f76e5aadbe73e5e2f9bd178c1249fe26e525624fd5ccc3b",
+  "coletado_em": "2026-10-14"
+ },
+ "faq_iptu_semec_2016.pdf": {
+  "url": "https://semecmaceio.com/intranet/documents/2016/07/faq-iptu.pdf/",
+  "orgao": "Secretaria Municipal de Economia de Maceió",
+  "titulo": "Perguntas frequentes sobre IPTU (2016)",
+  "confianca": "oficial",
+  "licenca": "documento público",
+  "uso": "fonte de dúvidas reais para as perguntas (Q4); não entra na base",
+  "sha256": "fd0ec666a4fcba0556b5a4c5d4ee22b17b59bca27e73f2fe4b84398562ca7553",
+  "coletado_em": "2026-10-14"
+ },
+ "faq_ouvidoria.html": {
+  "url": "https://www.ouvidoria.maceio.al.gov.br/ouvidoria/faces/pages/perguntasfrequentes.xhtml",
+  "orgao": "Ouvidoria-Geral de Maceió",
+  "titulo": "Perguntas frequentes da Ouvidoria",
+  "confianca": "oficial",
+  "licenca": "documento público",
+  "uso": "fonte de dúvidas reais para as perguntas (Q4); não entra na base",
+  "sha256": "193b215d3ea5556bbb69853f814a36889cbd5a4b0c81c4c6ec7909d5d13bd35f",
+  "coletado_em": "2026-10-14"
+ }
+}
