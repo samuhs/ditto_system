@@ -11,7 +11,8 @@ vi.mock("../api/client");
 
 const round = {
   id: 5, name: "piloto", description: "", status: "open" as const, seed: 7, rubric_version: 1,
-  experiment_ids: [90], size: 10, pilot: false, strata: [], allocation: "proportional" as const, adjudicator_id: null, source_round_id: null, retest_annotator_id: null,
+  experiment_ids: [90], size: 10, kind: "single" as const, pilot: false, strata: [],
+  allocation: "proportional" as const, adjudicator_id: null, source_round_id: null, retest_annotator_id: null,
   created_at: "2026-10-13T03:00:00",
 };
 
@@ -81,7 +82,7 @@ describe("RodadasPage", () => {
     await userEvent.click(screen.getByRole("button", { name: /criar rodada/i }));
 
     expect(client.createAnnotationRound).toHaveBeenCalledWith({
-      name: "principal", items: ["90:7"], sample_size: 20, seed: 11,
+      name: "principal", kind: "single", items: ["90:7"], sample_size: 20, seed: 11,
       strata: ["question_type", "rag"], allocation: "equal", pilot: true,
     });
   });
@@ -129,6 +130,52 @@ describe("RodadasPage", () => {
     renderAt("/anotacao");
 
     expect(await screen.findByRole("link", { name: /abrir a tela de avaliação/i })).toHaveAttribute("href", "/anotar");
+  });
+
+  it("creates a pairwise Rodada from exactly two Combinações, with no sample_size when left blank", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      runs: [
+        { id: 7, chunking: "markdown", embedding: "e5", rag: "naive", retriever: "similarity", llm: "Qwen3.5-4B" },
+        { id: 8, chunking: "markdown", embedding: "e5", rag: "agentic", retriever: "similarity", llm: "Qwen3.5-4B" },
+      ],
+    } as never);
+    vi.mocked(client.createAnnotationRound).mockResolvedValue({ ...round, id: 9, name: "pares", kind: "pairwise" });
+    renderAt("/anotacao");
+
+    await userEvent.type(await screen.findByLabelText(/nome da rodada/i), "pares");
+    await userEvent.click(screen.getByRole("radio", { name: /comparação lado a lado/i }));
+    await userEvent.selectOptions(await screen.findByLabelText("Base"), "campanha-b2");
+    await userEvent.selectOptions(await screen.findByLabelText("Experimento"), "90");
+    const picker = screen.getByRole("region", { name: /adicionar combinações/i });
+    const checkboxes = await within(picker).findAllByRole("checkbox");
+    await userEvent.click(checkboxes[0]);
+    await userEvent.click(checkboxes[1]);
+    await userEvent.click(screen.getByRole("button", { name: /criar rodada/i }));
+
+    expect(client.createAnnotationRound).toHaveBeenCalledWith({
+      name: "pares", kind: "pairwise", items: ["90:7", "90:8"], strata: [], allocation: "proportional", pilot: false,
+    });
+  });
+
+  it("disables a third Combinação once a pairwise Rodada already has two", async () => {
+    vi.mocked(client.getExperiment).mockResolvedValue({
+      runs: [
+        { id: 7, chunking: "markdown", embedding: "e5", rag: "naive", retriever: "similarity", llm: "Qwen3.5-4B" },
+        { id: 8, chunking: "markdown", embedding: "e5", rag: "agentic", retriever: "similarity", llm: "Qwen3.5-4B" },
+        { id: 9, chunking: "markdown", embedding: "e5", rag: "compression", retriever: "similarity", llm: "Qwen3.5-4B" },
+      ],
+    } as never);
+    renderAt("/anotacao");
+
+    await userEvent.click(await screen.findByRole("radio", { name: /comparação lado a lado/i }));
+    await userEvent.selectOptions(await screen.findByLabelText("Base"), "campanha-b2");
+    await userEvent.selectOptions(await screen.findByLabelText("Experimento"), "90");
+    const picker = screen.getByRole("region", { name: /adicionar combinações/i });
+    const checkboxes = await within(picker).findAllByRole("checkbox");
+    await userEvent.click(checkboxes[0]);
+    await userEvent.click(checkboxes[1]);
+
+    expect(checkboxes[2]).toBeDisabled();
   });
 });
 
@@ -368,6 +415,96 @@ describe("RodadaDetailPage", () => {
     renderAt("/anotacao/5");
 
     expect(await screen.findByRole("link", { name: /notas \(csv\)/i })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /latex/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("RodadaDetailPage pairwise", () => {
+  const pairRound = { ...round, id: 6, name: "pares", kind: "pairwise" as const, status: "closed" as const };
+
+  const pairAgreement = {
+    round: pairRound, avaliadores: ["Ana", "Bruno"], note: null,
+    dimension: {
+      n: 4, alpha: { value: 0.75, low: 0.5, high: 0.9 },
+      kappa_unweighted: { value: 0.2, low: 0.0, high: 0.4 }, kappa_linear: { value: 0.43, low: 0.2, high: 0.6 },
+      confusion: { avaliadores: ["Ana", "Bruno"], levels: ["A", "tie", "B"], matrix: [[1, 0, 0], [0, 0, 1], [0, 1, 1]] },
+    },
+    disagreements: [{
+      item_id: 41, position: 1, question: "Qual é o telefone da Defesa Civil?",
+      notes: {
+        Ana: { preference: "A", reasons: ["mais_correta"], cannot_evaluate: false, reason: null, comment: null },
+        Bruno: { preference: "B", reasons: ["mais_concisa"], cannot_evaluate: false, reason: null, comment: null },
+      },
+    }],
+  };
+
+  const pairSummary = {
+    round: pairRound,
+    pair_run_1: { experiment_id: 96, run_id: 355, chunking: "markdown", embedding: "e5", rag: "naive",
+      retriever: "similarity", llm: "Gemma3-4B" },
+    pair_run_2: { experiment_id: 96, run_id: 356, chunking: "markdown", embedding: "e5", rag: "agentic",
+      retriever: "similarity", llm: "Gemma3-4B" },
+    avaliadores: {
+      Ana: {
+        wins: { "1": 2, "2": 1 }, ties: 1, n_decided: 3, sign_test_p: 1.0,
+        proportion: { "1": { value: 2 / 3, low: 0.21, high: 0.94 }, "2": { value: 1 / 3, low: 0.06, high: 0.79 } },
+        reasons: { "1": { mais_correta: 2 }, "2": { mais_concisa: 1 } },
+      },
+    },
+    final: {
+      wins: { "1": 2, "2": 1 }, ties: 1, n_decided: 3, sign_test_p: 1.0,
+      proportion: { "1": { value: 2 / 3, low: 0.21, high: 0.94 }, "2": { value: 1 / 3, low: 0.06, high: 0.79 } },
+      reasons: { "1": { mais_correta: 2 }, "2": { mais_concisa: 1 } },
+    },
+    pending: 0,
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(client.listAnnotators).mockResolvedValue([]);
+    vi.mocked(client.getAnnotationRound).mockResolvedValue({
+      ...pairRound, progress: [{ annotator_id: 3, name: "Ana", done: 4, total: 4 }],
+    });
+    vi.mocked(client.getAnnotationAgreement).mockResolvedValue(pairAgreement as never);
+    vi.mocked(client.getPairwiseSummary).mockResolvedValue(pairSummary as never);
+  });
+
+  it("shows the round as a side-by-side comparison in the header", async () => {
+    renderAt("/anotacao/6");
+
+    expect(await screen.findByText(/comparação lado a lado/i)).toBeInTheDocument();
+  });
+
+  it("shows the pairwise Concordância with unweighted and linear kappa", async () => {
+    renderAt("/anotacao/6");
+
+    expect(await screen.findByText("0,20 [0,00; 0,40]")).toBeInTheDocument();
+    expect(screen.getByText("0,43 [0,20; 0,60]")).toBeInTheDocument();
+    expect(client.getAnnotationAgreement).toHaveBeenCalledWith(6);
+  });
+
+  it("shows the pairwise summary: wins, ties, sign test and win proportion per Avaliador and final", async () => {
+    renderAt("/anotacao/6");
+
+    expect(await screen.findByText(/resumo da comparação/i)).toBeInTheDocument();
+    const table = await screen.findByRole("table", { name: /resumo da comparação/i });
+    expect(within(table).getByText("naive · Gemma3-4B")).toBeInTheDocument();
+    expect(within(table).getByText("agentic · Gemma3-4B")).toBeInTheDocument();
+    const anaRow = within(table).getByText("Ana").closest("tr")!;
+    expect(within(anaRow).getAllByText("1")).toHaveLength(2); // ties and run 2's wins
+    expect(within(anaRow).getByText("2")).toBeInTheDocument(); // run 1's wins
+    expect(within(anaRow).getByText(/mais correta: 2/)).toBeInTheDocument();
+    const finalRow = within(table).getByText("Final").closest("tr")!;
+    expect(within(finalRow).getByText(/67%/)).toBeInTheDocument();
+    expect(client.getPairwiseSummary).toHaveBeenCalledWith(6);
+  });
+
+  it("does not offer the reteste or the automatic-metrics validation for a pairwise Rodada", async () => {
+    renderAt("/anotacao/6");
+    await screen.findByText(/resumo da comparação/i);
+
+    expect(screen.queryByText(/reteste/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/nota humana × métricas automáticas/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /latex/i })).not.toBeInTheDocument();
   });
 });

@@ -8,21 +8,28 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.annotation.export import to_csv, to_latex
+from app.annotation.export import to_csv, to_latex, to_pair_csv
 from app.annotation.rubric import RUBRIC
 from app.annotation.service import (
     AnnotationError,
     adjudicate,
     adjudication_view,
     close_round,
+    create_pairwise_round,
     create_retest,
     create_round,
+    delete_round,
     final_notes,
     get_annotator,
     get_round,
     join_round,
     list_rounds as list_round_summaries,
     note_out,
+    pairwise_adjudicate,
+    pairwise_adjudication_view,
+    pairwise_final_notes,
+    pairwise_note_out,
+    pairwise_summary,
     preview_round,
     queue,
     remove_participant,
@@ -32,6 +39,7 @@ from app.annotation.service import (
     round_summary,
     round_validation,
     save_note,
+    save_pairwise_note,
     set_adjudicator,
 )
 from app.api.deps import get_session_factory
@@ -60,21 +68,30 @@ class AnnotatorPatch(BaseModel):
 class RoundIn(BaseModel):
     name: str = Field(max_length=120)
     # The Combinações to sample from ("experiment:run"), or every run of one Experimento.
+    # A pairwise Rodada (kind="pairwise") takes exactly two.
     items: list[str] | None = None
     experiment_id: int | None = None
-    sample_size: int = Field(gt=0)
+    # Optional for a pairwise Rodada (every common question goes in); required otherwise.
+    sample_size: int | None = Field(None, gt=0)
     seed: int | None = Field(None, ge=0, le=2**31 - 1)  # the column is a 32-bit integer
     description: str = ""
     strata: list[Literal["question_type", "rag", "llm"]] = []
     allocation: Literal["proportional", "equal"] = "proportional"
     pilot: bool = False
+    kind: Literal["single", "pairwise"] = "single"
 
     _not_blank = field_validator("name")(_clean_name)
 
     @model_validator(mode="after")
     def _has_source(self) -> "RoundIn":
+        if self.kind == "pairwise":
+            if not self.items or len(self.items) != 2:
+                raise ValueError("uma rodada de comparação usa exatamente duas Combinações (items)")
+            return self
         if not self.items and self.experiment_id is None:
             raise ValueError("informe as Combinações (items) ou o experiment_id")
+        if self.sample_size is None:
+            raise ValueError("informe o sample_size")
         return self
 
 
@@ -99,6 +116,19 @@ class NoteIn(BaseModel):
     cannot_evaluate: bool = False
     reason: str | None = Field(None, max_length=500)
     comment: str | None = Field(None, max_length=2000)
+
+
+class PairNoteIn(BaseModel):
+    preference: Literal["A", "tie", "B"] | None = None
+    reasons: list[Literal["mais_correta", "mais_completa", "mais_concisa", "menos_invencao", "outro"]] = []
+    cannot_evaluate: bool = False
+    reason: str | None = Field(None, max_length=500)
+    comment: str | None = Field(None, max_length=2000)
+
+
+class PairAdjudicationIn(BaseModel):
+    annotator_id: int
+    preference: Literal["A", "tie", "B"]
 
 
 def _annotator_out(a: Annotator) -> dict:
@@ -176,12 +206,19 @@ def list_rounds(session: Session = Depends(_session)) -> list[dict]:
 
 @router.post("/annotation/rounds", status_code=201)
 def post_round(body: RoundIn, session: Session = Depends(_session)) -> dict:
-    """Sample answers of an Experimento into a new Rodada (same seed, same sample)."""
-    rnd = _or_http(lambda: create_round(
-        session, body.name, body.sample_size, items=body.items, experiment_id=body.experiment_id,
-        seed=body.seed, description=body.description, strata=list(body.strata),
-        allocation=body.allocation, pilot=body.pilot,
-    ))
+    """Sample answers of an Experimento into a new Rodada (same seed, same sample); `kind="pairwise"`
+    instead samples questions both of its two Combinações answered, for a side-by-side comparison."""
+    if body.kind == "pairwise":
+        rnd = _or_http(lambda: create_pairwise_round(
+            session, body.name, body.items or [], sample_size=body.sample_size, seed=body.seed,
+            description=body.description, pilot=body.pilot,
+        ))
+    else:
+        rnd = _or_http(lambda: create_round(
+            session, body.name, body.sample_size, items=body.items, experiment_id=body.experiment_id,
+            seed=body.seed, description=body.description, strata=list(body.strata),
+            allocation=body.allocation, pilot=body.pilot,
+        ))
     return round_summary(rnd)
 
 
@@ -235,10 +272,33 @@ def put_adjudication(item_id: int, body: AdjudicationIn, session: Session = Depe
     return {"item_id": decision.item_id, "correctness": decision.correctness, "grounding": decision.grounding}
 
 
+@router.get("/annotation/rounds/{round_id}/pair-adjudication")
+def get_pair_adjudication(round_id: int, annotator_id: int = Query(...),
+                          session: Session = Depends(_session)) -> dict:
+    """The disputed Items of a closed pairwise Rodada, for its adjudicator only."""
+    return _or_http(lambda: pairwise_adjudication_view(session, get_round(session, round_id),
+                                                       get_annotator(session, annotator_id)))
+
+
+@router.put("/annotation/pair-items/{item_id}/adjudication")
+def put_pair_adjudication(item_id: int, body: PairAdjudicationIn, session: Session = Depends(_session)) -> dict:
+    """The adjudicator's final preference on a disputed pairwise Item."""
+    decision = _or_http(lambda: pairwise_adjudicate(session, item_id, body.annotator_id, body.preference))
+    return {"item_id": decision.item_id, "preference": decision.preference}
+
+
 @router.get("/annotation/rounds/{round_id}/final")
 def get_final(round_id: int, session: Session = Depends(_session)) -> dict:
     """The Nota final of each Item and how many are still pending."""
     return _or_http(lambda: final_notes(session, get_round(session, round_id)))
+
+
+@router.get("/annotation/rounds/{round_id}/pairwise-summary")
+def get_pairwise_summary(round_id: int, session: Session = Depends(_session)) -> dict:
+    """Per Avaliador, and for the final preference: wins of each Combinação, ties, a sign test
+    p-value, each side's win proportion with a 95% Wilson CI, and reason counts among each
+    side's wins. The only endpoint that unblinds which Combinação is which."""
+    return _or_http(lambda: pairwise_summary(session, get_round(session, round_id)))
 
 
 @router.get("/annotation/rounds/{round_id}/validation")
@@ -270,10 +330,15 @@ def _download(content: str, media_type: str, filename: str) -> Response:
 
 @router.get("/annotation/rounds/{round_id}/export.csv")
 def export_csv(round_id: int, excel: bool = Query(False), session: Session = Depends(_session)) -> Response:
-    """Every note of the Rodada (long format) with the Nota final and the automatic metrics;
-    `excel=true` gives the ";"-separated, formula-safe version for spreadsheets in PT-BR."""
+    """Every note of the Rodada (long format); a pairwise Rodada's also unblinds which
+    Combina\u00e7\u00e3o was A and what each preference favors. `excel=true` gives the ";"-separated,
+    formula-safe version for spreadsheets in PT-BR."""
     rnd = _or_http(lambda: get_round(session, round_id))
-    content = "\ufeff" + to_csv(session, rnd, final_notes(session, rnd), excel)  # BOM: spreadsheets read UTF-8
+    if rnd.kind == "pairwise":
+        body = to_pair_csv(session, rnd, pairwise_final_notes(session, rnd), excel)
+    else:
+        body = to_csv(session, rnd, final_notes(session, rnd), excel)
+    content = "\ufeff" + body  # BOM: spreadsheets read UTF-8
     return _download(content, "text/csv; charset=utf-8", f"anotacao-rodada-{round_id}.csv")
 
 
@@ -325,3 +390,21 @@ def put_note(item_id: int, annotator_id: int, body: NoteIn, session: Session = D
     note = _or_http(lambda: save_note(session, item_id, annotator_id, body.correctness, body.grounding,
                                       body.cannot_evaluate, body.reason, body.comment))
     return {"item_id": note.item_id, "annotator_id": note.annotator_id, **note_out(note)}
+
+
+@router.put("/annotation/pair-items/{item_id}/notes/{annotator_id}")
+def put_pair_note(item_id: int, annotator_id: int, body: PairNoteIn, session: Session = Depends(_session)) -> dict:
+    """Save (or replace) one Avaliador's preference on a pairwise Item."""
+    note = _or_http(lambda: save_pairwise_note(session, item_id, annotator_id, body.preference,
+                                               list(body.reasons), body.cannot_evaluate, body.reason,
+                                               body.comment))
+    return {"item_id": note.item_id, "annotator_id": note.annotator_id, **pairwise_note_out(note)}
+
+
+@router.delete("/annotation/rounds/{round_id}")
+def delete_round_route(round_id: int, session: Session = Depends(_session)) -> dict:
+    """Delete a Rodada created by mistake; refused (409) if anyone has already noted any of its
+    Items, so a slip never loses data."""
+    rnd = _or_http(lambda: get_round(session, round_id))
+    _or_http(lambda: delete_round(session, rnd))
+    return {"round_id": round_id, "deleted": True}

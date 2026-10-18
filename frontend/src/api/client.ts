@@ -32,6 +32,12 @@ import type {
   FlowSpec,
   IngestResult,
   Options,
+  PairAdjudicationView,
+  PairwiseAgreement,
+  PairwiseNoteValues,
+  PairwisePreference,
+  PairwiseQueue,
+  PairwiseSummary,
   Persona,
   PromptsResponse,
   Rubric,
@@ -378,9 +384,11 @@ export async function closeAnnotationRound(id: number): Promise<AnnotationRoundS
   return asJson<AnnotationRoundSummary>(await fetch(`${BASE}/annotation/rounds/${id}/close`, { method: "POST" }));
 }
 
-/** Concordância between the Avaliadores of a Rodada (kappa, alpha, disagreements). */
-export async function getAnnotationAgreement(id: number): Promise<AnnotationAgreement> {
-  return asJson<AnnotationAgreement>(await fetch(`${BASE}/annotation/rounds/${id}/agreement`));
+/** Concordância between the Avaliadores of a Rodada (kappa, alpha, disagreements); a pairwise
+ * Rodada's has a different shape (`dimension` instead of `dimensions`), told apart by
+ * `round.kind`. */
+export async function getAnnotationAgreement(id: number): Promise<AnnotationAgreement | PairwiseAgreement> {
+  return asJson(await fetch(`${BASE}/annotation/rounds/${id}/agreement`));
 }
 
 /** Designates (or clears, with null) the Rodada's adjudicator. */
@@ -438,4 +446,48 @@ export function annotationExportUrl(
   if (kind === "csv" && excel) params.set("excel", "true");
   const query = params.toString();
   return `${BASE}/annotation/rounds/${roundId}/export.${kind}${query ? `?${query}` : ""}`;
+}
+
+/** Deletes a Rodada created by mistake; refused (409) once it has any notes. */
+export async function deleteAnnotationRound(roundId: number): Promise<{ round_id: number; deleted: boolean }> {
+  return asJson(await fetch(`${BASE}/annotation/rounds/${roundId}`, { method: "DELETE" }));
+}
+
+// ---- Pairwise (side-by-side) comparison Rodadas ----
+
+/** A pairwise Rodada as one Avaliador sees it: blind, with only that Avaliador's notes. */
+export async function getPairwiseQueue(roundId: number, annotatorId: number): Promise<PairwiseQueue> {
+  return asJson<PairwiseQueue>(
+    await fetch(`${BASE}/annotation/rounds/${roundId}/queue?annotator_id=${annotatorId}`),
+  );
+}
+
+export async function savePairwiseNote(
+  itemId: number, annotatorId: number, note: PairwiseNoteValues,
+): Promise<PairwiseNoteValues & { item_id: number; annotator_id: number }> {
+  return asJson(await fetch(`${BASE}/annotation/pair-items/${itemId}/notes/${annotatorId}`, {
+    method: "PUT", ...json(note),
+  }));
+}
+
+/** The disputed Items of a closed pairwise Rodada, for its adjudicator only. */
+export async function getPairAdjudication(roundId: number, annotatorId: number): Promise<PairAdjudicationView> {
+  return asJson<PairAdjudicationView>(
+    await fetch(`${BASE}/annotation/rounds/${roundId}/pair-adjudication?annotator_id=${annotatorId}`),
+  );
+}
+
+export async function savePairAdjudication(
+  itemId: number, annotatorId: number, preference: PairwisePreference,
+): Promise<{ item_id: number; preference: PairwisePreference }> {
+  return asJson(await fetch(`${BASE}/annotation/pair-items/${itemId}/adjudication`, {
+    method: "PUT", ...json({ annotator_id: annotatorId, preference }),
+  }));
+}
+
+/** Per Avaliador, and for the final preference: wins of each Combinação, ties, a sign test
+ * p-value, each side's win proportion with a 95% Wilson CI, and reason counts. The only call
+ * that unblinds which Combinação is which. */
+export async function getPairwiseSummary(roundId: number): Promise<PairwiseSummary> {
+  return asJson<PairwiseSummary>(await fetch(`${BASE}/annotation/rounds/${roundId}/pairwise-summary`));
 }

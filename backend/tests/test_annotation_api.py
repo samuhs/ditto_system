@@ -1227,3 +1227,381 @@ def test_the_latex_can_be_written_in_english_for_the_english_paper(env):
     names = [client.get(f"/annotation/rounds/{rnd['id']}/export.tex", params={"resamples": 100, **p}).headers[
         "content-disposition"] for p in ({}, {"decimal": "comma"}, {"lang": "en"})]
     assert len(set(names)) == 3 and "-en.tex" in names[2]
+
+
+# ---- pairwise (side-by-side) comparison rounds ----
+
+def _pair_experiment(session_factory, q1: list[str], q2: list[str], base="guia") -> tuple[int, int, int]:
+    """One Experimento with two Combinações (naive, agentic); run 1 answers `q1`, run 2 `q2`."""
+    session = session_factory()
+    experiment = Experiment(name="pares", status="done", config={"base": base})
+    for k, (rag, questions) in enumerate((("naive", q1), ("agentic", q2))):
+        run = ExperimentRun(chunking="markdown", embedding="e5", rag_technique=rag,
+                            retriever="similarity", llm="qwen3.5", status="done")
+        for q in questions:
+            run.results.append(RunResult(
+                question=q, reference_answer=f"Ref {q}", generated_answer=f"Resposta {k} a {q}",
+                retrieved_context=[f"Trecho {k} de {q}"], scores={"answer_correctness": 0.5},
+            ))
+        experiment.runs.append(run)
+    session.add(experiment)
+    session.commit()
+    experiment_id, run_ids = experiment.id, [r.id for r in experiment.runs]
+    session.close()
+    return experiment_id, run_ids[0], run_ids[1]
+
+
+def _pair_items_arg(experiment_id, run1, run2) -> list[str]:
+    return [f"{experiment_id}:{run1}", f"{experiment_id}:{run2}"]
+
+
+def _pair_round(client, items, **over) -> dict:
+    body = {"name": "pares", "kind": "pairwise", "items": items, **over}
+    response = client.post("/annotation/rounds", json=body)
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def _pair_items_by_position(sf, round_id) -> list[dict]:
+    from app.core.db.models import AnnotationPairItem
+    session = sf()
+    items = session.query(AnnotationPairItem).filter_by(round_id=round_id) \
+        .order_by(AnnotationPairItem.position).all()
+    out = [{"id": i.id, "question": i.question, "a_is_1": i.a_is_1} for i in items]
+    session.close()
+    return out
+
+
+def _pair_note(client, item_id, annotator_id, **over):
+    body = {"preference": None, "reasons": [], "cannot_evaluate": False, "reason": None, "comment": None, **over}
+    return client.put(f"/annotation/pair-items/{item_id}/notes/{annotator_id}", json=body)
+
+
+def test_a_pairwise_round_pairs_only_the_common_questions(env):
+    client, sf = env
+    q1 = [f"Q{i}?" for i in range(5)]
+    q2 = [f"Q{i}?" for i in range(2, 7)]
+    experiment_id, r1, r2 = _pair_experiment(sf, q1, q2)
+
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+
+    assert rnd["kind"] == "pairwise"
+    assert rnd["size"] == 3  # Q2, Q3, Q4 only
+    items = _pair_items_by_position(sf, rnd["id"])
+    assert sorted(i["question"] for i in items) == ["Q2?", "Q3?", "Q4?"]
+
+
+def test_pairwise_sample_size_samples_that_many_common_questions(env):
+    client, sf = env
+    q = [f"Q{i}?" for i in range(10)]
+    experiment_id, r1, r2 = _pair_experiment(sf, q, q)
+
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2), sample_size=4, seed=1)
+
+    assert rnd["size"] == 4
+
+
+def test_asking_for_more_common_questions_than_exist_is_refused(env):
+    client, sf = env
+    q = [f"Q{i}?" for i in range(3)]
+    experiment_id, r1, r2 = _pair_experiment(sf, q, q)
+
+    response = client.post("/annotation/rounds", json={
+        "name": "pares", "kind": "pairwise", "items": _pair_items_arg(experiment_id, r1, r2), "sample_size": 10,
+    })
+
+    assert response.status_code == 422
+    assert "3" in response.json()["detail"]
+
+
+def test_a_pairwise_round_needs_exactly_two_combinations(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+
+    one_item = client.post("/annotation/rounds", json={
+        "name": "x", "kind": "pairwise", "items": [f"{experiment_id}:{r1}"],
+    })
+    three_items = client.post("/annotation/rounds", json={
+        "name": "x", "kind": "pairwise",
+        "items": [f"{experiment_id}:{r1}", f"{experiment_id}:{r2}", f"{experiment_id}:{r1}"],
+    })
+
+    assert one_item.status_code == 422
+    assert three_items.status_code == 422
+
+
+def test_the_ab_order_is_reproducible_with_the_seed(env):
+    client, sf = env
+    q = [f"Q{i}?" for i in range(6)]
+    experiment_id, r1, r2 = _pair_experiment(sf, q, q)
+    items = _pair_items_arg(experiment_id, r1, r2)
+    ana = _annotator(client, "Ana")
+
+    def answer_by_question(seed):
+        rnd = _pair_round(client, items, seed=seed)
+        qs = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()["items"]
+        return {i["question"]: i["answer_a"] for i in qs}
+
+    first, second = answer_by_question(5), answer_by_question(5)
+    assert first == second
+    assert answer_by_question(6) != first
+
+
+def test_the_queue_is_blind_for_pairwise_rounds(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+    ana = _annotator(client)
+
+    item = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()["items"][0]
+
+    hidden = {"rag", "llm", "experiment_id", "combination", "source_result_id_1", "source_result_id_2",
+              "answer_1", "answer_2", "context_1", "context_2"}
+    assert hidden.isdisjoint(item)
+    assert "naive" not in str(item) and "agentic" not in str(item) and "qwen" not in str(item)
+    assert {"answer_a", "answer_b", "context_a", "context_b"} <= set(item)
+
+
+def test_pairwise_note_requires_a_preference_or_cannot_evaluate(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+    ana = _annotator(client)
+    item_id = client.get(f"/annotation/rounds/{rnd['id']}/queue",
+                         params={"annotator_id": ana}).json()["items"][0]["id"]
+
+    assert _pair_note(client, item_id, ana).status_code == 422  # no preference
+    assert _pair_note(client, item_id, ana, preference="A").status_code == 422  # no reasons
+    assert _pair_note(client, item_id, ana, preference="A", reasons=["mais_correta"]).status_code == 200
+    assert _pair_note(client, item_id, ana, preference="tie", reasons=["mais_correta"]).status_code == 422
+    assert _pair_note(client, item_id, ana, preference="tie").status_code == 200
+    assert _pair_note(client, item_id, ana, cannot_evaluate=True).status_code == 422  # no reason text
+    assert _pair_note(client, item_id, ana, cannot_evaluate=True, reason="ambígua").status_code == 200
+    assert _pair_note(client, item_id, ana, cannot_evaluate=True, reason="ambígua",
+                      preference="A").status_code == 422
+
+
+def test_an_invalid_pairwise_reason_is_refused(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+    ana = _annotator(client)
+    item_id = client.get(f"/annotation/rounds/{rnd['id']}/queue",
+                         params={"annotator_id": ana}).json()["items"][0]["id"]
+
+    assert _pair_note(client, item_id, ana, preference="A", reasons=["chute"]).status_code == 422
+
+
+def test_a_pairwise_note_is_saved_and_shown_in_the_queue(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+    ana = _annotator(client)
+    item_id = client.get(f"/annotation/rounds/{rnd['id']}/queue",
+                         params={"annotator_id": ana}).json()["items"][0]["id"]
+
+    saved = _pair_note(client, item_id, ana, preference="B", reasons=["mais_completa", "mais_concisa"],
+                       comment="Melhor organizada.")
+
+    assert saved.status_code == 200
+    queue = client.get(f"/annotation/rounds/{rnd['id']}/queue", params={"annotator_id": ana}).json()
+    assert queue["items"][0]["note"] == {"preference": "B", "reasons": ["mais_completa", "mais_concisa"],
+                                        "cannot_evaluate": False, "reason": None, "comment": "Melhor organizada."}
+    assert queue["done"] == 1
+
+
+def test_pairwise_export_unblinds_which_combination_was_a_and_translates_the_preference(env):
+    import csv
+    import io
+    client, sf = env
+    q = ["Q0?", "Q1?"]
+    experiment_id, r1, r2 = _pair_experiment(sf, q, q)
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2), seed=3)
+    ana = _annotator(client, "Ana")
+    items = _pair_items_by_position(sf, rnd["id"])
+    _pair_note(client, items[0]["id"], ana, preference="A", reasons=["mais_correta"])
+    _pair_note(client, items[1]["id"], ana, preference="B", reasons=["mais_concisa"])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+
+    response = client.get(f"/annotation/rounds/{rnd['id']}/export.csv")
+
+    assert response.status_code == 200
+    rows = list(csv.DictReader(io.StringIO(response.text.lstrip("﻿"))))
+    assert len(rows) == 2
+    for row in rows:
+        assert row["run1_rag"] == "naive" and row["run2_rag"] == "agentic"
+        assert row["a_e_do_run"] in ("1", "2")
+        assert row["preferencia"] in ("naive·qwen3.5 melhor", "agentic·qwen3.5 melhor")
+    row0 = next(r for r in rows if int(r["item"]) == items[0]["id"])
+    expected_label = "naive·qwen3.5" if row0["a_e_do_run"] == "1" else "agentic·qwen3.5"
+    assert row0["preferencia"] == f"{expected_label} melhor"
+    assert row0["preferencia_final"] == row0["preferencia"]
+    assert row0["situacao_final"] == "uma nota"
+
+
+def test_pairwise_agreement_has_kappa_variants_and_alpha(env):
+    client, sf = env
+    q = [f"Q{i}?" for i in range(4)]
+    experiment_id, r1, r2 = _pair_experiment(sf, q, q)
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2), seed=9)
+    ana, bruno = _annotator(client, "Ana"), _annotator(client, "Bruno")
+    items = _pair_items_by_position(sf, rnd["id"])
+    # The same (0, 1, 2, 2) / (0, 2, 2, 1) sequence hand-worked for kappa in test_annotation_agreement.py,
+    # with 0="A", 1="tie", 2="B": kappa unweighted 0.2, kappa linear 3/7, kappa quadratic 7/11.
+    for item, pref in zip(items, ["A", "tie", "B", "B"]):
+        _pair_note(client, item["id"], ana, preference=pref, reasons=([] if pref == "tie" else ["mais_correta"]))
+    for item, pref in zip(items, ["A", "B", "B", "tie"]):
+        _pair_note(client, item["id"], bruno, preference=pref, reasons=([] if pref == "tie" else ["mais_correta"]))
+
+    result = client.get(f"/annotation/rounds/{rnd['id']}/agreement", params={"resamples": 200}).json()
+
+    dim = result["dimension"]
+    assert dim["n"] == 4
+    assert dim["kappa_unweighted"]["value"] == pytest.approx(0.2)
+    assert dim["kappa_linear"]["value"] == pytest.approx(3 / 7)
+    assert dim["alpha"]["value"] is not None
+    assert dim["confusion"]["avaliadores"] == ["Ana", "Bruno"]
+    assert dim["confusion"]["levels"] == ["A", "tie", "B"]
+    assert dim["confusion"]["matrix"] == [[1, 0, 0], [0, 0, 1], [0, 1, 1]]
+    assert len(result["disagreements"]) == 2
+
+
+def test_pairwise_summary_gives_wins_ties_sign_test_and_wilson_ci(env):
+    client, sf = env
+    q = [f"Q{i}?" for i in range(4)]
+    experiment_id, r1, r2 = _pair_experiment(sf, q, q)
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2), seed=4)
+    ana = _annotator(client, "Ana")
+    items = _pair_items_by_position(sf, rnd["id"])
+    # Want: run 1 wins twice, run 2 once, one tie, whichever item's own A/B coin flip came up.
+    for item, want in zip(items, ["1", "1", "2", "tie"]):
+        if want == "tie":
+            _pair_note(client, item["id"], ana, preference="tie")
+        else:
+            preference = "A" if (want == "1") == item["a_is_1"] else "B"
+            _pair_note(client, item["id"], ana, preference=preference, reasons=["mais_correta"])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+
+    result = client.get(f"/annotation/rounds/{rnd['id']}/pairwise-summary").json()
+
+    ana_summary = result["avaliadores"]["Ana"]
+    assert ana_summary["wins"] == {"1": 2, "2": 1}
+    assert ana_summary["ties"] == 1
+    assert ana_summary["n_decided"] == 3
+    assert ana_summary["sign_test_p"] == pytest.approx(1.0)  # n=10,k=2 would be 0.109; here n=3,k=1: 1.0
+    assert ana_summary["proportion"]["1"]["value"] == pytest.approx(2 / 3)
+    assert ana_summary["proportion"]["1"]["low"] == pytest.approx(0.2077, abs=0.001)
+    assert ana_summary["proportion"]["1"]["high"] == pytest.approx(0.9385, abs=0.001)
+    assert ana_summary["reasons"]["1"] == {"mais_correta": 2}
+    assert result["final"]["wins"] == {"1": 2, "2": 1}  # a single Avaliador: the final is their own
+    assert result["pair_run_1"]["rag"] == "naive"
+    assert result["pair_run_2"]["rag"] == "agentic"
+
+
+def test_pairwise_adjudication_decides_the_final_preference(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+    ana, bruno, ori = _annotator(client, "Ana"), _annotator(client, "Bruno"), _annotator(client, "Orientador")
+    item = _pair_items_by_position(sf, rnd["id"])[0]
+    _pair_note(client, item["id"], ana, preference="A", reasons=["mais_correta"])
+    _pair_note(client, item["id"], bruno, preference="B", reasons=["mais_concisa"])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+    client.patch(f"/annotation/rounds/{rnd['id']}", json={"adjudicator_id": ori})
+
+    view = client.get(f"/annotation/rounds/{rnd['id']}/pair-adjudication", params={"annotator_id": ori}).json()
+    assert len(view["items"]) == 1
+    assert view["items"][0]["notes"]["Ana"]["preference"] == "A"
+    assert view["items"][0]["notes"]["Bruno"]["preference"] == "B"
+
+    decided = client.put(f"/annotation/pair-items/{item['id']}/adjudication",
+                         json={"annotator_id": ori, "preference": "B"})
+    assert decided.status_code == 200
+
+    final = client.get(f"/annotation/rounds/{rnd['id']}/pairwise-summary").json()["final"]
+    expected_side = "2" if item["a_is_1"] else "1"  # "B" won: translate to which run that is
+    other_side = "1" if expected_side == "2" else "2"
+    assert final["wins"][expected_side] == 1
+    assert final["wins"][other_side] == 0
+
+
+def test_an_item_without_disagreement_cannot_be_pair_adjudicated(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+    ana, ori = _annotator(client, "Ana"), _annotator(client, "Orientador")
+    item = _pair_items_by_position(sf, rnd["id"])[0]
+    _pair_note(client, item["id"], ana, preference="A", reasons=["mais_correta"])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+    client.patch(f"/annotation/rounds/{rnd['id']}", json={"adjudicator_id": ori})
+
+    response = client.put(f"/annotation/pair-items/{item['id']}/adjudication",
+                          json={"annotator_id": ori, "preference": "B"})
+
+    assert response.status_code == 409
+
+
+def test_single_rounds_default_to_kind_single_and_are_unaffected(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+
+    assert rnd["kind"] == "single"
+    assert client.get("/annotation/rounds").json()[0]["kind"] == "single"
+    assert client.get(f"/annotation/rounds/{rnd['id']}").json()["kind"] == "single"
+
+
+def test_validation_retest_and_latex_are_refused_for_pairwise_rounds(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+    ana = _annotator(client)
+    item = _pair_items_by_position(sf, rnd["id"])[0]
+    _pair_note(client, item["id"], ana, preference="A", reasons=["mais_correta"])
+    client.post(f"/annotation/rounds/{rnd['id']}/close")
+
+    assert client.get(f"/annotation/rounds/{rnd['id']}/validation").status_code == 409
+    assert client.get(f"/annotation/rounds/{rnd['id']}/export.tex").status_code == 409
+    assert client.post(f"/annotation/rounds/{rnd['id']}/retest", json={"annotator_id": ana}).status_code == 409
+
+
+def test_deleting_a_round_without_notes_succeeds(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=2)
+
+    response = client.delete(f"/annotation/rounds/{rnd['id']}")
+
+    assert response.status_code == 200
+    assert client.get(f"/annotation/rounds/{rnd['id']}").status_code == 404
+
+
+def test_deleting_a_round_with_notes_is_refused(env):
+    client, sf = env
+    rnd = _round(client, _experiment(sf), size=1)
+    ana = _annotator(client)
+    item_id = client.get(f"/annotation/rounds/{rnd['id']}/queue",
+                         params={"annotator_id": ana}).json()["items"][0]["id"]
+    client.put(f"/annotation/items/{item_id}/notes/{ana}", json={"correctness": 1, "grounding": 1})
+
+    response = client.delete(f"/annotation/rounds/{rnd['id']}")
+
+    assert response.status_code == 409
+    assert client.get(f"/annotation/rounds/{rnd['id']}").status_code == 200
+
+
+def test_deleting_a_pairwise_round_with_notes_is_refused(env):
+    client, sf = env
+    experiment_id, r1, r2 = _pair_experiment(sf, ["Q0?"], ["Q0?"])
+    rnd = _pair_round(client, _pair_items_arg(experiment_id, r1, r2))
+    ana = _annotator(client)
+    item = _pair_items_by_position(sf, rnd["id"])[0]
+    _pair_note(client, item["id"], ana, preference="A", reasons=["mais_correta"])
+
+    response = client.delete(f"/annotation/rounds/{rnd['id']}")
+
+    assert response.status_code == 409
+
+
+def test_an_unknown_round_cannot_be_deleted(env):
+    client, _ = env
+
+    assert client.delete("/annotation/rounds/999").status_code == 404

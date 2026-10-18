@@ -180,10 +180,20 @@ class AnnotationRound(Base):
     # A retest Rodada: the same Items for the same Avaliador, to measure intra-rater reliability.
     source_round_id: Mapped[int | None] = mapped_column(ForeignKey("annotation_round.id"), nullable=True)
     retest_annotator_id: Mapped[int | None] = mapped_column(ForeignKey("annotator.id"), nullable=True)
+    # "single": one answer scored on the Rubrica (the original design). "pairwise": two
+    # Combinações compared side by side (see AnnotationPairItem/AnnotationPairNote).
+    kind: Mapped[str] = mapped_column(String(20), default="single")
+    # A pairwise Rodada's two Combinações, in the order given at creation (not the per-item
+    # A/B shown to the Avaliador, which is drawn per item for blindness; see AnnotationPairItem.a_is_1).
+    pair_run_1: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    pair_run_2: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     items: Mapped[list["AnnotationItem"]] = relationship(
         back_populates="round", cascade="all, delete-orphan", order_by="AnnotationItem.position"
+    )
+    pair_items: Mapped[list["AnnotationPairItem"]] = relationship(
+        back_populates="round", cascade="all, delete-orphan", order_by="AnnotationPairItem.position"
     )
 
 
@@ -257,6 +267,70 @@ class AnnotationAdjudication(Base):
     annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
     correctness: Mapped[int | None] = mapped_column(Integer, nullable=True)
     grounding: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class AnnotationPairItem(Base):
+    """One question of a pairwise Rodada, holding both Combinações' answers to it.
+
+    `_1`/`_2` follow the Rodada's own `pair_run_1`/`pair_run_2` order; `a_is_1` says which
+    one this Item shows as "A" to the Avaliador (drawn once per item with the Rodada's seed,
+    so every Avaliador sees the same, reproducible A/B split, and no Combinação is always A).
+    """
+
+    __tablename__ = "annotation_pair_item"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    round_id: Mapped[int] = mapped_column(ForeignKey("annotation_round.id"))
+    position: Mapped[int] = mapped_column(Integer)
+    source_result_id_1: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_result_id_2: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    question: Mapped[str] = mapped_column(String)
+    question_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    reference_answer: Mapped[str | None] = mapped_column(String, nullable=True)
+    evidence: Mapped[list] = mapped_column(JSON, default=list)
+    answer_1: Mapped[str] = mapped_column(String)
+    answer_2: Mapped[str] = mapped_column(String)
+    context_1: Mapped[list] = mapped_column(JSON, default=list)
+    context_2: Mapped[list] = mapped_column(JSON, default=list)
+    a_is_1: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    round: Mapped["AnnotationRound"] = relationship(back_populates="pair_items")
+    notes: Mapped[list["AnnotationPairNote"]] = relationship(cascade="all, delete-orphan")
+
+
+class AnnotationPairNote(Base):
+    """An Avaliador's preference between the two answers of one Item de comparação."""
+
+    __tablename__ = "annotation_pair_note"
+    __table_args__ = (UniqueConstraint("item_id", "annotator_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("annotation_pair_item.id"))
+    annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
+    # "A" | "tie" | "B"; None while cannot_evaluate.
+    preference: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    # Why A or B won; empty on a tie. Subset of PAIRWISE_REASONS (app.annotation.service).
+    reasons: Mapped[list] = mapped_column(JSON, default=list)
+    cannot_evaluate: Mapped[bool] = mapped_column(Boolean, default=False)
+    reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    comment: Mapped[str | None] = mapped_column(String, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class AnnotationPairAdjudication(Base):
+    """The adjudicator's decision on a pairwise Item where the Avaliadores disagree."""
+
+    __tablename__ = "annotation_pair_adjudication"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("annotation_pair_item.id"), unique=True)
+    annotator_id: Mapped[int] = mapped_column(ForeignKey("annotator.id"))
+    preference: Mapped[str | None] = mapped_column(String(10), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
