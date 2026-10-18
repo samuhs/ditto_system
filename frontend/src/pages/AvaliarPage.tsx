@@ -5,12 +5,16 @@ import {
   createAnnotator,
   getAdjudication,
   getAnnotationQueue,
+  getPairAdjudication,
+  getPairwiseQueue,
   getRubric,
   joinAnnotationRound,
   listAnnotationRounds,
   listAnnotators,
   saveAdjudication,
   saveAnnotationNote,
+  savePairAdjudication,
+  savePairwiseNote,
 } from "../api/client";
 import type {
   AdjudicationView,
@@ -19,6 +23,12 @@ import type {
   AnnotationQueueItem,
   AnnotationRoundSummary,
   Annotator,
+  PairAdjudicationView,
+  PairwiseNoteValues,
+  PairwisePreference,
+  PairwiseQueue,
+  PairwiseQueueItem,
+  PairwiseReason,
   Rubric,
   RubricDimension,
 } from "../api/types";
@@ -60,19 +70,19 @@ function changes(draft: Draft, item: AnnotationQueueItem): boolean {
  */
 export function AvaliarPage() {
   const [annotator, setAnnotator] = useState<Annotator | null>(null);
-  const [roundId, setRoundId] = useState<number | null>(null);
-  const [adjudicating, setAdjudicating] = useState<number | null>(null);
+  const [round, setRound] = useState<AnnotationRoundSummary | null>(null);
+  const [adjudicating, setAdjudicating] = useState<AnnotationRoundSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
 
-  async function choose(id: number) {
+  async function choose(r: AnnotationRoundSummary) {
     if (!annotator || joining) return;
     setError(null);
     setJoining(true);
     try {
-      await joinAnnotationRound(id, annotator.id);
-      setRoundId(id);
+      await joinAnnotationRound(r.id, annotator.id);
+      setRound(r);
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -81,7 +91,7 @@ export function AvaliarPage() {
   }
 
   function leave() {
-    setRoundId(null);
+    setRound(null);
     setAdjudicating(null);
     setAnnotator(null);
     setError(null);
@@ -102,15 +112,19 @@ export function AvaliarPage() {
       <AnnotationGuide opened={guideOpen} onClose={() => setGuideOpen(false)} />
       {error && <Errata title="Algo não funcionou">{error}</Errata>}
       {!annotator && <Identify onDone={setAnnotator} onError={setError} />}
-      {annotator && roundId === null && adjudicating === null && (
+      {annotator && round === null && adjudicating === null && (
         <ChooseRound annotatorId={annotator.id} onChoose={choose} onAdjudicate={setAdjudicating}
           onError={setError} busy={joining} />
       )}
       {annotator && adjudicating !== null && (
-        <Adjudicate roundId={adjudicating} annotator={annotator} onError={setError} />
+        adjudicating.kind === "pairwise"
+          ? <PairwiseAdjudicate roundId={adjudicating.id} annotator={annotator} onError={setError} />
+          : <Adjudicate roundId={adjudicating.id} annotator={annotator} onError={setError} />
       )}
-      {annotator && roundId !== null && (
-        <Evaluate roundId={roundId} annotator={annotator} onError={setError} onLeave={leave} />
+      {annotator && round !== null && (
+        round.kind === "pairwise"
+          ? <PairwiseEvaluate roundId={round.id} annotator={annotator} onError={setError} onLeave={leave} />
+          : <Evaluate roundId={round.id} annotator={annotator} onError={setError} onLeave={leave} />
       )}
     </div>
   );
@@ -163,7 +177,8 @@ function Identify({ onDone, onError }: { onDone: (a: Annotator) => void; onError
 }
 
 function ChooseRound({ annotatorId, onChoose, onAdjudicate, onError, busy }: {
-  annotatorId: number; onChoose: (id: number) => void; onAdjudicate: (id: number) => void;
+  annotatorId: number; onChoose: (round: AnnotationRoundSummary) => void;
+  onAdjudicate: (round: AnnotationRoundSummary) => void;
   onError: (e: string) => void; busy: boolean;
 }) {
   const [rounds, setRounds] = useState<AnnotationRoundSummary[] | null>(null);
@@ -185,8 +200,9 @@ function ChooseRound({ annotatorId, onChoose, onAdjudicate, onError, busy }: {
       )}
       <div className="ditto-choices">
         {open.map((r) => (
-          <Button key={r.id} variant="default" disabled={busy} onClick={() => onChoose(r.id)}>
-            {r.name} · {r.size} respostas{r.pilot ? " · rodada piloto" : ""}
+          <Button key={r.id} variant="default" disabled={busy} onClick={() => onChoose(r)}>
+            {r.name} · {r.size} {r.kind === "pairwise" ? "perguntas · comparação lado a lado" : "respostas"}
+            {r.pilot ? " · rodada piloto" : ""}
           </Button>
         ))}
       </div>
@@ -195,7 +211,7 @@ function ChooseRound({ annotatorId, onChoose, onAdjudicate, onError, busy }: {
           <h2 className="ditto-h3">Adjudicação</h2>
           <div className="ditto-choices">
             {toAdjudicate.map((r) => (
-              <Button key={r.id} variant="light" onClick={() => onAdjudicate(r.id)}>Adjudicar {r.name}</Button>
+              <Button key={r.id} variant="light" onClick={() => onAdjudicate(r)}>Adjudicar {r.name}</Button>
             ))}
           </div>
         </>
@@ -534,5 +550,373 @@ function DimensionField({ dim, value, disabled, onChange }: {
         />
       ))}
     </fieldset>
+  );
+}
+
+// ---- Pairwise (side-by-side) comparison Rodadas ----
+
+type PairwiseDraft = PairwiseNoteValues;
+
+const EMPTY_PAIR: PairwiseDraft = {
+  preference: null, reasons: [], cannot_evaluate: false, reason: null, comment: null,
+};
+
+const PAIR_REASONS: { value: PairwiseReason; label: string }[] = [
+  { value: "mais_correta", label: "Mais correta" },
+  { value: "mais_completa", label: "Mais completa" },
+  { value: "mais_concisa", label: "Mais concisa" },
+  { value: "menos_invencao", label: "Menos invenção" },
+  { value: "outro", label: "Outro" },
+];
+
+const PAIR_REASON_LABEL = Object.fromEntries(PAIR_REASONS.map((r) => [r.value, r.label])) as
+  Record<PairwiseReason, string>;
+
+function isPairComplete(d: PairwiseDraft): boolean {
+  if (d.cannot_evaluate) return Boolean(d.reason?.trim());
+  if (d.preference === null) return false;
+  return d.preference === "tie" || d.reasons.length > 0;
+}
+
+/** What goes to the API: no preference/reasons when the Avaliador cannot evaluate, no reasons
+ * on a tie, blank texts as null. */
+function toPairNote(d: PairwiseDraft): PairwiseNoteValues {
+  if (d.cannot_evaluate) {
+    return { preference: null, reasons: [], cannot_evaluate: true, reason: d.reason?.trim() || null,
+      comment: d.comment?.trim() || null };
+  }
+  return {
+    preference: d.preference, reasons: d.preference === "tie" ? [] : d.reasons,
+    cannot_evaluate: false, reason: null, comment: d.comment?.trim() || null,
+  };
+}
+
+function pairChanges(draft: PairwiseDraft, item: PairwiseQueueItem): boolean {
+  const saved = item.note ?? EMPTY_PAIR;
+  return JSON.stringify(toPairNote(draft)) !== JSON.stringify(toPairNote(saved));
+}
+
+function pairwiseNoteText(n: PairwiseNoteValues): string {
+  if (n.cannot_evaluate) return "não conseguiu avaliar";
+  if (n.preference === "tie") return "empate";
+  if (n.preference === null) return "—";
+  const reasons = n.reasons.map((r) => PAIR_REASON_LABEL[r] ?? r).join(", ");
+  return reasons ? `${n.preference} melhor (${reasons})` : `${n.preference} melhor`;
+}
+
+function PairwiseEvaluate({ roundId, annotator, onError, onLeave }: {
+  roundId: number; annotator: Annotator; onError: (e: string | null) => void; onLeave: () => void;
+}) {
+  const [queue, setQueue] = useState<PairwiseQueue | null>(null);
+  const [index, setIndex] = useState(0);
+  // Unsaved choices per Item, kept while the Avaliador moves between questions.
+  const [drafts, setDrafts] = useState<Record<number, PairwiseDraft>>({});
+  const [saving, setSaving] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  const draftsRef = useRef(drafts);
+  draftsRef.current = drafts;
+
+  useEffect(() => {
+    getPairwiseQueue(roundId, annotator.id)
+      .then((q) => {
+        setQueue(q);
+        setDrafts({});
+        const firstOpen = q.items.findIndex((i) => i.note === null);
+        setIndex(firstOpen === -1 ? 0 : firstOpen);
+        setFinished(q.items.length > 0 && firstOpen === -1);
+      })
+      .catch((e) => onError(errorText(e)));
+  }, [roundId, annotator.id, onError]);
+
+  const item = queue?.items[index];
+  const draft: PairwiseDraft = item ? (drafts[item.id] ?? item.note ?? EMPTY_PAIR) : EMPTY_PAIR;
+  const edit = useCallback((change: Partial<PairwiseDraft>) => {
+    if (!item) return;
+    setDrafts((all) => ({ ...all, [item.id]: { ...(all[item.id] ?? item.note ?? EMPTY_PAIR), ...change } }));
+  }, [item]);
+  const complete = item ? isPairComplete(draft) : false;
+  const last = queue ? queue.items.length - 1 : 0;
+
+  const choosePreference = useCallback((preference: PairwisePreference) => {
+    edit(preference === "tie" ? { preference, reasons: [] } : { preference });
+  }, [edit]);
+
+  const toggleReason = useCallback((reason: PairwiseReason) => {
+    edit({ reasons: draft.reasons.includes(reason)
+      ? draft.reasons.filter((r) => r !== reason) : [...draft.reasons, reason] });
+  }, [edit, draft.reasons]);
+
+  const save = useCallback(async () => {
+    if (!queue || !item || !isPairComplete(draft) || saving) return;
+    setSaving(true);
+    onError(null);
+    try {
+      const sent = draft;
+      const wasPending = queue.items.some((i) => i.note === null);
+      const note = toPairNote(draft);
+      await savePairwiseNote(item.id, annotator.id, note);
+      const items = queue.items.map((i) => (i.id === item.id ? { ...i, note } : i));
+      setQueue({ ...queue, items, done: items.filter((i) => i.note !== null).length });
+      setDrafts((all) => {
+        if (all[item.id] !== undefined && all[item.id] !== sent) return all;
+        const { [item.id]: _sent, ...rest } = all;
+        return rest;
+      });
+      const pending = [...items.keys()].map((k) => (index + 1 + k) % items.length)
+        .find((k) => items[k].note === null);
+      const otherUnsaved = Object.entries(draftsRef.current).some(([id, d]) => {
+        const other = items.find((i) => i.id === Number(id));
+        return other !== undefined && other.id !== item.id && pairChanges(d, other);
+      });
+      if (wasPending && pending === undefined && indexRef.current === index && !otherUnsaved) setFinished(true);
+      setIndex((current) => (current === index ? (pending ?? Math.min(index + 1, items.length - 1)) : current));
+    } catch (e) {
+      onError(errorText(e));
+    } finally {
+      setSaving(false);
+    }
+  }, [queue, item, draft, saving, annotator.id, index, onError]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName ?? "";
+      const onRadio = tag === "INPUT" && target?.getAttribute("type") === "radio";
+      if (!onRadio && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(tag)) return;
+      if (document.querySelector('[role="dialog"]')) return;  // the help is open: keys belong to it
+      if (onRadio && e.key.startsWith("Arrow")) return;
+      if (!item || saving || finished || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "1") choosePreference("A");
+      else if (e.key === "2") choosePreference("tie");
+      else if (e.key === "3") choosePreference("B");
+      else if (e.key === "Enter") { void save(); }
+      else if (e.key === "ArrowLeft") setIndex((i) => Math.max(0, i - 1));
+      else if (e.key === "ArrowRight") setIndex((i) => Math.min(last, i + 1));
+      else return;
+      e.preventDefault();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [item, choosePreference, save, last, saving, finished]);
+
+  if (!queue) return null;
+  if (finished) {
+    return (
+      <section className="ditto-sec ditto-thanks">
+        <h1 className="ditto-h2">Obrigado, {annotator.name}!</h1>
+        <p className="ditto-read">
+          Você comparou {queue.done} de {queue.total} perguntas da rodada {queue.round.name}. Suas respostas estão
+          salvas.
+        </p>
+        <p className="ditto-muted">
+          Enquanto a rodada estiver aberta, você ainda pode revisar e corrigir qualquer comparação.
+        </p>
+        <div className="ditto-annotate-nav">
+          <Button onClick={onLeave}>Voltar ao início</Button>
+          <Button variant="default" onClick={() => { setFinished(false); setIndex(0); }}>Revisar minhas respostas</Button>
+        </div>
+      </section>
+    );
+  }
+  const unsaved = item ? item.id in drafts && pairChanges(drafts[item.id], item) : false;
+
+  return (
+    <section className="ditto-sec">
+      <div className="ditto-sec-head">
+        <h1 className="ditto-h2">{queue.round.name}</h1>
+        <p className="ditto-read">
+          Pergunta {index + 1} de {queue.total} · {queue.done} de {queue.total} comparadas
+          {unsaved && <strong> · escolha não salva</strong>}
+        </p>
+      </div>
+      {item && (
+        <>
+          <div className="ditto-annotate-text">
+            <h2 className="ditto-h3">Pergunta</h2>
+            <p>{item.question}</p>
+            <h2 className="ditto-h3">Resposta de referência</h2>
+            <p>{item.reference_answer}</p>
+          </div>
+          <div className="ditto-pair-answers">
+            <div className="ditto-pair-answer">
+              <h2 className="ditto-h3">Resposta A</h2>
+              <p className="ditto-annotate-answer">{item.answer_a}</p>
+              <details>
+                <summary>Trechos que o sistema recuperou ({item.context_a.length})</summary>
+                {item.context_a.length === 0
+                  ? <p className="ditto-muted">Nenhum trecho recuperado.</p>
+                  : <ol>{item.context_a.map((c, k) => <li key={k}>{c}</li>)}</ol>}
+              </details>
+            </div>
+            <div className="ditto-pair-answer">
+              <h2 className="ditto-h3">Resposta B</h2>
+              <p className="ditto-annotate-answer">{item.answer_b}</p>
+              <details>
+                <summary>Trechos que o sistema recuperou ({item.context_b.length})</summary>
+                {item.context_b.length === 0
+                  ? <p className="ditto-muted">Nenhum trecho recuperado.</p>
+                  : <ol>{item.context_b.map((c, k) => <li key={k}>{c}</li>)}</ol>}
+              </details>
+            </div>
+          </div>
+          <div className="ditto-annotate-rubric">
+            <fieldset className="ditto-rubric-dim">
+              <legend>Qual resposta é melhor?</legend>
+              <Radio.Group value={draft.preference ?? ""} onChange={(v) => choosePreference(v as PairwisePreference)}>
+                <Radio value="A" label="A melhor" disabled={draft.cannot_evaluate} />
+                <Radio value="tie" label="Empate" disabled={draft.cannot_evaluate} />
+                <Radio value="B" label="B melhor" disabled={draft.cannot_evaluate} />
+              </Radio.Group>
+            </fieldset>
+            {draft.preference !== null && draft.preference !== "tie" && (
+              <fieldset className="ditto-rubric-dim">
+                <legend>Por quê?</legend>
+                <div className="ditto-pair-reasons">
+                  {PAIR_REASONS.map((r) => (
+                    <Checkbox
+                      key={r.value}
+                      label={r.label}
+                      checked={draft.reasons.includes(r.value)}
+                      disabled={draft.cannot_evaluate}
+                      onChange={() => toggleReason(r.value)}
+                    />
+                  ))}
+                </div>
+              </fieldset>
+            )}
+            <Checkbox
+              label="Não consigo avaliar esta pergunta"
+              checked={draft.cannot_evaluate}
+              onChange={(e) => edit({ cannot_evaluate: e.currentTarget.checked })}
+            />
+            {draft.cannot_evaluate && (
+              <TextInput label="Por quê?" value={draft.reason ?? ""} onChange={(e) => edit({ reason: e.currentTarget.value })} />
+            )}
+            <Textarea
+              label="Comentário (opcional)"
+              value={draft.comment ?? ""}
+              onChange={(e) => edit({ comment: e.currentTarget.value })}
+              autosize
+              minRows={2}
+            />
+            <div className="ditto-annotate-nav">
+              <Button variant="default" disabled={index === 0} onClick={() => setIndex(index - 1)}>Anterior</Button>
+              <Button variant="default" disabled={index === last} onClick={() => setIndex(index + 1)}>Próxima</Button>
+              <Button onClick={save} disabled={!complete} loading={saving}>Salvar e seguir</Button>
+            </div>
+            <p className="ditto-pair-shortcuts">
+              Atalhos: 1 = A melhor · 2 = Empate · 3 = B melhor · Enter salva e segue · ← e → navegam.
+            </p>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function PairwiseAdjudicate({ roundId, annotator, onError }: {
+  roundId: number; annotator: Annotator; onError: (e: string | null) => void;
+}) {
+  const [view, setView] = useState<PairAdjudicationView | null>(null);
+  const [index, setIndex] = useState(0);
+  const [choice, setChoice] = useState<PairwisePreference | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getPairAdjudication(roundId, annotator.id)
+      .then((v) => {
+        setView(v);
+        const first = v.items.findIndex((i) => i.adjudication === null);
+        const at = first === -1 ? 0 : first;
+        setIndex(at);
+        setChoice(v.items[at]?.adjudication ?? null);
+      })
+      .catch((e) => onError(errorText(e)));
+  }, [roundId, annotator.id, onError]);
+
+  if (!view) return null;
+  const item = view.items[index];
+
+  function go(to: number) {
+    setIndex(to);
+    setChoice(view!.items[to]?.adjudication ?? null);
+  }
+
+  async function save() {
+    if (!view || !item || choice === null) return;
+    setSaving(true);
+    onError(null);
+    try {
+      await savePairAdjudication(item.id, annotator.id, choice);
+      const items = view.items.map((i) => (i.id === item.id ? { ...i, adjudication: choice } : i));
+      setView({ ...view, items, decided: items.filter((i) => i.adjudication !== null).length });
+      const next = items.findIndex((i, k) => k !== index && i.adjudication === null);
+      if (next !== -1) {
+        setIndex(next);
+        setChoice(null);
+      }
+    } catch (e) {
+      onError(errorText(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="ditto-sec">
+      <div className="ditto-sec-head">
+        <h1 className="ditto-h2">Adjudicação · {view.round.name}</h1>
+        <p className="ditto-read">
+          {view.decided} de {view.total} decididas. Você vê as preferências dos avaliadores só nas perguntas em que
+          eles discordaram, e decide a preferência final.
+        </p>
+      </div>
+      {view.total === 0 && <p className="ditto-empty">Os avaliadores concordaram em tudo: não há o que adjudicar.</p>}
+      {item && (
+        <>
+          <div className="ditto-annotate-text">
+            <h2 className="ditto-h3">Pergunta</h2>
+            <p>{item.question}</p>
+            <h2 className="ditto-h3">Resposta de referência</h2>
+            <p>{item.reference_answer}</p>
+          </div>
+          <div className="ditto-pair-answers">
+            <div className="ditto-pair-answer">
+              <h2 className="ditto-h3">Resposta A</h2>
+              <p className="ditto-annotate-answer">{item.answer_a}</p>
+            </div>
+            <div className="ditto-pair-answer">
+              <h2 className="ditto-h3">Resposta B</h2>
+              <p className="ditto-annotate-answer">{item.answer_b}</p>
+            </div>
+          </div>
+          <div className="ditto-annotate-rubric">
+            <fieldset className="ditto-rubric-dim">
+              <legend>Preferências dos avaliadores</legend>
+              {Object.entries(item.notes).map(([name, n]) => (
+                <div key={name}>{name}: {pairwiseNoteText(n)}{n.comment ? ` (“${n.comment}”)` : ""}</div>
+              ))}
+            </fieldset>
+            <fieldset className="ditto-rubric-dim">
+              <legend>Preferência final</legend>
+              <Radio.Group value={choice ?? ""} onChange={(v) => setChoice(v as PairwisePreference)}>
+                <Radio value="A" label="A melhor" />
+                <Radio value="tie" label="Empate" />
+                <Radio value="B" label="B melhor" />
+              </Radio.Group>
+            </fieldset>
+            <div className="ditto-annotate-nav">
+              <Button variant="default" disabled={index === 0} onClick={() => go(index - 1)}>Anterior</Button>
+              <Button variant="default" disabled={index === view.items.length - 1} onClick={() => go(index + 1)}>
+                Próxima
+              </Button>
+              <Button onClick={save} disabled={choice === null} loading={saving}>Salvar decisão</Button>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
   );
 }

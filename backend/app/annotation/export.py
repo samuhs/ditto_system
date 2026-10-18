@@ -10,7 +10,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.annotation.rubric import DIMENSIONS
-from app.core.db.models import AnnotationItem, AnnotationNote, AnnotationRound, Annotator
+from app.annotation.service import translate_pair_preference
+from app.core.db.models import (
+    AnnotationItem,
+    AnnotationNote,
+    AnnotationPairItem,
+    AnnotationPairNote,
+    AnnotationRound,
+    Annotator,
+)
 
 _LATEX_SPECIALS = {
     "\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#",
@@ -59,6 +67,52 @@ def to_csv(session: Session, rnd: AnnotationRound, final: dict, for_excel: bool 
                 entry.get("status", ""),
                 *("" if item.auto_scores.get(m) is None else item.auto_scores[m] for m in metrics),
             ])
+    return buffer.getvalue()
+
+
+def to_pair_csv(session: Session, rnd: AnnotationRound, final: dict, for_excel: bool = False) -> str:
+    """One row per note of a pairwise Rodada (long format), with the unblinded mapping (which
+    Combinação was A for that Item) and the preference translated to which Combinação it
+    favors."""
+    final_by_item = {entry["id"]: entry for entry in final["items"]}
+    rows = session.execute(
+        select(AnnotationPairNote, Annotator.name, AnnotationPairItem)
+        .join(Annotator, AnnotationPairNote.annotator_id == Annotator.id)
+        .join(AnnotationPairItem, AnnotationPairNote.item_id == AnnotationPairItem.id)
+        .where(AnnotationPairItem.round_id == rnd.id)
+        .order_by(AnnotationPairItem.position, Annotator.name)
+    ).all()
+    run1, run2 = rnd.pair_run_1 or {}, rnd.pair_run_2 or {}
+    label1 = f"{run1.get('rag', '')}·{run1.get('llm', '')}"
+    label2 = f"{run2.get('rag', '')}·{run2.get('llm', '')}"
+
+    def result_text(item: AnnotationPairItem, preference: str | None) -> str:
+        side = translate_pair_preference(item, preference)
+        return {None: "", "tie": "empate", "1": f"{label1} melhor", "2": f"{label2} melhor"}[side]
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, delimiter=";" if for_excel else ",")
+    writer.writerow([
+        "rodada", "item", "posicao", "pergunta", "tipo_pergunta",
+        "run1_chunking", "run1_embedding", "run1_rag", "run1_retriever", "run1_llm",
+        "run2_chunking", "run2_embedding", "run2_rag", "run2_retriever", "run2_llm",
+        "a_e_do_run", "avaliador", "preferencia_bruta", "preferencia", "motivos",
+        "nao_consegue_avaliar", "motivo", "comentario", "preferencia_final", "situacao_final",
+    ])
+    for note, name, item in rows:
+        entry = final_by_item.get(item.id, {})
+        writer.writerow([
+            rnd.id, item.id, item.position, _cell(item.question, for_excel), item.question_type or "",
+            run1.get("chunking", ""), run1.get("embedding", ""), run1.get("rag", ""),
+            run1.get("retriever", ""), run1.get("llm", ""),
+            run2.get("chunking", ""), run2.get("embedding", ""), run2.get("rag", ""),
+            run2.get("retriever", ""), run2.get("llm", ""),
+            "1" if item.a_is_1 else "2", _cell(name, for_excel),
+            note.preference or "", result_text(item, note.preference),
+            ";".join(note.reasons or []), "sim" if note.cannot_evaluate else "não",
+            _cell(note.reason, for_excel), _cell(note.comment, for_excel),
+            result_text(item, entry.get("preference")), entry.get("status", ""),
+        ])
     return buffer.getvalue()
 
 

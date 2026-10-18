@@ -5,7 +5,9 @@ from app.annotation.agreement import (
     bootstrap_ci,
     confusion_matrix,
     krippendorff_alpha,
+    sign_test,
     weighted_kappa,
+    wilson_ci,
 )
 
 # Krippendorff (2011), "Computing Krippendorff's Alpha-Reliability": 4 coders x 12 units,
@@ -87,3 +89,41 @@ def test_spearman_is_undefined_without_variation():
     from app.annotation.agreement import spearman
     assert spearman([1, 1, 1], [1, 2, 3]) is None
     assert spearman([1], [2]) is None
+
+
+# ---- pairwise comparison rounds: unweighted/linear kappa, sign test, Wilson CI ----
+
+def test_weighted_kappa_unweighted_matches_plain_cohens_kappa():
+    # Same ratings as the quadratic hand-worked example above; Do = 0.5, De = 0.375 -> kappa 0.2.
+    assert weighted_kappa([0, 1, 2, 2], [0, 2, 2, 1], categories=[0, 1, 2],
+                          weights="unweighted") == pytest.approx(0.2)
+
+
+def test_weighted_kappa_linear_matches_a_hand_worked_example():
+    # Linear weights |i-j|/2. Do = 0.25, De = 0.4375, kappa = 1 - Do/De = 3/7.
+    assert weighted_kappa([0, 1, 2, 2], [0, 2, 2, 1], categories=[0, 1, 2],
+                          weights="linear") == pytest.approx(3 / 7)
+
+
+def test_weighted_kappa_defaults_to_quadratic_weights():
+    assert weighted_kappa([0, 1, 2, 2], [0, 2, 2, 1], categories=[0, 1, 2]) == pytest.approx(7 / 11)
+
+
+def test_an_unknown_kappa_weighting_is_refused():
+    with pytest.raises(ValueError):
+        weighted_kappa([0, 1], [0, 1], categories=[0, 1], weights="cubic")
+
+
+def test_sign_test_matches_a_hand_worked_binomial_tail():
+    # n=10, k=2: 2 * sum_{i=0..2} C(10,i) / 2**10 = 2 * 56/1024 = 0.109375.
+    assert sign_test(8, 2) == pytest.approx(0.109375)
+    assert sign_test(5, 5) == pytest.approx(1.0)  # an even split is never significant
+    assert sign_test(0, 0) is None
+
+
+def test_wilson_ci_matches_a_published_score_interval():
+    # Wilson (1927) 95% interval for 5/10 is commonly tabulated as about (0.237, 0.763).
+    low, high = wilson_ci(5, 10)
+    assert low == pytest.approx(0.2366, abs=0.001)
+    assert high == pytest.approx(0.7634, abs=0.001)
+    assert wilson_ci(0, 0) is None

@@ -13,8 +13,12 @@ export function runLabel(run: ExperimentRunRef): string {
   return `${term("rag", run.rag).name} · ${term("retriever", run.retriever).name} · ${run.llm}${index}`;
 }
 
-/** Base → Experimento → Combinações: ticking a Combinação adds it to the Comparação. */
-export function CombinationPicker({ items, onToggle }: { items: string[]; onToggle: (id: string) => void }) {
+/** Base → Experimento → Combinações: ticking a Combinação adds it to the Comparação.
+ * `max`, when given, disables ticking more once `items` has reached it (unticking is always
+ * allowed), for callers that take an exact number of Combinações (a pairwise Rodada: two). */
+export function CombinationPicker({ items, onToggle, max }: {
+  items: string[]; onToggle: (id: string) => void; max?: number;
+}) {
   const [bases, setBases] = useState<string[]>([]);
   const [base, setBase] = useState("");
   const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
@@ -62,11 +66,13 @@ export function CombinationPicker({ items, onToggle }: { items: string[]; onTogg
         <div className="ditto-compare-runs">
           {runs.map((run) => {
             const id = `${experimentId}:${run.id}`;
+            const checked = items.includes(id);
             return (
               <Checkbox
                 key={id}
                 label={runLabel(run)}
-                checked={items.includes(id)}
+                checked={checked}
+                disabled={!checked && max !== undefined && items.length >= max}
                 onChange={() => onToggle(id)}
               />
             );

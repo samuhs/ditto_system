@@ -1473,6 +1473,16 @@ a { color: inherit; text-underline-offset: 3px; }
   .ditto-annotate { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* ---- Anotação humana: pairwise (side-by-side) comparison ---- */
+.ditto-pair-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 12px; }
+.ditto-pair-answer { display: flex; flex-direction: column; gap: 6px; }
+.ditto-pair-answer .ditto-annotate-answer { flex: 1; }
+.ditto-pair-reasons { display: flex; flex-wrap: wrap; gap: 8px; }
+.ditto-pair-shortcuts { color: var(--ink-2); font-size: 13px; }
+@media (max-width: 760px) {
+  .ditto-pair-answers { grid-template-columns: minmax(0, 1fr); }
+}
+
 .ditto-guide h3 { font-size: 15px; margin: 18px 0 6px; }
 .ditto-guide p, .ditto-guide li { font-family: var(--font-read); font-size: 15px; line-height: 1.5; }
 .ditto-guide ul, .ditto-guide ol { padding-left: 20px; margin: 0; }

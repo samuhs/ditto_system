@@ -3,6 +3,7 @@
 Only the standard library: the formulas are small, and the test suite checks them against
 hand-worked examples and Krippendorff's published values.
 """
+import math
 import random
 from collections import Counter
 from collections.abc import Callable, Sequence
@@ -62,16 +63,31 @@ def krippendorff_alpha(units: Sequence[Sequence[Rating]], level: str = "ordinal"
     return 1 - observed / expected
 
 
-def weighted_kappa(a: Sequence[int], b: Sequence[int], categories: Sequence[int]) -> float | None:
-    """Cohen's kappa with quadratic weights, for two raters over the same items."""
+def weighted_kappa(a: Sequence[int], b: Sequence[int], categories: Sequence[int],
+                   weights: str = "quadratic") -> float | None:
+    """Cohen's kappa for two raters over the same items.
+
+    `weights`: "quadratic" (the default; penalizes distant disagreements most), "linear"
+    (penalizes proportionally to the distance between categories) or "unweighted" (plain
+    Cohen's kappa: every disagreement counts the same).
+    """
     k = len(categories)
     index = {c: i for i, c in enumerate(categories)}
     n = len(a)
     if n == 0 or k < 2:
         return None
 
-    def weight(i, j):
-        return (i - j) ** 2 / (k - 1) ** 2
+    if weights == "unweighted":
+        def weight(i, j):
+            return 0.0 if i == j else 1.0
+    elif weights == "linear":
+        def weight(i, j):
+            return abs(i - j) / (k - 1)
+    elif weights == "quadratic":
+        def weight(i, j):
+            return (i - j) ** 2 / (k - 1) ** 2
+    else:
+        raise ValueError(f"unknown weights {weights!r}")
 
     observed = sum(weight(index[x], index[y]) for x, y in zip(a, b)) / n
     pa, pb = Counter(index[x] for x in a), Counter(index[y] for y in b)
@@ -106,6 +122,28 @@ def bootstrap_ci(units: Sequence, statistic: Callable[[Sequence], float | None],
         return None
     values.sort()
     return values[int(0.025 * len(values))], values[min(len(values) - 1, int(0.975 * len(values)))]
+
+
+def sign_test(wins_a: int, wins_b: int) -> float | None:
+    """Two-sided exact sign test p-value over `wins_a + wins_b` ties-dropped comparisons,
+    against the null that either side wins with probability 1/2. None without comparisons."""
+    n = wins_a + wins_b
+    if n == 0:
+        return None
+    k = min(wins_a, wins_b)
+    tail = sum(math.comb(n, i) for i in range(k + 1)) / 2**n
+    return min(1.0, 2 * tail)
+
+
+def wilson_ci(successes: int, n: int, z: float = 1.959963984540054) -> tuple[float, float] | None:
+    """95% Wilson score interval for a proportion of `successes` out of `n`. None without n."""
+    if n == 0:
+        return None
+    p = successes / n
+    denom = 1 + z**2 / n
+    centre = p + z**2 / (2 * n)
+    spread = z * math.sqrt(p * (1 - p) / n + z**2 / (4 * n**2))
+    return ((centre - spread) / denom, (centre + spread) / denom)
 
 
 def spearman(x: Sequence[float], y: Sequence[float]) -> float | None:

@@ -532,6 +532,10 @@ export interface Rubric {
   dimensions: RubricDimension[];
 }
 
+/** "single": one answer scored on the Rubrica. "pairwise": two Combinações compared
+ * side by side, with a preference instead of a score. */
+export type AnnotationRoundKind = "single" | "pairwise";
+
 export interface AnnotationRoundSummary {
   id: number;
   name: string;
@@ -541,6 +545,7 @@ export interface AnnotationRoundSummary {
   rubric_version: number;
   experiment_ids: number[];
   size: number;
+  kind: AnnotationRoundKind;
   /** A pilot Rodada calibrates the Rubrica and never enters the analysis. */
   pilot: boolean;
   strata: AnnotationStratumDim[];
@@ -615,15 +620,17 @@ export interface AnnotationQueue {
 
 export interface AnnotationRoundInput {
   name: string;
-  /** Combinações to sample from, as "experiment:run". */
+  /** Combinações to sample from, as "experiment:run"; a pairwise Rodada takes exactly two. */
   items?: string[];
   experiment_id?: number;
-  sample_size: number;
+  /** Optional for a pairwise Rodada (every common question goes in); required otherwise. */
+  sample_size?: number;
   seed?: number | null;
   description?: string;
   strata?: AnnotationStratumDim[];
   allocation?: "proportional" | "equal";
   pilot?: boolean;
+  kind?: AnnotationRoundKind;
 }
 
 export interface AgreementValue {
@@ -721,4 +728,128 @@ export interface RetestAgreement {
   done: number;
   total: number;
   dimensions: Record<"correctness" | "grounding", { n: number; alpha: AgreementValue }>;
+}
+
+// ---- Pairwise (side-by-side) comparison Rodadas ----
+
+export type PairwisePreference = "A" | "tie" | "B";
+
+export type PairwiseReason = "mais_correta" | "mais_completa" | "mais_concisa" | "menos_invencao" | "outro";
+
+/** An Avaliador's preference between the two answers of one pairwise Item. `reasons` is
+ * empty on a tie; with `cannot_evaluate`, `preference` is null and `reason` says why. */
+export interface PairwiseNoteValues {
+  preference: PairwisePreference | null;
+  reasons: PairwiseReason[];
+  cannot_evaluate: boolean;
+  reason: string | null;
+  comment: string | null;
+}
+
+/** One question of a pairwise Rodada as an Avaliador sees it: blind (no Técnica, LLM,
+ * Experimento, or which Combinação sits at A or B). */
+export interface PairwiseQueueItem {
+  id: number;
+  position: number;
+  question: string;
+  question_type: string | null;
+  reference_answer: string | null;
+  evidence: string[];
+  answer_a: string;
+  context_a: string[];
+  answer_b: string;
+  context_b: string[];
+  note: PairwiseNoteValues | null;
+}
+
+export interface PairwiseQueue {
+  round: AnnotationRoundSummary;
+  annotator: { id: number; name: string };
+  items: PairwiseQueueItem[];
+  done: number;
+  total: number;
+}
+
+export interface PairAdjudicationItem {
+  id: number;
+  position: number;
+  question: string;
+  reference_answer: string | null;
+  evidence: string[];
+  answer_a: string;
+  context_a: string[];
+  answer_b: string;
+  context_b: string[];
+  notes: Record<string, PairwiseNoteValues>;
+  adjudication: PairwisePreference | null;
+}
+
+export interface PairAdjudicationView {
+  round: AnnotationRoundSummary;
+  items: PairAdjudicationItem[];
+  decided: number;
+  total: number;
+}
+
+export interface PairwiseConfusion {
+  avaliadores: string[];
+  levels: string[];
+  matrix: number[][];
+}
+
+export interface PairwiseAgreementDimension {
+  n: number;
+  alpha: AgreementValue;
+  kappa_unweighted: AgreementValue | null;
+  kappa_linear: AgreementValue | null;
+  confusion: PairwiseConfusion | null;
+}
+
+export interface PairwiseAgreement {
+  round: AnnotationRoundSummary;
+  avaliadores: string[];
+  dimension: PairwiseAgreementDimension;
+  disagreements: {
+    item_id: number; position: number; question: string;
+    notes: Record<string, PairwiseNoteValues>;
+  }[];
+  note: string | null;
+}
+
+/** One of a pairwise Rodada's two Combinações, unblinded (shown only in the summary/export). */
+export interface PairwiseCombinationRef {
+  experiment_id: number;
+  run_id: number;
+  chunking: string;
+  embedding: string;
+  rag: string;
+  retriever: string;
+  llm: string;
+}
+
+export interface PairwiseProportion {
+  value: number | null;
+  low: number | null;
+  high: number | null;
+}
+
+/** Wins of each side ("1": pair_run_1, "2": pair_run_2), ties, a two-sided sign test
+ * p-value over the decided (non-tie) items, each side's win proportion with a 95% Wilson CI,
+ * and reason counts among each side's wins. */
+export interface PairwiseSideStats {
+  wins: Record<"1" | "2", number>;
+  ties: number;
+  n_decided: number;
+  sign_test_p: number | null;
+  proportion: Record<"1" | "2", PairwiseProportion>;
+  reasons: Record<"1" | "2", Record<string, number>>;
+}
+
+export interface PairwiseSummary {
+  round: AnnotationRoundSummary;
+  pair_run_1: PairwiseCombinationRef;
+  pair_run_2: PairwiseCombinationRef;
+  avaliadores: Record<string, PairwiseSideStats>;
+  final: PairwiseSideStats;
+  pending: number;
 }

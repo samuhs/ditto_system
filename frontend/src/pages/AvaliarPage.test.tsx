@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as client from "../api/client";
-import type { AnnotationQueue, Rubric } from "../api/types";
+import type { AnnotationQueue, PairwiseQueue, PairwiseReason, Rubric } from "../api/types";
 import { AvaliarPage } from "./AvaliarPage";
 
 vi.mock("../api/client");
@@ -34,7 +34,8 @@ const rubric: Rubric = {
 
 const round = {
   id: 5, name: "piloto", description: "", status: "open" as const, seed: 7, rubric_version: 1,
-  experiment_ids: [90], size: 2, pilot: false, strata: [], allocation: "proportional" as const, adjudicator_id: null, source_round_id: null, retest_annotator_id: null,
+  experiment_ids: [90], size: 2, kind: "single" as const, pilot: false, strata: [],
+  allocation: "proportional" as const, adjudicator_id: null, source_round_id: null, retest_annotator_id: null,
   created_at: null,
 };
 
@@ -452,6 +453,209 @@ describe("AvaliarPage", () => {
     await userEvent.keyboard("2");
 
     expect(screen.getByRole("radio", { name: /Correção: 2 · Correta/ })).toBeChecked();
+  });
+});
+
+// ---- pairwise (side-by-side) comparison rounds ----
+
+const pairRound = {
+  id: 6, name: "pares", description: "", status: "open" as const, seed: 4, rubric_version: 1,
+  experiment_ids: [96], size: 2, kind: "pairwise" as const, pilot: false, strata: [],
+  allocation: "proportional" as const, adjudicator_id: null, source_round_id: null, retest_annotator_id: null,
+  created_at: null,
+};
+
+function pairQueue(over: Partial<PairwiseQueue> = {}): PairwiseQueue {
+  return {
+    round: pairRound,
+    annotator: { id: 3, name: "Ana" },
+    items: [
+      {
+        id: 21, position: 0, question: "Quantos metros tem a roda-gigante?", question_type: "simples",
+        reference_answer: "42 metros.", evidence: ["A roda tem 42 metros de altura"],
+        answer_a: "Tem 42 metros de altura.", context_a: ["Trecho A sobre a roda"],
+        answer_b: "A roda-gigante mede 42m.", context_b: ["Trecho B sobre a roda"],
+        note: null,
+      },
+      {
+        id: 22, position: 1, question: "Quanto custa o almoço?", question_type: "simples",
+        reference_answer: "R$ 3.", evidence: ["almoço por R$ 3"],
+        answer_a: "Custa R$ 3.", context_a: [],
+        answer_b: "O almoço sai por três reais.", context_b: [],
+        note: null,
+      },
+    ],
+    done: 0,
+    total: 2,
+    ...over,
+  };
+}
+
+function pairNote(preference: "A" | "tie" | "B" | null, reasons: PairwiseReason[] = []) {
+  return { preference, reasons, cannot_evaluate: false, reason: null, comment: null };
+}
+
+function renderPairPage() {
+  return render(
+    <MantineProvider>
+      <MemoryRouter initialEntries={["/anotar"]}>
+        <Routes>
+          <Route path="/anotar" element={<AvaliarPage />} />
+        </Routes>
+      </MemoryRouter>
+    </MantineProvider>,
+  );
+}
+
+describe("AvaliarPage pairwise", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(client.listAnnotators).mockResolvedValue([{ id: 3, name: "Ana", active: true }]);
+    vi.mocked(client.listAnnotationRounds).mockResolvedValue([pairRound]);
+    vi.mocked(client.getPairwiseQueue).mockResolvedValue(pairQueue());
+    vi.mocked(client.joinAnnotationRound).mockResolvedValue(undefined);
+    vi.mocked(client.savePairwiseNote).mockResolvedValue({
+      item_id: 21, annotator_id: 3, ...pairNote("A", ["mais_correta"]),
+    });
+  });
+
+  async function openPairRound() {
+    renderPairPage();
+    await userEvent.click(await screen.findByRole("button", { name: "Ana" }));
+    await userEvent.click(await screen.findByRole("button", { name: /pares/i }));
+    await screen.findByText("Quantos metros tem a roda-gigante?");
+  }
+
+  it("offers a pairwise Rodada marked as a side-by-side comparison", async () => {
+    renderPairPage();
+    await userEvent.click(await screen.findByRole("button", { name: "Ana" }));
+
+    expect(await screen.findByRole("button", { name: /pares · 2 perguntas · comparação lado a lado/i }))
+      .toBeInTheDocument();
+  });
+
+  it("shows the question, the reference answer and both answers side by side", async () => {
+    await openPairRound();
+
+    expect(client.getPairwiseQueue).toHaveBeenCalledWith(6, 3);
+    expect(screen.getByText("42 metros.")).toBeInTheDocument();
+    expect(screen.getByText("Tem 42 metros de altura.")).toBeInTheDocument();
+    expect(screen.getByText("A roda-gigante mede 42m.")).toBeInTheDocument();
+    expect(screen.getByText("Resposta A")).toBeInTheDocument();
+    expect(screen.getByText("Resposta B")).toBeInTheDocument();
+    expect(screen.getByText(/0 de 2 comparadas/i)).toBeInTheDocument();
+  });
+
+  it("each answer's retrieved context is collapsible and closed by default", async () => {
+    await openPairRound();
+
+    const summaries = screen.getAllByText(/Trechos que o sistema recuperou/i);
+    expect(summaries).toHaveLength(2);
+    for (const summary of summaries) {
+      const details = summary.closest("details");
+      expect(details).not.toBeNull();
+      expect(details).not.toHaveAttribute("open");
+    }
+  });
+
+  it("shows the keyboard shortcuts on screen", async () => {
+    await openPairRound();
+
+    expect(screen.getByText(/atalhos/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 = A melhor/i)).toBeInTheDocument();
+  });
+
+  it("requires a reason before saving a preference that is not a tie", async () => {
+    await openPairRound();
+
+    await userEvent.click(screen.getByRole("radio", { name: "A melhor" }));
+    expect(screen.getByRole("button", { name: /salvar e seguir/i })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: /mais correta/i }));
+    expect(screen.getByRole("button", { name: /salvar e seguir/i })).toBeEnabled();
+  });
+
+  it("does not require a reason on a tie", async () => {
+    await openPairRound();
+
+    await userEvent.click(screen.getByRole("radio", { name: "Empate" }));
+
+    expect(screen.getByRole("button", { name: /salvar e seguir/i })).toBeEnabled();
+    expect(screen.queryByRole("checkbox", { name: /mais correta/i })).not.toBeInTheDocument();
+  });
+
+  it("saves the preference and reasons, then moves to the next question", async () => {
+    await openPairRound();
+
+    await userEvent.click(screen.getByRole("radio", { name: "B melhor" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: /mais concisa/i }));
+    await userEvent.click(screen.getByRole("checkbox", { name: /menos invenção/i }));
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(client.savePairwiseNote).toHaveBeenCalledWith(21, 3, pairNote("B", ["mais_concisa", "menos_invencao"]));
+    expect(await screen.findByText("Quanto custa o almoço?")).toBeInTheDocument();
+    expect(screen.getByText(/1 de 2 comparadas/i)).toBeInTheDocument();
+  });
+
+  it("lets the Avaliador say they cannot evaluate, with a reason", async () => {
+    await openPairRound();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: /não consigo avaliar/i }));
+    expect(screen.getByRole("button", { name: /salvar e seguir/i })).toBeDisabled();
+    await userEvent.type(screen.getByLabelText(/por quê/i), "Pergunta ambígua");
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(client.savePairwiseNote).toHaveBeenCalledWith(21, 3, {
+      preference: null, reasons: [], cannot_evaluate: true, reason: "Pergunta ambígua", comment: null,
+    });
+  });
+
+  it("picks B with the 3 shortcut, then saves once a reason is given", async () => {
+    await openPairRound();
+
+    await userEvent.keyboard("3");
+    expect(screen.getByRole("radio", { name: "B melhor" })).toBeChecked();
+    await userEvent.click(screen.getByRole("checkbox", { name: /mais completa/i }));
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(client.savePairwiseNote).toHaveBeenCalledWith(21, 3, pairNote("B", ["mais_completa"]));
+    expect(await screen.findByText("Quanto custa o almoço?")).toBeInTheDocument();
+  });
+
+  it("picks A with the 1 shortcut", async () => {
+    await openPairRound();
+
+    await userEvent.keyboard("1");
+
+    expect(screen.getByRole("radio", { name: "A melhor" })).toBeChecked();
+  });
+
+  it("the tie shortcut (2) needs no reason to save with Enter", async () => {
+    await openPairRound();
+
+    await userEvent.keyboard("2");
+    await userEvent.keyboard("{Enter}");
+
+    expect(client.savePairwiseNote).toHaveBeenCalledWith(21, 3, pairNote("tie"));
+    expect(await screen.findByText("Quanto custa o almoço?")).toBeInTheDocument();
+  });
+
+  it("never shows which technique or LLM produced either answer", async () => {
+    await openPairRound();
+
+    expect(screen.queryByText(/naive|agentic|compression|qwen|gemma|tucano/i)).not.toBeInTheDocument();
+  });
+
+  it("thanks the Avaliador after the last comparison", async () => {
+    await openPairRound();
+    await userEvent.click(screen.getByRole("radio", { name: "Empate" }));
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+    await screen.findByText("Quanto custa o almoço?");
+    await userEvent.click(screen.getByRole("radio", { name: "Empate" }));
+
+    await userEvent.click(screen.getByRole("button", { name: /salvar e seguir/i }));
+
+    expect(await screen.findByText(/obrigado/i)).toBeInTheDocument();
   });
 });
 

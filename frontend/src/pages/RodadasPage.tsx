@@ -1,16 +1,18 @@
 import { Button, Checkbox, NativeSelect, NumberInput, Radio, TextInput } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
   annotationExportUrl,
   closeAnnotationRound,
   createAnnotationRound,
   createRetest,
+  deleteAnnotationRound,
   getAnnotationAgreement,
   getAnnotationRound,
   getAnnotationValidation,
   getFinalNotes,
+  getPairwiseSummary,
   getRetests,
   listAnnotationRounds,
   listAnnotators,
@@ -25,6 +27,7 @@ import type {
   AnnotationNoteValues,
   AnnotationRoundDetail,
   AnnotationRoundInput,
+  AnnotationRoundKind,
   AnnotationRoundPreview,
   AnnotationRoundSummary,
   AnnotationStratumDim,
@@ -33,6 +36,10 @@ import type {
   FinalNotes,
   MeanCi,
   MetricCorrelation,
+  PairwiseAgreement,
+  PairwiseNoteValues,
+  PairwiseSideStats,
+  PairwiseSummary,
   RetestAgreement,
 } from "../api/types";
 import { CombinationPicker } from "../components/CombinationPicker";
@@ -40,6 +47,9 @@ import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 
 const STATUS = { open: "Aberta", closed: "Fechada" } as const;
+const KIND_LABEL: Record<AnnotationRoundKind, string> = {
+  single: "Notas por resposta", pairwise: "Comparação lado a lado",
+};
 
 const DIMS: { value: AnnotationStratumDim; label: string }[] = [
   { value: "question_type", label: "Tipo de pergunta" },
@@ -54,6 +64,7 @@ export function RodadasPage() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [kind, setKind] = useState<AnnotationRoundKind>("single");
   const [items, setItems] = useState<string[]>([]);
   const [size, setSize] = useState<number | string>(60);
   const [seed, setSeed] = useState<number | string>("");
@@ -86,10 +97,11 @@ export function RodadasPage() {
   function design(): AnnotationRoundInput {
     return {
       name: name.trim() || "prévia",
+      kind,
       items,
-      sample_size: Number(size),
+      ...(kind === "pairwise" ? (size === "" ? {} : { sample_size: Number(size) }) : { sample_size: Number(size) }),
       ...(seed === "" ? {} : { seed: Number(seed) }),
-      strata,
+      strata: kind === "pairwise" ? [] : strata,
       allocation,
       pilot,
     };
@@ -101,6 +113,15 @@ export function RodadasPage() {
       designVersion.current += 1;
       setPreview(null);
     };
+  }
+
+  function changeKind(value: AnnotationRoundKind) {
+    setKind(value);
+    setItems([]);
+    setSize(value === "pairwise" ? "" : 60);
+    setStrata([]);
+    designVersion.current += 1;
+    setPreview(null);
   }
 
   async function showPreview() {
@@ -121,6 +142,7 @@ export function RodadasPage() {
       const rnd = await createAnnotationRound(design());
       setCreated(rnd.name);
       setName("");
+      setItems([]);
       setPreview(null);
       refresh();
     } catch (e) {
@@ -129,8 +151,9 @@ export function RodadasPage() {
   }
 
   const toggleItem = touch((id: string) =>
-    setItems((all) => (all.includes(id) ? all.filter((x) => x !== id) : [...all, id])));
-  const ready = items.length > 0 && Number(size) > 0;
+    setItems((all) => (all.includes(id) ? all.filter((x) => x !== id)
+      : kind === "pairwise" && all.length >= 2 ? all : [...all, id])));
+  const ready = kind === "pairwise" ? items.length === 2 : items.length > 0 && Number(size) > 0;
   const canCreate = name.trim() !== "" && ready;
 
   return (
@@ -159,35 +182,52 @@ export function RodadasPage() {
         </div>
         <div className="ditto-sec-body">
           <TextInput label="Nome da rodada" value={name} onChange={(e) => setName(e.currentTarget.value)} maw={420} />
-          <CombinationPicker items={items} onToggle={toggleItem} />
+          <Radio.Group label="Tipo de rodada" value={kind} onChange={(v) => changeKind(v as AnnotationRoundKind)}>
+            <Radio value="single" label="Notas por resposta (0–2)" />
+            <Radio value="pairwise" label="Comparação lado a lado (A/B)" mt={6} />
+          </Radio.Group>
+          {kind === "pairwise" && (
+            <p className="ditto-muted">
+              Escolha exatamente duas Combinações da mesma Base (por exemplo, naive × agentic do mesmo LLM). A rodada
+              sorteia um Item por pergunta que as duas responderam, com o lado A/B sorteado por Item.
+            </p>
+          )}
+          <CombinationPicker items={items} onToggle={toggleItem} max={kind === "pairwise" ? 2 : undefined} />
           {items.length > 0 && <p className="ditto-muted">{items.length} Combinação(ões) escolhida(s): {items.join(", ")}</p>}
           <div className="ditto-filters" style={{ margin: 0 }}>
-            <NumberInput label="Respostas a sortear" value={size} onChange={touch(setSize)} min={1} maw={200} />
+            <NumberInput
+              label={kind === "pairwise" ? "Perguntas a sortear (opcional; vazio = todas em comum)" : "Respostas a sortear"}
+              value={size} onChange={touch(setSize)} min={1} maw={280}
+            />
             <NumberInput label="Semente (opcional)" value={seed} onChange={touch(setSeed)} min={0} maw={200} />
           </div>
-          <fieldset className="ditto-rubric-dim">
-            <legend>Estratificar por</legend>
-            {DIMS.map((d) => (
-              <Checkbox
-                key={d.value}
-                label={d.label}
-                checked={strata.includes(d.value)}
-                onChange={() => touch(setStrata)(strata.includes(d.value)
-                  ? strata.filter((x) => x !== d.value) : [...strata, d.value])}
-              />
-            ))}
-            <Radio.Group value={allocation} onChange={(v) => touch(setAllocation)(v as "proportional" | "equal")}>
-              <Radio value="proportional" label="Proporcional ao tamanho de cada estrato" />
-              <Radio value="equal" label="Igual por estrato" mt={6} />
-            </Radio.Group>
-          </fieldset>
+          {kind === "single" && (
+            <fieldset className="ditto-rubric-dim">
+              <legend>Estratificar por</legend>
+              {DIMS.map((d) => (
+                <Checkbox
+                  key={d.value}
+                  label={d.label}
+                  checked={strata.includes(d.value)}
+                  onChange={() => touch(setStrata)(strata.includes(d.value)
+                    ? strata.filter((x) => x !== d.value) : [...strata, d.value])}
+                />
+              ))}
+              <Radio.Group value={allocation} onChange={(v) => touch(setAllocation)(v as "proportional" | "equal")}>
+                <Radio value="proportional" label="Proporcional ao tamanho de cada estrato" />
+                <Radio value="equal" label="Igual por estrato" mt={6} />
+              </Radio.Group>
+            </fieldset>
+          )}
           <Checkbox
             label="Rodada piloto (calibra a rubrica; fica fora da análise)"
             checked={pilot}
             onChange={(e) => setPilot(e.currentTarget.checked)}
           />
           <div className="ditto-annotate-nav">
-            <Button variant="default" onClick={showPreview} disabled={!ready}>Ver prévia</Button>
+            {kind === "single" && (
+              <Button variant="default" onClick={showPreview} disabled={!ready}>Ver prévia</Button>
+            )}
             <Button onClick={create} disabled={!canCreate}>Criar rodada</Button>
           </div>
           {preview && <PreviewTable preview={preview} />}
@@ -202,11 +242,12 @@ export function RodadasPage() {
         ) : (
           <div className="ditto-table-wrap">
             <table className="ditto-table">
-              <thead><tr><th>Rodada</th><th>Respostas</th><th>Situação</th><th>Experimento</th></tr></thead>
+              <thead><tr><th>Rodada</th><th>Tipo</th><th>Respostas</th><th>Situação</th><th>Experimento</th></tr></thead>
               <tbody>
                 {rounds.map((r) => (
                   <tr key={r.id}>
                     <td><Link to={`/anotacao/${r.id}`}>{r.name}</Link></td>
+                    <td>{KIND_LABEL[r.kind]}</td>
                     <td className="ditto-num">{r.size} respostas</td>
                     <td>{STATUS[r.status]}{r.pilot && <span className="ditto-muted"> · piloto, fora da análise</span>}</td>
                     <td>{r.experiment_ids.map((id) => `#${id}`).join(", ")}</td>
@@ -271,15 +312,18 @@ function PreviewTable({ preview }: { preview: AnnotationRoundPreview }) {
 
 export function RodadaDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [round, setRound] = useState<AnnotationRoundDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
-  const [agreement, setAgreement] = useState<AnnotationAgreement | null>(null);
+  const [agreement, setAgreement] = useState<AnnotationAgreement | PairwiseAgreement | null>(null);
   const [closing, setClosing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [computing, setComputing] = useState(false);
   const [annotators, setAnnotators] = useState<Annotator[]>([]);
   const [final, setFinal] = useState<FinalNotes | null>(null);
+  const [pairwiseSummary, setPairwiseSummary] = useState<PairwiseSummary | null>(null);
   const [validation, setValidation] = useState<AnnotationValidation | null>(null);
   const [validating, setValidating] = useState(false);
   const [retestFor, setRetestFor] = useState("");
@@ -317,7 +361,11 @@ export function RodadaDetailPage() {
       setRound((r) => (r ? { ...r, adjudicator_id: value ? Number(value) : null } : r));
       await setAnnotationAdjudicator(Number(id), value ? Number(value) : null);
       getAnnotationRound(Number(id)).then(setRound).catch((e) => setError(errorText(e)));
-      getFinalNotes(Number(id)).then(setFinal).catch((e) => setError(errorText(e)));
+      if (round?.kind === "pairwise") {
+        getPairwiseSummary(Number(id)).then(setPairwiseSummary).catch((e) => setError(errorText(e)));
+      } else {
+        getFinalNotes(Number(id)).then(setFinal).catch((e) => setError(errorText(e)));
+      }
     } catch (e) {
       setError(errorText(e));
     }
@@ -336,13 +384,18 @@ export function RodadaDetailPage() {
   function load() {
     setAgreement(null);
     setValidation(null);
+    setPairwiseSummary(null);
     getAnnotationRound(Number(id))
       .then((r) => {
         setRound(r);
         if (r.status === "closed") {
           computeAgreement();
           listAnnotators().then(setAnnotators).catch((e) => setError(errorText(e)));
-          getFinalNotes(Number(id)).then(setFinal).catch((e) => setError(errorText(e)));
+          if (r.kind === "pairwise") {
+            getPairwiseSummary(Number(id)).then(setPairwiseSummary).catch((e) => setError(errorText(e)));
+          } else {
+            getFinalNotes(Number(id)).then(setFinal).catch((e) => setError(errorText(e)));
+          }
         }
       })
       .catch((e) => setError(errorText(e)));
@@ -372,11 +425,22 @@ export function RodadaDetailPage() {
     }
   }
 
+  async function removeRound() {
+    setError(null);
+    try {
+      await deleteAnnotationRound(Number(id));
+      navigate("/anotacao");
+    } catch (e) {
+      setError(errorText(e));
+      setDeleting(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title={round ? `Rodada ${round.name}` : "Rodada"}
-        lede={round && `${round.size} respostas · semente ${round.seed} · rubrica v${round.rubric_version} · ${STATUS[round.status]}${round.pilot ? " · piloto, fora da análise" : ""}`}
+        lede={round && `${KIND_LABEL[round.kind]} · ${round.size} respostas · semente ${round.seed} · ${STATUS[round.status]}${round.pilot ? " · piloto, fora da análise" : ""}`}
         back={{ to: "/anotacao", label: "Voltar às rodadas" }}
       />
       {error && <Errata title="Algo não funcionou">{error}</Errata>}
@@ -392,11 +456,23 @@ export function RodadaDetailPage() {
           )}
         </div>
       )}
+      {round && round.progress.every((p) => p.done === 0) && (
+        <div className="ditto-annotate-nav" style={{ marginBottom: 16 }}>
+          {deleting ? (
+            <>
+              <Button size="xs" color="red" onClick={removeRound}>Confirmar: apagar a rodada (criada por engano)</Button>
+              <Button size="xs" variant="subtle" onClick={() => setDeleting(false)}>Cancelar</Button>
+            </>
+          ) : (
+            <Button size="xs" variant="subtle" onClick={() => setDeleting(true)}>Apagar rodada</Button>
+          )}
+        </div>
+      )}
       {round?.status === "closed" && (
         <p className="ditto-annotate-nav">
           <a href={annotationExportUrl(round.id, "csv")} download>Baixar notas (CSV)</a>
           <a href={annotationExportUrl(round.id, "csv", "point", true)} download>Baixar notas para Excel (;)</a>
-          {!round.pilot && round.retest_annotator_id === null && (
+          {round.kind === "single" && !round.pilot && round.retest_annotator_id === null && (
             <>
               <a href={annotationExportUrl(round.id, "tex")} download>Baixar tabelas LaTeX (ponto)</a>
               <a href={annotationExportUrl(round.id, "tex", "comma")} download>Baixar tabelas LaTeX (vírgula)</a>
@@ -448,14 +524,16 @@ export function RodadaDetailPage() {
           <Button variant="default" onClick={computeAgreement} loading={computing}>Calcular concordância agora</Button>
         </section>
       )}
-      {agreement && <AgreementSection agreement={agreement} />}
+      {agreement && (round?.kind === "pairwise"
+        ? <PairwiseAgreementSection agreement={agreement as PairwiseAgreement} />
+        : <AgreementSection agreement={agreement as AnnotationAgreement} />)}
       {round?.status === "closed" && (
         <section className="ditto-sec">
           <div className="ditto-sec-head">
             <h2 className="ditto-h2">Adjudicação e Nota final</h2>
             <p className="ditto-read">
-              Onde os avaliadores discordam, o adjudicador decide a nota na tela de avaliação. Ele não pode ter dado
-              notas nesta rodada.
+              Onde os avaliadores discordam, o adjudicador decide {round.kind === "pairwise" ? "a preferência" : "a nota"} na
+              tela de avaliação. Ele não pode ter dado notas nesta rodada.
             </p>
           </div>
           <NativeSelect
@@ -468,10 +546,16 @@ export function RodadaDetailPage() {
                 .map((a) => ({ value: String(a.id), label: a.active ? a.name : `${a.name} (desativado)` }))]}
             maw={320}
           />
-          {final && <p>{finalSummary(final)}</p>}
+          {round.kind === "single" && final && <p>{finalSummary(final)}</p>}
+          {round.kind === "pairwise" && pairwiseSummary && (
+            <p>{pairwiseSummary.pending} comparaç{pairwiseSummary.pending === 1 ? "ão" : "ões"} pendente{pairwiseSummary.pending === 1 ? "" : "s"} de adjudicação.</p>
+          )}
         </section>
       )}
-      {round?.status === "closed" && round.retest_annotator_id === null && (
+      {round?.kind === "pairwise" && round.status === "closed" && pairwiseSummary && (
+        <PairwiseSummarySection summary={pairwiseSummary} />
+      )}
+      {round?.kind === "single" && round?.status === "closed" && round.retest_annotator_id === null && (
         <section className="ditto-sec">
           <div className="ditto-sec-head">
             <h2 className="ditto-h2">Reteste</h2>
@@ -512,7 +596,7 @@ export function RodadaDetailPage() {
           )}
         </section>
       )}
-      {round?.status === "closed" && !round.pilot && round.retest_annotator_id === null && (
+      {round?.kind === "single" && round?.status === "closed" && !round.pilot && round.retest_annotator_id === null && (
         <section className="ditto-sec">
           <div className="ditto-sec-head">
             <h2 className="ditto-h2">Nota humana × métricas automáticas</h2>
@@ -688,6 +772,162 @@ function AgreementSection({ agreement }: { agreement: AnnotationAgreement }) {
           </table>
         </div>
       )}
+    </section>
+  );
+}
+
+const REASON_LABEL: Record<string, string> = {
+  mais_correta: "mais correta", mais_completa: "mais completa", mais_concisa: "mais concisa",
+  menos_invencao: "menos invenção", outro: "outro",
+};
+
+function pairwiseNoteText(n: PairwiseNoteValues): string {
+  if (n.cannot_evaluate) return "não conseguiu avaliar";
+  if (n.preference === "tie") return "empate";
+  const side = n.preference === "A" ? "A" : n.preference === "B" ? "B" : "—";
+  const reasons = n.reasons.map((r) => REASON_LABEL[r] ?? r).join(", ");
+  return reasons ? `${side} melhor (${reasons})` : side;
+}
+
+function PairwiseAgreementSection({ agreement }: { agreement: PairwiseAgreement }) {
+  const d = agreement.dimension;
+  return (
+    <section className="ditto-sec">
+      <div className="ditto-sec-head">
+        <h2 className="ditto-h2">Concordância</h2>
+        <p className="ditto-read">
+          α de Krippendorff ordinal e, com dois avaliadores, kappa de Cohen (sem peso e com peso linear), com IC 95%
+          por bootstrap, na escala cega A &lt; empate &lt; B. Respostas sem preferência ficam fora.
+        </p>
+      </div>
+      {agreement.note && <p className="ditto-empty">{agreement.note}</p>}
+      <div className="ditto-table-wrap">
+        <table className="ditto-table">
+          <thead><tr><th className="ditto-num">Respostas</th><th>α ordinal</th><th>κ sem peso</th><th>κ linear</th></tr></thead>
+          <tbody>
+            <tr>
+              <td className="ditto-num">{d.n}</td>
+              <td>{withCi(d.alpha)}</td>
+              <td>{withCi(d.kappa_unweighted)}</td>
+              <td>{withCi(d.kappa_linear)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {d.confusion && (
+        <div className="ditto-table-wrap">
+          <table className="ditto-table" aria-label="Matriz de confusão">
+            <caption>Matriz de confusão (linhas: {d.confusion.avaliadores[0]}; colunas: {d.confusion.avaliadores[1]})</caption>
+            <thead><tr><th />{d.confusion.levels.map((l) => <th key={l} className="ditto-num">{l}</th>)}</tr></thead>
+            <tbody>
+              {d.confusion.matrix.map((row, i) => (
+                <tr key={i}>
+                  <th>{d.confusion!.levels[i]}</th>
+                  {row.map((c, j) => <td key={j} className="ditto-num">{c}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <h3 className="ditto-h3">Discordâncias ({agreement.disagreements.length})</h3>
+      {agreement.disagreements.length === 0 ? (
+        <p className="ditto-muted">Nenhuma discordância.</p>
+      ) : (
+        <div className="ditto-table-wrap">
+          <table className="ditto-table">
+            <thead><tr><th>Pergunta</th><th>Preferências</th></tr></thead>
+            <tbody>
+              {agreement.disagreements.map((d2) => (
+                <tr key={d2.item_id}>
+                  <td>{d2.question}</td>
+                  <td>
+                    {Object.entries(d2.notes).map(([name, n]) => (
+                      <div key={name}>{name}: {pairwiseNoteText(n)}{n.comment ? ` (“${n.comment}”)` : ""}</div>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function combinationLabel(ref: { rag: string; llm: string }): string {
+  return `${ref.rag} · ${ref.llm}`;
+}
+
+function sidePct(p: PairwiseSideStats["proportion"]["1"]): string {
+  if (p.value === null) return "—";
+  const pct = (v: number) => `${(v * 100).toFixed(0)}%`;
+  return p.low === null || p.high === null ? pct(p.value) : `${pct(p.value)} [${pct(p.low)}; ${pct(p.high)}]`;
+}
+
+function signP(p: number | null): string {
+  return p === null ? "—" : p < 0.001 ? "< 0,001" : dec(p);
+}
+
+function SideStatsRows({ who, stats }: { who: string; stats: PairwiseSideStats }) {
+  const reasonsText = (side: "1" | "2") => {
+    const entries = Object.entries(stats.reasons[side]);
+    if (entries.length === 0) return "—";
+    return entries.map(([r, n]) => `${REASON_LABEL[r] ?? r}: ${n}`).join(", ");
+  };
+  return (
+    <tr>
+      <td>{who}</td>
+      <td className="ditto-num">{stats.wins["1"]}</td>
+      <td className="ditto-num">{stats.ties}</td>
+      <td className="ditto-num">{stats.wins["2"]}</td>
+      <td>{signP(stats.sign_test_p)}</td>
+      <td>{sidePct(stats.proportion["1"])}</td>
+      <td>{reasonsText("1")}</td>
+      <td>{reasonsText("2")}</td>
+    </tr>
+  );
+}
+
+function PairwiseSummarySection({ summary }: { summary: PairwiseSummary }) {
+  const label1 = combinationLabel(summary.pair_run_1);
+  const label2 = combinationLabel(summary.pair_run_2);
+  return (
+    <section className="ditto-sec">
+      <div className="ditto-sec-head">
+        <h2 className="ditto-h2">Resumo da comparação</h2>
+        <p className="ditto-read">
+          <strong>{label1}</strong> (run 1) × <strong>{label2}</strong> (run 2). Por avaliador e para a preferência
+          final (concordância ou adjudicada): vitórias de cada Combinação, empates, teste do sinal (bicaudal, sem os
+          empates) e proporção de vitórias do run 1 com IC 95% de Wilson.
+        </p>
+      </div>
+      {summary.pending > 0 && (
+        <p className="ditto-muted">{summary.pending} comparaç{summary.pending === 1 ? "ão" : "ões"} pendente{summary.pending === 1 ? "" : "s"} de adjudicação.</p>
+      )}
+      <div className="ditto-table-wrap">
+        <table className="ditto-table" aria-label="Resumo da comparação">
+          <thead>
+            <tr>
+              <th>Avaliador</th>
+              <th className="ditto-num">{label1}</th>
+              <th className="ditto-num">Empates</th>
+              <th className="ditto-num">{label2}</th>
+              <th>p (teste do sinal)</th>
+              <th>Proporção run 1 [IC 95%]</th>
+              <th>Motivos · run 1</th>
+              <th>Motivos · run 2</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(summary.avaliadores).map(([name, stats]) => (
+              <SideStatsRows key={name} who={name} stats={stats} />
+            ))}
+            <SideStatsRows who="Final" stats={summary.final} />
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
