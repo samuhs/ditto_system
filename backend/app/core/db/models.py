@@ -96,6 +96,9 @@ class RunResult(Base):
     retrieval_signals: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     latency_ms: Mapped[int] = mapped_column(Integer, default=0)
     tokens: Mapped[int] = mapped_column(Integer, default=0)
+    # Token usage of every LLM call behind this answer, as the provider reported it:
+    # {"calls", "input_tokens", "output_tokens", "reasoning_tokens"}; None on old rows.
+    usage: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     run: Mapped["ExperimentRun"] = relationship(back_populates="results")
 

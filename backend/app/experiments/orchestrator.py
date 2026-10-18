@@ -30,6 +30,7 @@ from app.core.evaluation.base import EvalSample
 from app.core.config.runtime import get_eval_embedding, get_stall_limit_s
 from app.core.evaluation.runner import evaluate_sample, metrics_need_embedder
 from app.core.llm import ollama
+from app.core.llm import usage as llm_usage
 from app.core.llm.factory import is_local_llm, resolve_llm
 from app.core.memory.device import resolve_embedding_device
 from app.core.memory.leases import CachedQueryEmbedder, LeaseSwitcher
@@ -342,13 +343,15 @@ def _error_result(run_id: int, question: QuestionItem, error: str) -> RunResult:
 def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder):
     """Run rag.answer + evaluate for one question.
 
-    Returns (answer, contexts, scores, latency_ms, tokens, graph_explanation).
+    Returns (answer, contexts, scores, latency_ms, tokens, graph_explanation, usage), where
+    usage sums the token usage of every LLM call behind the answer.
     """
     start = time.perf_counter()
-    if getattr(rag, "uses_evidence", False):
-        answer = rag.answer(question.text, evidence=question.evidence)
-    else:
-        answer = rag.answer(question.text)
+    with llm_usage.track() as call_usage:
+        if getattr(rag, "uses_evidence", False):
+            answer = rag.answer(question.text, evidence=question.evidence)
+        else:
+            answer = rag.answer(question.text)
     latency_ms = int((time.perf_counter() - start) * 1000)
     context_texts = [c.get("text", "") for c in answer.contexts]
     sample = EvalSample(
@@ -362,14 +365,14 @@ def _process_question(rag, question: QuestionItem, metrics: list, eval_embedder)
     scores = evaluate_sample(sample, metrics, embedder=eval_embedder)
     return (
         answer.answer, answer.contexts, scores, latency_ms, len(answer.answer.split()),
-        answer.graph_explanation,
+        answer.graph_explanation, dict(call_usage),
     )
 
 
 def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eval_embedder):
     """Try _process_question up to _MAX_RETRIES times with _RETRY_DELAY_S between attempts.
 
-    Returns (answer_text, contexts, scores, latency_ms, tokens, graph_explanation, error).
+    Returns (answer_text, contexts, scores, latency_ms, tokens, graph_explanation, usage, error).
     On permanent failure `error` is the last exception raised (so #19 can record it
     verbatim in the Registro de pausa) and the other values are None.
     """
@@ -396,7 +399,7 @@ def _process_question_with_retry(rag, question: QuestionItem, metrics: list, eva
                     _MAX_RETRIES,
                     exc,
                 )
-    return None, None, None, None, None, None, last_exc
+    return None, None, None, None, None, None, None, last_exc
 
 
 # How often a question's future is polled for a stall signal while waiting on it.
@@ -1052,7 +1055,7 @@ def _run_experiment(
                                 pause_in_flight = tracker.snapshot()
                             continue
 
-                        answer_text, contexts, scores, latency_ms, tokens, explanation, error = outcome
+                        answer_text, contexts, scores, latency_ms, tokens, explanation, call_usage, error = outcome
                         if error is not None:
                             session.add(_error_result(run.id, question, str(error)))
                             if failures.record_failure():
@@ -1081,6 +1084,7 @@ def _run_experiment(
                                     scores=scores,
                                     latency_ms=latency_ms,
                                     tokens=tokens,
+                                    usage=call_usage,
                                 )
                             )
                         watchdog.heartbeat()  # a result was just recorded

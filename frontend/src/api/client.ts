@@ -1,8 +1,5 @@
 import type {
-  RetestAgreement,
-  AnnotationValidation,
   AdjudicationView,
-  FinalNotes,
   AnnotationAgreement,
   AnnotationNoteValues,
   AnnotationQueue,
@@ -10,27 +7,32 @@ import type {
   AnnotationRoundInput,
   AnnotationRoundPreview,
   AnnotationRoundSummary,
+  AnnotationValidation,
   Annotator,
   AppSettings,
-  Comparison,
   BaseSummary,
-  EvaluationSettings,
-  MemoryStatus,
   ChatConfig,
   ChatConfigInput,
   ChatMessage,
   ChatTurn,
+  Comparison,
   DialogueDetail,
   DialogueList,
   DialogueListParams,
+  EvaluationSettings,
   ExperimentDetail,
   ExperimentDifficulty,
   ExperimentList,
+  ExperimentRef,
+  FinalNotes,
+  FlowSpec,
   GraphBuildJob,
   GraphBuildRequest,
-  ExperimentRef,
-  FlowSpec,
   IngestResult,
+  LlmProvider,
+  LlmProviderInput,
+  LlmProviderTest,
+  MemoryStatus,
   Options,
   PairAdjudicationView,
   PairwiseAgreement,
@@ -40,6 +42,7 @@ import type {
   PairwiseSummary,
   Persona,
   PromptsResponse,
+  RetestAgreement,
   Rubric,
 } from "./types";
 
@@ -287,6 +290,30 @@ export async function saveGeminiKey(key: string): Promise<{ gemini_api_key_set: 
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key }),
+  }));
+}
+
+export async function listLlmProviders(): Promise<LlmProvider[]> {
+  return asJson<LlmProvider[]>(await fetch(`${BASE}/settings/llm-providers`));
+}
+
+export async function saveLlmProvider(id: string, body: LlmProviderInput): Promise<LlmProvider> {
+  return asJson(await fetch(`${BASE}/settings/llm-providers/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+}
+
+export async function deleteLlmProvider(id: string): Promise<{ deleted: string }> {
+  return asJson(await fetch(`${BASE}/settings/llm-providers/${encodeURIComponent(id)}`, { method: "DELETE" }));
+}
+
+export async function testLlmProvider(id: string, model: string): Promise<LlmProviderTest> {
+  return asJson(await fetch(`${BASE}/settings/llm-providers/${encodeURIComponent(id)}/test`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model }),
   }));
 }
 

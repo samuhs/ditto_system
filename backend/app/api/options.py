@@ -7,9 +7,8 @@ from app.core.chunking.base import chunking_registry
 from app.core.embedding.base import embedding_registry
 from app.core.evaluation.base import evaluation_registry
 from app.core.graph.build import current_extractors
-from app.core.config.runtime import get_gemini_key
-from app.core.llm.gemini import DEFAULT_GEMINI_MODEL
 from app.core.llm.ollama import list_ollama_models
+from app.core.llm.providers import all_providers, llm_name
 from app.core.rag.base import rag_registry
 from app.core.retrieval.base import retrieval_registry
 from app.core.vectorstore.qdrant import QdrantStore, parse_collection_name
@@ -26,13 +25,22 @@ def get_ollama_lister() -> Callable[[], list[str]]:
 
 
 def _llm_options(list_ollama: Callable[[], list[str]]) -> list[dict[str, str]]:
-    """Real model names: every model on the local server, plus Gemini when a key is set.
+    """Real model names: every model on the local server and every model of each provider.
 
-    Without a key a Gemini run would only fail, so it is not offered.
+    A provider without a key is not offered (its runs would only fail), nor is Gemini
+    without a key. Models of the built-in local server keep their bare names; the others
+    are named "<provider>::<model>".
     """
     llms = []
-    if get_gemini_key() is not None:
-        llms.append({"value": DEFAULT_GEMINI_MODEL, "label": DEFAULT_GEMINI_MODEL, "location": "remote"})
+    for provider in all_providers().values():
+        if provider.id == "local":
+            continue
+        if not provider.local and provider.resolved_key() is None:
+            continue
+        for model in provider.models:
+            value = model if provider.id == "gemini" else llm_name(provider.id, model)
+            label = model if provider.id == "gemini" else f"{model} ({provider.id})"
+            llms.append({"value": value, "label": label, "location": "local" if provider.local else "remote"})
     try:
         names = list_ollama()
     except Exception:  # noqa: BLE001  an Ollama outage must not break the form pages

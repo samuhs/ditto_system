@@ -117,6 +117,45 @@ def test_run_experiment_persists_results(session_factory):
     check.close()
 
 
+def test_run_experiment_records_the_token_usage_of_every_llm_call(session_factory):
+    """Every LLM call behind an answer (here agentic: decide, then answer) adds to its usage."""
+    from app.core.llm.chat_model import ChatModelLLM
+
+    class _Msg:
+        def __init__(self, content):
+            self.content = content
+            self.usage_metadata = {"input_tokens": 50, "output_tokens": 7,
+                                   "output_token_details": {"reasoning": 0}}
+
+    class _Model:
+        def invoke(self, prompt):
+            return _Msg("ANSWER: The center." if prompt.startswith("You are answering") else "The center.")
+
+    store = QdrantStore(client=QdrantClient(":memory:"))
+    ingest_documents(
+        [Document(name="a.txt", text="Para one.\n\nPara two here.")],
+        IngestConfig(base="viagem", chunkings=["recursive"], embeddings=["gemini"]),
+        store, embedder_factory=_embedder_factory,
+    )
+    session = session_factory()
+    experiment = Experiment(name="usage", status="pending", config={})
+    session.add(experiment)
+    session.commit()
+    experiment_id = experiment.id
+    session.close()
+    config = ExperimentConfig(llms=["openrouter::m"], base="viagem", chunkings=["recursive"], embeddings=["gemini"],
+                              rags=["naive", "agentic"], retrievers=["similarity"], metrics=["answer_relevancy"])
+    deps = ExperimentDeps(store=store, session_factory=session_factory,
+                          llm_factory=lambda *a, **k: ChatModelLLM(_Model()), embedder_factory=_embedder_factory)
+    run_experiment(experiment_id, config, [QuestionItem(text="Where is the center?")], deps)
+
+    check = session_factory()
+    usage = {run.rag_technique: run.results[0].usage for run in check.get(Experiment, experiment_id).runs}
+    assert usage["naive"] == {"calls": 1, "input_tokens": 50, "output_tokens": 7, "reasoning_tokens": 0}
+    assert usage["agentic"]["calls"] == 1  # the first decision already answered
+    check.close()
+
+
 def test_question_retry_on_transient_failure(session_factory):
     """When rag.answer fails, it retries up to _MAX_RETRIES times then records the error."""
     store = QdrantStore(client=QdrantClient(":memory:"))

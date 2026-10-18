@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { getMemory, getSettings, saveGeminiKey, saveStallLimit } from "../api/client";
 import type { MemoryStatus } from "../api/types";
+import { LlmProvidersSection } from "../components/LlmProvidersSection";
 import { Errata, Saved, errorText } from "../components/Notice";
 import { PageHeader } from "../components/PageHeader";
 import { StatusTag } from "../components/StatusTag";
@@ -71,7 +72,7 @@ export function SettingsPage() {
     <div>
       <PageHeader
         title="Sistema"
-        lede="Memória e chaves usadas pelo Ditto. As mudanças valem para as próximas execuções."
+        lede="Memória, chaves e provedores de LLM usados pelo Ditto. As mudanças valem para as próximas execuções."
       />
 
       {error && (
@@ -145,6 +146,8 @@ export function SettingsPage() {
             </div>
           </div>
         </section>
+
+        <LlmProvidersSection />
 
         <section className="ditto-sec">
           <div className="ditto-sec-head">

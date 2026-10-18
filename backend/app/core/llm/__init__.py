@@ -1,2 +1,2 @@
-"""LLM providers package. Importing it registers all built-in providers."""
-from app.core.llm import gemini, ollama  # noqa: F401  registers the built-ins
+"""LLM package. Importing it registers the one LLM implementation (a LangChain chat model)."""
+from app.core.llm import chat_model  # noqa: F401  registers ChatModelLLM

@@ -1,23 +1,28 @@
-"""LLM factory: resolves model names to a provider."""
-from app.core.llm.base import LLM, build_llm
-from app.core.llm.ollama import OllamaLLM
+"""LLM factory: resolves an LLM name to a chat model of its provider."""
+from app.core.llm.base import LLM
+from app.core.llm.chat_model import ChatModelLLM, build_chat_model
+from app.core.llm.providers import split_llm_name
 
 
-def resolve_llm(name: str, **kwargs) -> LLM:
-    """Build an LLM by name.
+def resolve_llm(name: str, client=None, **kwargs) -> LLM:
+    """Build the LLM for a name (see app.core.llm.providers for the naming rules).
 
-    - "gemini-*" (a Gemini model name)            -> GeminiLLM with that model
-    - "<model>:<tag>" (an Ollama model name)      -> OllamaLLM with that model
-    - "<org>/<repo>" (MLX / Hugging Face name)    -> OllamaLLM (local OpenAI-compatible server)
-    - anything else                               -> the provider registry
+    `client` injects a ready chat model (tests); otherwise the provider's configuration
+    builds one. Raises KeyError for a name no provider serves.
     """
-    if name.startswith("gemini-"):
-        return build_llm("gemini", model=name, **kwargs)
-    if ":" in name or "/" in name:
-        return OllamaLLM(model=name, **kwargs)
-    return build_llm(name, **kwargs)
+    provider, model = split_llm_name(name)
+    if client is not None:
+        return ChatModelLLM(client)
+    return ChatModelLLM(build_chat_model(provider, model, **kwargs))
 
 
 def is_local_llm(name: str) -> bool:
-    """Whether the named LLM runs on this machine: anything Gemini does not serve."""
-    return not (name == "gemini" or name.startswith("gemini-"))
+    """Whether the named LLM runs on this machine (so it competes for memory and the GPU).
+
+    A name no provider serves counts as local: the memory policy then stays conservative.
+    """
+    try:
+        provider, _ = split_llm_name(name)
+    except KeyError:
+        return True
+    return provider.local

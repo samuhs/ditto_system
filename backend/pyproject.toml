@@ -16,6 +16,7 @@ dependencies = [
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
     "python-multipart>=0.0.9",
+    "langchain>=1.0",  # init_chat_model: one generic chat model for every LLM provider
     "langchain-core>=0.2",
     "langchain-google-genai>=1.0",
     "langchain-openai>=0.1",

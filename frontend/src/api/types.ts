@@ -442,6 +442,41 @@ export interface AppSettings {
   stall_limit_minutes: number;
 }
 
+/** An LLM provider: any model behind any OpenAI-compatible URL or LangChain provider. */
+export interface LlmProvider {
+  id: string;
+  /** "custom" (OpenAI-compatible URL) or a LangChain provider name (openai, google_genai, anthropic, ...). */
+  kind: string;
+  base_url: string | null;
+  api_key_env: string | null;
+  api_key_set: boolean;
+  models: string[];
+  /** Extra LangChain constructor arguments, e.g. {"extra_body": {"reasoning": {"enabled": false}}}. */
+  params: Record<string, unknown>;
+  local: boolean;
+  max_tokens_in_body: boolean | null;
+  builtin: boolean;
+}
+
+export interface LlmProviderInput {
+  kind: string;
+  base_url?: string | null;
+  /** Omitted: keeps the stored key; "": clears it. */
+  api_key?: string | null;
+  api_key_env?: string | null;
+  models: string[];
+  params: Record<string, unknown>;
+  local: boolean;
+}
+
+export interface LlmProviderTest {
+  ok: boolean;
+  answer?: string;
+  latency_ms?: number;
+  usage?: { calls: number; input_tokens: number; output_tokens: number; reasoning_tokens: number };
+  error?: string;
+}
+
 export interface EvaluationSettings {
   /** Embedder that scores experiments that do not name one. */
   eval_embedding: string;

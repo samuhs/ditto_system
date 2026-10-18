@@ -130,6 +130,7 @@ def _result_rows(experiment: Experiment) -> list[dict]:
                     "scores": result.scores,
                     "latency_ms": result.latency_ms,
                     "tokens": result.tokens,
+                    "usage": result.usage,
                     "question_signals": profiles.get(result.question, {}),
                     "retrieval_signals": result.retrieval_signals or {},
                     # GraphRAG runs: the Grafo de conhecimento's stats; None otherwise.

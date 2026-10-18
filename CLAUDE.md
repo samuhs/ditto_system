@@ -42,6 +42,7 @@ Dev backend usa o venv `backend/.venv` (Python 3.13). Frontend usa Node 22.
 ## Estrutura
 - `backend/app/` — FastAPI monólito modular (`core/`, `ingestion/`, `experiments/`, `api/`)
 - `backend/app/core/memory/` — `leases.py`: cache de vetores das perguntas e troca de reserva para experimentos em etapas; perfis de memória, `ModelManager` (todo embedder passa por ele: cache com limite de modelos locais) e política de device (embedder nunca divide a GPU com LLM local)
+- `backend/app/core/llm/` — um único `ChatModelLLM` (LangChain `init_chat_model`) para todo LLM; provedores são configuração (`providers.py`): `local` (MLX/Ollama) e `gemini` embutidos, os outros cadastrados em Sistema (tipo `custom` = qualquer URL compatível com OpenAI, ou um provedor do LangChain), com o modelo nomeado `provedor::modelo`; `usage.py` grava os tokens reais de cada resposta
 - `frontend/` — React + Vite + TS + Mantine (nginx faz proxy `/api/` → api)
 - `docs/superpowers/{specs,plans}/` — specs e planos de implementação
 - `database/` — documento de teste (FAQ de guia de viagem): `faq_manus_completa.md` (bruto) e `faq_manus_normalizado.md`. `guia_santo_antonio_da_alegria.md` (base enriquecida, com `.fontes.json`). Toda base nova segue `database/DIRETRIZES.md` (original preservado + versão `_normalizado`)

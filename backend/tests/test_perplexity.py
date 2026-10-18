@@ -33,6 +33,7 @@ def test_only_mlx_models_get_a_scorer(monkeypatch, tmp_path):
     monkeypatch.setenv("DITTO_HOME", str(tmp_path))
     assert perplexity_scorer_for("qwen3:1.7b") is None
     assert perplexity_scorer_for("gemini-2.5-flash-lite") is None
+    assert perplexity_scorer_for("openrouter::qwen/qwen3.5-9b") is None
     assert isinstance(perplexity_scorer_for("mlx-community/Qwen2.5-3B-Instruct-4bit"),
                       perplexity.MlxPerplexityScorer)
     monkeypatch.setenv("DITTO_HOME", str(tmp_path / "missing"))

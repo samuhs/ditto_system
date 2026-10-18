@@ -27,6 +27,7 @@ beforeEach(() => {
   });
   vi.mocked(client.saveGeminiKey).mockResolvedValue({ gemini_api_key_set: true });
   vi.mocked(client.saveStallLimit).mockResolvedValue({ stall_limit_minutes: 5 });
+  vi.mocked(client.listLlmProviders).mockResolvedValue([]);
   vi.mocked(client.getMemory).mockResolvedValue({
     profile: { name: "low", max_local_models: 1, embedding_device: "cpu", max_concurrency: 2 },
     total_bytes: 8 * 1024 ** 3,

@@ -93,10 +93,10 @@ class MlxPerplexityScorer(PerplexityScorer):
 def perplexity_scorer_for(model: str) -> PerplexityScorer | None:
     """The scorer for a local LLM server model, or None when it cannot be scored.
 
-    MLX models are Hugging Face ids ("org/repo"); Ollama tags ("qwen3:1.7b")
-    and Gemini have no scorer.
+    MLX models are Hugging Face ids ("org/repo"); Ollama tags ("qwen3:1.7b"),
+    Gemini and models behind a configured provider ("<provider>::<model>") have no scorer.
     """
-    if "/" not in model or not mlx_python().exists() or not _SCRIPT.exists():
+    if "/" not in model or "::" in model or not mlx_python().exists() or not _SCRIPT.exists():
         return None
     return MlxPerplexityScorer()
 
