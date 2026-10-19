@@ -1,4 +1,4 @@
-import { Button, Checkbox, Group, PasswordInput, Select, Textarea, TextInput } from "@mantine/core";
+import { Button, Checkbox, Group, NumberInput, PasswordInput, Select, Textarea, TextInput } from "@mantine/core";
 import { useEffect, useState } from "react";
 
 import { deleteLlmProvider, listLlmProviders, saveLlmProvider, testLlmProvider } from "../api/client";
@@ -24,16 +24,18 @@ interface Form {
   models: string;
   params: string;
   local: boolean;
+  rpm: number | null;
 }
 
 const EMPTY: Form = {
-  id: "", kind: "custom", base_url: "", api_key: "", api_key_env: "", models: "", params: "{}", local: false,
+  id: "", kind: "custom", base_url: "", api_key: "", api_key_env: "", models: "", params: "{}", local: false, rpm: null,
 };
 
 function toForm(p: LlmProvider): Form {
   return {
     id: p.id, kind: p.kind, base_url: p.base_url ?? "", api_key: "", api_key_env: p.api_key_env ?? "",
     models: p.models.join("\n"), params: JSON.stringify(p.params, null, 2), local: p.local,
+    rpm: p.requests_per_minute,
   };
 }
 
@@ -86,6 +88,7 @@ export function LlmProvidersSection() {
         models: form.models.split("\n").map((m) => m.trim()).filter(Boolean),
         params,
         local: form.local,
+        requests_per_minute: form.rpm,
       });
       setSaved(true);
       setEditing(true);
@@ -223,6 +226,14 @@ export function LlmProvidersSection() {
           onChange={(e) => set({ params: e.currentTarget.value })}
           w={620}
           styles={{ input: { fontFamily: "monospace" } }}
+        />
+        <NumberInput
+          label="Limite de requisições por minuto"
+          description="Vazio: sem limite. Ex.: 18 para uma conta nova do OpenRouter limitada a 20/min"
+          min={1}
+          value={form.rpm ?? ""}
+          onChange={(v) => set({ rpm: typeof v === "number" && v > 0 ? v : null })}
+          w={300}
         />
         <Checkbox
           label="Roda nesta máquina (entra na política de memória e GPU)"

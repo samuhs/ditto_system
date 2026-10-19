@@ -12,9 +12,14 @@ from app.main import create_app
 
 @pytest.fixture
 def cfg_dir(tmp_path, monkeypatch):
+    from app.core.config.settings import get_settings
+
     monkeypatch.setenv("APP_CONFIG_DIR", str(tmp_path))
     monkeypatch.setenv("ENV_FILE", "")
-    return tmp_path
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    get_settings.cache_clear()  # no key from the project .env leaks into the test
+    yield tmp_path
+    get_settings.cache_clear()
 
 
 class _FakeStore:
@@ -171,3 +176,11 @@ def test_provider_test_endpoint_reports_answer_usage_or_error(cfg_dir, monkeypat
     monkeypatch.setattr(chat_models, "init_chat_model", _boom)
     bad = client.post("/settings/llm-providers/openrouter/test", json={"model": "m"}).json()
     assert bad["ok"] is False and "401" in bad["error"]
+
+
+def test_requests_per_minute_is_stored_validated_and_public(cfg_dir):
+    saved = providers.save_provider("capped", {**OPENROUTER, "requests_per_minute": 18})
+    assert saved.requests_per_minute == 18
+    assert providers.get_provider("capped").public()["requests_per_minute"] == 18
+    with pytest.raises(ValueError, match="requests_per_minute"):
+        providers.save_provider("capped", {**OPENROUTER, "requests_per_minute": 0})

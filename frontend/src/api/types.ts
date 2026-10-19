@@ -455,6 +455,8 @@ export interface LlmProvider {
   params: Record<string, unknown>;
   local: boolean;
   max_tokens_in_body: boolean | null;
+  /** Client-side cap on requests per minute to this provider; null: no cap. */
+  requests_per_minute: number | null;
   builtin: boolean;
 }
 
@@ -467,6 +469,7 @@ export interface LlmProviderInput {
   models: string[];
   params: Record<string, unknown>;
   local: boolean;
+  requests_per_minute: number | null;
 }
 
 export interface LlmProviderTest {

@@ -11,12 +11,12 @@ vi.mock("../api/client");
 
 const LOCAL: LlmProvider = {
   id: "local", kind: "custom", base_url: "http://localhost:11434/v1", api_key_env: null, api_key_set: true,
-  models: [], params: {}, local: true, max_tokens_in_body: true, builtin: true,
+  models: [], params: {}, local: true, max_tokens_in_body: true, requests_per_minute: null, builtin: true,
 };
 const OPENROUTER: LlmProvider = {
   id: "openrouter", kind: "custom", base_url: "https://openrouter.ai/api/v1", api_key_env: null, api_key_set: true,
   models: ["qwen/qwen3.5-9b", "z-ai/glm-5.3-flash"], params: { extra_body: { reasoning: { enabled: false } } },
-  local: false, max_tokens_in_body: null, builtin: false,
+  local: false, max_tokens_in_body: null, requests_per_minute: null, builtin: false,
 };
 
 function renderSection() {
@@ -62,6 +62,7 @@ describe("LlmProvidersSection", () => {
       {
         kind: "custom", base_url: "https://api.deepseek.com/v1", api_key: "sk-1", api_key_env: null,
         models: ["deepseek-v4.1-flash"], params: { extra_body: { x: 1 } }, local: false,
+        requests_per_minute: null,
       },
     ]);
     expect(await screen.findByText("Provedor salvo")).toBeInTheDocument();

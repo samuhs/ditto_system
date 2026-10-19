@@ -46,6 +46,9 @@ class Provider:
     # the max_completion_tokens that langchain-openai sends for a typed max_tokens; most
     # OpenAI-compatible servers read max_tokens. None: in the body for "custom", typed otherwise.
     max_tokens_in_body: bool | None = None
+    # Client-side cap on requests per minute, shared by every call to this provider (e.g. a
+    # new OpenRouter account may send 20 requests a minute to some models). None: no cap.
+    requests_per_minute: float | None = None
     builtin: bool = False
 
     def resolved_key(self) -> str | None:
@@ -65,7 +68,7 @@ class Provider:
             "id": self.id, "kind": self.kind, "base_url": self.base_url, "api_key_env": self.api_key_env,
             "api_key_set": self.resolved_key() is not None, "models": list(self.models),
             "params": self.params, "local": self.local, "max_tokens_in_body": self.max_tokens_in_body,
-            "builtin": self.builtin,
+            "requests_per_minute": self.requests_per_minute, "builtin": self.builtin,
         }
 
 
@@ -105,6 +108,7 @@ def _from_dict(provider_id: str, data: dict) -> Provider:
         api_key=data.get("api_key") or None, api_key_env=data.get("api_key_env") or None,
         models=tuple(data.get("models") or ()), params=dict(data.get("params") or {}),
         local=bool(data.get("local", False)), max_tokens_in_body=data.get("max_tokens_in_body"),
+        requests_per_minute=data.get("requests_per_minute"),
     )
 
 
@@ -140,6 +144,9 @@ def validate(provider_id: str, data: dict) -> None:
         raise ValueError(f"params não pode definir {sorted(clash)}: use os campos do provedor")
     if any(not isinstance(m, str) or not m.strip() or SEPARATOR in m for m in data.get("models") or []):
         raise ValueError("cada modelo é um nome não vazio, sem '::'")
+    rpm = data.get("requests_per_minute")
+    if rpm is not None and (not isinstance(rpm, (int, float)) or rpm <= 0):
+        raise ValueError("requests_per_minute precisa ser um número positivo (ou vazio, sem limite)")
 
 
 def save_provider(provider_id: str, data: dict) -> Provider:
@@ -153,6 +160,7 @@ def save_provider(provider_id: str, data: dict) -> Provider:
         "api_key_env": (data.get("api_key_env") or "").strip() or None,
         "models": [m.strip() for m in data.get("models") or []], "params": data.get("params") or {},
         "local": bool(data.get("local", False)), "max_tokens_in_body": data.get("max_tokens_in_body"),
+        "requests_per_minute": data.get("requests_per_minute"),
     }
     if "api_key" in data and data["api_key"] is not None:
         if data["api_key"]:

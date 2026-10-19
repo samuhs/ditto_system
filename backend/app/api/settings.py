@@ -45,6 +45,7 @@ class ProviderBody(BaseModel):
     params: dict = {}
     local: bool = False
     max_tokens_in_body: bool | None = None
+    requests_per_minute: float | None = None
 
 
 class ProviderTestBody(BaseModel):

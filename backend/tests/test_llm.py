@@ -137,3 +137,22 @@ def test_max_tokens_placement_can_be_forced(monkeypatch, in_body):
                      max_tokens=10)
     assert ("max_tokens" in captured.get("extra_body", {})) is in_body
     assert ("max_tokens" in captured) is not in_body
+
+
+def test_a_requests_per_minute_cap_shares_one_rate_limiter_per_provider(monkeypatch):
+    from app.core.llm import chat_model
+
+    captured = _capture_init(monkeypatch)
+    capped = Provider(id="r", kind="custom", base_url="http://h/v1", requests_per_minute=18)
+    build_chat_model(capped, "m")
+    first = captured["rate_limiter"]
+    build_chat_model(capped, "other-model")
+    assert captured["rate_limiter"] is first  # the cap is the provider's, shared
+    assert abs(first.requests_per_second - 18 / 60) < 1e-9
+    assert chat_model.rate_limiter_for(Provider(id="free", kind="custom", base_url="http://h/v1")) is None
+
+
+def test_without_a_cap_no_rate_limiter_is_passed(monkeypatch):
+    captured = _capture_init(monkeypatch)
+    build_chat_model(Provider(id="x", kind="custom", base_url="http://h/v1"), "m")
+    assert "rate_limiter" not in captured

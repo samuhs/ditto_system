@@ -4,9 +4,32 @@ Nothing here knows any provider. The provider's configuration (kind, URL, key, e
 arguments) goes to `init_chat_model`, which returns the matching LangChain chat model; the
 same `generate` then works for a local MLX server, OpenRouter, Gemini or any other.
 """
+import threading
+
 from app.core.llm import usage
 from app.core.llm.base import LLM, llm_registry, sampling_kwargs
 from app.core.llm.providers import Provider
+
+# One rate limiter per (provider, cap), shared by every chat model built for it: the
+# orchestrator builds a model per run and answers questions in parallel, and the cap is
+# the provider's, not a model instance's.
+_limiters: dict[tuple[str, float], object] = {}
+_limiters_lock = threading.Lock()
+
+
+def rate_limiter_for(provider: Provider):
+    """The shared LangChain rate limiter of a provider with a requests-per-minute cap, else None."""
+    if not provider.requests_per_minute:
+        return None
+    from langchain_core.rate_limiters import InMemoryRateLimiter
+
+    key = (provider.id, float(provider.requests_per_minute))
+    with _limiters_lock:
+        if key not in _limiters:
+            _limiters[key] = InMemoryRateLimiter(
+                requests_per_second=provider.requests_per_minute / 60, check_every_n_seconds=0.1, max_bucket_size=1,
+            )
+        return _limiters[key]
 
 
 def build_chat_model(provider: Provider, model: str, *, temperature: float | None = None,
@@ -31,6 +54,9 @@ def build_chat_model(provider: Provider, model: str, *, temperature: float | Non
         # Travamento/2 (#20): a hard timeout so a stuck call fails into the usual retry
         # path instead of hanging the worker thread.
         kwargs["timeout"] = timeout
+    limiter = rate_limiter_for(provider)
+    if limiter is not None:
+        kwargs["rate_limiter"] = limiter
     model_provider = "openai" if provider.kind == "custom" else provider.kind
     return init_chat_model(model, model_provider=model_provider, **kwargs)
 

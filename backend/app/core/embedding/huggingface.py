@@ -14,6 +14,34 @@ _BATCH_SIZE = 32
 _tokenizers: dict[tuple, object] = {}
 _tokenizers_lock = threading.Lock()
 
+# One encode at a time on the GPU, across every embedder: Metal (MPS) aborts the whole
+# process ("failed assertion ... MTLCommandBufferStatusCommitted") when two threads encode
+# at once, which happens when questions run in parallel and a technique embeds the
+# queries the LLM writes (agentic, hyde, crag, multi_query) while another thread scores.
+_gpu_lock = threading.Lock()
+
+
+def _is_gpu_oom(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return "out of memory" in text and ("mps" in text or "cuda" in text)
+
+
+def free_gpu_cache() -> None:
+    """Hand the GPU memory PyTorch keeps cached back to the system.
+
+    On Apple Silicon the MPS allocator keeps every encode's buffers; over several
+    experiments in one process (long contexts, many answers to score) the cache reached
+    the unified-memory limit and scoring failed with "MPS backend out of memory".
+    """
+    try:
+        import torch
+    except ImportError:  # pragma: no cover - torch ships with sentence-transformers
+        return
+    if hasattr(torch, "mps") and torch.backends.mps.is_available():
+        torch.mps.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
 
 @contextmanager
 def reuse_tokenizers():
@@ -68,11 +96,34 @@ class HuggingFaceEmbedder(Embedder):
             with reuse_tokenizers():
                 model = SentenceTransformer(model_name, device=None if device in (None, "auto") else device)
         self._model = model
+        self._cpu_lock = threading.Lock()
+
+    def _lock(self) -> threading.Lock:
+        """The GPU-wide lock when the model sits on a GPU, else this instance's own."""
+        device = str(getattr(self._model, "device", "cpu"))
+        return _gpu_lock if device.startswith(("mps", "cuda")) else self._cpu_lock
+
+    def _run(self, inputs, **kwargs):
+        lock = self._lock()
+        on_gpu = lock is _gpu_lock
+        with lock:
+            try:
+                return self._model.encode(inputs, convert_to_numpy=True, **kwargs)
+            except RuntimeError as exc:
+                if not (on_gpu and _is_gpu_oom(exc)):
+                    raise
+                # Free the cache and retry once in small batches before giving up.
+                free_gpu_cache()
+                kwargs["batch_size"] = max(1, kwargs.get("batch_size", _BATCH_SIZE) // 8)
+                return self._model.encode(inputs, convert_to_numpy=True, **kwargs)
+            finally:
+                if on_gpu:
+                    free_gpu_cache()
 
     def _encode(self, texts: list[str], prefix: str) -> list[list[float]]:
         """Encode a batch, each text behind the given prefix."""
         prefixed = [prefix + text for text in texts]
-        return _floats(self._model.encode(prefixed, batch_size=_BATCH_SIZE, convert_to_numpy=True))
+        return _floats(self._run(prefixed, batch_size=_BATCH_SIZE))
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         """Embed a batch of documents."""
@@ -84,7 +135,7 @@ class HuggingFaceEmbedder(Embedder):
 
     def embed_query(self, text: str) -> list[float]:
         """Embed a single query string."""
-        return _floats(self._model.encode(self.query_prefix + text, convert_to_numpy=True))
+        return _floats(self._run(self.query_prefix + text))
 
     @property
     def dimension(self) -> int:
